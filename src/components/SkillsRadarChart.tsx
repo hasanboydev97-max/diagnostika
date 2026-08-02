@@ -85,7 +85,7 @@ export default function SkillsRadarChart({ results = {}, blueprint }: Props) {
       <h2 className="text-2xl text-neutral-main">Ko'nikmalar profili va Fikrlash darajalari</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-white rounded-3xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] border border-border/50 p-10 flex flex-col relative overflow-hidden">
+        <div className="bg-white rounded-3xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] border border-border/50 p-4 sm:p-10 flex flex-col relative overflow-hidden">
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl"></div>
           
           <h3 className="text-xs font-bold text-neutral-secondary mb-2 uppercase tracking-widest text-center">Fikrlash ko'nikmalari</h3>
@@ -113,9 +113,9 @@ export default function SkillsRadarChart({ results = {}, blueprint }: Props) {
           </p>
         </div>
         
-        <div className="bg-white rounded-3xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] border border-border/50 p-10 flex flex-col justify-center">
-          <h3 className="text-xs font-bold text-neutral-secondary mb-10 uppercase tracking-widest">Fikrlash darajalari (foizda)</h3>
-          <div className="space-y-7">
+        <div className="bg-white rounded-3xl shadow-[0_2px_20px_-4px_rgba(0,0,0,0.05)] border border-border/50 p-6 sm:p-10 flex flex-col justify-center">
+          <h3 className="text-xs font-bold text-neutral-secondary mb-8 sm:mb-10 uppercase tracking-widest">Fikrlash darajalari (foizda)</h3>
+          <div className="space-y-6 sm:space-y-7">
             {dynamicBars.map((bar, index) => (
               <div key={index} className="group">
                 <div className="flex justify-between text-sm font-medium mb-3">

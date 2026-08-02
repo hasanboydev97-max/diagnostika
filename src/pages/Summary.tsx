@@ -206,15 +206,15 @@ export default function Summary() {
                 </div>
               </div>
               
-              <div className="pt-4 md:pt-0 flex flex-col items-center justify-center">
+              <div className="pt-6 md:pt-0 flex flex-col items-center justify-center">
                 <div className="text-xs font-bold text-neutral-secondary mb-3 uppercase tracking-widest">To'plam diapazoni</div>
-                <div className="text-5xl font-bold text-neutral-main mb-2">{minRange}–{maxRange}</div>
+                <div className="text-4xl md:text-5xl font-bold text-neutral-main mb-2">{minRange}–{maxRange}</div>
                 <div className="text-sm text-neutral-secondary">Haqiqiy daraja shu oraliqda</div>
               </div>
               
-              <div className="pt-4 md:pt-0 flex flex-col items-center justify-center">
+              <div className="pt-6 md:pt-0 flex flex-col items-center justify-center">
                 <div className="text-xs font-bold text-neutral-secondary mb-3 uppercase tracking-widest">Tuzatilgan ball</div>
-                <div className="text-5xl font-bold text-neutral-main mb-2">~{totalScore}</div>
+                <div className="text-4xl md:text-5xl font-bold text-neutral-main mb-2">~{totalScore}</div>
                 <div className="text-sm text-neutral-secondary">Xato yo'q - haqiqiy daraja to'liq</div>
               </div>
             </div>
@@ -233,12 +233,14 @@ export default function Summary() {
               
               <div className="h-6 w-full premium-gradient rounded-full relative shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]"></div>
               
-              <div className="flex justify-between text-xs font-bold mt-4 px-2 tracking-widest uppercase">
+              <div className="flex justify-between text-[10px] sm:text-xs font-bold mt-4 px-1 sm:px-2 tracking-widest uppercase">
                 <span className="text-danger w-[35%] text-left md:text-center">Sayoz</span>
                 <span className="text-warning w-[15%] text-left md:text-center">Zaif</span>
-                <span className="text-yellow-600 w-[17%] text-left md:text-center">O'rtacha</span>
+                <span className="text-yellow-600 w-[17%] text-left md:text-center hidden sm:inline-block">O'rtacha</span>
+                <span className="text-yellow-600 w-[17%] text-left md:text-center sm:hidden">O'rta</span>
                 <span className="text-primary w-[17%] text-left md:text-center">Yaxshi</span>
-                <span className="text-success w-[16%] text-right md:text-center">Juda yuqori</span>
+                <span className="text-success w-[16%] text-right md:text-center hidden sm:inline-block">Juda yuqori</span>
+                <span className="text-success w-[16%] text-right md:text-center sm:hidden">Yuqori</span>
               </div>
               
               {/* Marker at totalScore */}

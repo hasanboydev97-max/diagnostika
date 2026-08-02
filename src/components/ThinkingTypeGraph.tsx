@@ -85,7 +85,7 @@ export default function ThinkingTypeGraph({ results = {}, blueprint }: Props) {
       </div>
       
       {/* Main Infographic Container */}
-      <div className="bg-[#f8fafc] rounded-[2.5rem] shadow-[inset_0_2px_20px_rgba(0,0,0,0.02)] border border-slate-200/60 p-6 md:p-16 relative overflow-hidden">
+      <div className="bg-[#f8fafc] rounded-[2.5rem] shadow-[inset_0_2px_20px_rgba(0,0,0,0.02)] border border-slate-200/60 p-4 md:p-16 relative overflow-hidden">
         
         {/* Decorative Dotted Grid */}
         <div className="absolute inset-0 opacity-[0.5] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#cbd5e1 1.5px, transparent 1.5px)', backgroundSize: '32px 32px' }}></div>

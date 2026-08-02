@@ -101,7 +101,7 @@ export default function WelcomeModal({
           animate="visible"
           exit="exit"
           variants={containerVariants}
-          className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-4 ${modalBg} backdrop-blur-md`}
+          className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-4 ${modalBg} backdrop-blur-md overflow-hidden`}
         >
           {/* Subtle star pattern background */}
           <div className="absolute inset-0 opacity-[0.15]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
@@ -146,12 +146,12 @@ export default function WelcomeModal({
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 1, duration: 0.8 }}
-                    className="text-6xl font-display font-bold text-white tracking-tighter"
+                    className="text-5xl sm:text-6xl font-display font-bold text-white tracking-tighter"
                   >
                     {score}
                   </motion.span>
-                  <span className="text-2xl text-slate-400 font-display">/ 100</span>
-                  <span className="ml-2 text-[10px] text-slate-400 uppercase tracking-widest font-bold">Umumiy natija</span>
+                  <span className="text-xl sm:text-2xl text-slate-400 font-display">/ 100</span>
+                  <span className="ml-1 sm:ml-2 text-[8px] sm:text-[10px] text-slate-400 uppercase tracking-widest font-bold">Umumiy natija</span>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-4 pt-5 border-t border-white/10">
@@ -180,7 +180,7 @@ export default function WelcomeModal({
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', delay: 1.5, bounce: 0.5 }}
-                className={`relative z-10 shadow-xl px-6 py-6 rounded-[1.5rem] flex flex-col items-center justify-center min-w-[260px] border-2 ${isPassed ? 'bg-primary/90 border-blue-400/30 text-white' : 'bg-slate-800/90 border-red-500/30 text-slate-200'}`}
+                className={`relative z-10 shadow-xl px-4 sm:px-6 py-6 rounded-[1.5rem] flex flex-col items-center justify-center w-full md:min-w-[260px] md:w-auto border-2 ${isPassed ? 'bg-primary/90 border-blue-400/30 text-white' : 'bg-slate-800/90 border-red-500/30 text-slate-200'}`}
               >
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 border-4 shadow-md ${isPassed ? 'bg-success/20 border-success text-success' : 'bg-danger/20 border-danger text-danger'}`}>
                   {isPassed ? <Check strokeWidth={3} size={24} /> : <X strokeWidth={3} size={24} />}

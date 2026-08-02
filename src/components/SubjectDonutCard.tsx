@@ -37,14 +37,14 @@ export default function SubjectDonutCard({ results = {}, blueprint }: Props) {
       </div>
       <h2 className="text-2xl text-neutral-main">Fanlar bo'yicha o'zlashtirish (Asosiy yo'nalishlar)</h2>
       
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-5">
         {donuts.map((item, index) => (
-          <div key={index} className="bg-white rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.03)] border border-border/50 p-6 flex flex-col items-center text-center transition-premium hover:shadow-md hover:-translate-y-1 group">
-            <h3 className="text-xs font-bold text-neutral-secondary mb-6 h-8 flex items-center justify-center uppercase tracking-widest leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">
+          <div key={index} className="bg-white rounded-2xl sm:rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.03)] border border-border/50 p-4 sm:p-6 flex flex-col items-center text-center transition-premium hover:shadow-md hover:-translate-y-1 group">
+            <h3 className="text-[10px] sm:text-xs font-bold text-neutral-secondary mb-3 sm:mb-6 h-8 flex items-center justify-center uppercase tracking-widest leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">
               {item.name}
             </h3>
             
-            <div className="w-28 h-28 relative mb-5">
+            <div className="w-20 h-20 sm:w-28 sm:h-28 relative mb-4 sm:mb-5">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
