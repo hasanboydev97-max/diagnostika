@@ -31,20 +31,20 @@ export default function TopicProgressList({ results = {}, blueprint }: Props) {
       </div>
       <h2 className="text-2xl font-bold text-neutral-main">Mavzular bo'yicha</h2>
       
-      <div className="bg-white rounded-2xl shadow-sm border border-border p-8">
-        <div className="space-y-5">
+      <div className="bg-white rounded-2xl shadow-sm border border-border p-4 md:p-8">
+        <div className="space-y-4 md:space-y-5">
           {topics.map((topic, index) => (
-            <div key={index} className="flex items-center gap-6">
-              <div className="w-1/3 md:w-1/4 text-sm font-medium text-neutral-main truncate" title={topic.name}>
+            <div key={index} className="flex items-center gap-3 md:gap-6">
+              <div className="w-1/3 md:w-1/4 text-xs md:text-sm font-medium text-neutral-main truncate" title={topic.name}>
                 {topic.name}
               </div>
-              <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+              <div className="flex-1 h-2 md:h-2.5 bg-slate-100 rounded-full overflow-hidden">
                 <div 
                   className={`h-full ${topic.color} rounded-full transition-all duration-1000 ease-out`}
                   style={{ width: `${topic.value}%` }}
                 ></div>
               </div>
-              <div className={`w-12 text-right text-sm font-bold ${
+              <div className={`w-10 md:w-12 text-right text-xs md:text-sm font-bold ${
                 topic.value >= 80 ? 'text-success' : topic.value === 0 ? 'text-danger/80' : 'text-warning'
               }`}>
                 {topic.value}%

@@ -30,13 +30,13 @@ export default function RoadmapJourney() {
 
   return (
     <section className="space-y-8 relative max-w-5xl mx-auto pt-8">
-      <div className="text-center space-y-4 mb-16">
+      <div className="text-center space-y-2 md:space-y-4 mb-8 md:mb-16">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-primary/5 text-primary rounded-full text-sm font-bold tracking-wider border border-primary/10">
           <Map size={16} />
           <span className="font-display uppercase">Bosqichma-bosqich reja</span>
         </div>
-        <h2 className="text-3xl md:text-4xl text-neutral-main font-display font-semibold">Rivojlanish yo'li</h2>
-        <p className="text-neutral-secondary max-w-2xl mx-auto text-lg leading-relaxed">
+        <h2 className="text-xl md:text-3xl lg:text-4xl text-neutral-main font-display font-semibold">Rivojlanish yo'li</h2>
+        <p className="text-neutral-secondary max-w-2xl mx-auto text-sm md:text-lg leading-relaxed">
           Kelgusi oylarda natijalarni yaxshilash va kamchiliklarni to'ldirish uchun tuzilgan aniq qadamlar.
         </p>
       </div>
@@ -119,10 +119,10 @@ export default function RoadmapJourney() {
                     {/* Connecting subtle line on desktop */}
                     <div className={`hidden md:block absolute top-1/2 -translate-y-1/2 w-16 h-px bg-border/50 z-[-1] transition-all duration-500 ${isLeft ? '-right-16 group-hover:bg-primary/30' : '-left-16 group-hover:bg-primary/30'} ${isActive ? 'bg-primary/30' : ''}`}></div>
 
-                    <div className={`text-xs font-bold uppercase tracking-widest mb-3 ${isActive ? 'text-primary' : 'text-neutral-secondary'}`}>
+                    <div className={`text-xs font-bold uppercase tracking-widest mb-2 md:mb-3 ${isActive ? 'text-primary' : 'text-neutral-secondary'}`}>
                       {step.time}
                     </div>
-                    <h3 className={`text-xl md:text-2xl font-display font-semibold mb-4 ${isActive ? 'text-neutral-main' : 'text-neutral-secondary'}`}>
+                    <h3 className={`text-base md:text-xl lg:text-2xl font-display font-semibold mb-2 md:mb-4 ${isActive ? 'text-neutral-main' : 'text-neutral-secondary'}`}>
                       {step.goal}
                     </h3>
                     

@@ -72,14 +72,14 @@ export default function ThinkingTypeGraph({ results = {}, blueprint }: Props) {
 
   return (
     <section className="space-y-8 relative max-w-[1440px] mx-auto pt-4">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-2 md:gap-4 mb-4 md:mb-8">
         <div>
-          <div className="flex items-center gap-2 text-primary text-sm font-bold tracking-wider mb-2">
+          <div className="flex items-center gap-2 text-primary text-sm font-bold tracking-wider mb-1 md:mb-2">
             <span className="font-display">09</span>
           </div>
-          <h2 className="text-3xl font-display font-semibold text-neutral-main">Fikrlash turlari profili</h2>
+          <h2 className="text-xl md:text-3xl font-display font-semibold text-neutral-main">Fikrlash turlari profili</h2>
         </div>
-        <p className="text-neutral-secondary max-w-md text-sm md:text-right leading-relaxed font-medium">
+        <p className="text-neutral-secondary max-w-md text-xs md:text-sm md:text-right leading-relaxed font-medium">
           Turli xil fikrlash qobiliyatlari qanday shakllangani va o'zaro qanday bog'langanini ko'rsatuvchi markazlashgan tahliliy xarita.
         </p>
       </div>
@@ -136,28 +136,28 @@ export default function ThinkingTypeGraph({ results = {}, blueprint }: Props) {
         </div>
 
         {/* 2x2 Grid for Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-x-48 lg:gap-x-[400px] md:gap-y-28 relative z-10">
+        <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-6 md:gap-x-48 lg:gap-x-[400px] md:gap-y-28 relative z-10">
           {dynamicNodes.map((node, i) => (
             <div 
               key={node.id} 
-              className={`bg-white/95 backdrop-blur-xl rounded-3xl p-6 md:p-8 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.1)] border border-white hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] hover:-translate-y-1 transition-all duration-500 ${i % 2 === 0 ? 'md:mr-auto' : 'md:ml-auto'} max-w-[320px] w-full relative overflow-hidden group`}
+              className={`bg-white/95 backdrop-blur-xl rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.1)] border border-white hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] hover:-translate-y-1 transition-all duration-500 ${i % 2 === 0 ? 'md:mr-auto' : 'md:ml-auto'} md:max-w-[320px] w-full relative overflow-hidden group`}
             >
               {/* Top subtle border based on color */}
               <div className={`absolute top-0 left-0 w-full h-1.5 ${node.bgColor} opacity-90`}></div>
               
-              <div className="flex justify-between items-start mb-5">
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-slate-50 border border-slate-100 shadow-sm ${node.textColor} group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500`}>
+              <div className="flex justify-between items-start mb-3 md:mb-5">
+                <div className="flex items-center gap-2 md:gap-4">
+                  <div className={`w-9 h-9 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center bg-slate-50 border border-slate-100 shadow-sm ${node.textColor} group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500`}>
                     {node.icon}
                   </div>
-                  <h3 className="font-display font-bold text-xl text-neutral-main tracking-wide">{node.name}</h3>
+                  <h3 className="font-display font-bold text-base md:text-xl text-neutral-main tracking-wide">{node.name}</h3>
                 </div>
-                <div className={`text-3xl font-display font-bold ${node.textColor} drop-shadow-sm`}>
-                  {node.score}<span className="text-lg opacity-70">%</span>
+                <div className={`text-2xl md:text-3xl font-display font-bold ${node.textColor} drop-shadow-sm`}>
+                  {node.score}<span className="text-sm md:text-lg opacity-70">%</span>
                 </div>
               </div>
               
-              <p className="text-[13px] text-neutral-secondary leading-relaxed mb-6 font-medium">
+              <p className="text-[11px] md:text-[13px] text-neutral-secondary leading-relaxed mb-3 md:mb-6 font-medium">
                 {node.desc}
               </p>
               
