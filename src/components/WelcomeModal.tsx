@@ -116,7 +116,7 @@ export default function WelcomeModal({
             <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_80%,transparent_100%)]"></div>
           </div>
           
-          <motion.div className="relative z-10 w-full max-w-4xl mx-auto flex flex-col items-center justify-center min-h-screen py-8 md:py-0">
+          <motion.div className="relative z-10 w-full max-w-4xl mx-auto flex flex-col items-center justify-start md:justify-center min-h-screen py-12 md:py-8">
             
             {/* Logo Area */}
             <motion.div variants={itemVariants} className="relative mb-6 md:mb-8 group flex-shrink-0">
