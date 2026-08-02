@@ -101,7 +101,7 @@ export default function WelcomeModal({
           animate="visible"
           exit="exit"
           variants={containerVariants}
-          className={`fixed inset-0 z-50 flex flex-col items-center py-10 px-4 md:p-8 ${modalBg} backdrop-blur-md overflow-y-auto`}
+          className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-2 sm:p-4 md:p-8 ${modalBg} backdrop-blur-md overflow-hidden`}
         >
           {/* Subtle star pattern background */}
           <div className="absolute inset-0 opacity-[0.15]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
@@ -119,16 +119,16 @@ export default function WelcomeModal({
                 {isPassed ? <Trophy size={20} className="sm:w-6 sm:h-6 md:w-8 md:h-8" /> : <Frown size={20} className="sm:w-6 sm:h-6 md:w-8 md:h-8" />}
               </motion.div>
               
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-normal text-white drop-shadow-md px-2 leading-snug">
+              <h1 className="text-xl sm:text-2xl md:text-4xl font-bold tracking-normal text-white drop-shadow-md px-1 leading-tight">
                 {isPassed ? 'Umumiy diagnostik xulosa' : 'Diagnostika yakunlandi'}
               </h1>
-              <p className="text-xs sm:text-sm md:text-base text-slate-300 max-w-lg mx-auto px-4 font-medium">
-                Uch kirish imtihoni — matematika, ingliz tili va tanqidiy fikrlash
+              <p className="text-[10px] sm:text-xs md:text-base text-slate-300 max-w-lg mx-auto px-2 font-medium">
+                Matematika, ingliz tili, tanqidiy fikrlash
               </p>
             </div>
             
             {/* Info Strip */}
-            <motion.div variants={itemVariants} className="flex flex-wrap justify-center items-center gap-2 sm:gap-3 text-[10px] sm:text-xs md:text-sm py-2 mx-auto max-w-2xl px-2 w-full">
+            <motion.div variants={itemVariants} className="flex flex-row flex-wrap justify-center items-center gap-1.5 sm:gap-3 text-[9px] sm:text-xs md:text-sm py-1 mx-auto max-w-2xl px-1 w-full">
               <div className="bg-white/5 border border-white/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5 sm:gap-2">
                 <span className="text-slate-400">Nomzod:</span>
                 <strong className="text-white font-bold">{candidateName}</strong>
@@ -144,7 +144,7 @@ export default function WelcomeModal({
             </motion.div>
 
             {/* Main Result Card */}
-            <motion.div variants={itemVariants} className="bg-white/10 border border-white/10 rounded-2xl md:rounded-3xl p-4 sm:p-5 md:p-8 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-10 backdrop-blur-xl shadow-2xl relative overflow-hidden mt-2 md:mt-8 max-w-3xl mx-auto w-full">
+            <motion.div variants={itemVariants} className="bg-white/10 border border-white/10 rounded-xl md:rounded-3xl p-3 sm:p-4 md:p-8 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-10 backdrop-blur-xl shadow-2xl relative overflow-hidden mt-1 md:mt-8 max-w-3xl mx-auto w-full">
               
               {/* Dynamic Glow */}
               <div className={`absolute -top-32 -left-32 w-64 h-64 rounded-full blur-[80px] opacity-30 pointer-events-none ${isPassed ? 'bg-blue-400' : 'bg-red-500'}`}></div>
@@ -156,16 +156,16 @@ export default function WelcomeModal({
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 1, duration: 0.8 }}
-                      className="text-6xl md:text-7xl font-bold text-white tracking-normal leading-none"
+                      className="text-5xl sm:text-6xl md:text-7xl font-bold text-white tracking-normal leading-none"
                     >
                       {score}
                     </motion.span>
-                    <span className="text-2xl md:text-3xl text-slate-400 font-medium">/ 100</span>
+                    <span className="text-xl md:text-3xl text-slate-400 font-medium">/ 100</span>
                   </div>
-                  <span className="text-[10px] md:text-xs text-slate-400 uppercase tracking-[0.2em] font-bold mt-2">Umumiy natija</span>
+                  <span className="text-[9px] md:text-xs text-slate-400 uppercase tracking-[0.2em] font-bold mt-1">Umumiy natija</span>
                 </div>
                 
-                <div className="flex justify-center w-full pt-4 md:pt-6 border-t border-white/10 px-0 gap-1.5 sm:gap-4">
+                <div className="flex justify-center w-full pt-3 md:pt-6 border-t border-white/10 px-0 gap-1.5 sm:gap-4">
                   {[
                     { label: 'Matematika', val: scores?.math || 0 },
                     { label: 'Ingliz tili', val: scores?.english || 0 },
@@ -176,10 +176,10 @@ export default function WelcomeModal({
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 1.2 + idx * 0.1 }}
-                      className="flex flex-col items-center flex-1 bg-white/5 border border-white/5 rounded-xl md:rounded-2xl p-2 sm:p-3 md:p-4 hover:bg-white/10 transition-colors"
+                      className="flex flex-col items-center flex-1 bg-white/5 border border-white/5 rounded-lg md:rounded-2xl p-1.5 sm:p-2 md:p-4 hover:bg-white/10 transition-colors"
                     >
-                      <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1">{s.val}</div>
-                      <div className="text-[7px] sm:text-[9px] md:text-xs text-slate-400 uppercase font-bold tracking-widest text-center leading-tight">
+                      <div className="text-lg sm:text-xl md:text-3xl font-bold text-white mb-0.5">{s.val}</div>
+                      <div className="text-[6px] sm:text-[8px] md:text-xs text-slate-400 uppercase font-bold tracking-widest text-center leading-tight">
                         {s.label}
                       </div>
                     </motion.div>
@@ -192,12 +192,12 @@ export default function WelcomeModal({
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', delay: 1.5, bounce: 0.5 }}
-                className={`relative z-10 shadow-xl px-3 py-4 md:px-8 md:py-8 rounded-[1rem] md:rounded-[1.5rem] flex flex-col items-center justify-center w-full md:min-w-[280px] md:w-auto border-2 ${isPassed ? 'bg-primary/90 border-blue-400/30 text-white' : 'bg-slate-800/90 border-red-500/30 text-slate-200'}`}
+                className={`relative z-10 shadow-xl px-2 py-3 md:px-8 md:py-8 rounded-[0.75rem] md:rounded-[1.5rem] flex flex-col items-center justify-center w-full md:min-w-[280px] md:w-auto border-2 ${isPassed ? 'bg-primary/90 border-blue-400/30 text-white' : 'bg-slate-800/90 border-red-500/30 text-slate-200'}`}
               >
-                <div className={`w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center mb-2 md:mb-4 border-2 md:border-4 shadow-md ${isPassed ? 'bg-success/20 border-success text-success' : 'bg-danger/20 border-danger text-danger'}`}>
-                  {isPassed ? <Check strokeWidth={3} size={20} className="md:w-7 md:h-7" /> : <X strokeWidth={3} size={20} className="md:w-7 md:h-7" />}
+                <div className={`w-8 h-8 md:w-14 md:h-14 rounded-full flex items-center justify-center mb-1.5 md:mb-4 border-2 md:border-4 shadow-md ${isPassed ? 'bg-success/20 border-success text-success' : 'bg-danger/20 border-danger text-danger'}`}>
+                  {isPassed ? <Check strokeWidth={3} size={16} className="md:w-7 md:h-7" /> : <X strokeWidth={3} size={16} className="md:w-7 md:h-7" />}
                 </div>
-                <h3 className={`text-lg sm:text-xl md:text-2xl font-bold mb-1 md:mb-2 tracking-wide text-center ${isPassed ? 'text-white' : 'text-white'}`}>
+                <h3 className={`text-base sm:text-lg md:text-2xl font-bold mb-0.5 md:mb-2 tracking-wide text-center ${isPassed ? 'text-white' : 'text-white'}`}>
                   {isPassed ? 'QABUL QILINSIN' : 'QABUL QILINMADI'}
                 </h3>
                 <p className={`text-[10px] md:text-xs text-center font-medium leading-relaxed ${isPassed ? 'text-blue-100' : 'text-slate-400'}`}>
@@ -211,13 +211,13 @@ export default function WelcomeModal({
             </motion.div>
 
             {/* Action Button */}
-            <motion.div variants={itemVariants} className="pt-2 md:pt-4 pb-12 md:pb-0 relative z-10">
+            <motion.div variants={itemVariants} className="pt-2 pb-2 md:pb-0 relative z-10">
               <button 
                 onClick={handleClose}
-                className="group relative inline-flex items-center justify-center gap-2 md:gap-3 bg-white/10 hover:bg-white border border-white/20 text-white hover:text-slate-900 px-6 py-3 md:px-8 md:py-3 rounded-full font-bold transition-all shadow-lg hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-1 overflow-hidden w-full max-w-xs mx-auto"
+                className="group relative inline-flex items-center justify-center gap-2 md:gap-3 bg-white/10 hover:bg-white border border-white/20 text-white hover:text-slate-900 px-4 py-2.5 md:px-8 md:py-3 rounded-full font-bold transition-all shadow-lg hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-1 overflow-hidden w-full max-w-xs mx-auto"
               >
-                <span className="relative z-10 tracking-widest uppercase text-xs">To'liq hisobotni ko'rish</span>
-                <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform" />
+                <span className="relative z-10 tracking-widest uppercase text-[10px] md:text-xs">To'liq hisobotni ko'rish</span>
+                <ArrowRight size={14} className="relative z-10 group-hover:translate-x-1 transition-transform md:w-4 md:h-4" />
               </button>
             </motion.div>
             
