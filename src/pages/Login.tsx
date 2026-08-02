@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Lock, ArrowRight, Activity, BrainCircuit } from 'lucide-react';
+import { Search, Lock, ArrowRight, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../lib/db';
 import logo from '../assets/logo.jpg';
