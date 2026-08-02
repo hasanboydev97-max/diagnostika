@@ -11,7 +11,7 @@ export const generateDiagnosticSummary = async (studentName: string, grade: stri
   const genAI = new GoogleGenerativeAI(apiKey);
 
   // Google Gemini API ning haqiqiy modellari
-  const fallbackModels = ["gemini-1.5-flash", "gemini-1.5-pro"];
+  const fallbackModels = ["gemini-1.5-flash", "gemini-pro", "gemini-1.0-pro"];
 
   // Qaysi mavzular va ko'nikmalarda qanday xato qilinganini tahlil qilish
   const failedQuestions = blueprint.filter(q => !questionResults[q.id]);
@@ -90,7 +90,7 @@ export const generateGradeBlueprint = async (grade: string): Promise<QuestionBlu
   if (!apiKey) throw new Error("API kalit topilmadi.");
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const fallbackModels = ["gemini-1.5-flash", "gemini-1.5-pro"];
+  const fallbackModels = ["gemini-1.5-flash", "gemini-pro", "gemini-1.0-pro"];
 
   const prompt = `Siz malakali ta'lim ekspertisiz. Menga ${grade}-sinf o'quvchilari uchun diagnostika test shablonini tuzib bering.
 Jami 30 ta savol bo'lishi shart.
