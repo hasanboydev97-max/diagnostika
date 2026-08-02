@@ -113,17 +113,17 @@ export default function Admin() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6" style={{ 
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-3 sm:p-6" style={{ 
       backgroundImage: 'radial-gradient(circle at center, #ffffff 0%, #f1f5f9 100%)' 
     }}>
-      <div className="bg-white max-w-7xl w-full p-8 rounded-2xl shadow-xl border border-slate-200 my-8">
+      <div className="bg-white max-w-7xl w-full p-4 sm:p-8 rounded-2xl shadow-xl border border-slate-200 my-4 sm:my-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-neutral-main mb-2">Admin Panel</h1>
-            <p className="text-neutral-secondary">O'quvchi natijalarini boshqarish va diagnostika yaratish.</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-neutral-main mb-2">Admin Panel</h1>
+            <p className="text-sm sm:text-base text-neutral-secondary">O'quvchi natijalarini boshqarish va diagnostika yaratish.</p>
           </div>
           
-          <div className="flex bg-slate-100 p-1 rounded-lg">
+          <div className="flex flex-wrap w-full md:w-auto bg-slate-100 p-1 rounded-lg">
             <button 
               onClick={() => setActiveTab('new')}
               className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-all ${activeTab === 'new' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}

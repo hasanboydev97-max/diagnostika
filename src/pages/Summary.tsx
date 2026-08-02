@@ -159,8 +159,8 @@ export default function Summary() {
 
       <div ref={printRef} className="print-container bg-background-main">
         {/* Main Content */}
-        <div className="max-w-[1440px] mx-auto px-6 md:px-12 pt-12 space-y-16">
-          <header className="flex justify-between items-center pb-8 border-b border-border">
+        <div className="max-w-[1440px] mx-auto px-4 md:px-12 pt-6 md:pt-12 space-y-10 md:space-y-16">
+          <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 sm:pb-8 border-b border-border gap-4">
           <div className="flex items-center gap-3">
             <img src={logo} alt="Boborahim Mashrab" className="w-12 h-12 rounded-lg object-contain shadow-sm border border-slate-200" />
             <h1 className="font-bold text-xl text-neutral-main">Boborahim Mashrab</h1>
@@ -192,8 +192,8 @@ export default function Summary() {
           <h2 className="text-2xl font-bold text-neutral-main font-display mb-2">Umumiy daraja</h2>
           <p className="text-neutral-secondary mb-8">Umumiy ball qaysi toifada — va e'tiborsizlik qayergacha yetadi.</p>
           
-          <div className="bg-white rounded-2xl shadow-sm border border-border p-10">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center divide-y md:divide-y-0 md:divide-x divide-border">
+          <div className="bg-white rounded-2xl shadow-sm border border-border p-5 md:p-10">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 text-center divide-y md:divide-y-0 md:divide-x divide-border">
               <div className="pt-4 md:pt-0 flex flex-col items-center">
                 <div className="text-xs font-bold text-neutral-secondary mb-3 uppercase tracking-widest">Umumiy natija</div>
                 <div className="flex items-baseline justify-center gap-1 mb-2">
@@ -255,7 +255,7 @@ export default function Summary() {
           <div className="flex items-center gap-2 text-primary text-sm font-bold tracking-wider">
             <span>03</span>
           </div>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <h2 className="text-2xl font-bold text-neutral-main">Tizim xulosasi</h2>
             {studentData.aiSummaryText?.includes('Texnik xatolik') && (
               <button 
@@ -267,7 +267,7 @@ export default function Summary() {
               </button>
             )}
           </div>
-          <div className="bg-primary/5 p-8 rounded-3xl border border-primary/20 shadow-sm relative overflow-hidden">
+          <div className="bg-primary/5 p-5 md:p-8 rounded-3xl border border-primary/20 shadow-sm relative overflow-hidden">
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl"></div>
             <div className="relative z-10">
               <h3 className="font-bold text-lg text-neutral-900 mb-3">Tahlil</h3>
