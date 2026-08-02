@@ -1,3 +1,4 @@
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
 import type { QuestionBlueprint } from '../lib/blueprint';
 
 interface Props {
@@ -5,52 +6,86 @@ interface Props {
   blueprint: QuestionBlueprint[];
 }
 
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white border border-slate-200 shadow-xl px-4 py-3 rounded-xl text-sm">
+        <div className="font-bold text-neutral-main mb-2">{data.name}</div>
+        <div className="flex items-center gap-2">
+          <span className="font-black text-primary">{data.value}%</span>
+          <span className="text-xs font-medium text-slate-400">({data.correct}/{data.total} to'g'ri)</span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function TopicProgressList({ results = {}, blueprint }: Props) {
-  // Barcha mavzularni yig'ish va ularning nechtasi to'g'ri bo'lganini hisoblash
-  const topicStats: Record<string, { total: number; correct: number }> = {};
+  const topicsMap: Record<string, { total: number; correct: number }> = {};
   
   blueprint.forEach(q => {
-    if (!topicStats[q.topic]) {
-      topicStats[q.topic] = { total: 0, correct: 0 };
+    if (!topicsMap[q.topic]) {
+      topicsMap[q.topic] = { total: 0, correct: 0 };
     }
-    topicStats[q.topic].total++;
-    if (results[q.id]) {
-      topicStats[q.topic].correct++;
-    }
+    topicsMap[q.topic].total++;
+    if (results[q.id]) topicsMap[q.topic].correct++;
   });
 
-  const topics = Object.entries(topicStats).map(([name, stats]) => {
-    const value = Math.round((stats.correct / stats.total) * 100);
-    const color = value >= 80 ? 'bg-success' : value === 0 ? 'bg-danger/80' : 'bg-warning';
-    return { name, value, color };
-  }).sort((a, b) => b.value - a.value); // Eng yuqori ballilar tepada
+  const chartData = Object.entries(topicsMap)
+    .map(([topic, stat]) => ({
+      name: topic,
+      value: Math.round((stat.correct / stat.total) * 100),
+      correct: stat.correct,
+      total: stat.total,
+    }))
+    .sort((a, b) => b.value - a.value); // Sort by highest score first
+
+  const chartHeight = Math.max(300, chartData.length * 45); // Dynamic height based on items
+
   return (
-    <section className="space-y-6">
+    <section className="space-y-4">
       <div className="flex items-center gap-2 text-primary text-sm font-bold tracking-wider">
         <span>07</span>
       </div>
-      <h2 className="text-2xl font-bold text-neutral-main">Mavzular bo'yicha</h2>
+      <h2 className="text-lg md:text-2xl font-bold text-neutral-main">Mavzular bo'yicha tahlil</h2>
       
-      <div className="bg-white rounded-2xl shadow-sm border border-border p-4 md:p-8">
-        <div className="space-y-4 md:space-y-5">
-          {topics.map((topic, index) => (
-            <div key={index} className="flex items-center gap-3 md:gap-6">
-              <div className="w-1/3 md:w-1/4 text-xs md:text-sm font-medium text-neutral-main truncate" title={topic.name}>
-                {topic.name}
-              </div>
-              <div className="flex-1 h-2 md:h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full ${topic.color} rounded-full transition-all duration-1000 ease-out`}
-                  style={{ width: `${topic.value}%` }}
-                ></div>
-              </div>
-              <div className={`w-10 md:w-12 text-right text-xs md:text-sm font-bold ${
-                topic.value >= 80 ? 'text-success' : topic.value === 0 ? 'text-danger/80' : 'text-warning'
-              }`}>
-                {topic.value}%
-              </div>
-            </div>
-          ))}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 md:p-6 overflow-hidden">
+        <div className="w-full mt-2" style={{ height: chartHeight }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart 
+              data={chartData} 
+              layout="vertical" 
+              margin={{ top: 0, right: 30, left: 10, bottom: 0 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+              <XAxis 
+                type="number" 
+                domain={[0, 100]} 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fill: '#94a3b8', fontSize: 12 }} 
+              />
+              <YAxis 
+                type="category" 
+                dataKey="name" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fill: '#475569', fontSize: 11, fontWeight: 600 }}
+                width={120}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
+              <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={20}>
+                {chartData.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={entry.value >= 75 ? '#059669' : entry.value >= 40 ? '#d97706' : '#e11d48'} 
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </section>
