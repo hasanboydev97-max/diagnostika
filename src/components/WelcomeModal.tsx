@@ -96,7 +96,7 @@ export default function WelcomeModal({
           animate="visible"
           exit="exit"
           variants={containerVariants}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden bg-slate-950/90 backdrop-blur-3xl"
+          className="fixed inset-0 z-50 overflow-y-auto overflow-x-hidden bg-slate-950/90 backdrop-blur-3xl"
         >
           {/* Animated Premium Aurora Background Blobs */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
