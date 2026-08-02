@@ -1,5 +1,17 @@
-
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import type { QuestionBlueprint } from '../lib/blueprint';
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-neutral-main text-white px-4 py-2 rounded-lg shadow-xl border border-slate-700 font-sans text-sm">
+        <span className="font-medium opacity-80">{payload[0].payload.subject}:</span>
+        <span className="ml-2 font-display font-bold text-lg">{payload[0].value}%</span>
+      </div>
+    );
+  }
+  return null;
+};
 
 interface Props {
   results?: Record<number, boolean>;
@@ -13,7 +25,6 @@ const SKILL_COLORS: Record<string, string> = {
   'Baholash':      '#7c3aed',
   'Sintezlash':    '#e11d48',
 };
-
 
 export default function SkillsRadarChart({ results = {}, blueprint }: Props) {
   const skillStats: Record<string, { total: number; correct: number }> = {
@@ -48,6 +59,13 @@ export default function SkillsRadarChart({ results = {}, blueprint }: Props) {
     { name: 'Sintezlash',    value: getPercentage("Sintezlash"), color: SKILL_COLORS['Sintezlash']    },
   ];
 
+  const data = [
+    { subject: 'Baholash',   score: getPercentage("Baholash")   },
+    { subject: 'Tahlil',     score: getPercentage("Tahlil")     },
+    { subject: 'Sintezlash', score: getPercentage("Sintezlash") },
+    { subject: "Qo'llash",   score: getPercentage("Qo'llash")   },
+    { subject: 'Tushunish',  score: getPercentage("Tushunish")  },
+  ];
 
   return (
     <section className="space-y-4">
@@ -57,7 +75,7 @@ export default function SkillsRadarChart({ results = {}, blueprint }: Props) {
       <h2 className="text-lg md:text-2xl font-bold text-neutral-main">Ko'nikmalar profili</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Left: Score rows — consistent on all screens */}
+        {/* Left: Score rows — same on all screens */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
           <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Fikrlash darajalari</div>
           <div className="divide-y divide-slate-100">
@@ -82,44 +100,27 @@ export default function SkillsRadarChart({ results = {}, blueprint }: Props) {
           </div>
         </div>
 
-        {/* Right: Custom SVG circular progress rings */}
-        <div className="hidden md:block bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-5">Ko'nikma halqalari</div>
-          <div className="grid grid-cols-3 gap-4">
-            {bars.map((bar) => {
-              const r = 32;
-              const circ = 2 * Math.PI * r;
-              const offset = circ - (bar.value / 100) * circ;
-              return (
-                <div key={bar.name} className="flex flex-col items-center gap-2">
-                  <div className="relative w-20 h-20">
-                    <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
-                      {/* Track */}
-                      <circle cx="40" cy="40" r={r} fill="none" stroke="#f1f5f9" strokeWidth="7" />
-                      {/* Progress */}
-                      <circle
-                        cx="40" cy="40" r={r}
-                        fill="none"
-                        stroke={bar.color}
-                        strokeWidth="7"
-                        strokeLinecap="round"
-                        strokeDasharray={circ}
-                        strokeDashoffset={offset}
-                        style={{ transition: 'stroke-dashoffset 1s ease-out' }}
-                      />
-                    </svg>
-                    {/* Center label */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-base font-black leading-none" style={{ color: bar.color }}>{bar.value}</span>
-                      <span className="text-[9px] font-bold text-slate-400 leading-none">%</span>
-                    </div>
-                  </div>
-                  <span className="text-[9px] font-black uppercase tracking-wider text-slate-500 text-center leading-tight">
-                    {bar.name}
-                  </span>
-                </div>
-              );
-            })}
+        {/* Right: Radar chart — desktop visual bonus */}
+        <div className="hidden md:flex bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex-col">
+          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Fikrlash xaritasi</div>
+          <div className="flex-1 min-h-[260px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="65%" data={data}>
+                <defs>
+                  <linearGradient id="radarGradient2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#1e3a8a" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#1e3a8a" stopOpacity={0.04} />
+                  </linearGradient>
+                </defs>
+                <PolarGrid stroke="#f1f5f9" strokeWidth={1.5} />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'General Sans', fontWeight: 700 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                <Tooltip content={<CustomTooltip />} cursor={false} />
+                <Radar name="Natija" dataKey="score" stroke="#1e3a8a" strokeWidth={2} fill="url(#radarGradient2)" />
+                <Radar dataKey="score" stroke="none" fill="#1e3a8a" fillOpacity={1}
+                  dot={{ r: 4, fill: '#1e3a8a', strokeWidth: 2, stroke: '#fff' }} />
+              </RadarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
