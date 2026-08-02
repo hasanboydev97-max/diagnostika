@@ -51,6 +51,20 @@ export default function Login() {
           setLoadingStep(0);
           setTimeout(() => setLoadingStep(1), 1800);
           setTimeout(() => setLoadingStep(2), 3600);
+          setTimeout(() => {
+            navigate('/summary/' + id);
+          }, 4500);
+        }
+      } else {
+        setError("Bunday Login (ID) ga ega natija topilmadi.");
+        setIsLoading(false);
+      }
+    } catch (err) {
+      setError("Tizimda xatolik yuz berdi. Iltimos qayta urinib ko'ring.");
+      setIsLoading(false);
+    }
+  };
+
   if (loadingStep >= 0) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center p-6 relative font-['Space_Grotesk'] overflow-hidden">
