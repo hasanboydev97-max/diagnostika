@@ -1,4 +1,4 @@
-import { CheckCircle2, AlertTriangle, XCircle, TrendingUp } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, TrendingUp } from 'lucide-react';
 import type { QuestionBlueprint } from '../lib/blueprint';
 
 interface Props {
