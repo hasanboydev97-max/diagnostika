@@ -91,136 +91,87 @@ export default function WelcomeModal({
 
   const modalBg = isPassed 
     ? "bg-gradient-to-b from-[#0f172a] to-[#1e3a8a]/40" 
-    : "bg-gradient-to-b from-[#0f172a] to-[#7f1d1d]/30";
-
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          variants={containerVariants}
-          className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-4 md:p-8 ${modalBg} backdrop-blur-md overflow-y-auto`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto"
         >
-          {/* Subtle star pattern background */}
-          <div className="absolute inset-0 opacity-[0.15]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
-          
-          <motion.div variants={itemVariants} className="relative z-10 max-w-3xl w-full text-center space-y-4">
-            
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
+            className="w-full max-w-sm sm:max-w-md bg-slate-900/95 border border-slate-700 rounded-[2rem] shadow-2xl overflow-hidden relative backdrop-blur-xl my-8"
+          >
+            {/* Dynamic Subtle Glow */}
+            <div className={`absolute -top-32 -right-32 w-64 h-64 rounded-full blur-[80px] opacity-20 pointer-events-none ${isPassed ? 'bg-success' : 'bg-danger'}`}></div>
+
             {/* Header */}
-            <div className="space-y-4 mb-4 mt-8 md:mt-0">
-              <motion.div 
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', damping: 12, stiffness: 150, delay: 0.3 }}
-                className={`w-12 h-12 md:w-14 md:h-14 mx-auto rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.15)] border-2 border-white/20 text-white ${isPassed ? 'bg-success' : 'bg-danger'}`}
-              >
+            <div className="pt-8 px-6 pb-4 text-center relative z-10">
+              <div className={`mx-auto w-14 h-14 rounded-2xl mb-4 flex items-center justify-center border ${isPassed ? 'bg-success/10 text-success border-success/20' : 'bg-danger/10 text-danger border-danger/20'}`}>
                 {isPassed ? <Trophy size={24} /> : <Frown size={24} />}
-              </motion.div>
-              
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-normal text-white drop-shadow-md px-2 leading-snug">
-                {isPassed ? 'Umumiy diagnostik xulosa' : 'Diagnostika yakunlandi'}
-              </h1>
-              <p className="text-xs sm:text-sm md:text-base text-slate-300 max-w-lg mx-auto px-4 font-medium">
-                Uch kirish imtihoni — matematika, ingliz tili va tanqidiy fikrlash
-              </p>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-1.5 tracking-tight">Diagnostik xulosa</h2>
+              <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-400 font-medium">
+                <span className="text-slate-200">{candidateName}</span>
+                <span className="w-1 h-1 rounded-full bg-slate-600"></span>
+                <span>{grade}</span>
+                <span className="w-1 h-1 rounded-full bg-slate-600"></span>
+                <span>3 fan</span>
+              </div>
             </div>
-            
-            {/* Info Strip */}
-            <motion.div variants={itemVariants} className="flex flex-wrap justify-center items-center gap-2 sm:gap-3 text-[10px] sm:text-xs md:text-sm py-2 mx-auto max-w-2xl px-2 w-full">
-              <div className="bg-white/5 border border-white/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5 sm:gap-2">
-                <span className="text-slate-400">Nomzod:</span>
-                <strong className="text-white font-bold">{candidateName}</strong>
-              </div>
-              <div className="bg-white/5 border border-white/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5 sm:gap-2">
-                <span className="text-slate-400">Sinf:</span>
-                <strong className="text-white font-bold">{grade}</strong>
-              </div>
-              <div className="bg-white/5 border border-white/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5 sm:gap-2">
-                <span className="text-slate-400">Imtihon:</span>
-                <strong className="text-white font-bold">3 fan</strong>
-              </div>
-            </motion.div>
 
-            {/* Main Result Card */}
-            <motion.div variants={itemVariants} className="bg-white/10 border border-white/10 rounded-3xl p-5 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-10 backdrop-blur-xl shadow-2xl relative overflow-hidden mt-4 md:mt-8 max-w-3xl mx-auto">
-              
-              {/* Dynamic Glow */}
-              <div className={`absolute -top-32 -left-32 w-64 h-64 rounded-full blur-[80px] opacity-30 pointer-events-none ${isPassed ? 'bg-blue-400' : 'bg-red-500'}`}></div>
-              
-              <div className="flex-1 w-full relative z-10 flex flex-col items-center md:items-start text-center md:text-left">
-                <div className="flex flex-col items-center md:items-start mb-6">
-                  <div className="flex items-baseline justify-center md:justify-start gap-1">
-                    <motion.span 
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 1, duration: 0.8 }}
-                      className="text-6xl md:text-7xl font-bold text-white tracking-normal leading-none"
-                    >
-                      {score}
-                    </motion.span>
-                    <span className="text-2xl md:text-3xl text-slate-400 font-medium">/ 100</span>
+            {/* Scores Area */}
+            <div className="px-5 sm:px-6 py-2 relative z-10">
+              <div className="bg-slate-800/60 rounded-[1.5rem] border border-slate-700/50 p-5 flex items-center justify-between">
+                {/* Total Score */}
+                <div className="flex flex-col justify-center">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Umumiy ball</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-5xl sm:text-6xl font-bold text-white leading-none tracking-tight">{score}</span>
+                    <span className="text-sm text-slate-500 font-bold">/100</span>
                   </div>
-                  <span className="text-[10px] md:text-xs text-slate-400 uppercase tracking-[0.2em] font-bold mt-2">Umumiy natija</span>
                 </div>
-                
-                <div className="flex justify-center w-full pt-6 border-t border-white/10 px-0 gap-2 sm:gap-4">
-                  {[
-                    { label: 'Matematika', val: scores?.math || 0 },
-                    { label: 'Ingliz tili', val: scores?.english || 0 },
-                    { label: 'T. Fikrlash', val: scores?.critical || 0 }
-                  ].map((s, idx) => (
-                    <motion.div 
-                      key={idx}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 1.2 + idx * 0.1 }}
-                      className="flex flex-col items-center flex-1 bg-white/5 border border-white/5 rounded-2xl p-3 sm:p-4 hover:bg-white/10 transition-colors"
-                    >
-                      <div className="text-2xl sm:text-3xl font-bold text-white mb-1.5">{s.val}</div>
-                      <div className="text-[9px] sm:text-xs text-slate-400 uppercase font-bold tracking-wider text-center leading-tight">
-                        {s.label}
-                      </div>
-                    </motion.div>
-                  ))}
+
+                {/* Divider */}
+                <div className="w-px h-16 bg-slate-700/50 mx-4 sm:mx-6"></div>
+
+                {/* Subjects */}
+                <div className="flex flex-col gap-2.5 flex-1">
+                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                    <span className="text-slate-400 font-medium">Matematika</span>
+                    <span className="text-white font-bold">{scores?.math || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                    <span className="text-slate-400 font-medium">Ingliz tili</span>
+                    <span className="text-white font-bold">{scores?.english || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs sm:text-sm">
+                    <span className="text-slate-400 font-medium">T. Fikrlash</span>
+                    <span className="text-white font-bold">{scores?.critical || 0}</span>
+                  </div>
                 </div>
               </div>
-              
-              {/* Decision Box */}
-              <motion.div 
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', delay: 1.5, bounce: 0.5 }}
-                className={`relative z-10 shadow-xl px-4 py-6 md:px-8 md:py-8 rounded-[1.5rem] flex flex-col items-center justify-center w-full md:min-w-[280px] md:w-auto border-2 ${isPassed ? 'bg-primary/90 border-blue-400/30 text-white' : 'bg-slate-800/90 border-red-500/30 text-slate-200'}`}
-              >
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 border-4 shadow-md ${isPassed ? 'bg-success/20 border-success text-success' : 'bg-danger/20 border-danger text-danger'}`}>
-                  {isPassed ? <Check strokeWidth={3} size={28} /> : <X strokeWidth={3} size={28} />}
-                </div>
-                <h3 className={`text-xl sm:text-2xl font-bold mb-2 tracking-wide text-center ${isPassed ? 'text-white' : 'text-white'}`}>
-                  {isPassed ? 'QABUL QILINSIN' : 'QABUL QILINMADI'}
-                </h3>
-                <p className={`text-xs text-center font-medium leading-relaxed ${isPassed ? 'text-blue-100' : 'text-slate-400'}`}>
-                  {isPassed 
-                    ? <>ISHONCHLI DARAJA —<br/>QABUL TAVSIYA ETILADI</>
-                    : <>YETARLI DARAJA EMAS —<br/>QAYTA URINIB KO'RING</>
-                  }
-                </p>
-              </motion.div>
+            </div>
 
-            </motion.div>
+            {/* Decision Pill */}
+            <div className="px-5 sm:px-6 pt-4 pb-6 relative z-10">
+              <div className={`w-full py-3.5 rounded-xl flex items-center justify-center gap-2.5 font-bold text-sm tracking-wide ${isPassed ? 'bg-success/10 text-success border border-success/20' : 'bg-danger/10 text-danger border border-danger/20'}`}>
+                {isPassed ? <Check size={18} strokeWidth={2.5} /> : <X size={18} strokeWidth={2.5} />}
+                {isPassed ? 'QABUL QILINISHI TAVSIYA ETILADI' : 'YETARLI DARAJA EMAS'}
+              </div>
+            </div>
 
             {/* Action Button */}
-            <motion.div variants={itemVariants} className="pt-2 md:pt-4 pb-12 md:pb-0 relative z-10">
-              <button 
-                onClick={handleClose}
-                className="group relative inline-flex items-center justify-center gap-2 md:gap-3 bg-white/10 hover:bg-white border border-white/20 text-white hover:text-slate-900 px-6 py-3 md:px-8 md:py-3 rounded-full font-bold transition-all shadow-lg hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-1 overflow-hidden w-full max-w-xs mx-auto"
-              >
-                <span className="relative z-10 tracking-widest uppercase text-xs">To'liq hisobotni ko'rish</span>
-                <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform" />
+            <div className="p-4 sm:p-5 bg-slate-800/40 border-t border-slate-700/50 relative z-10">
+              <button onClick={handleClose} className="w-full bg-white text-slate-900 py-3.5 sm:py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-100 active:scale-[0.98] transition-all">
+                To'liq hisobotni ko'rish <ArrowRight size={18} />
               </button>
-            </motion.div>
-            
+            </div>
           </motion.div>
         </motion.div>
       )}
