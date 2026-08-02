@@ -21,50 +21,50 @@ export default function ScoreBreakdownTable({ scores, totalScore }: Props) {
       <div className="bg-white rounded-2xl shadow-sm border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-neutral-secondary uppercase tracking-wider font-semibold border-b border-border">
+            <thead className="bg-slate-50 text-neutral-secondary uppercase tracking-wider font-semibold border-b border-border text-[10px] md:text-xs">
               <tr>
-                <th className="px-6 py-4">Fan</th>
-                <th className="px-6 py-4">Xom ball</th>
-                <th className="px-6 py-4">Fan vazni</th>
-                <th className="px-6 py-4">Hissa</th>
+                <th className="px-3 py-3 md:px-6 md:py-4">Fan</th>
+                <th className="px-3 py-3 md:px-6 md:py-4">Xom ball</th>
+                <th className="px-3 py-3 md:px-6 md:py-4">Fan vazni</th>
+                <th className="px-3 py-3 md:px-6 md:py-4">Hissa</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border text-neutral-main">
+            <tbody className="divide-y divide-border text-neutral-main text-xs md:text-sm">
               <tr className="hover:bg-slate-50 transition-colors">
-                <td className="px-6 py-4 font-medium">Matematika</td>
-                <td className="px-6 py-4">{scores.math}/100</td>
-                <td className="px-6 py-4 text-slate-500">× 20%</td>
-                <td className="px-6 py-4 font-medium">= {(scores.math * 0.2).toFixed(1)}</td>
+                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">Matematika</td>
+                <td className="px-3 py-3 md:px-6 md:py-4">{scores.math}/100</td>
+                <td className="px-3 py-3 md:px-6 md:py-4 text-slate-500">× 20%</td>
+                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">= {(scores.math * 0.2).toFixed(1)}</td>
               </tr>
               <tr className="hover:bg-slate-50 transition-colors">
-                <td className="px-6 py-4 font-medium">Mantiq</td>
-                <td className="px-6 py-4">{scores.logic}/100</td>
-                <td className="px-6 py-4 text-slate-500">× 20%</td>
-                <td className="px-6 py-4 font-medium">= {(scores.logic * 0.2).toFixed(1)}</td>
+                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">Mantiq</td>
+                <td className="px-3 py-3 md:px-6 md:py-4">{scores.logic}/100</td>
+                <td className="px-3 py-3 md:px-6 md:py-4 text-slate-500">× 20%</td>
+                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">= {(scores.logic * 0.2).toFixed(1)}</td>
               </tr>
               <tr className="hover:bg-slate-50 transition-colors">
-                <td className="px-6 py-4 font-medium">Analitik fikrlash</td>
-                <td className="px-6 py-4">{scores.analytical}/100</td>
-                <td className="px-6 py-4 text-slate-500">× 20%</td>
-                <td className="px-6 py-4 font-medium">= {(scores.analytical * 0.2).toFixed(1)}</td>
+                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">Analitik fikrlash</td>
+                <td className="px-3 py-3 md:px-6 md:py-4">{scores.analytical}/100</td>
+                <td className="px-3 py-3 md:px-6 md:py-4 text-slate-500">× 20%</td>
+                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">= {(scores.analytical * 0.2).toFixed(1)}</td>
               </tr>
               <tr className="hover:bg-slate-50 transition-colors">
-                <td className="px-6 py-4 font-medium">Og'zaki nutq</td>
-                <td className="px-6 py-4">{scores.verbal}/100</td>
-                <td className="px-6 py-4 text-slate-500">× 20%</td>
-                <td className="px-6 py-4 font-medium">= {(scores.verbal * 0.2).toFixed(1)}</td>
+                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">Og'zaki nutq</td>
+                <td className="px-3 py-3 md:px-6 md:py-4">{scores.verbal}/100</td>
+                <td className="px-3 py-3 md:px-6 md:py-4 text-slate-500">× 20%</td>
+                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">= {(scores.verbal * 0.2).toFixed(1)}</td>
               </tr>
               <tr className="hover:bg-slate-50 transition-colors">
-                <td className="px-6 py-4 font-medium">Kreativlik</td>
-                <td className="px-6 py-4">{scores.creativity}/100</td>
-                <td className="px-6 py-4 text-slate-500">× 20%</td>
-                <td className="px-6 py-4 font-medium">= {(scores.creativity * 0.2).toFixed(1)}</td>
+                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">Kreativlik</td>
+                <td className="px-3 py-3 md:px-6 md:py-4">{scores.creativity}/100</td>
+                <td className="px-3 py-3 md:px-6 md:py-4 text-slate-500">× 20%</td>
+                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">= {(scores.creativity * 0.2).toFixed(1)}</td>
               </tr>
               <tr className="bg-slate-50 font-bold border-t-2 border-border">
-                <td className="px-6 py-4">Umumiy o'rtacha ball</td>
-                <td className="px-6 py-4"></td>
-                <td className="px-6 py-4"></td>
-                <td className="px-6 py-4 text-primary text-lg">{totalScore}/100</td>
+                <td className="px-3 py-3 md:px-6 md:py-4">Umumiy o'rtacha ball</td>
+                <td className="px-3 py-3 md:px-6 md:py-4"></td>
+                <td className="px-3 py-3 md:px-6 md:py-4"></td>
+                <td className="px-3 py-3 md:px-6 md:py-4 text-primary text-base md:text-lg">{totalScore}/100</td>
               </tr>
             </tbody>
           </table>

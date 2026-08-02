@@ -37,27 +37,27 @@ export default function SubjectDonutCard({ results = {}, blueprint }: Props) {
       </div>
       <h2 className="text-2xl text-neutral-main">Fanlar bo'yicha o'zlashtirish (Asosiy yo'nalishlar)</h2>
       
-      <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-5">
         {donuts.map((item, index) => (
-          <div key={index} className="bg-white rounded-2xl sm:rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.03)] border border-border/50 p-4 sm:p-6 flex flex-col items-center text-center transition-premium hover:shadow-md hover:-translate-y-1 group">
-            <h3 className="text-[10px] sm:text-xs font-bold text-neutral-secondary mb-3 sm:mb-6 h-8 flex items-center justify-center uppercase tracking-widest leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">
+          <div key={index} className="bg-white rounded-2xl sm:rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.03)] border border-border/50 p-3 sm:p-5 flex flex-col items-center text-center transition-premium hover:shadow-md hover:-translate-y-1 group">
+            <h3 className="text-[9px] sm:text-xs font-bold text-neutral-secondary mb-3 sm:mb-5 h-8 flex items-center justify-center uppercase tracking-widest leading-tight opacity-80 group-hover:opacity-100 transition-opacity">
               {item.name}
             </h3>
             
-            <div className="w-20 h-20 sm:w-28 sm:h-28 relative mb-4 sm:mb-5">
+            <div className="w-16 h-16 sm:w-24 sm:h-24 relative mb-3 sm:mb-5">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={[{ value: item.value || 1 }, { value: Math.max(100 - item.value, 0) }]}
                     cx="50%"
                     cy="50%"
-                    innerRadius={36}
-                    outerRadius={46}
+                    innerRadius="75%"
+                    outerRadius="100%"
                     startAngle={90}
                     endAngle={-270}
                     dataKey="value"
                     stroke="none"
-                    cornerRadius={10} /* Smooth ends */
+                    cornerRadius={5}
                     paddingAngle={0}
                   >
                     <Cell fill={item.value === 0 ? '#fca5a5' : item.color} />
@@ -67,13 +67,13 @@ export default function SubjectDonutCard({ results = {}, blueprint }: Props) {
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <div className="flex items-baseline">
-                  <span className="text-2xl font-display font-semibold" style={{ color: item.value === 0 ? '#dc2626' : item.color }}>{item.value}</span>
-                  <span className="text-sm font-medium ml-0.5 opacity-60" style={{ color: item.value === 0 ? '#dc2626' : item.color }}>%</span>
+                  <span className="text-xl sm:text-2xl font-display font-semibold tracking-tighter" style={{ color: item.value === 0 ? '#dc2626' : item.color }}>{item.value}</span>
+                  <span className="text-[10px] sm:text-sm font-medium ml-0.5 opacity-60" style={{ color: item.value === 0 ? '#dc2626' : item.color }}>%</span>
                 </div>
               </div>
             </div>
             
-            <div className="text-xs text-neutral-secondary font-medium bg-background-main px-3 py-1.5 rounded-full">
+            <div className="text-[10px] sm:text-xs text-neutral-secondary font-medium bg-background-main px-2 sm:px-3 py-1 sm:py-1.5 rounded-full whitespace-nowrap">
               {item.count} ta savol
             </div>
           </div>

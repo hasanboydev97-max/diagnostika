@@ -22,25 +22,25 @@ export default function QuestionResultTable({ results = {}, blueprint }: Props) 
       <div className="bg-white rounded-2xl shadow-sm border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-neutral-secondary uppercase tracking-wider font-semibold border-b border-border">
+            <thead className="bg-slate-50 text-neutral-secondary uppercase tracking-wider font-semibold border-b border-border text-[10px] md:text-xs">
               <tr>
-                <th className="px-6 py-4 w-16">#</th>
-                <th className="px-6 py-4">Mavzu / Savol matni (qisqacha)</th>
-                <th className="px-6 py-4">Ko'nikma</th>
-                <th className="px-6 py-4">Sarflangan vaqt</th>
-                <th className="px-6 py-4">Qiyinlik</th>
-                <th className="px-6 py-4 text-center">Natija</th>
+                <th className="px-3 py-3 md:px-6 md:py-4 w-8 md:w-16">#</th>
+                <th className="px-3 py-3 md:px-6 md:py-4">Mavzu / Savol matni (qisqacha)</th>
+                <th className="px-3 py-3 md:px-6 md:py-4">Ko'nikma</th>
+                <th className="px-3 py-3 md:px-6 md:py-4">Sarflangan vaqt</th>
+                <th className="px-3 py-3 md:px-6 md:py-4">Qiyinlik</th>
+                <th className="px-3 py-3 md:px-6 md:py-4 text-center">Natija</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border text-neutral-main">
+            <tbody className="divide-y divide-border text-neutral-main text-[11px] md:text-sm">
               {displayQuestions.map((q) => (
-                <tr key={q.id} className={`transition-colors ${q.correct ? 'hover:bg-slate-50' : 'bg-amber-50 hover:bg-amber-100/50 border-l-4 border-l-warning'}`}>
-                  <td className="px-6 py-4 font-medium text-slate-400">{String(q.id).padStart(2, '0')}</td>
-                  <td className="px-6 py-4 font-medium">{q.topic}</td>
-                  <td className="px-6 py-4 text-slate-600">{q.skill}</td>
-                  <td className="px-6 py-4 text-slate-500">{q.timeEstimate}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded-md text-xs font-medium ${
+                <tr key={q.id} className={`transition-colors ${q.correct ? 'hover:bg-slate-50' : 'bg-amber-50 hover:bg-amber-100/50 border-l-2 md:border-l-4 border-l-warning'}`}>
+                  <td className="px-3 py-3 md:px-6 md:py-4 font-medium text-slate-400">{String(q.id).padStart(2, '0')}</td>
+                  <td className="px-3 py-3 md:px-6 md:py-4 font-medium min-w-[140px]">{q.topic}</td>
+                  <td className="px-3 py-3 md:px-6 md:py-4 text-slate-600 whitespace-nowrap">{q.skill}</td>
+                  <td className="px-3 py-3 md:px-6 md:py-4 text-slate-500 whitespace-nowrap">{q.timeEstimate}</td>
+                  <td className="px-3 py-3 md:px-6 md:py-4">
+                    <span className={`px-2 py-1 rounded-md text-[10px] md:text-xs font-medium whitespace-nowrap ${
                       q.difficulty === 'Oson' ? 'bg-success/10 text-success' :
                       q.difficulty === 'O\'rta' ? 'bg-primary/10 text-primary' :
                       'bg-purple-100 text-purple-700'
@@ -48,11 +48,11 @@ export default function QuestionResultTable({ results = {}, blueprint }: Props) 
                       {q.difficulty}
                     </span>
                   </td>
-                  <td className="px-6 py-4 flex justify-center">
+                  <td className="px-3 py-3 md:px-6 md:py-4 flex justify-center items-center">
                     {q.correct ? (
-                      <CheckCircle2 className="w-5 h-5 text-success" />
+                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-success" />
                     ) : (
-                      <XCircle className="w-5 h-5 text-warning" />
+                      <XCircle className="w-4 h-4 md:w-5 md:h-5 text-warning" />
                     )}
                   </td>
                 </tr>
