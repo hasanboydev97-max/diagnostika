@@ -119,19 +119,28 @@ export default function WelcomeModal({
                 {isPassed ? <Trophy size={24} /> : <Frown size={24} />}
               </motion.div>
               
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold tracking-tight text-white drop-shadow-md px-2 leading-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-normal text-white drop-shadow-md px-2 leading-snug">
                 {isPassed ? 'Umumiy diagnostik xulosa' : 'Diagnostika yakunlandi'}
               </h1>
-              <p className="text-xs sm:text-sm md:text-base text-slate-300 max-w-lg mx-auto px-4">
+              <p className="text-xs sm:text-sm md:text-base text-slate-300 max-w-lg mx-auto px-4 font-medium">
                 Uch kirish imtihoni — matematika, ingliz tili va tanqidiy fikrlash
               </p>
             </div>
             
             {/* Info Strip */}
-            <motion.div variants={itemVariants} className="flex flex-row justify-center items-center gap-3 sm:gap-6 text-[10px] sm:text-xs md:text-sm text-slate-300 py-3 border-y border-white/10 bg-white/5 backdrop-blur-sm rounded-xl mx-auto max-w-2xl px-2">
-              <span className="flex flex-col sm:flex-row sm:items-center">Nomzod: <strong className="text-white font-medium sm:ml-1">{candidateName}</strong></span>
-              <span className="flex flex-col sm:flex-row sm:items-center">Sinf: <strong className="text-white font-medium sm:ml-1">{grade}</strong></span>
-              <span className="flex flex-col sm:flex-row sm:items-center">Imtihonlar: <strong className="text-white font-medium sm:ml-1">3 fan</strong></span>
+            <motion.div variants={itemVariants} className="flex flex-wrap justify-center items-center gap-2 sm:gap-3 text-[10px] sm:text-xs md:text-sm py-2 mx-auto max-w-2xl px-2 w-full">
+              <div className="bg-white/5 border border-white/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5 sm:gap-2">
+                <span className="text-slate-400">Nomzod:</span>
+                <strong className="text-white font-bold">{candidateName}</strong>
+              </div>
+              <div className="bg-white/5 border border-white/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5 sm:gap-2">
+                <span className="text-slate-400">Sinf:</span>
+                <strong className="text-white font-bold">{grade}</strong>
+              </div>
+              <div className="bg-white/5 border border-white/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5 sm:gap-2">
+                <span className="text-slate-400">Imtihon:</span>
+                <strong className="text-white font-bold">3 fan</strong>
+              </div>
             </motion.div>
 
             {/* Main Result Card */}
@@ -147,16 +156,16 @@ export default function WelcomeModal({
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 1, duration: 0.8 }}
-                      className="text-6xl md:text-7xl font-display font-bold text-white tracking-tight leading-none"
+                      className="text-6xl md:text-7xl font-bold text-white tracking-normal leading-none"
                     >
                       {score}
                     </motion.span>
-                    <span className="text-2xl md:text-3xl text-slate-400 font-display">/ 100</span>
+                    <span className="text-2xl md:text-3xl text-slate-400 font-medium">/ 100</span>
                   </div>
-                  <span className="text-[10px] md:text-xs text-slate-400 uppercase tracking-widest font-bold mt-2">Umumiy natija</span>
+                  <span className="text-[10px] md:text-xs text-slate-400 uppercase tracking-[0.2em] font-bold mt-2">Umumiy natija</span>
                 </div>
                 
-                <div className="flex justify-between w-full pt-5 border-t border-white/10 px-2 sm:px-0 gap-2">
+                <div className="flex justify-center w-full pt-6 border-t border-white/10 px-0 gap-2 sm:gap-4">
                   {[
                     { label: 'Matematika', val: scores?.math || 0 },
                     { label: 'Ingliz tili', val: scores?.english || 0 },
@@ -167,11 +176,11 @@ export default function WelcomeModal({
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 1.2 + idx * 0.1 }}
-                      className="flex flex-col items-center flex-1"
+                      className="flex flex-col items-center flex-1 bg-white/5 border border-white/5 rounded-2xl p-3 sm:p-4 hover:bg-white/10 transition-colors"
                     >
-                      <div className="text-xl sm:text-2xl font-bold text-white mb-1">{s.val}</div>
-                      <div className="text-[8px] sm:text-[10px] text-slate-400 uppercase font-bold tracking-widest text-center leading-tight">
-                        {s.label.includes(' ') ? s.label.split(' ').map((w,i)=><div key={i}>{w}</div>) : s.label}
+                      <div className="text-2xl sm:text-3xl font-bold text-white mb-1.5">{s.val}</div>
+                      <div className="text-[9px] sm:text-xs text-slate-400 uppercase font-bold tracking-wider text-center leading-tight">
+                        {s.label}
                       </div>
                     </motion.div>
                   ))}
@@ -183,12 +192,12 @@ export default function WelcomeModal({
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', delay: 1.5, bounce: 0.5 }}
-                className={`relative z-10 shadow-xl px-4 py-5 md:px-8 md:py-8 rounded-[1.5rem] flex flex-col items-center justify-center w-full md:min-w-[280px] md:w-auto border-2 ${isPassed ? 'bg-primary/90 border-blue-400/30 text-white' : 'bg-slate-800/90 border-red-500/30 text-slate-200'}`}
+                className={`relative z-10 shadow-xl px-4 py-6 md:px-8 md:py-8 rounded-[1.5rem] flex flex-col items-center justify-center w-full md:min-w-[280px] md:w-auto border-2 ${isPassed ? 'bg-primary/90 border-blue-400/30 text-white' : 'bg-slate-800/90 border-red-500/30 text-slate-200'}`}
               >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 border-4 shadow-md ${isPassed ? 'bg-success/20 border-success text-success' : 'bg-danger/20 border-danger text-danger'}`}>
-                  {isPassed ? <Check strokeWidth={3} size={24} /> : <X strokeWidth={3} size={24} />}
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 border-4 shadow-md ${isPassed ? 'bg-success/20 border-success text-success' : 'bg-danger/20 border-danger text-danger'}`}>
+                  {isPassed ? <Check strokeWidth={3} size={28} /> : <X strokeWidth={3} size={28} />}
                 </div>
-                <h3 className={`text-xl font-display font-bold mb-2 tracking-wide ${isPassed ? 'text-white' : 'text-white'}`}>
+                <h3 className={`text-xl sm:text-2xl font-bold mb-2 tracking-wide text-center ${isPassed ? 'text-white' : 'text-white'}`}>
                   {isPassed ? 'QABUL QILINSIN' : 'QABUL QILINMADI'}
                 </h3>
                 <p className={`text-xs text-center font-medium leading-relaxed ${isPassed ? 'text-blue-100' : 'text-slate-400'}`}>
