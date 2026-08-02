@@ -68,29 +68,67 @@ export const db = {
   },
 
   async getResult(id: string): Promise<StudentResult | undefined> {
+    let result: StudentResult | undefined = undefined;
     try {
       const res = await fetch(`${API_URL}/results/${id}`);
       if (res.ok) {
-        return await res.json();
+        result = await res.json();
       }
     } catch (e) {
-      console.warn("Could not fetch from backend, trying local storage");
+      console.warn("Backenddan olishda xatolik, lokal bazadan qidiramiz...");
     }
 
-    const current: StudentResult[] = await localforage.getItem<StudentResult[]>(LOCAL_DB_KEY) || [];
-    return current.find(r => r.id === id);
+    if (!result) {
+      const current: StudentResult[] = await localforage.getItem<StudentResult[]>(LOCAL_DB_KEY) || [];
+      result = current.find(r => r.id === id);
+    }
+    return result;
   },
 
   async getAllResults(): Promise<StudentResult[]> {
+    const localResults = await localforage.getItem<StudentResult[]>(LOCAL_DB_KEY) || [];
+    let remoteResults: StudentResult[] = [];
+    let isBackendOnline = false;
+
     try {
       const res = await fetch(`${API_URL}/results`);
       if (res.ok) {
-        return await res.json();
+        remoteResults = await res.json();
+        isBackendOnline = true;
       }
     } catch (e) {
-      console.warn("Could not fetch from backend, returning local storage");
+      console.warn("Backendga ulanib bo'lmadi, faqat lokal ma'lumotlar ko'rsatiladi.");
     }
 
-    return await localforage.getItem<StudentResult[]>(LOCAL_DB_KEY) || [];
+    // Ikkala bazadagi ma'lumotlarni ID bo'yicha birlashtirish
+    const mergedMap = new Map<string, StudentResult>();
+    
+    // Oldin backend ma'lumotlarini qo'shamiz (ular ishonchliroq)
+    remoteResults.forEach(r => mergedMap.set(r.id, r));
+    
+    // Agar backend ishlayotgan bo'lsa, lokalda bor lekin backendda yo'q ma'lumotlarni orqa fonga jo'natib (sinxronizatsiya) yuboramiz
+    if (isBackendOnline) {
+      for (const local of localResults) {
+        if (!mergedMap.has(local.id)) {
+           mergedMap.set(local.id, local);
+           // Orqa fonga (MongoDB) saqlashga yuborish
+           fetch(`${API_URL}/results`, {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify(local)
+           }).catch(() => {});
+        }
+      }
+    } else {
+      // Agar backend o'chgan bo'lsa, bor lokalni hammasini qo'shamiz
+      localResults.forEach(r => mergedMap.set(r.id, r));
+    }
+    
+    // Vaqti bo'yicha saralab (eng yangilari tepada) qaytaramiz
+    return Array.from(mergedMap.values()).sort((a, b) => {
+       const timeA = new Date(a.createdAt || 0).getTime();
+       const timeB = new Date(b.createdAt || 0).getTime();
+       return timeB - timeA;
+    });
   }
 };
