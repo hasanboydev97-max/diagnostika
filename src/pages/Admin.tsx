@@ -113,28 +113,30 @@ export default function Admin() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-3 sm:p-6" style={{ 
+    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row items-start md:items-center justify-center md:p-6" style={{ 
       backgroundImage: 'radial-gradient(circle at center, #ffffff 0%, #f1f5f9 100%)' 
     }}>
-      <div className="bg-white max-w-7xl w-full p-4 sm:p-8 rounded-2xl shadow-xl border border-slate-200 my-4 sm:my-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+      <div className="bg-white max-w-7xl w-full min-h-screen md:min-h-0 p-4 sm:p-8 md:rounded-3xl shadow-xl md:border border-slate-200">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 gap-5">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-neutral-main mb-2">Admin Panel</h1>
-            <p className="text-sm sm:text-base text-neutral-secondary">O'quvchi natijalarini boshqarish va diagnostika yaratish.</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-neutral-main tracking-tight">Admin Panel</h1>
+            <p className="text-sm text-neutral-secondary mt-1">O'quvchi natijalarini boshqarish va diagnostika yaratish.</p>
           </div>
           
-          <div className="flex flex-wrap w-full md:w-auto bg-slate-100 p-1 rounded-lg">
+          <div className="flex w-full md:w-auto bg-slate-100/80 p-1.5 rounded-xl border border-slate-200/60 shadow-inner relative">
             <button 
               onClick={() => setActiveTab('new')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-all ${activeTab === 'new' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`flex-1 flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 relative z-10 ${activeTab === 'new' ? 'text-primary' : 'text-slate-500 hover:text-slate-700'}`}
             >
-              <PlusCircle className="w-4 h-4" /> Yangi qo'shish
+              {activeTab === 'new' && <div className="absolute inset-0 bg-white rounded-lg shadow-sm border border-slate-200/50 -z-10"></div>}
+              <PlusCircle className="w-4 h-4" /> Qo'shish
             </button>
             <button 
               onClick={() => setActiveTab('dashboard')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm transition-all ${activeTab === 'dashboard' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`flex-1 flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 relative z-10 ${activeTab === 'dashboard' ? 'text-primary' : 'text-slate-500 hover:text-slate-700'}`}
             >
-              <Users className="w-4 h-4" /> Barcha o'quvchilar
+              {activeTab === 'dashboard' && <div className="absolute inset-0 bg-white rounded-lg shadow-sm border border-slate-200/50 -z-10"></div>}
+              <Users className="w-4 h-4" /> Barchasi
             </button>
           </div>
         </div>
@@ -142,69 +144,114 @@ export default function Admin() {
         {activeTab === 'dashboard' ? (
           <div className="space-y-4">
             {allResults.length === 0 ? (
-              <div className="text-center py-12 text-slate-400">Hozircha natijalar yo'q.</div>
+              <div className="text-center py-16 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-400">Hozircha natijalar yo'q.</div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50 text-slate-500 text-sm border-b">
-                      <th className="p-4 font-medium rounded-tl-lg">O'quvchi</th>
-                      <th className="p-4 font-medium">Sinf</th>
-                      <th className="p-4 font-medium">Sana</th>
-                      <th className="p-4 font-medium">Natija</th>
-                      <th className="p-4 font-medium text-indigo-600">Login (ID)</th>
-                      <th className="p-4 font-medium text-indigo-600">Parol (PIN)</th>
-                      <th className="p-4 font-medium rounded-tr-lg">Amallar</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {allResults.map(r => (
-                      <tr key={r.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="p-4 font-medium text-slate-800">{r.studentName}</td>
-                        <td className="p-4 text-slate-600">{r.grade}-sinf</td>
-                        <td className="p-4 text-slate-500 text-sm">{new Date(r.createdAt).toLocaleDateString()}</td>
-                        <td className="p-4">
-                          <span className={`px-2 py-1 rounded text-xs font-bold ${r.totalScore >= 50 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                            {r.totalScore}%
-                          </span>
-                        </td>
-                        <td className="p-4 font-mono font-bold text-slate-700">{r.id}</td>
-                        <td className="p-4 font-mono font-bold text-slate-500">{r.pin || '---'}</td>
-                        <td className="p-4">
-                          <button onClick={() => navigate('/summary/' + r.id)} className="text-primary hover:underline text-sm font-medium">
-                            Ko'rish
-                          </button>
-                        </td>
+              <>
+                {/* Mobile Cards View */}
+                <div className="grid grid-cols-1 gap-4 md:hidden">
+                  {allResults.map(r => (
+                    <div key={r.id} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col gap-3">
+                      <div className="flex justify-between items-start border-b border-slate-100 pb-3">
+                        <div>
+                          <div className="font-bold text-slate-800 text-base">{r.studentName}</div>
+                          <div className="text-xs text-slate-500 mt-0.5">{new Date(r.createdAt).toLocaleDateString()} &bull; {r.grade}-sinf</div>
+                        </div>
+                        <span className={`px-2.5 py-1 rounded-md text-xs font-black ${r.totalScore >= 50 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                          {r.totalScore}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <div>
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">ID / LOGIN</div>
+                          <div className="font-mono font-bold text-slate-700">{r.id}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">PAROL (PIN)</div>
+                          <div className="font-mono font-bold text-slate-700">{r.pin || '---'}</div>
+                        </div>
+                      </div>
+                      <button onClick={() => navigate('/summary/' + r.id)} className="w-full mt-1 bg-primary/5 text-primary hover:bg-primary/10 py-2.5 rounded-xl text-sm font-bold transition-colors">
+                        Xulosani Ko'rish
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto bg-white rounded-2xl border border-slate-200 shadow-sm">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50/80 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
+                        <th className="p-4 font-bold rounded-tl-2xl">O'quvchi</th>
+                        <th className="p-4 font-bold">Sinf / Sana</th>
+                        <th className="p-4 font-bold">Natija</th>
+                        <th className="p-4 font-bold">Login (ID)</th>
+                        <th className="p-4 font-bold">Parol (PIN)</th>
+                        <th className="p-4 font-bold rounded-tr-2xl">Amallar</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {allResults.map(r => (
+                        <tr key={r.id} className="hover:bg-slate-50/50 transition-colors group">
+                          <td className="p-4 font-bold text-slate-800">{r.studentName}</td>
+                          <td className="p-4">
+                            <div className="text-sm font-medium text-slate-700">{r.grade}-sinf</div>
+                            <div className="text-xs text-slate-400">{new Date(r.createdAt).toLocaleDateString()}</div>
+                          </td>
+                          <td className="p-4">
+                            <span className={`px-2.5 py-1 rounded-md text-xs font-black ${r.totalScore >= 50 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                              {r.totalScore}%
+                            </span>
+                          </td>
+                          <td className="p-4 font-mono font-bold text-slate-700 bg-slate-50/50 group-hover:bg-white">{r.id}</td>
+                          <td className="p-4 font-mono font-bold text-slate-500 bg-slate-50/50 group-hover:bg-white">{r.pin || '---'}</td>
+                          <td className="p-4">
+                            <button onClick={() => navigate('/summary/' + r.id)} className="text-primary bg-primary/5 hover:bg-primary/10 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors">
+                              Ko'rish
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         ) : (
           /* New Result Tab */
           generatedCredentials ? (
-              <div className="bg-emerald-50 border border-emerald-200 p-8 rounded-xl text-center space-y-6">
-              <h2 className="text-2xl font-bold text-emerald-800">Muvaffaqiyatli saqlandi!</h2>
-              <p className="text-emerald-700">O'quvchiga quyidagi tizimga kirish ma'lumotlarini bering:</p>
+            <div className="bg-emerald-50 border border-emerald-200 p-6 md:p-10 rounded-2xl md:rounded-3xl text-center space-y-6 md:space-y-8 relative overflow-hidden shadow-inner">
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none"></div>
+              <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none"></div>
               
-              <div className="flex flex-col md:flex-row justify-center gap-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-emerald-100 min-w-[200px]">
-                  <div className="text-sm font-medium text-slate-400 mb-1 uppercase tracking-wider">Login (ID)</div>
-                  <div className="text-4xl font-bold text-slate-800 tracking-widest">{generatedCredentials.id}</div>
+              <div className="relative z-10">
+                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-sm">
+                  <Check className="w-8 h-8" />
                 </div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-emerald-100 min-w-[200px]">
-                  <div className="text-sm font-medium text-slate-400 mb-1 uppercase tracking-wider">Parol (PIN)</div>
-                  <div className="text-4xl font-bold text-primary tracking-widest">{generatedCredentials.pin}</div>
+                <h2 className="text-2xl md:text-3xl font-black text-emerald-800 tracking-tight">Muvaffaqiyatli saqlandi!</h2>
+                <p className="text-emerald-700/80 text-sm md:text-base mt-2 font-medium">O'quvchiga quyidagi ma'lumotlarni taqdim eting:</p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
+                <div className="bg-white/80 backdrop-blur-sm p-5 md:p-6 rounded-2xl shadow-sm border border-emerald-100 flex-1 max-w-[240px] mx-auto sm:mx-0 w-full">
+                  <div className="text-xs font-bold text-emerald-400/80 mb-2 uppercase tracking-widest">Login (ID)</div>
+                  <div className="text-3xl md:text-4xl font-black text-slate-800 tracking-widest select-all">{generatedCredentials.id}</div>
+                </div>
+                <div className="bg-white/80 backdrop-blur-sm p-5 md:p-6 rounded-2xl shadow-sm border border-emerald-100 flex-1 max-w-[240px] mx-auto sm:mx-0 w-full">
+                  <div className="text-xs font-bold text-emerald-400/80 mb-2 uppercase tracking-widest">Parol (PIN)</div>
+                  <div className="text-3xl md:text-4xl font-black text-primary tracking-widest select-all">{generatedCredentials.pin}</div>
                 </div>
               </div>
               
-              <p className="text-sm text-emerald-600 max-w-lg mx-auto">
-                Ota-ona tizimga aynan shu login va parol orqali kirib, farzandining batafsil diagnostikasini (SaaS) ko'ra oladi.
+              <p className="text-xs md:text-sm text-emerald-700/70 max-w-lg mx-auto font-medium relative z-10">
+                Ota-ona tizimga aynan shu login va parol orqali kirib, farzandining batafsil diagnostikasini ko'ra oladi.
               </p>
               
-              <div className="pt-4 flex justify-center gap-4">
+              <div className="pt-6 flex flex-col sm:flex-row justify-center gap-3 relative z-10">
+                <button onClick={() => navigate('/summary/' + generatedCredentials.id)} className="w-full sm:w-auto bg-emerald-600 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20">
+                  Xulosani ko'rish
+                </button>
                 <button 
                   onClick={() => {
                     setStudentName('');
@@ -214,12 +261,9 @@ export default function Admin() {
                     setQuestionResults(initial);
                     setGeneratedCredentials(null);
                   }} 
-                  className="text-emerald-800 font-medium hover:underline"
+                  className="w-full sm:w-auto bg-white text-emerald-700 border border-emerald-200 px-8 py-3.5 rounded-xl font-bold hover:bg-emerald-50 transition-colors"
                 >
-                  Yana bitta kiritish
-                </button>
-                <button onClick={() => navigate('/summary/' + generatedCredentials.id)} className="bg-emerald-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-emerald-700 transition-colors">
-                  Xulosani ko'rish
+                  Yangi qo'shish
                 </button>
               </div>
             </div>
@@ -252,13 +296,17 @@ export default function Admin() {
               </div>
 
               {/* Questions Section */}
-              <div className="space-y-6 pt-6 border-t">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-6 pt-8 mt-2 border-t border-slate-100">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                   <div>
-                    <h3 className="font-bold text-xl text-neutral-main">Imtihon savollari ({grade}-sinf uchun)</h3>
-                    <p className="text-sm text-neutral-secondary mt-1">O'quvchi to'g'ri topgan savollarni belgilang. Vaqtni tejash uchun guruh yoki umumiy tugmalardan foydalaning.</p>
+                    <h3 className="font-black text-xl text-neutral-main">Imtihon savollari ({grade}-sinf)</h3>
+                    <p className="text-xs md:text-sm text-neutral-secondary mt-1">
+                      O'quvchi to'g'ri topgan savollarni belgilang.
+                    </p>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
+                  
+                  {/* Action Bar */}
+                  <div className="flex flex-wrap items-center bg-slate-50 border border-slate-200 p-1.5 rounded-xl gap-1">
                     <button 
                       type="button"
                       onClick={() => {
@@ -266,9 +314,9 @@ export default function Admin() {
                         currentBlueprint.forEach(q => all[q.id] = true);
                         setQuestionResults(all);
                       }}
-                      className="text-xs font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-3 py-2 rounded-lg transition-colors border border-emerald-200"
+                      className="flex-1 md:flex-none text-[11px] md:text-xs font-bold bg-white text-emerald-700 hover:bg-emerald-50 px-3 py-2 rounded-lg transition-colors border border-slate-200 shadow-sm"
                     >
-                      Barchasi To'g'ri
+                      Barchasi
                     </button>
                     <button 
                       type="button"
@@ -277,9 +325,9 @@ export default function Admin() {
                         currentBlueprint.forEach(q => inverted[q.id] = !questionResults[q.id]);
                         setQuestionResults(inverted);
                       }}
-                      className="text-xs font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3 py-2 rounded-lg transition-colors border border-indigo-200"
+                      className="flex-1 md:flex-none text-[11px] md:text-xs font-bold bg-white text-indigo-700 hover:bg-indigo-50 px-3 py-2 rounded-lg transition-colors border border-slate-200 shadow-sm"
                     >
-                      Teskari qilish (Invert)
+                      Invert
                     </button>
                     <button 
                       type="button"
@@ -288,14 +336,15 @@ export default function Admin() {
                         currentBlueprint.forEach(q => none[q.id] = false);
                         setQuestionResults(none);
                       }}
-                      className="text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 px-3 py-2 rounded-lg transition-colors border border-slate-200"
+                      className="flex-1 md:flex-none text-[11px] md:text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 px-3 py-2 rounded-lg transition-colors border border-slate-200 shadow-sm"
                     >
                       Tozalash
                     </button>
+                    <div className="w-px h-6 bg-slate-200 mx-1 hidden md:block"></div>
                     <button 
                       type="button"
                       onClick={() => setIsEditorOpen(true)}
-                      className="flex items-center gap-2 text-xs font-medium text-primary bg-primary/5 hover:bg-primary/10 px-3 py-2 rounded-lg transition-colors border border-primary/20 ml-auto"
+                      className="w-full md:w-auto flex justify-center items-center gap-1.5 text-[11px] md:text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 px-4 py-2 rounded-lg transition-colors shadow-sm mt-1 md:mt-0"
                     >
                       <Settings2 className="w-3.5 h-3.5" /> Shablon
                     </button>
@@ -365,14 +414,17 @@ export default function Admin() {
                 </div>
               </div>
 
-              <button 
-                type="submit" 
-                disabled={isLoading}
-                className={`w-full py-4 rounded-xl text-white font-bold text-lg transition-all shadow-md flex items-center justify-center gap-3 ${isLoading ? 'bg-slate-400 cursor-not-allowed' : 'bg-primary hover:bg-blue-700 hover:shadow-lg hover:-translate-y-0.5'}`}
-              >
-                {isLoading && <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
-                {isLoading ? "AI xulosa shakllantirmoqda (Bulutga yuklanmoqda)..." : "Saqlash va AI xulosa yaratish"}
-              </button>
+              {/* Sticky Mobile Bottom Bar for Save Button */}
+              <div className="sticky bottom-0 bg-white/90 backdrop-blur-xl p-4 -mx-4 sm:mx-0 sm:p-0 sm:bg-transparent z-40 border-t border-slate-200 sm:border-0 pb-safe sm:pb-0 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] sm:shadow-none mt-8">
+                <button 
+                  type="submit" 
+                  disabled={isLoading}
+                  className={`w-full py-4 rounded-xl text-white font-black text-base md:text-lg transition-all shadow-lg flex items-center justify-center gap-3 ${isLoading ? 'bg-slate-400 cursor-not-allowed shadow-none' : 'bg-primary hover:bg-blue-700 hover:shadow-xl hover:-translate-y-0.5 shadow-primary/30'}`}
+                >
+                  {isLoading && <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
+                  {isLoading ? "Xulosa yozilmoqda..." : "Saqlash va AI xulosa yaratish"}
+                </button>
+              </div>
             </form>
           )
         )}
