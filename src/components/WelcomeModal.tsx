@@ -109,14 +109,14 @@ export default function WelcomeModal({
           <motion.div variants={itemVariants} className="relative z-10 max-w-3xl w-full text-center space-y-4">
             
             {/* Header */}
-            <div className="space-y-4 mb-4 mt-8 md:mt-0">
+            <div className="space-y-2 sm:space-y-4 mb-2 sm:mb-4 mt-4 md:mt-0">
               <motion.div 
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: 'spring', damping: 12, stiffness: 150, delay: 0.3 }}
-                className={`w-12 h-12 md:w-14 md:h-14 mx-auto rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.15)] border-2 border-white/20 text-white ${isPassed ? 'bg-success' : 'bg-danger'}`}
+                className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 mx-auto rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.15)] border-2 border-white/20 text-white ${isPassed ? 'bg-success' : 'bg-danger'}`}
               >
-                {isPassed ? <Trophy size={24} /> : <Frown size={24} />}
+                {isPassed ? <Trophy size={20} className="sm:w-6 sm:h-6 md:w-8 md:h-8" /> : <Frown size={20} className="sm:w-6 sm:h-6 md:w-8 md:h-8" />}
               </motion.div>
               
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-normal text-white drop-shadow-md px-2 leading-snug">
@@ -144,7 +144,7 @@ export default function WelcomeModal({
             </motion.div>
 
             {/* Main Result Card */}
-            <motion.div variants={itemVariants} className="bg-white/10 border border-white/10 rounded-3xl p-5 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-10 backdrop-blur-xl shadow-2xl relative overflow-hidden mt-4 md:mt-8 max-w-3xl mx-auto">
+            <motion.div variants={itemVariants} className="bg-white/10 border border-white/10 rounded-2xl md:rounded-3xl p-4 sm:p-5 md:p-8 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-10 backdrop-blur-xl shadow-2xl relative overflow-hidden mt-2 md:mt-8 max-w-3xl mx-auto w-full">
               
               {/* Dynamic Glow */}
               <div className={`absolute -top-32 -left-32 w-64 h-64 rounded-full blur-[80px] opacity-30 pointer-events-none ${isPassed ? 'bg-blue-400' : 'bg-red-500'}`}></div>
@@ -165,7 +165,7 @@ export default function WelcomeModal({
                   <span className="text-[10px] md:text-xs text-slate-400 uppercase tracking-[0.2em] font-bold mt-2">Umumiy natija</span>
                 </div>
                 
-                <div className="flex justify-center w-full pt-6 border-t border-white/10 px-0 gap-2 sm:gap-4">
+                <div className="flex justify-center w-full pt-4 md:pt-6 border-t border-white/10 px-0 gap-1.5 sm:gap-4">
                   {[
                     { label: 'Matematika', val: scores?.math || 0 },
                     { label: 'Ingliz tili', val: scores?.english || 0 },
@@ -176,10 +176,10 @@ export default function WelcomeModal({
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 1.2 + idx * 0.1 }}
-                      className="flex flex-col items-center flex-1 bg-white/5 border border-white/5 rounded-2xl p-3 sm:p-4 hover:bg-white/10 transition-colors"
+                      className="flex flex-col items-center flex-1 bg-white/5 border border-white/5 rounded-xl md:rounded-2xl p-2 sm:p-3 md:p-4 hover:bg-white/10 transition-colors"
                     >
-                      <div className="text-2xl sm:text-3xl font-bold text-white mb-1.5">{s.val}</div>
-                      <div className="text-[9px] sm:text-xs text-slate-400 uppercase font-bold tracking-wider text-center leading-tight">
+                      <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1">{s.val}</div>
+                      <div className="text-[7px] sm:text-[9px] md:text-xs text-slate-400 uppercase font-bold tracking-widest text-center leading-tight">
                         {s.label}
                       </div>
                     </motion.div>
@@ -192,18 +192,18 @@ export default function WelcomeModal({
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ type: 'spring', delay: 1.5, bounce: 0.5 }}
-                className={`relative z-10 shadow-xl px-4 py-6 md:px-8 md:py-8 rounded-[1.5rem] flex flex-col items-center justify-center w-full md:min-w-[280px] md:w-auto border-2 ${isPassed ? 'bg-primary/90 border-blue-400/30 text-white' : 'bg-slate-800/90 border-red-500/30 text-slate-200'}`}
+                className={`relative z-10 shadow-xl px-3 py-4 md:px-8 md:py-8 rounded-[1rem] md:rounded-[1.5rem] flex flex-col items-center justify-center w-full md:min-w-[280px] md:w-auto border-2 ${isPassed ? 'bg-primary/90 border-blue-400/30 text-white' : 'bg-slate-800/90 border-red-500/30 text-slate-200'}`}
               >
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 border-4 shadow-md ${isPassed ? 'bg-success/20 border-success text-success' : 'bg-danger/20 border-danger text-danger'}`}>
-                  {isPassed ? <Check strokeWidth={3} size={28} /> : <X strokeWidth={3} size={28} />}
+                <div className={`w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center mb-2 md:mb-4 border-2 md:border-4 shadow-md ${isPassed ? 'bg-success/20 border-success text-success' : 'bg-danger/20 border-danger text-danger'}`}>
+                  {isPassed ? <Check strokeWidth={3} size={20} className="md:w-7 md:h-7" /> : <X strokeWidth={3} size={20} className="md:w-7 md:h-7" />}
                 </div>
-                <h3 className={`text-xl sm:text-2xl font-bold mb-2 tracking-wide text-center ${isPassed ? 'text-white' : 'text-white'}`}>
+                <h3 className={`text-lg sm:text-xl md:text-2xl font-bold mb-1 md:mb-2 tracking-wide text-center ${isPassed ? 'text-white' : 'text-white'}`}>
                   {isPassed ? 'QABUL QILINSIN' : 'QABUL QILINMADI'}
                 </h3>
-                <p className={`text-xs text-center font-medium leading-relaxed ${isPassed ? 'text-blue-100' : 'text-slate-400'}`}>
+                <p className={`text-[10px] md:text-xs text-center font-medium leading-relaxed ${isPassed ? 'text-blue-100' : 'text-slate-400'}`}>
                   {isPassed 
-                    ? <>ISHONCHLI DARAJA —<br/>QABUL TAVSIYA ETILADI</>
-                    : <>YETARLI DARAJA EMAS —<br/>QAYTA URINIB KO'RING</>
+                    ? <>ISHONCHLI DARAJA —<br className="hidden md:block"/> QABUL TAVSIYA ETILADI</>
+                    : <>YETARLI DARAJA EMAS —<br className="hidden md:block"/> QAYTA URINIB KO'RING</>
                   }
                 </p>
               </motion.div>
