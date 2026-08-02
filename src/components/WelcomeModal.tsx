@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { Trophy, ArrowRight, Frown, Check, X } from 'lucide-react';
+import { ArrowRight, Frown, Check, X } from 'lucide-react';
 import trophyImg from '../assets/trophy.png';
 
 interface WelcomeModalProps {
