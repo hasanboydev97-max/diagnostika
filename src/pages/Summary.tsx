@@ -218,8 +218,8 @@ export default function Summary() {
           <div className="flex items-center gap-2 text-primary text-sm font-bold tracking-wider">
             <span>01</span>
           </div>
-          <h2 className="text-2xl font-bold text-neutral-main">Bir qarashda</h2>
-          <p className="text-lg text-neutral-secondary leading-relaxed max-w-4xl">
+          <h2 className="text-xl md:text-2xl font-bold text-neutral-main">Bir qarashda</h2>
+          <p className="text-sm md:text-lg text-neutral-secondary leading-relaxed max-w-4xl">
             O'quvchi <strong className="text-neutral-main font-semibold">{studentData.studentName}</strong> kirish imtihonida umumiy <strong className="text-neutral-main font-semibold">{totalScore}/100</strong> ball oldi — <strong className="text-neutral-main font-semibold">{isPass ? 'yaxshi (dasturni ishonchli o\'zlashtiradi)' : 'qoniqarsiz (qo\'shimcha tayyorgarlik talab etiladi)'}</strong>. 
           </p>
         </section>
@@ -236,10 +236,10 @@ export default function Summary() {
           <div className="flex items-center gap-2 text-primary text-sm font-bold tracking-wider">
             <span>02</span>
           </div>
-          <h2 className="text-2xl font-bold text-neutral-main font-display mb-2">Umumiy daraja</h2>
-          <p className="text-neutral-secondary mb-8">Umumiy ball qaysi toifada — va e'tiborsizlik qayergacha yetadi.</p>
+          <h2 className="text-xl md:text-2xl font-bold text-neutral-main font-display mb-1 md:mb-2">Umumiy daraja</h2>
+          <p className="text-xs md:text-base text-neutral-secondary mb-4 md:mb-8">Umumiy ball qaysi toifada — va e'tiborsizlik qayergacha yetadi.</p>
           
-          <div className="bg-white rounded-2xl shadow-sm border border-border p-5 md:p-10">
+          <div className="bg-white rounded-2xl shadow-sm border border-border p-4 md:p-10">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 text-center divide-y md:divide-y-0 md:divide-x divide-border">
               <div className="pt-4 md:pt-0 flex flex-col items-center">
                 <div className="text-xs font-bold text-neutral-secondary mb-3 uppercase tracking-widest">Umumiy natija</div>
@@ -312,7 +312,7 @@ export default function Summary() {
             <span>03</span>
           </div>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-            <h2 className="text-2xl font-bold text-neutral-main">Tizim xulosasi</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-neutral-main">Tizim xulosasi</h2>
             {studentData.aiSummaryText?.includes('Texnik xatolik') && (
               <button 
                 onClick={handleRegenerateAi}
@@ -323,17 +323,17 @@ export default function Summary() {
               </button>
             )}
           </div>
-          <div className="bg-primary/5 p-5 md:p-8 rounded-3xl border border-primary/20 shadow-sm relative overflow-hidden">
+          <div className="bg-primary/5 p-4 md:p-8 rounded-2xl md:rounded-3xl border border-primary/20 shadow-sm relative overflow-hidden">
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl"></div>
             <div className="relative z-10">
-              <h3 className="font-bold text-lg text-neutral-900 mb-3">Tahlil</h3>
-              <p className="text-neutral-700 leading-relaxed text-lg mb-8">{studentData.aiSummaryText}</p>
+              <h3 className="font-bold text-base md:text-lg text-neutral-900 mb-2 md:mb-3">Tahlil</h3>
+              <p className="text-neutral-700 leading-relaxed text-sm md:text-lg mb-4 md:mb-8">{studentData.aiSummaryText}</p>
               
-              <div className="bg-white p-6 rounded-2xl border border-primary/10 shadow-sm">
-                <h3 className="font-bold text-lg text-primary mb-2 flex items-center gap-2">
-                  <span className="text-xl">💡</span> Amaliy Tavsiyalar
+              <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl border border-primary/10 shadow-sm">
+                <h3 className="font-bold text-base md:text-lg text-primary mb-2 flex items-center gap-2">
+                  <span className="text-lg md:text-xl">💡</span> Amaliy Tavsiyalar
                 </h3>
-                <p className="text-neutral-700 leading-relaxed italic">{studentData.aiAdviceText}</p>
+                <p className="text-neutral-700 leading-relaxed italic text-sm md:text-base">{studentData.aiAdviceText}</p>
               </div>
             </div>
           </div>
