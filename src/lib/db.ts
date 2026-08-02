@@ -28,7 +28,7 @@ export interface StudentResult {
 
 const LOCAL_DB_KEY = 'maktab_student_results';
 const LOCAL_BLUEPRINT_KEY = 'maktab_blueprints_v2';
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const db = {
   // Blueprints (Keep blueprints local for now as they are static settings)
