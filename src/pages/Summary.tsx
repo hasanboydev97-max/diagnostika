@@ -193,7 +193,7 @@ export default function Summary() {
 
       <div ref={printRef} className="print-container bg-background-main">
         {/* Main Content */}
-        <div className="max-w-[1440px] mx-auto px-4 md:px-12 pt-6 md:pt-12 space-y-10 md:space-y-16">
+        <div className="max-w-[1440px] mx-auto px-4 md:px-12 pt-4 md:pt-12 space-y-6 md:space-y-16">
           <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 sm:pb-8 border-b border-border gap-4">
           <div className="flex items-center gap-3">
             <img src={logo} alt="Boborahim Mashrab" className="w-12 h-12 rounded-lg object-contain shadow-sm border border-slate-200" />
@@ -218,8 +218,8 @@ export default function Summary() {
           <div className="flex items-center gap-2 text-primary text-sm font-bold tracking-wider">
             <span>01</span>
           </div>
-          <h2 className="text-xl md:text-2xl font-bold text-neutral-main">Bir qarashda</h2>
-          <p className="text-sm md:text-lg text-neutral-secondary leading-relaxed max-w-4xl">
+          <h2 className="text-lg md:text-2xl font-bold text-neutral-main">Bir qarashda</h2>
+          <p className="text-xs md:text-lg text-neutral-secondary leading-relaxed max-w-4xl">
             O'quvchi <strong className="text-neutral-main font-semibold">{studentData.studentName}</strong> kirish imtihonida umumiy <strong className="text-neutral-main font-semibold">{totalScore}/100</strong> ball oldi — <strong className="text-neutral-main font-semibold">{isPass ? 'yaxshi (dasturni ishonchli o\'zlashtiradi)' : 'qoniqarsiz (qo\'shimcha tayyorgarlik talab etiladi)'}</strong>. 
           </p>
         </section>
@@ -236,11 +236,34 @@ export default function Summary() {
           <div className="flex items-center gap-2 text-primary text-sm font-bold tracking-wider">
             <span>02</span>
           </div>
-          <h2 className="text-xl md:text-2xl font-bold text-neutral-main font-display mb-1 md:mb-2">Umumiy daraja</h2>
+          <h2 className="text-lg md:text-2xl font-bold text-neutral-main font-display mb-1 md:mb-2">Umumiy daraja</h2>
           <p className="text-xs md:text-base text-neutral-secondary mb-4 md:mb-8">Umumiy ball qaysi toifada — va e'tiborsizlik qayergacha yetadi.</p>
           
           <div className="bg-white rounded-2xl shadow-sm border border-border p-4 md:p-10">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 text-center divide-y md:divide-y-0 md:divide-x divide-border">
+            {/* Mobile: big score top, then 2-col grid below */}
+            <div className="md:hidden flex flex-col items-center text-center pb-4 mb-4 border-b border-slate-100">
+              <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Umumiy natija</div>
+              <div className="flex items-baseline gap-1 mb-2">
+                <span className="text-6xl font-black text-primary">{totalScore}</span>
+                <span className="text-2xl text-slate-400 font-medium">/100</span>
+              </div>
+              <div className={`text-white text-[10px] px-4 py-1.5 rounded-full font-black tracking-widest uppercase ${isPass ? 'bg-success' : 'bg-danger'}`}>
+                {isPass ? "O'tdi" : 'Yiqildi'}
+              </div>
+            </div>
+            <div className="md:hidden grid grid-cols-2 gap-3 text-center">
+              <div className="p-3 rounded-xl bg-slate-50">
+                <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Diapazon</div>
+                <div className="text-2xl font-black text-neutral-main">{minRange}–{maxRange}</div>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50">
+                <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Tuzatilgan</div>
+                <div className="text-2xl font-black text-neutral-main">~{totalScore}</div>
+              </div>
+            </div>
+
+            {/* Desktop: 3-col grid */}
+            <div className="hidden md:grid grid-cols-3 gap-8 text-center divide-x divide-border">
               <div className="pt-4 md:pt-0 flex flex-col items-center">
                 <div className="text-xs font-bold text-neutral-secondary mb-3 uppercase tracking-widest">Umumiy natija</div>
                 <div className="flex items-baseline justify-center gap-1 mb-2">
