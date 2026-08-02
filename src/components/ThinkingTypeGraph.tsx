@@ -81,52 +81,65 @@ export default function ThinkingTypeGraph({ results = {}, blueprint }: Props) {
         Turli xil fikrlash qobiliyatlari qanday shakllangani va o'zaro qanday bog'langanini ko'rsatuvchi markazlashgan tahliliy xarita.
       </p>
 
-      {/* ===== MOBILE LAYOUT ===== */}
-      <div className="md:hidden bg-white rounded-2xl border border-border/50 shadow-sm overflow-hidden">
-        {/* Mini brain header */}
-        <div className="flex items-center gap-3 px-4 py-3 bg-primary/5 border-b border-primary/10">
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
-            <BrainCircuit size={16} className="text-white" />
+      {/* ===== MOBILE LAYOUT: 2×2 Colorful Stat Tiles ===== */}
+      <div className="md:hidden space-y-3">
+        {/* Brain Header Badge */}
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
+            <BrainCircuit size={14} className="text-white" />
           </div>
-          <span className="text-xs font-bold text-primary uppercase tracking-widest">Asosiy Fikrlash Turlari</span>
+          <span className="text-[11px] font-bold text-primary uppercase tracking-widest">4 ta fikrlash turi tahlili</span>
         </div>
 
-        {/* List rows */}
-        {dynamicNodes.map((node, index) => (
-          <div
-            key={node.id}
-            className={`flex items-center gap-3 px-4 py-3.5 ${index < dynamicNodes.length - 1 ? 'border-b border-slate-100' : ''}`}
-          >
-            {/* Icon */}
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${node.light}`} style={{ color: node.color }}>
-              {node.icon}
-            </div>
-
-            {/* Name + Bar */}
-            <div className="flex-1 min-w-0">
-              <div className="flex justify-between items-center mb-1.5">
-                <span className="text-[11px] font-bold text-neutral-main uppercase tracking-wide">{node.name}</span>
-                <span className="text-[11px] font-bold ml-2 shrink-0" style={{ color: node.color }}>
-                  {node.score}%
-                </span>
-              </div>
-              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-700 ease-out"
-                  style={{ width: `${node.score}%`, backgroundColor: node.color }}
-                />
-              </div>
-            </div>
-
-            {/* Score badge */}
+        {/* 2×2 Grid */}
+        <div className="grid grid-cols-2 gap-3">
+          {dynamicNodes.map((node) => (
             <div
-              className="shrink-0 text-[10px] font-bold px-2 py-1 rounded-lg"
-              style={{ color: node.color, backgroundColor: `${node.color}15` }}
+              key={node.id}
+              className="relative rounded-2xl overflow-hidden"
+              style={{ background: `linear-gradient(135deg, ${node.color}18 0%, ${node.color}08 100%)`, border: `1.5px solid ${node.color}25` }}
             >
-              {node.correct}/{node.total}
+              {/* Top accent bar */}
+              <div className="h-1 w-full" style={{ backgroundColor: node.color }} />
+
+              <div className="p-4">
+                {/* Icon + Score row */}
+                <div className="flex items-start justify-between mb-3">
+                  <div
+                    className="w-8 h-8 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: `${node.color}20`, color: node.color }}
+                  >
+                    {node.icon}
+                  </div>
+                  <div className="text-right">
+                    <div className="font-black text-2xl leading-none" style={{ color: node.color }}>
+                      {node.score}
+                    </div>
+                    <div className="text-[10px] font-bold opacity-60" style={{ color: node.color }}>%</div>
+                  </div>
+                </div>
+
+                {/* Name */}
+                <div className="font-bold text-[12px] text-neutral-main mb-2.5 tracking-tight">
+                  {node.name}
+                </div>
+
+                {/* Progress track */}
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: `${node.color}20` }}>
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${node.score}%`, backgroundColor: node.color }}
+                  />
+                </div>
+
+                {/* Correct/Total */}
+                <div className="mt-2 text-[10px] font-semibold" style={{ color: node.color }}>
+                  {node.correct} / {node.total} savol
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* ===== DESKTOP LAYOUT (original mind-map) ===== */}
