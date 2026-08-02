@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { db, type StudentResult } from '../lib/db';
 import { generateDiagnosticSummary } from '../lib/gemini';
 import * as htmlToImage from 'html-to-image';
@@ -135,8 +136,41 @@ export default function Summary() {
   }, [resultId, navigate]);
 
   if (!studentData) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-50">Ma'lumot yuklanmoqda...</div>;
+    return (
+      <div className="min-h-screen bg-slate-50/50 flex flex-col pt-12 px-4 md:px-12 space-y-12 w-full max-w-[1440px] mx-auto animate-pulse">
+        {/* Skeleton Header */}
+        <div className="flex justify-between items-center pb-8 border-b border-slate-200">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-slate-200 rounded-lg"></div>
+            <div className="h-6 w-48 bg-slate-200 rounded-full"></div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="h-4 w-32 bg-slate-200 rounded-full"></div>
+            <div className="w-8 h-8 rounded-full bg-slate-200"></div>
+          </div>
+        </div>
+        
+        {/* Skeleton Section 1 */}
+        <div className="space-y-4">
+          <div className="h-4 w-12 bg-slate-200 rounded-full"></div>
+          <div className="h-8 w-64 bg-slate-200 rounded-full"></div>
+          <div className="h-20 bg-slate-200 rounded-2xl w-full max-w-4xl"></div>
+        </div>
+
+        {/* Skeleton Section 2 */}
+        <div className="space-y-4 pt-8">
+          <div className="h-4 w-12 bg-slate-200 rounded-full"></div>
+          <div className="h-8 w-64 bg-slate-200 rounded-full"></div>
+          <div className="h-64 bg-slate-200 rounded-3xl w-full"></div>
+        </div>
+      </div>
+    );
   }
+
+  const sectionVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } }
+  };
 
   const totalScore = studentData.totalScore;
   const isPass = totalScore >= 70;
@@ -173,7 +207,13 @@ export default function Summary() {
           </div>
         </header>
 
-        {/* 01. Bir qarashda */}
+        <motion.div 
+          initial={isGeneratingPdf ? "visible" : "hidden"}
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          variants={sectionVariants}
+        >
+          {/* 01. Bir qarashda */}
         <section className="space-y-4">
           <div className="flex items-center gap-2 text-primary text-sm font-bold tracking-wider">
             <span>01</span>
@@ -183,7 +223,14 @@ export default function Summary() {
             O'quvchi <strong className="text-neutral-main font-semibold">{studentData.studentName}</strong> kirish imtihonida umumiy <strong className="text-neutral-main font-semibold">{totalScore}/100</strong> ball oldi — <strong className="text-neutral-main font-semibold">{isPass ? 'yaxshi (dasturni ishonchli o\'zlashtiradi)' : 'qoniqarsiz (qo\'shimcha tayyorgarlik talab etiladi)'}</strong>. 
           </p>
         </section>
+        </motion.div>
 
+        <motion.div 
+          initial={isGeneratingPdf ? "visible" : "hidden"}
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          variants={sectionVariants}
+        >
         {/* 02. Umumiy daraja */}
         <section className="space-y-8">
           <div className="flex items-center gap-2 text-primary text-sm font-bold tracking-wider">
@@ -251,7 +298,14 @@ export default function Summary() {
             </div>
           </div>
         </section>
+        </motion.div>
 
+        <motion.div 
+          initial={isGeneratingPdf ? "visible" : "hidden"}
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          variants={sectionVariants}
+        >
         {/* AI Diagnostics Section */}
         <section className="space-y-6">
           <div className="flex items-center gap-2 text-primary text-sm font-bold tracking-wider">
@@ -284,15 +338,39 @@ export default function Summary() {
             </div>
           </div>
         </section>
+        </motion.div>
 
-        <ScoreBreakdownTable scores={studentData.scores} totalScore={totalScore} />
-        <QuestionResultTable results={studentData.questionResults} blueprint={studentData.blueprintSnapshot || QUESTIONS_BLUEPRINT} />
-        <DifficultyGrid results={studentData.questionResults} blueprint={studentData.blueprintSnapshot || QUESTIONS_BLUEPRINT} />
-        <SubjectDonutCard results={studentData.questionResults} blueprint={studentData.blueprintSnapshot || QUESTIONS_BLUEPRINT} />
-        <TopicProgressList results={studentData.questionResults} blueprint={studentData.blueprintSnapshot || QUESTIONS_BLUEPRINT} />
-        <SkillsRadarChart results={studentData.questionResults} blueprint={studentData.blueprintSnapshot || QUESTIONS_BLUEPRINT} />
-        <ThinkingTypeGraph results={studentData.questionResults} blueprint={studentData.blueprintSnapshot || QUESTIONS_BLUEPRINT} />
-        <RoadmapJourney />
+        <motion.div initial={isGeneratingPdf ? "visible" : "hidden"} whileInView="visible" viewport={{ once: true, margin: "-50px" }} variants={sectionVariants}>
+          <ScoreBreakdownTable scores={studentData.scores} totalScore={totalScore} />
+        </motion.div>
+
+        <motion.div initial={isGeneratingPdf ? "visible" : "hidden"} whileInView="visible" viewport={{ once: true, margin: "-50px" }} variants={sectionVariants}>
+          <QuestionResultTable results={studentData.questionResults} blueprint={studentData.blueprintSnapshot || QUESTIONS_BLUEPRINT} />
+        </motion.div>
+        
+        <motion.div initial={isGeneratingPdf ? "visible" : "hidden"} whileInView="visible" viewport={{ once: true, margin: "-50px" }} variants={sectionVariants}>
+          <DifficultyGrid results={studentData.questionResults} blueprint={studentData.blueprintSnapshot || QUESTIONS_BLUEPRINT} />
+        </motion.div>
+        
+        <motion.div initial={isGeneratingPdf ? "visible" : "hidden"} whileInView="visible" viewport={{ once: true, margin: "-50px" }} variants={sectionVariants}>
+          <SubjectDonutCard results={studentData.questionResults} blueprint={studentData.blueprintSnapshot || QUESTIONS_BLUEPRINT} />
+        </motion.div>
+        
+        <motion.div initial={isGeneratingPdf ? "visible" : "hidden"} whileInView="visible" viewport={{ once: true, margin: "-50px" }} variants={sectionVariants}>
+          <TopicProgressList results={studentData.questionResults} blueprint={studentData.blueprintSnapshot || QUESTIONS_BLUEPRINT} />
+        </motion.div>
+        
+        <motion.div initial={isGeneratingPdf ? "visible" : "hidden"} whileInView="visible" viewport={{ once: true, margin: "-50px" }} variants={sectionVariants}>
+          <SkillsRadarChart results={studentData.questionResults} blueprint={studentData.blueprintSnapshot || QUESTIONS_BLUEPRINT} />
+        </motion.div>
+        
+        <motion.div initial={isGeneratingPdf ? "visible" : "hidden"} whileInView="visible" viewport={{ once: true, margin: "-50px" }} variants={sectionVariants}>
+          <ThinkingTypeGraph results={studentData.questionResults} blueprint={studentData.blueprintSnapshot || QUESTIONS_BLUEPRINT} />
+        </motion.div>
+        
+        <motion.div initial={isGeneratingPdf ? "visible" : "hidden"} whileInView="visible" viewport={{ once: true, margin: "-50px" }} variants={sectionVariants}>
+          <RoadmapJourney />
+        </motion.div>
         
         <Footer onPrint={handleDownloadPdf} isGeneratingPdf={isGeneratingPdf} />
       </div>
