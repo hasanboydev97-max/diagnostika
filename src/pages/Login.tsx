@@ -23,11 +23,15 @@ export default function Login() {
     setError('');
     
     if (id === 'admin') {
-      navigate('/admin');
+      if (pin === '7777') {
+        navigate('/admin');
+      } else {
+        setError("Admin paroli xato. Ruxsat etilmadi.");
+      }
       return;
     }
     
-    if (!pin && id !== 'admin') {
+    if (!pin) {
       setError("Parolni (PIN) kiriting");
       return;
     }
@@ -201,8 +205,8 @@ export default function Login() {
             </div>
 
             <div className="mt-4 text-center">
-              <p className="text-xs text-slate-500">
-                Tizimga kirish uchun Login qismiga <kbd className="font-sans px-2 py-1 bg-slate-100 border border-slate-200 rounded-md text-slate-600 font-semibold ml-1">admin</kbd> deb yozing
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Tizimga kirish uchun Login qismiga <kbd className="font-sans px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-600 font-semibold ml-1">admin</kbd> va Parol qismiga maxfiy kodni yozing
               </p>
             </div>
           </div>
