@@ -91,6 +91,8 @@ export default function WelcomeModal({
 
   const modalBg = isPassed 
     ? "bg-gradient-to-b from-[#0f172a] to-[#1e3a8a]/40" 
+    : "bg-gradient-to-b from-[#0f172a] to-[#7f1d1d]/30";
+
   return (
     <AnimatePresence>
       {isVisible && (
