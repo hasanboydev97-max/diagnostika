@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { ArrowRight, Frown, CheckCircle, XCircle, Award } from 'lucide-react';
+import { ArrowRight, CheckCircle, XCircle } from 'lucide-react';
+import logo from '../assets/logo.jpg';
 
 interface WelcomeModalProps {
   score: number;
@@ -95,35 +96,33 @@ export default function WelcomeModal({
           animate="visible"
           exit="exit"
           variants={containerVariants}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden bg-slate-950/80 backdrop-blur-2xl"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden bg-slate-950/90 backdrop-blur-3xl"
         >
           {/* Animated Premium Aurora Background Blobs */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <motion.div 
               animate={{ rotate: 360, scale: [1, 1.2, 1] }} 
               transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-              className={`absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full blur-[120px] opacity-40 mix-blend-screen ${isPassed ? 'bg-blue-600' : 'bg-rose-900'}`}
+              className={`absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full blur-[120px] opacity-30 mix-blend-screen ${isPassed ? 'bg-blue-600' : 'bg-rose-900'}`}
             />
             <motion.div 
               animate={{ rotate: -360, scale: [1, 1.3, 1] }} 
               transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-              className={`absolute -bottom-[20%] -right-[10%] w-[60vw] h-[60vw] rounded-full blur-[100px] opacity-30 mix-blend-screen ${isPassed ? 'bg-indigo-500' : 'bg-red-800'}`}
+              className={`absolute -bottom-[20%] -right-[10%] w-[60vw] h-[60vw] rounded-full blur-[100px] opacity-20 mix-blend-screen ${isPassed ? 'bg-indigo-500' : 'bg-red-800'}`}
             />
             {/* Noise Texture Overlay */}
             <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
+            {/* Premium Subtle Grid */}
+            <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_80%,transparent_100%)]"></div>
           </div>
           
           <motion.div className="relative z-10 w-full max-w-4xl mx-auto flex flex-col items-center">
             
-            {/* Trophy / Icon Area */}
+            {/* Logo Area */}
             <motion.div variants={itemVariants} className="relative mb-8 group">
-              <div className={`absolute inset-0 rounded-full blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-700 ${isPassed ? 'bg-blue-400' : 'bg-rose-500'}`}></div>
-              <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full bg-slate-900/50 border border-white/10 flex items-center justify-center shadow-[inset_0_2px_20px_rgba(255,255,255,0.1)] backdrop-blur-md">
-                {isPassed ? (
-                  <Award size={40} className="text-blue-400 drop-shadow-[0_0_15px_rgba(96,165,250,0.5)] md:w-12 md:h-12" />
-                ) : (
-                  <Frown size={40} className="text-rose-400 drop-shadow-[0_0_15px_rgba(251,113,133,0.5)] md:w-12 md:h-12" />
-                )}
+              <div className={`absolute inset-0 rounded-2xl blur-xl opacity-40 group-hover:opacity-70 transition-opacity duration-700 ${isPassed ? 'bg-blue-400' : 'bg-rose-500'}`}></div>
+              <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white p-1 shadow-[0_0_30px_rgba(255,255,255,0.1)] backdrop-blur-md transform -rotate-3 hover:rotate-0 transition-transform duration-500">
+                <img src={logo} alt="School Logo" className="w-full h-full object-contain rounded-xl" />
               </div>
             </motion.div>
 
