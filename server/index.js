@@ -62,6 +62,10 @@ if (MONGODB_URI) {
 }
 
 // Routes
+app.get('/', (req, res) => {
+  res.send('API is running...');
+});
+
 app.get('/api/results', async (req, res) => {
   try {
     const results = await Result.find().sort({ _id: -1 });
