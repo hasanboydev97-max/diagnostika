@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Lock, ArrowRight, Activity } from 'lucide-react';
 import { db } from '../lib/db';
+import logo from '../assets/logo.jpg';
 
 export default function Login() {
   const [id, setId] = useState('');
@@ -103,8 +104,8 @@ export default function Login() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md z-10">
         <div className="flex justify-center mb-6">
-          <div className="w-12 h-12 bg-slate-900 text-white rounded-xl flex items-center justify-center shadow-lg transform -rotate-3 transition-transform hover:rotate-0 duration-300">
-            <Activity className="w-6 h-6" />
+          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg transform -rotate-3 transition-transform hover:rotate-0 duration-300 overflow-hidden border-2 border-white ring-1 ring-slate-100">
+            <img src={logo} alt="Maktab Logosi" className="w-full h-full object-contain" />
           </div>
         </div>
         <h2 className="mt-2 text-center text-3xl font-bold tracking-tight text-slate-900">
