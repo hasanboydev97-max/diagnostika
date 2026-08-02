@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { ArrowRight, Frown, Check, X } from 'lucide-react';
-import trophyImg from '../assets/trophy.png';
+import { ArrowRight, Frown, CheckCircle, XCircle, Award } from 'lucide-react';
 
 interface WelcomeModalProps {
   score: number;
@@ -29,11 +28,10 @@ export default function WelcomeModal({
     document.body.style.overflow = 'hidden';
     
     if (isPassed) {
-      // Confetti animation
       const timer = setTimeout(() => {
         const duration = 4 * 1000;
         const animationEnd = Date.now() + duration;
-        const defaults = { startVelocity: 35, spread: 360, ticks: 60, zIndex: 9999 };
+        const defaults = { startVelocity: 45, spread: 360, ticks: 100, zIndex: 9999, colors: ['#2563eb', '#3b82f6', '#60a5fa', '#ffffff'] };
 
         const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
 
@@ -75,24 +73,19 @@ export default function WelcomeModal({
     }, 600);
   };
 
-  // Variants for staggered animations
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { staggerChildren: 0.2, delayChildren: 0.1 }
+      transition: { staggerChildren: 0.15, delayChildren: 0.1 }
     },
-    exit: { opacity: 0, transition: { duration: 0.4 } }
+    exit: { opacity: 0, backdropFilter: 'blur(0px)', transition: { duration: 0.5 } }
   };
 
   const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 100, damping: 15 } }
+    hidden: { opacity: 0, y: 30, scale: 0.95 },
+    visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 120, damping: 20 } }
   };
-
-  const modalBg = isPassed 
-    ? "bg-gradient-to-b from-[#0f172a] to-[#1e3a8a]/40" 
-    : "bg-gradient-to-b from-[#0f172a] to-[#7f1d1d]/30";
 
   return (
     <AnimatePresence>
@@ -102,126 +95,124 @@ export default function WelcomeModal({
           animate="visible"
           exit="exit"
           variants={containerVariants}
-          className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-2 sm:p-4 md:p-8 ${modalBg} backdrop-blur-md overflow-hidden`}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden bg-slate-950/80 backdrop-blur-2xl"
         >
-          {/* Subtle star pattern background */}
-          <div className="absolute inset-0 opacity-[0.15]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
+          {/* Animated Premium Aurora Background Blobs */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <motion.div 
+              animate={{ rotate: 360, scale: [1, 1.2, 1] }} 
+              transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+              className={`absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full blur-[120px] opacity-40 mix-blend-screen ${isPassed ? 'bg-blue-600' : 'bg-rose-900'}`}
+            />
+            <motion.div 
+              animate={{ rotate: -360, scale: [1, 1.3, 1] }} 
+              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+              className={`absolute -bottom-[20%] -right-[10%] w-[60vw] h-[60vw] rounded-full blur-[100px] opacity-30 mix-blend-screen ${isPassed ? 'bg-indigo-500' : 'bg-red-800'}`}
+            />
+            {/* Noise Texture Overlay */}
+            <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
+          </div>
           
-          <motion.div variants={itemVariants} className="relative z-10 max-w-3xl w-full text-center space-y-4 my-auto">
+          <motion.div className="relative z-10 w-full max-w-4xl mx-auto flex flex-col items-center">
             
-            {/* Header */}
-            <div className="space-y-2 sm:space-y-4 mb-2 sm:mb-4 mt-4 md:mt-0">
-              <motion.div 
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', damping: 12, stiffness: 150, delay: 0.3 }}
-                className={`w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.15)] border-2 border-white/20 overflow-hidden ${isPassed ? 'bg-white/10' : 'bg-danger text-white'}`}
-              >
-                {isPassed ? <img src={trophyImg} alt="Trophy" className="w-full h-full object-contain p-1.5" /> : <Frown size={24} className="sm:w-8 sm:h-8 md:w-10 md:h-10" />}
-              </motion.div>
-              
-              <h1 className="text-xl sm:text-2xl md:text-4xl font-bold tracking-normal text-white drop-shadow-md px-1 leading-tight">
-                {isPassed ? 'Umumiy diagnostik xulosa' : 'Diagnostika yakunlandi'}
+            {/* Trophy / Icon Area */}
+            <motion.div variants={itemVariants} className="relative mb-8 group">
+              <div className={`absolute inset-0 rounded-full blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-700 ${isPassed ? 'bg-blue-400' : 'bg-rose-500'}`}></div>
+              <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-full bg-slate-900/50 border border-white/10 flex items-center justify-center shadow-[inset_0_2px_20px_rgba(255,255,255,0.1)] backdrop-blur-md">
+                {isPassed ? (
+                  <Award size={40} className="text-blue-400 drop-shadow-[0_0_15px_rgba(96,165,250,0.5)] md:w-12 md:h-12" />
+                ) : (
+                  <Frown size={40} className="text-rose-400 drop-shadow-[0_0_15px_rgba(251,113,133,0.5)] md:w-12 md:h-12" />
+                )}
+              </div>
+            </motion.div>
+
+            {/* Typography Header */}
+            <motion.div variants={itemVariants} className="text-center mb-10 space-y-3">
+              <h1 className="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-white/60 tracking-tight">
+                {isPassed ? 'Diagnostik Xulosa' : 'Diagnostika Yakunlandi'}
               </h1>
-              <p className="text-[10px] sm:text-xs md:text-base text-slate-300 max-w-lg mx-auto px-2 font-medium">
-                Matematika, ingliz tili, tanqidiy fikrlash
-              </p>
-            </div>
-            
-            {/* Info Strip */}
-            <motion.div variants={itemVariants} className="flex flex-row flex-wrap justify-center items-center gap-1.5 sm:gap-3 text-[9px] sm:text-xs md:text-sm py-1 mx-auto max-w-2xl px-1 w-full">
-              <div className="bg-white/5 border border-white/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5 sm:gap-2">
-                <span className="text-slate-400">Nomzod:</span>
-                <strong className="text-white font-bold">{candidateName}</strong>
-              </div>
-              <div className="bg-white/5 border border-white/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5 sm:gap-2">
-                <span className="text-slate-400">Sinf:</span>
-                <strong className="text-white font-bold">{grade}</strong>
-              </div>
-              <div className="bg-white/5 border border-white/10 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5 sm:gap-2">
-                <span className="text-slate-400">Imtihon:</span>
-                <strong className="text-white font-bold">3 fan</strong>
+              <div className="flex flex-wrap justify-center items-center gap-2 md:gap-4 text-xs md:text-sm font-medium text-slate-300">
+                <span className="px-4 py-1.5 rounded-full bg-white/5 border border-white/5 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
+                  Nomzod: <span className="text-white font-bold">{candidateName}</span>
+                </span>
+                <span className="px-4 py-1.5 rounded-full bg-white/5 border border-white/5 backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
+                  Sinf: <span className="text-white font-bold">{grade}</span>
+                </span>
               </div>
             </motion.div>
 
-            {/* Main Result Card */}
-            <motion.div variants={itemVariants} className="bg-white/10 border border-white/10 rounded-xl md:rounded-3xl p-3 sm:p-4 md:p-8 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-10 backdrop-blur-xl shadow-2xl relative overflow-hidden mt-1 md:mt-8 max-w-3xl mx-auto w-full">
-              
-              {/* Dynamic Glow */}
-              <div className={`absolute -top-32 -left-32 w-64 h-64 rounded-full blur-[80px] opacity-30 pointer-events-none ${isPassed ? 'bg-blue-400' : 'bg-red-500'}`}></div>
-              
-              <div className="flex-1 w-full relative z-10 flex flex-col items-center md:items-start text-center md:text-left">
-                <div className="flex flex-col items-center md:items-start mb-6">
-                  <div className="flex items-baseline justify-center md:justify-start gap-1">
-                    <motion.span 
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 1, duration: 0.8 }}
-                      className="text-5xl sm:text-6xl md:text-7xl font-bold text-white tracking-normal leading-none"
-                    >
-                      {score}
-                    </motion.span>
-                    <span className="text-xl md:text-3xl text-slate-400 font-medium">/ 100</span>
-                  </div>
-                  <span className="text-[9px] md:text-xs text-slate-400 uppercase tracking-[0.2em] font-bold mt-1">Umumiy natija</span>
-                </div>
-                
-                <div className="flex justify-center w-full pt-3 md:pt-6 border-t border-white/10 px-0 gap-1.5 sm:gap-4">
-                  {[
-                    { label: 'Matematika', val: scores?.math || 0 },
-                    { label: 'Mantiq', val: scores?.logic || 0 },
-                    { label: 'Analitik', val: scores?.analytical || 0 }
-                  ].map((s, idx) => (
-                    <motion.div 
-                      key={idx}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 1.2 + idx * 0.1 }}
-                      className="flex flex-col items-center flex-1 bg-white/5 border border-white/5 rounded-lg md:rounded-2xl p-1.5 sm:p-2 md:p-4 hover:bg-white/10 transition-colors"
-                    >
-                      <div className="text-lg sm:text-xl md:text-3xl font-bold text-white mb-0.5">{s.val}</div>
-                      <div className="text-[6px] sm:text-[8px] md:text-xs text-slate-400 uppercase font-bold tracking-widest text-center leading-tight">
-                        {s.label}
+            {/* The Ultimate Glass Card */}
+            <motion.div variants={itemVariants} className="w-full">
+              <div className="relative rounded-[2rem] p-1 overflow-hidden bg-gradient-to-b from-white/10 to-white/0 shadow-2xl">
+                {/* Inner Glass */}
+                <div className="relative rounded-[1.8rem] bg-slate-900/60 backdrop-blur-xl border border-white/10 overflow-hidden flex flex-col md:flex-row shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)]">
+                  
+                  {/* Left Side: Score Details */}
+                  <div className="flex-1 p-8 md:p-12 flex flex-col justify-center relative">
+                    <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/5 to-transparent"></div>
+                    <div className="relative z-10 flex flex-col md:flex-row items-center md:items-end gap-4 mb-10">
+                      <div className="text-[5rem] md:text-[7rem] font-black leading-none text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 tracking-tighter">
+                        {score}
                       </div>
-                    </motion.div>
-                  ))}
+                      <div className="pb-3 md:pb-6 text-xl md:text-2xl font-bold text-slate-500 uppercase tracking-widest">
+                        / 100
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3 md:gap-4 w-full relative z-10">
+                      {[
+                        { label: 'Matematika', val: scores?.math || 0 },
+                        { label: 'Mantiq', val: scores?.logic || 0 },
+                        { label: 'Analitik', val: scores?.analytical || 0 }
+                      ].map((s, idx) => (
+                        <div key={idx} className="flex flex-col items-center justify-center p-3 md:p-4 rounded-2xl bg-white/5 border border-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] hover:bg-white/10 transition-colors">
+                          <span className="text-2xl md:text-3xl font-bold text-white mb-1">{s.val}</span>
+                          <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{s.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Right Side: Decision Panel */}
+                  <div className={`w-full md:w-[320px] p-8 md:p-12 flex flex-col items-center justify-center relative overflow-hidden ${isPassed ? 'bg-gradient-to-br from-blue-600 to-indigo-900' : 'bg-gradient-to-br from-rose-600 to-rose-900'}`}>
+                    {/* Inner glowing orb */}
+                    <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent"></div>
+                    
+                    <div className="relative z-10 flex flex-col items-center text-center">
+                      <div className={`w-16 h-16 rounded-2xl mb-6 flex items-center justify-center shadow-2xl backdrop-blur-md border ${isPassed ? 'bg-blue-500/30 border-blue-400/50' : 'bg-rose-500/30 border-rose-400/50'}`}>
+                        {isPassed ? <CheckCircle size={32} className="text-white" /> : <XCircle size={32} className="text-white" />}
+                      </div>
+                      
+                      <h3 className="text-2xl font-black text-white tracking-tight mb-3">
+                        {isPassed ? 'QABUL QILINDI' : 'RAD ETILDI'}
+                      </h3>
+                      
+                      <p className="text-xs font-semibold text-white/70 uppercase tracking-widest leading-relaxed">
+                        {isPassed 
+                          ? 'Ishonchli daraja. Qabul tavsiya etiladi.'
+                          : 'Yetarli daraja emas. Qayta urinib ko\'ring.'
+                        }
+                      </p>
+                    </div>
+                  </div>
+
                 </div>
               </div>
-              
-              {/* Decision Box */}
-              <motion.div 
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', delay: 1.5, bounce: 0.5 }}
-                className={`relative z-10 shadow-xl px-2 py-3 md:px-8 md:py-8 rounded-[0.75rem] md:rounded-[1.5rem] flex flex-col items-center justify-center w-full md:min-w-[280px] md:w-auto border-2 ${isPassed ? 'bg-primary/90 border-blue-400/30 text-white' : 'bg-slate-800/90 border-red-500/30 text-slate-200'}`}
-              >
-                <div className={`w-8 h-8 md:w-14 md:h-14 rounded-full flex items-center justify-center mb-1.5 md:mb-4 border-2 md:border-4 shadow-md ${isPassed ? 'bg-success/20 border-success text-success' : 'bg-danger/20 border-danger text-danger'}`}>
-                  {isPassed ? <Check strokeWidth={3} size={16} className="md:w-7 md:h-7" /> : <X strokeWidth={3} size={16} className="md:w-7 md:h-7" />}
-                </div>
-                <h3 className={`text-base sm:text-lg md:text-2xl font-bold mb-0.5 md:mb-2 tracking-wide text-center ${isPassed ? 'text-white' : 'text-white'}`}>
-                  {isPassed ? 'QABUL QILINSIN' : 'QABUL QILINMADI'}
-                </h3>
-                <p className={`text-[10px] md:text-xs text-center font-medium leading-relaxed ${isPassed ? 'text-blue-100' : 'text-slate-400'}`}>
-                  {isPassed 
-                    ? <>ISHONCHLI DARAJA —<br className="hidden md:block"/> QABUL TAVSIYA ETILADI</>
-                    : <>YETARLI DARAJA EMAS —<br className="hidden md:block"/> QAYTA URINIB KO'RING</>
-                  }
-                </p>
-              </motion.div>
-
             </motion.div>
 
-            {/* Action Button */}
-            <motion.div variants={itemVariants} className="pt-2 pb-2 md:pb-0 relative z-10">
+            {/* Premium Ghost Button */}
+            <motion.div variants={itemVariants} className="mt-10">
               <button 
                 onClick={handleClose}
-                className="group relative inline-flex items-center justify-center gap-2 md:gap-3 bg-white/10 hover:bg-white border border-white/20 text-white hover:text-slate-900 px-4 py-2.5 md:px-8 md:py-3 rounded-full font-bold transition-all shadow-lg hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-1 overflow-hidden w-full max-w-xs mx-auto"
+                className="group relative px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full flex items-center gap-3 overflow-hidden transition-all duration-500 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:border-white/20 backdrop-blur-sm"
               >
-                <span className="relative z-10 tracking-widest uppercase text-[10px] md:text-xs">To'liq hisobotni ko'rish</span>
-                <ArrowRight size={14} className="relative z-10 group-hover:translate-x-1 transition-transform md:w-4 md:h-4" />
+                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-out"></span>
+                <span className="relative z-10 text-xs font-bold uppercase tracking-[0.2em] text-white">Batafsil Hisobot</span>
+                <ArrowRight size={16} className="relative z-10 text-white group-hover:translate-x-1 transition-transform" />
               </button>
             </motion.div>
-            
+
           </motion.div>
         </motion.div>
       )}
