@@ -116,7 +116,7 @@ export default function Admin() {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6" style={{ 
       backgroundImage: 'radial-gradient(circle at center, #ffffff 0%, #f1f5f9 100%)' 
     }}>
-      <div className="bg-white max-w-5xl w-full p-8 rounded-2xl shadow-xl border border-slate-200 my-8">
+      <div className="bg-white max-w-7xl w-full p-8 rounded-2xl shadow-xl border border-slate-200 my-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-neutral-main mb-2">Admin Panel</h1>
