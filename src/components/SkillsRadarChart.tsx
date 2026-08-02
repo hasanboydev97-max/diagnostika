@@ -106,19 +106,29 @@ export default function SkillsRadarChart({ results = {}, blueprint }: Props) {
           <div className="flex-1 min-h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="65%" data={data}>
-                <defs>
-                  <linearGradient id="radarGradient2" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#1e3a8a" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#1e3a8a" stopOpacity={0.04} />
-                  </linearGradient>
-                </defs>
-                <PolarGrid stroke="#f1f5f9" strokeWidth={1.5} />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'General Sans', fontWeight: 700 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                <PolarGrid stroke="#cbd5e1" strokeWidth={1} />
+                <PolarAngleAxis 
+                  dataKey="subject" 
+                  tick={{ fill: '#64748b', fontSize: 12, fontWeight: 700 }} 
+                />
+                <PolarRadiusAxis 
+                  angle={90} 
+                  domain={[0, 100]} 
+                  tickCount={6} 
+                  tick={{ fill: '#94a3b8', fontSize: 10 }} 
+                  axisLine={false} 
+                />
                 <Tooltip content={<CustomTooltip />} cursor={false} />
-                <Radar name="Natija" dataKey="score" stroke="#1e3a8a" strokeWidth={2} fill="url(#radarGradient2)" />
-                <Radar dataKey="score" stroke="none" fill="#1e3a8a" fillOpacity={1}
-                  dot={{ r: 4, fill: '#1e3a8a', strokeWidth: 2, stroke: '#fff' }} />
+                <Radar 
+                  name="Natija" 
+                  dataKey="score" 
+                  stroke="#1e3a8a" 
+                  strokeWidth={2} 
+                  fill="#1e3a8a" 
+                  fillOpacity={0.4} 
+                  dot={{ r: 4, fill: '#ffffff', strokeWidth: 2, stroke: '#1e3a8a' }}
+                  activeDot={{ r: 6, fill: '#1e3a8a', strokeWidth: 0 }}
+                />
               </RadarChart>
             </ResponsiveContainer>
           </div>
