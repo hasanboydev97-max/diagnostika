@@ -185,7 +185,7 @@ export default function Admin() {
         ) : (
           /* New Result Tab */
           generatedCredentials ? (
-            <div className="bg-emerald-50 border border-emerald-200 p-8 rounded-xl text-center space-y-6">
+              <div className="bg-emerald-50 border border-emerald-200 p-8 rounded-xl text-center space-y-6">
               <h2 className="text-2xl font-bold text-emerald-800">Muvaffaqiyatli saqlandi!</h2>
               <p className="text-emerald-700">O'quvchiga quyidagi tizimga kirish ma'lumotlarini bering:</p>
               
@@ -205,7 +205,19 @@ export default function Admin() {
               </p>
               
               <div className="pt-4 flex justify-center gap-4">
-                <button onClick={() => setGeneratedCredentials(null)} className="text-emerald-800 font-medium hover:underline">Yana bitta kiritish</button>
+                <button 
+                  onClick={() => {
+                    setStudentName('');
+                    setGrade('5');
+                    const initial: Record<number, boolean> = {};
+                    currentBlueprint.forEach(q => initial[q.id] = false);
+                    setQuestionResults(initial);
+                    setGeneratedCredentials(null);
+                  }} 
+                  className="text-emerald-800 font-medium hover:underline"
+                >
+                  Yana bitta kiritish
+                </button>
                 <button onClick={() => navigate('/summary/' + generatedCredentials.id)} className="bg-emerald-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-emerald-700 transition-colors">
                   Xulosani ko'rish
                 </button>
