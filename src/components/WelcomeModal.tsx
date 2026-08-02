@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Variants } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { Trophy, ArrowRight, Frown, Check, X } from 'lucide-react';
 
@@ -73,25 +72,6 @@ export default function WelcomeModal({
       onClose();
     }, 600);
   };
-
-  // Variants for staggered animations
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.2, delayChildren: 0.1 }
-    },
-    exit: { opacity: 0, transition: { duration: 0.4 } }
-  };
-
-  const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 100, damping: 15 } }
-  };
-
-  const modalBg = isPassed 
-    ? "bg-gradient-to-b from-[#0f172a] to-[#1e3a8a]/40" 
-    : "bg-gradient-to-b from-[#0f172a] to-[#7f1d1d]/30";
 
   return (
     <AnimatePresence>
