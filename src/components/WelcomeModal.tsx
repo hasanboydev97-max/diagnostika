@@ -101,12 +101,12 @@ export default function WelcomeModal({
           animate="visible"
           exit="exit"
           variants={containerVariants}
-          className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-4 md:p-8 ${modalBg} backdrop-blur-md overflow-y-auto`}
+          className={`fixed inset-0 z-50 flex flex-col items-center py-10 px-4 md:p-8 ${modalBg} backdrop-blur-md overflow-y-auto`}
         >
           {/* Subtle star pattern background */}
           <div className="absolute inset-0 opacity-[0.15]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
           
-          <motion.div variants={itemVariants} className="relative z-10 max-w-3xl w-full text-center space-y-4">
+          <motion.div variants={itemVariants} className="relative z-10 max-w-3xl w-full text-center space-y-4 my-auto">
             
             {/* Header */}
             <div className="space-y-2 sm:space-y-4 mb-2 sm:mb-4 mt-4 md:mt-0">
