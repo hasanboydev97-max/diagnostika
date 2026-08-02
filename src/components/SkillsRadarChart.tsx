@@ -99,42 +99,44 @@ export default function SkillsRadarChart({ results = {}, blueprint }: Props) {
           </div>
         </div>
 
-        {/* Right: Radial Bar Chart — visually unique */}
-        <div className="hidden md:flex bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex-col">
-          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Aylana ko'rsatkichlari</div>
-          <div className="flex-1 min-h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadialBarChart
-                cx="50%"
-                cy="50%"
-                innerRadius="15%"
-                outerRadius="90%"
-                barSize={12}
-                data={radialData}
-                startAngle={90}
-                endAngle={-270}
-              >
-                <RadialBar
-                  background={{ fill: '#f1f5f9' }}
-                  dataKey="value"
-                  cornerRadius={6}
-                >
-                  {radialData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </RadialBar>
-                <Tooltip content={<CustomTooltip />} />
-                <Legend
-                  iconType="circle"
-                  iconSize={8}
-                  formatter={(value) => (
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      {value}
-                    </span>
-                  )}
-                />
-              </RadialBarChart>
-            </ResponsiveContainer>
+        {/* Right: Custom SVG circular progress rings */}
+        <div className="hidden md:block bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-5">Ko'nikma halqalari</div>
+          <div className="grid grid-cols-3 gap-4">
+            {bars.map((bar) => {
+              const r = 32;
+              const circ = 2 * Math.PI * r;
+              const offset = circ - (bar.value / 100) * circ;
+              return (
+                <div key={bar.name} className="flex flex-col items-center gap-2">
+                  <div className="relative w-20 h-20">
+                    <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
+                      {/* Track */}
+                      <circle cx="40" cy="40" r={r} fill="none" stroke="#f1f5f9" strokeWidth="7" />
+                      {/* Progress */}
+                      <circle
+                        cx="40" cy="40" r={r}
+                        fill="none"
+                        stroke={bar.color}
+                        strokeWidth="7"
+                        strokeLinecap="round"
+                        strokeDasharray={circ}
+                        strokeDashoffset={offset}
+                        style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+                      />
+                    </svg>
+                    {/* Center label */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-base font-black leading-none" style={{ color: bar.color }}>{bar.value}</span>
+                      <span className="text-[9px] font-bold text-slate-400 leading-none">%</span>
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-slate-500 text-center leading-tight">
+                    {bar.name}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
