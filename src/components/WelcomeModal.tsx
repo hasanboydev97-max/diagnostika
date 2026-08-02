@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { Trophy, ArrowRight, Frown, Check, X } from 'lucide-react';
+import trophyImg from '../assets/trophy.png';
 
 interface WelcomeModalProps {
   score: number;
@@ -114,9 +115,9 @@ export default function WelcomeModal({
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: 'spring', damping: 12, stiffness: 150, delay: 0.3 }}
-                className={`w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 mx-auto rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.15)] border-2 border-white/20 text-white ${isPassed ? 'bg-success' : 'bg-danger'}`}
+                className={`w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.15)] border-2 border-white/20 overflow-hidden ${isPassed ? 'bg-white/10' : 'bg-danger text-white'}`}
               >
-                {isPassed ? <Trophy size={20} className="sm:w-6 sm:h-6 md:w-8 md:h-8" /> : <Frown size={20} className="sm:w-6 sm:h-6 md:w-8 md:h-8" />}
+                {isPassed ? <img src={trophyImg} alt="Trophy" className="w-full h-full object-contain p-1.5" /> : <Frown size={24} className="sm:w-8 sm:h-8 md:w-10 md:h-10" />}
               </motion.div>
               
               <h1 className="text-xl sm:text-2xl md:text-4xl font-bold tracking-normal text-white drop-shadow-md px-1 leading-tight">
