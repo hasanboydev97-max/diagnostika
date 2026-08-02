@@ -1,17 +1,7 @@
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import {
+  RadialBarChart, RadialBar, ResponsiveContainer, Cell, Legend, Tooltip
+} from 'recharts';
 import type { QuestionBlueprint } from '../lib/blueprint';
-
-const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-neutral-main text-white px-4 py-2 rounded-lg shadow-xl border border-slate-700 font-sans text-sm">
-        <span className="font-medium opacity-80">{payload[0].payload.subject}:</span>
-        <span className="ml-2 font-display font-bold text-lg">{payload[0].value}%</span>
-      </div>
-    );
-  }
-  return null;
-};
 
 interface Props {
   results?: Record<number, boolean>;
@@ -24,6 +14,20 @@ const SKILL_COLORS: Record<string, string> = {
   'Tahlil qilish': '#059669',
   'Baholash':      '#7c3aed',
   'Sintezlash':    '#e11d48',
+};
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white border border-slate-200 shadow-xl px-3 py-2 rounded-xl text-sm">
+        <span className="font-bold text-neutral-main">{payload[0].payload.name}:</span>
+        <span className="ml-2 font-black" style={{ color: payload[0].payload.fill }}>
+          {payload[0].value}%
+        </span>
+      </div>
+    );
+  }
+  return null;
 };
 
 export default function SkillsRadarChart({ results = {}, blueprint }: Props) {
@@ -59,13 +63,8 @@ export default function SkillsRadarChart({ results = {}, blueprint }: Props) {
     { name: 'Sintezlash',    value: getPercentage("Sintezlash"), color: SKILL_COLORS['Sintezlash']    },
   ];
 
-  const data = [
-    { subject: 'Baholash',   score: getPercentage("Baholash")   },
-    { subject: 'Tahlil',     score: getPercentage("Tahlil")     },
-    { subject: 'Sintezlash', score: getPercentage("Sintezlash") },
-    { subject: "Qo'llash",   score: getPercentage("Qo'llash")   },
-    { subject: 'Tushunish',  score: getPercentage("Tushunish")  },
-  ];
+  // RadialBarChart needs data with fill property
+  const radialData = bars.map(b => ({ name: b.name, value: b.value, fill: b.color }));
 
   return (
     <section className="space-y-4">
@@ -75,7 +74,7 @@ export default function SkillsRadarChart({ results = {}, blueprint }: Props) {
       <h2 className="text-lg md:text-2xl font-bold text-neutral-main">Ko'nikmalar profili</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Left: Score rows — same on all screens */}
+        {/* Left: Score rows — consistent on all screens */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
           <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Fikrlash darajalari</div>
           <div className="divide-y divide-slate-100">
@@ -100,26 +99,41 @@ export default function SkillsRadarChart({ results = {}, blueprint }: Props) {
           </div>
         </div>
 
-        {/* Right: Radar chart — desktop visual bonus */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col">
-          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Fikrlash xaritasi</div>
-          <div className="flex-1 min-h-[260px]">
+        {/* Right: Radial Bar Chart — visually unique */}
+        <div className="hidden md:flex bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex-col">
+          <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Aylana ko'rsatkichlari</div>
+          <div className="flex-1 min-h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="65%" data={data}>
-                <defs>
-                  <linearGradient id="radarGradient2" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#1e3a8a" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#1e3a8a" stopOpacity={0.04} />
-                  </linearGradient>
-                </defs>
-                <PolarGrid stroke="#f1f5f9" strokeWidth={1.5} />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 11, fontFamily: 'General Sans', fontWeight: 700 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                <Tooltip content={<CustomTooltip />} cursor={false} />
-                <Radar name="Natija" dataKey="score" stroke="#1e3a8a" strokeWidth={2} fill="url(#radarGradient2)" />
-                <Radar dataKey="score" stroke="none" fill="#1e3a8a" fillOpacity={1}
-                  dot={{ r: 4, fill: '#1e3a8a', strokeWidth: 2, stroke: '#fff' }} />
-              </RadarChart>
+              <RadialBarChart
+                cx="50%"
+                cy="50%"
+                innerRadius="15%"
+                outerRadius="90%"
+                barSize={12}
+                data={radialData}
+                startAngle={90}
+                endAngle={-270}
+              >
+                <RadialBar
+                  background={{ fill: '#f1f5f9' }}
+                  dataKey="value"
+                  cornerRadius={6}
+                >
+                  {radialData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </RadialBar>
+                <Tooltip content={<CustomTooltip />} />
+                <Legend
+                  iconType="circle"
+                  iconSize={8}
+                  formatter={(value) => (
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {value}
+                    </span>
+                  )}
+                />
+              </RadialBarChart>
             </ResponsiveContainer>
           </div>
         </div>
