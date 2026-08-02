@@ -1,4 +1,4 @@
-import { RadialBarChart, RadialBar, Legend, ResponsiveContainer, Tooltip } from 'recharts';
+import { RadialBarChart, RadialBar, ResponsiveContainer, Tooltip } from 'recharts';
 import type { QuestionBlueprint } from '../lib/blueprint';
 
 interface Props {
