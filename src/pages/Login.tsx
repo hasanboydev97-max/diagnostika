@@ -51,99 +51,57 @@ export default function Login() {
           setLoadingStep(0);
           setTimeout(() => setLoadingStep(1), 1800);
           setTimeout(() => setLoadingStep(2), 3600);
-          setTimeout(() => {
-            navigate('/summary/' + id);
-          }, 5500); // 5.5s delay to show off the cool animation
-        }
-      } else {
-        setError("Bunday Login (ID) ga ega natija topilmadi.");
-        setIsLoading(false);
-      }
-    } catch (err) {
-      setError("Tizimda xatolik yuz berdi. Iltimos qayta urinib ko'ring.");
-      setIsLoading(false);
-    }
-  };
-
   if (loadingStep >= 0) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relative font-['Space_Grotesk'] overflow-hidden">
+      <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center p-6 relative font-['Space_Grotesk'] overflow-hidden">
         
-        {/* Animated Cyber/AI Background */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div 
-            animate={{ rotate: 360, scale: [1, 1.2, 1] }} 
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute top-1/4 left-1/4 w-[50vw] h-[50vw] rounded-full bg-blue-600/10 blur-[100px]"
-          />
-          <motion.div 
-            animate={{ rotate: -360, scale: [1, 1.5, 1] }} 
-            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-            className="absolute bottom-1/4 right-1/4 w-[40vw] h-[40vw] rounded-full bg-indigo-500/10 blur-[80px]"
-          />
-          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
-        </div>
+        {/* Subtle grid background for premium engineering feel */}
+        <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-60"></div>
         
-        <div className="z-10 flex flex-col items-center max-w-sm w-full text-center">
-          
-          <div className="relative mb-14 flex items-center justify-center">
-            {/* Outer spinning rings */}
-            <motion.div 
-              animate={{ rotate: 360 }}
-              transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-              className="absolute w-36 h-36 rounded-full border-2 border-blue-500/20 border-dashed"
-            />
-            <motion.div 
-              animate={{ rotate: -360 }}
-              transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-              className="absolute w-48 h-48 rounded-full border border-indigo-400/10"
-            />
-            
-            {/* Inner pulsing orb */}
-            <motion.div 
-              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.7, 0.3] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute w-20 h-20 bg-blue-500/40 rounded-full blur-xl"
-            />
-            
-            {/* Center glass icon */}
-            <div className="w-20 h-20 bg-slate-900/50 backdrop-blur-xl rounded-[1.5rem] border border-white/10 flex items-center justify-center shadow-[0_0_40px_rgba(59,130,246,0.2)] relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-transparent"></div>
-              <Activity className="text-blue-400 w-8 h-8 relative z-10" />
+        <div className="z-10 w-full max-w-sm">
+          <motion.div 
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className="bg-white border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-6 md:p-8"
+          >
+            <div className="flex flex-col items-center text-center mb-8">
+              <div className="relative w-16 h-16 mb-6">
+                <div className="absolute inset-0 border-2 border-slate-100 rounded-full"></div>
+                <div className="absolute inset-0 border-2 border-slate-900 rounded-full border-t-transparent animate-spin" style={{ animationDuration: '1s' }}></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Activity className="w-5 h-5 text-slate-900 animate-pulse" />
+                </div>
+              </div>
+              
+              <h3 className="text-lg font-bold text-slate-900 mb-2">Tahlil qilinmoqda</h3>
+              
+              <div className="h-5 relative w-full flex justify-center">
+                <AnimatePresence mode="wait">
+                  <motion.p 
+                    key={loadingStep}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-xs font-medium text-slate-500 absolute"
+                  >
+                    {loadingSteps[loadingStep]}
+                  </motion.p>
+                </AnimatePresence>
+              </div>
             </div>
-          </div>
-          
-          <h3 className="text-2xl md:text-3xl font-bold text-white mb-4 tracking-tight drop-shadow-md">Tahlil jarayoni</h3>
-          
-          <div className="h-10 flex items-center justify-center mb-10 w-full relative">
-            <AnimatePresence mode="wait">
-              <motion.p 
-                key={loadingStep}
-                initial={{ opacity: 0, y: 10, filter: 'blur(5px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                exit={{ opacity: 0, y: -10, filter: 'blur(5px)' }}
-                transition={{ duration: 0.4 }}
-                className="text-sm md:text-base font-medium text-blue-200/80 absolute w-full text-center"
-              >
-                {loadingSteps[loadingStep]}
-              </motion.p>
-            </AnimatePresence>
-          </div>
-          
-          {/* Futuristic Progress Bar */}
-          <div className="w-full h-1.5 bg-slate-800/80 rounded-full overflow-hidden shadow-inner relative backdrop-blur-sm border border-white/5">
-            <motion.div 
-              className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-600 via-blue-400 to-indigo-300 rounded-full shadow-[0_0_15px_rgba(96,165,250,0.8)]"
-              initial={{ width: '0%' }}
-              animate={{ width: `${((loadingStep + 1) / loadingSteps.length) * 100}%` }}
-              transition={{ duration: 1.8, ease: "easeInOut" }}
-            >
-              {/* Glowing leading edge */}
-              <div className="absolute right-0 top-0 w-10 h-full bg-gradient-to-r from-transparent to-white opacity-80 mix-blend-overlay"></div>
-            </motion.div>
-          </div>
-
+            
+            <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+              <motion.div 
+                className="h-full bg-slate-900 rounded-full"
+                initial={{ width: '0%' }}
+                animate={{ width: `${((loadingStep + 1) / loadingSteps.length) * 100}%` }}
+                transition={{ duration: 1.5, ease: "easeInOut" }}
+              />
+            </div>
+          </motion.div>
         </div>
+
       </div>
     );
   }
