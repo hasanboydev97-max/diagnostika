@@ -169,8 +169,8 @@ export default function WelcomeModal({
                 <div className="flex justify-center w-full pt-3 md:pt-6 border-t border-white/10 px-0 gap-1.5 sm:gap-4">
                   {[
                     { label: 'Matematika', val: scores?.math || 0 },
-                    { label: 'Ingliz tili', val: scores?.english || 0 },
-                    { label: 'T. Fikrlash', val: scores?.critical || 0 }
+                    { label: 'Mantiq', val: scores?.logic || 0 },
+                    { label: 'Analitik', val: scores?.analytical || 0 }
                   ].map((s, idx) => (
                     <motion.div 
                       key={idx}
