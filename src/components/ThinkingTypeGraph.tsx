@@ -81,61 +81,37 @@ export default function ThinkingTypeGraph({ results = {}, blueprint }: Props) {
         Turli xil fikrlash qobiliyatlari qanday shakllangani va o'zaro qanday bog'langanini ko'rsatuvchi markazlashgan tahliliy xarita.
       </p>
 
-      {/* ===== MOBILE LAYOUT: 2×2 Colorful Stat Tiles ===== */}
-      <div className="md:hidden space-y-3">
-        {/* Brain Header Badge */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
-            <BrainCircuit size={14} className="text-white" />
-          </div>
-          <span className="text-[11px] font-bold text-primary uppercase tracking-widest">4 ta fikrlash turi tahlili</span>
-        </div>
-
-        {/* 2×2 Grid */}
-        <div className="grid grid-cols-2 gap-3">
+      {/* ===== MOBILE LAYOUT: Minimal Score Rows ===== */}
+      <div className="md:hidden">
+        <div className="divide-y divide-slate-100">
           {dynamicNodes.map((node) => (
-            <div
-              key={node.id}
-              className="relative rounded-2xl overflow-hidden"
-              style={{ background: `linear-gradient(135deg, ${node.color}18 0%, ${node.color}08 100%)`, border: `1.5px solid ${node.color}25` }}
-            >
-              {/* Top accent bar */}
-              <div className="h-1 w-full" style={{ backgroundColor: node.color }} />
-
-              <div className="p-4">
-                {/* Icon + Score row */}
-                <div className="flex items-start justify-between mb-3">
-                  <div
-                    className="w-8 h-8 rounded-xl flex items-center justify-center"
-                    style={{ backgroundColor: `${node.color}20`, color: node.color }}
-                  >
-                    {node.icon}
-                  </div>
-                  <div className="text-right">
-                    <div className="font-black text-2xl leading-none" style={{ color: node.color }}>
-                      {node.score}
-                    </div>
-                    <div className="text-[10px] font-bold opacity-60" style={{ color: node.color }}>%</div>
-                  </div>
+            <div key={node.id} className="py-4 flex items-center gap-4">
+              {/* Left: colored dot + name */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: node.color }} />
+                  <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+                    {node.name}
+                  </span>
                 </div>
-
-                {/* Name */}
-                <div className="font-bold text-[12px] text-neutral-main mb-2.5 tracking-tight">
-                  {node.name}
-                </div>
-
-                {/* Progress track */}
-                <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: `${node.color}20` }}>
+                {/* Progress bar */}
+                <div className="h-[3px] bg-slate-100 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full"
                     style={{ width: `${node.score}%`, backgroundColor: node.color }}
                   />
                 </div>
-
-                {/* Correct/Total */}
-                <div className="mt-2 text-[10px] font-semibold" style={{ color: node.color }}>
-                  {node.correct} / {node.total} savol
+                <div className="mt-1.5 text-[10px] text-slate-400 font-medium">
+                  {node.correct}/{node.total} to'g'ri
                 </div>
+              </div>
+
+              {/* Right: big score */}
+              <div className="shrink-0 text-right">
+                <span className="text-4xl font-black leading-none" style={{ color: node.color }}>
+                  {node.score}
+                </span>
+                <span className="text-sm font-bold text-slate-400 ml-0.5">%</span>
               </div>
             </div>
           ))}
