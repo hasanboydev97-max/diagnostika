@@ -1,6 +1,4 @@
-import {
-  RadialBarChart, RadialBar, ResponsiveContainer, Cell, Legend, Tooltip
-} from 'recharts';
+
 import type { QuestionBlueprint } from '../lib/blueprint';
 
 interface Props {
@@ -16,19 +14,6 @@ const SKILL_COLORS: Record<string, string> = {
   'Sintezlash':    '#e11d48',
 };
 
-const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white border border-slate-200 shadow-xl px-3 py-2 rounded-xl text-sm">
-        <span className="font-bold text-neutral-main">{payload[0].payload.name}:</span>
-        <span className="ml-2 font-black" style={{ color: payload[0].payload.fill }}>
-          {payload[0].value}%
-        </span>
-      </div>
-    );
-  }
-  return null;
-};
 
 export default function SkillsRadarChart({ results = {}, blueprint }: Props) {
   const skillStats: Record<string, { total: number; correct: number }> = {
@@ -63,8 +48,6 @@ export default function SkillsRadarChart({ results = {}, blueprint }: Props) {
     { name: 'Sintezlash',    value: getPercentage("Sintezlash"), color: SKILL_COLORS['Sintezlash']    },
   ];
 
-  // RadialBarChart needs data with fill property
-  const radialData = bars.map(b => ({ name: b.name, value: b.value, fill: b.color }));
 
   return (
     <section className="space-y-4">
