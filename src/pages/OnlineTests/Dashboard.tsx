@@ -108,7 +108,7 @@ export default function OnlineTestsDashboard() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
-            placeholder="Search tests by title or subject..."
+            placeholder="Testlarni nomi yoki fani bo'yicha qidiring..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full max-w-md pl-10 pr-4 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 transition-colors bg-white shadow-sm"
@@ -134,16 +134,16 @@ export default function OnlineTestsDashboard() {
               <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FileText className="text-gray-400" size={24} />
               </div>
-              <h3 className="text-gray-900 font-medium mb-1">No tests found</h3>
+              <h3 className="text-gray-900 font-medium mb-1">Testlar topilmadi</h3>
               <p className="text-sm text-gray-500 mb-6">
-                {search ? "Try adjusting your search." : "Get started by creating your first test."}
+                {search ? "Boshqa so'z bilan qidirib ko'ring." : "Birinchi testingizni yaratishdan boshlang."}
               </p>
               {!search && (
                 <button
                   onClick={() => navigate('/online-tests/create')}
                   className="text-sm font-medium text-blue-600 hover:text-blue-700"
                 >
-                  Create your first test &rarr;
+                  Birinchi testingizni yarating &rarr;
                 </button>
               )}
             </div>
@@ -166,7 +166,7 @@ export default function OnlineTestsDashboard() {
                           {test.subject}
                         </span>
                         <span>•</span>
-                        <span>{test.questions?.length || 0} questions</span>
+                        <span>{test.questions?.length || 0} ta savol</span>
                         <span>•</span>
                         <span>{new Date(test.createdAt).toLocaleDateString()}</span>
                       </div>

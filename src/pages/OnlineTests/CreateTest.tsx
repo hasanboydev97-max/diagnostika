@@ -130,30 +130,30 @@ export default function CreateTest() {
           className="group flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-8 font-medium"
         >
           <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-          Back to Tests
+          Testlarga qaytish
         </button>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-semibold tracking-tight text-gray-900">Create Test</h1>
-          <p className="text-gray-500 mt-1 text-sm">Fill in the details to setup a new assessment.</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-gray-900">Test yaratish</h1>
+          <p className="text-gray-500 mt-1 text-sm">Yangi test sozlamalarini kiriting.</p>
         </div>
 
         {/* Basic Info Card */}
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Test Title</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Test nomi</label>
               <input 
                 type="text" 
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400
                   focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
-                placeholder="e.g. Midterm History Exam"
+                placeholder="masalan, Tarixdan choraklik imtihon"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Subject</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Fan</label>
               <input 
                 type="text" 
                 value={subject}
@@ -208,7 +208,7 @@ export default function CreateTest() {
               mode === 'ai' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            AI Generator
+            AI Yordamida
           </button>
           <button
             onClick={() => setMode('manual')}
@@ -216,7 +216,7 @@ export default function CreateTest() {
               mode === 'manual' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Manual Entry
+            Qo'lda kiritish
           </button>
         </div>
 
@@ -225,21 +225,21 @@ export default function CreateTest() {
           <div className="bg-blue-50/50 p-6 rounded-xl border border-blue-100 mb-8">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="text-blue-500" size={18} />
-              <h3 className="text-sm font-semibold text-blue-900">Generate with Gemini AI</h3>
+              <h3 className="text-sm font-semibold text-blue-900">Gemini AI yordamida yaratish</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Specific Topic (Optional)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Aniq mavzu (Ixtiyoriy)</label>
                 <input 
                   type="text" 
                   value={topic}
                   onChange={e => setTopic(e.target.value)}
                   className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-                  placeholder="e.g. World War II"
+                  placeholder="masalan, 2-Jahon urushi"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Number of Questions</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Savollar soni</label>
                 <input 
                   type="number" 
                   min="1" max="20"
@@ -255,7 +255,7 @@ export default function CreateTest() {
               className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 shadow-sm"
             >
               {generating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-              {generating ? 'Generating...' : 'Generate Questions'}
+              {generating ? 'Yaratilmoqda...' : 'Savollarni yaratish'}
             </button>
           </div>
         )}
@@ -264,7 +264,7 @@ export default function CreateTest() {
         {questions.length > 0 && (
           <div className="space-y-6 mb-8">
             <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-              <h2 className="text-lg font-semibold text-gray-900">Questions ({questions.length})</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Savollar ({questions.length})</h2>
             </div>
             
             {questions.map((q, qIndex) => (
@@ -282,12 +282,12 @@ export default function CreateTest() {
                     }}
                     rows={2}
                     className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black resize-none"
-                    placeholder="Type your question here..."
+                    placeholder="Savolingizni bu yerga yozing..."
                   />
                   <button
                     onClick={() => setQuestions(questions.filter((_, i) => i !== qIndex))}
                     className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                    title="Remove Question"
+                    title="Savolni o'chirish"
                   >
                     <Trash2 size={18} />
                   </button>
