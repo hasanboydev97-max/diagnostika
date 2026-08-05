@@ -197,7 +197,7 @@ app.post('/api/online-tests/generate', async (req, res) => {
     if (!apiKey) return res.status(500).json({ error: 'Gemini API key missing' });
     
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
     
     const prompt = `Yaratib berilishi kerak bo'lgan test:
 Fan: ${subject}
@@ -232,7 +232,7 @@ app.post('/api/online-test-results/check', async (req, res) => {
     if (!apiKey) return res.status(500).json({ error: 'Gemini API key missing' });
     
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
     
     const prompt = `O'quvchi test ishladi. 
 Test nomi: ${testTitle}
