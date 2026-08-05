@@ -1,2 +1,3 @@
-const cleanWord = '\\sin(x';
-console.log('Regex test:', /[0-9\\+*/=<>|\[\]{}^_\-]/.test(cleanWord));
+const str = '{"q": "\\frac", "newline": "a\\nb", "quote": "\\""}';
+const regex = /(?<!\\)\\(?!["\\/])/g;
+console.log(JSON.parse(str.replace(regex, "\\\\")));
