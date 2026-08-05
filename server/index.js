@@ -196,9 +196,43 @@ app.post('/api/online-test-results', async (req, res) => {
       }
     }
 
-    const result = new OnlineTestResult(data);
-    await result.save();
-    res.status(201).json({ message: 'Result saved successfully' });
+    // Attempt AI Generation safely
+    let aiFeedback = "Ajoyib natija! AI tizimi hozirda band bo'lgani sababli batafsil xulosa berolmadi, ammo yechimlaringiz muvaffaqiyatli saqlandi.";
+    try {
+      const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+      if (apiKey && test && data.questions) {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+        
+        const prompt = `O'quvchi test ishladi. 
+Test nomi: ${test.title}
+O'quvchi: ${data.studentName}
+Natija: ${data.score} / ${data.totalScore}
+
+Savollar va o'quvchining javoblari:
+${JSON.stringify(data.questions.map((q, i) => ({
+  savol: q.questionText,
+  togri_javob: q.correctOption,
+  oquvchi_javobi: data.answers[i]
+})), null, 2)}
+
+Ushbu natijalarga asosan o'quvchiga o'zbek tilida qisqa (2-3 ta gap) dalda beruvchi va qaysi mavzularda e'tiborli bo'lishi kerakligi haqida maslahat (feedback) yozing. Hech qanday JSON yozmang, faqat matn.`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        aiFeedback = response.text();
+      }
+    } catch (aiError) {
+      console.error('AI Feedback skipped/failed:', aiError.message);
+    }
+
+    data.aiFeedback = aiFeedback;
+
+    // Securely save to MongoDB FIRST before sending success response
+    const resultDoc = new OnlineTestResult(data);
+    await resultDoc.save();
+    
+    res.status(201).json({ message: 'Result saved successfully', aiFeedback });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -250,39 +284,7 @@ JSON dan boshqa hech qanday izoh yoki markdown yozma. Array qaytar.`;
   }
 });
 
-app.post('/api/online-test-results/check', async (req, res) => {
-  try {
-    const { testTitle, studentName, score, totalScore, answers, questions } = req.body;
-    const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: 'Gemini API key missing' });
-    
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
-    
-    const prompt = `O'quvchi test ishladi. 
-Test nomi: ${testTitle}
-O'quvchi: ${studentName}
-Natija: ${score} / ${totalScore}
-
-Savollar va o'quvchining javoblari:
-${JSON.stringify(questions.map((q, i) => ({
-  savol: q.questionText,
-  togri_javob: q.correctOption,
-  oquvchi_javobi: answers[i]
-})), null, 2)}
-
-Ushbu natijalarga asosan o'quvchiga o'zbek tilida qisqa (2-3 ta gap) dalda beruvchi va qaysi mavzularda e'tiborli bo'lishi kerakligi haqida maslahat (feedback) yozing. Hech qanday JSON yozmang, faqat matn.`;
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    
-    res.json({ feedback: text });
-  } catch (error) {
-    console.error('AI Check Error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
+// Old API check endpoint removed to favor the atomic save logic
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);

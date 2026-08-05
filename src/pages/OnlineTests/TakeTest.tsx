@@ -134,21 +134,7 @@ export default function TakeTest() {
     const resultId = 'res_' + Date.now().toString();
     
     try {
-      const aiRes = await fetch(`${API_URL}/online-test-results/check`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          testTitle: test.title,
-          studentName: studentName + (isForced ? ' (Cheated)' : ''),
-          score,
-          totalScore: test.questions.length,
-          answers,
-          questions: test.questions
-        })
-      });
-      const aiData = await aiRes.json();
-      
-      await fetch(`${API_URL}/online-test-results`, {
+      const res = await fetch(`${API_URL}/online-test-results`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -158,11 +144,16 @@ export default function TakeTest() {
           answers,
           score,
           totalScore: test.questions.length,
-          aiFeedback: aiData.feedback,
+          questions: test.questions,
           createdAt: new Date().toISOString()
         })
       });
       
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Server xatosi');
+      }
+
       // Exit fullscreen if active
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(err => console.log(err));
@@ -170,9 +161,9 @@ export default function TakeTest() {
 
       toast.success('Test muvaffaqiyatli yakunlandi!', { id: toastId });
       navigate(`/online-tests/results/${resultId}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error('Xatolik yuz berdi. Iltimos qayta urinib ko\'ring.', { id: toastId });
+      toast.error(error.message || 'Xatolik yuz berdi. Iltimos qayta urinib ko\'ring.', { id: toastId });
       setSubmitting(false);
     }
   };
