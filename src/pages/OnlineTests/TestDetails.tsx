@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, FileText, Printer } from 'lucide-react';
 import { getAuthHeaders, getToken } from '../../lib/auth';
 import { toast } from 'sonner';
+import FormattedText from '../../components/FormattedText';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -62,6 +63,46 @@ export default function TestDetails() {
     toast.success('Test manzili nusxalandi! O\'quvchilarga yuborishingiz mumkin.');
   };
 
+  const handleExportWord = () => {
+    if (!test) return;
+    
+    let htmlContent = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head><meta charset='utf-8'><title>${test.title}</title></head>
+      <body>
+        <h1 style="text-align:center; font-family: Arial, sans-serif;">${test.title}</h1>
+        <h3 style="text-align:center; font-family: Arial, sans-serif;">Fan: ${test.subject} | ${test.durationMinutes ? 'Vaqt: ' + test.durationMinutes + ' daqiqa' : ''}</h3>
+        <hr/>
+    `;
+
+    test.questions.forEach((q: any, i: number) => {
+      htmlContent += `<div style="font-family: Arial, sans-serif; margin-bottom: 20px;">`;
+      htmlContent += `<p><b>${i + 1}. ${q.questionText}</b></p>`;
+      q.options.forEach((opt: string) => {
+        htmlContent += `<p style="margin-left: 20px;">&#9711; ${opt}</p>`;
+      });
+      htmlContent += `</div>`;
+    });
+
+    htmlContent += `<br/><hr/><h2 style="font-family: Arial, sans-serif;">Kalit javoblar</h2>`;
+    test.questions.forEach((q: any, i: number) => {
+       htmlContent += `<p style="font-family: Arial, sans-serif; margin: 2px;"><b>${i + 1}.</b> ${q.correctOption}</p>`;
+    });
+
+    htmlContent += `</body></html>`;
+
+    const blob = new Blob(['\ufeff', htmlContent], {
+        type: 'application/msword'
+    });
+    
+    const downloadLink = document.createElement("a");
+    document.body.appendChild(downloadLink);
+    downloadLink.href = URL.createObjectURL(blob);
+    downloadLink.download = `${test.title}.doc`;
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -95,7 +136,28 @@ export default function TestDetails() {
           <ArrowLeft size={16} /> Dashboard'ga qaytish
         </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Print-only View (Hidden on screen) */}
+        <div className="hidden print:block mb-8">
+          <h1 className="text-3xl font-bold text-center mb-2">{test.title}</h1>
+          <p className="text-center text-gray-600 mb-8">Fan: {test.subject}</p>
+          <div className="space-y-6">
+            {test.questions.map((q: any, i: number) => (
+              <div key={i} className="mb-4 page-break-inside-avoid">
+                <p className="font-semibold text-lg mb-2">{i + 1}. <FormattedText content={q.questionText} /></p>
+                <div className="pl-6 space-y-2">
+                  {q.options.map((opt: string, oIndex: number) => (
+                    <div key={oIndex} className="flex items-center gap-2">
+                      <div className="w-4 h-4 border border-black rounded-full"></div>
+                      <FormattedText content={opt} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 print:hidden">
           
           {/* Sidebar Info */}
           <div className="lg:col-span-1 space-y-6">
@@ -124,6 +186,20 @@ export default function TestDetails() {
                 >
                   <ExternalLink size={16} /> O'zim yechib ko'rish
                 </button>
+                <div className="flex gap-2 w-full mt-2">
+                  <button
+                    onClick={handleExportWord}
+                    className="flex-1 flex items-center justify-center gap-2 px-2 py-2.5 bg-blue-50 border border-blue-200 text-blue-700 text-xs font-medium rounded-lg hover:bg-blue-100 transition-colors"
+                  >
+                    <FileText size={14} /> Word (.doc)
+                  </button>
+                  <button
+                    onClick={() => window.print()}
+                    className="flex-1 flex items-center justify-center gap-2 px-2 py-2.5 bg-red-50 border border-red-200 text-red-700 text-xs font-medium rounded-lg hover:bg-red-100 transition-colors"
+                  >
+                    <Printer size={14} /> Print (PDF)
+                  </button>
+                </div>
               </div>
             </div>
 

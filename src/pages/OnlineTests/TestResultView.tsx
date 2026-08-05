@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, ArrowLeft, BrainCircuit, CheckCircle2, XCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import FormattedText from '../../components/FormattedText';
 import {
   BarChart,
   Bar,
@@ -217,7 +218,7 @@ export default function TestResultView() {
                         {q.subtopic || 'Umumiy'}
                       </span>
                       <h4 className="text-base font-medium text-gray-900 leading-snug">
-                        {i + 1}. {q.questionText}
+                        {i + 1}. <FormattedText content={q.questionText} />
                       </h4>
                     </div>
                   </div>
@@ -238,7 +239,7 @@ export default function TestResultView() {
                       
                       return (
                         <div key={oIndex} className={cardClass}>
-                          {opt}
+                          <FormattedText content={opt} />
                         </div>
                       );
                     })}

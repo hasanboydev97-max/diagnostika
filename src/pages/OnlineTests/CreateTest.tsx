@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Sparkles, Plus, Trash2, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
+import FormattedText from '../../components/FormattedText';
 import { getAuthHeaders, getToken, getTeacher } from '../../lib/auth';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -288,8 +289,9 @@ export default function CreateTest() {
                   <span className="font-mono text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">
                     Q{qIndex + 1}
                   </span>
-                  <textarea
-                    value={q.questionText}
+                  <div className="flex-1 flex flex-col">
+                    <textarea
+                      value={q.questionText}
                     onChange={e => {
                       const newQ = [...questions];
                       newQ[qIndex].questionText = e.target.value;
@@ -299,6 +301,12 @@ export default function CreateTest() {
                     className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black resize-none"
                     placeholder="Savolingizni bu yerga yozing..."
                   />
+                  {q.questionText.includes('$') && (
+                    <div className="w-full mt-2 p-3 bg-slate-50 rounded-md border border-slate-200">
+                      <span className="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Tugallangan ko'rinishi:</span>
+                      <FormattedText content={q.questionText} />
+                    </div>
+                  )}
                   <button
                     onClick={() => setQuestions(questions.filter((_, i) => i !== qIndex))}
                     className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
@@ -306,6 +314,7 @@ export default function CreateTest() {
                   >
                     <Trash2 size={18} />
                   </button>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-12">
@@ -325,22 +334,29 @@ export default function CreateTest() {
                           }}
                           className="w-4 h-4 text-black border-gray-300 focus:ring-black cursor-pointer"
                         />
-                        <input
-                          type="text"
-                          value={opt}
-                          onChange={e => {
-                            const newQ = [...questions];
-                            const oldVal = newQ[qIndex].options[oIndex];
-                            const newVal = e.target.value;
-                            newQ[qIndex].options[oIndex] = newVal;
-                            if (newQ[qIndex].correctOption === oldVal) {
-                              newQ[qIndex].correctOption = newVal;
-                            }
-                            setQuestions(newQ);
-                          }}
-                          className="flex-1 bg-transparent border-b border-gray-200 focus:border-black px-1 py-1 text-sm focus:outline-none transition-colors"
-                          placeholder={`Option ${oIndex + 1}`}
-                        />
+                        <div className="flex-1 flex flex-col relative">
+                          <input
+                            type="text"
+                            value={opt}
+                            onChange={e => {
+                              const newQ = [...questions];
+                              const oldVal = newQ[qIndex].options[oIndex];
+                              const newVal = e.target.value;
+                              newQ[qIndex].options[oIndex] = newVal;
+                              if (newQ[qIndex].correctOption === oldVal) {
+                                newQ[qIndex].correctOption = newVal;
+                              }
+                              setQuestions(newQ);
+                            }}
+                            className="w-full bg-transparent border-b border-gray-200 focus:border-black px-1 py-1 text-sm focus:outline-none transition-colors"
+                            placeholder={`Option ${oIndex + 1}`}
+                          />
+                          {opt.includes('$') && (
+                            <div className="mt-1 p-2 bg-slate-50 border border-slate-200 rounded text-sm">
+                              <FormattedText content={opt} />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })}

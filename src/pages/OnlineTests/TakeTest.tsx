@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, ArrowLeft, Check, AlertTriangle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import FormattedText from '../../components/FormattedText';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -387,7 +388,7 @@ export default function TakeTest() {
         <div className="flex-1 flex flex-col max-w-4xl order-1 lg:order-2 lg:pt-8">
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-10 leading-snug">
-            {currentQ.questionText}
+            <FormattedText content={currentQ.questionText} />
           </h3>
 
           <div className="space-y-3">
@@ -403,7 +404,9 @@ export default function TakeTest() {
                       : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
                   }`}
                 >
-                  <span className={isSelected ? 'font-medium' : ''}>{opt}</span>
+                  <span className={isSelected ? 'font-medium' : ''}>
+                    <FormattedText content={opt} />
+                  </span>
                   <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
                     isSelected ? 'border-black bg-black text-white' : 'border-gray-300 group-hover:border-gray-400'
                   }`}>
