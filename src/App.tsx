@@ -6,6 +6,7 @@ import OnlineTestsDashboard from './pages/OnlineTests/Dashboard';
 import CreateTest from './pages/OnlineTests/CreateTest';
 import TakeTest from './pages/OnlineTests/TakeTest';
 import TestResultView from './pages/OnlineTests/TestResultView';
+import TestDetails from './pages/OnlineTests/TestDetails';
 import { Toaster } from 'sonner';
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
         {/* Online Tests Routes */}
         <Route path="/online-tests" element={<OnlineTestsDashboard />} />
         <Route path="/online-tests/create" element={<CreateTest />} />
+        <Route path="/online-tests/details/:testId" element={<TestDetails />} />
         <Route path="/online-tests/take/:testId" element={<TakeTest />} />
         <Route path="/online-tests/results/:resultId" element={<TestResultView />} />
       </Routes>

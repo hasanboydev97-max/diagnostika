@@ -112,7 +112,7 @@ export default function OnlineTestsDashboard() {
                 <li
                   key={test.id}
                   className="group hover:bg-gray-50/80 transition-colors flex items-center justify-between p-4 sm:p-6 cursor-pointer"
-                  onClick={() => navigate(`/online-tests/take/${test.id}`)}
+                  onClick={() => navigate(`/online-tests/details/${test.id}`)}
                 >
                   <div className="flex items-start gap-4">
                     <div className="mt-1 bg-gray-100 p-2 rounded-md text-gray-500 group-hover:bg-white group-hover:shadow-sm transition-all border border-transparent group-hover:border-gray-200">
@@ -133,7 +133,7 @@ export default function OnlineTestsDashboard() {
                   </div>
                   <div className="flex items-center text-gray-400 group-hover:text-gray-900 transition-colors">
                     <span className="text-sm font-medium mr-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      Take Test
+                      Natijalar
                     </span>
                     <ChevronRight size={18} />
                   </div>

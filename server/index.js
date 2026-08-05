@@ -160,6 +160,16 @@ app.get('/api/online-tests/:id', async (req, res) => {
   }
 });
 
+// GET all results for a specific test
+app.get('/api/online-tests/:id/results', async (req, res) => {
+  try {
+    const results = await OnlineTestResult.find({ testId: req.params.id }).sort({ createdAt: -1 });
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 app.post('/api/online-tests', async (req, res) => {
   try {
     const data = req.body;
