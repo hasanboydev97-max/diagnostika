@@ -286,35 +286,28 @@ export default function CreateTest() {
             {questions.map((q, qIndex) => (
               <div key={qIndex} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                 <div className="flex gap-4 items-start mb-6">
-                  <span className="font-mono text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                  <span className="font-mono text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded mt-2">
                     Q{qIndex + 1}
                   </span>
-                  <div className="flex-1 flex flex-col">
-                    <textarea
+                  <div className="flex-1 min-w-0">
+                    <MathInput
                       value={q.questionText}
-                    onChange={e => {
-                      const newQ = [...questions];
-                      newQ[qIndex].questionText = e.target.value;
-                      setQuestions(newQ);
-                    }}
-                    rows={2}
-                    className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black resize-none"
-                    placeholder="Savolingizni bu yerga yozing..."
-                  />
-                  {q.questionText.includes('$') && (
-                    <div className="w-full mt-2 p-3 bg-slate-50 rounded-md border border-slate-200">
-                      <span className="text-[10px] font-bold uppercase text-slate-400 mb-1 block">Tugallangan ko'rinishi:</span>
-                      <FormattedText content={q.questionText} />
-                    </div>
-                  )}
+                      onChange={(e: any) => {
+                        const newQ = [...questions];
+                        newQ[qIndex].questionText = e.target.value;
+                        setQuestions(newQ);
+                      }}
+                      placeholder="Savolingizni bu yerga yozing..."
+                      isTextarea={true}
+                    />
+                  </div>
                   <button
                     onClick={() => setQuestions(questions.filter((_, i) => i !== qIndex))}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors mt-1"
                     title="Savolni o'chirish"
                   >
                     <Trash2 size={18} />
                   </button>
-                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-12">
@@ -334,11 +327,10 @@ export default function CreateTest() {
                           }}
                           className="w-4 h-4 text-black border-gray-300 focus:ring-black cursor-pointer"
                         />
-                        <div className="flex-1 flex flex-col relative">
-                          <input
-                            type="text"
+                        <div className="flex-1 min-w-0">
+                          <MathInput
                             value={opt}
-                            onChange={e => {
+                            onChange={(e: any) => {
                               const newQ = [...questions];
                               const oldVal = newQ[qIndex].options[oIndex];
                               const newVal = e.target.value;
@@ -348,14 +340,8 @@ export default function CreateTest() {
                               }
                               setQuestions(newQ);
                             }}
-                            className="w-full bg-transparent border-b border-gray-200 focus:border-black px-1 py-1 text-sm focus:outline-none transition-colors"
-                            placeholder={`Option ${oIndex + 1}`}
+                            placeholder={`Variant ${oIndex + 1}`}
                           />
-                          {opt.includes('$') && (
-                            <div className="mt-1 p-2 bg-slate-50 border border-slate-200 rounded text-sm">
-                              <FormattedText content={opt} />
-                            </div>
-                          )}
                         </div>
                       </div>
                     );
@@ -393,5 +379,60 @@ export default function CreateTest() {
 
       </div>
     </div>
+  );
+}
+
+// Senior-level UX: Click-to-edit Math Input
+function MathInput({ 
+  value, 
+  onChange, 
+  placeholder, 
+  isTextarea = false 
+}: { 
+  value: string; 
+  onChange: (e: any) => void; 
+  placeholder: string; 
+  isTextarea?: boolean; 
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+
+  // If we are not editing and the value exists, show the rendered math
+  if (!isEditing && value) {
+    return (
+      <div 
+        onClick={() => setIsEditing(true)} 
+        className={`cursor-text border border-transparent hover:border-gray-300 hover:bg-gray-50 rounded px-3 py-2 transition-colors min-h-[40px] w-full flex items-center ${isTextarea ? 'items-start' : ''}`}
+        title="Tahrirlash uchun bosing"
+      >
+        <FormattedText content={value} />
+      </div>
+    );
+  }
+
+  // If editing or empty, show input field
+  if (isTextarea) {
+    return (
+      <textarea
+        value={value}
+        onChange={onChange}
+        onBlur={() => setIsEditing(false)}
+        autoFocus={isEditing}
+        rows={2}
+        className="w-full px-3 py-2 bg-white border border-black rounded shadow-sm focus:outline-none focus:ring-1 focus:ring-black resize-none"
+        placeholder={placeholder}
+      />
+    );
+  }
+
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={onChange}
+      onBlur={() => setIsEditing(false)}
+      autoFocus={isEditing}
+      className="w-full bg-white border-b-2 border-black px-2 py-1 text-sm focus:outline-none transition-colors"
+      placeholder={placeholder}
+    />
   );
 }
