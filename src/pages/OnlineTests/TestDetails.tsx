@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink } from 'lucide-react';
+import { getAuthHeaders, getToken } from '../../lib/auth';
 import { toast } from 'sonner';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -22,19 +23,27 @@ export default function TestDetails() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!getToken()) {
+      navigate('/teacher/login');
+      return;
+    }
     fetchData();
   }, [testId]);
 
   const fetchData = async () => {
     try {
       // Fetch test details
-      const testRes = await fetch(`${API_URL}/online-tests/${testId}`);
+      const testRes = await fetch(`${API_URL}/online-tests/${testId}`, {
+        headers: getAuthHeaders()
+      });
       if (!testRes.ok) throw new Error('Failed to fetch test');
       const testData = await testRes.json();
       setTest(testData);
 
       // Fetch results for this test
-      const resultsRes = await fetch(`${API_URL}/online-tests/${testId}/results`);
+      const resultsRes = await fetch(`${API_URL}/online-tests/${testId}/results`, {
+        headers: getAuthHeaders()
+      });
       if (resultsRes.ok) {
         const resultsData = await resultsRes.json();
         setResults(resultsData);

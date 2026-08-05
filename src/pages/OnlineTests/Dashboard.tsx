@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChevronRight, FileText, Search, Trash2 } from 'lucide-react';
+import { Plus, ChevronRight, FileText, Search, Trash2, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
+import { getAuthHeaders, getToken, logout, getTeacher } from '../../lib/auth';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -18,14 +19,21 @@ export default function OnlineTestsDashboard() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
+  const teacher = getTeacher();
 
   useEffect(() => {
+    if (!getToken()) {
+      navigate('/teacher/login');
+      return;
+    }
     fetchTests();
   }, []);
 
   const fetchTests = async () => {
     try {
-      const res = await fetch(`${API_URL}/online-tests`);
+      const res = await fetch(`${API_URL}/online-tests`, {
+        headers: getAuthHeaders()
+      });
       if (res.ok) {
         const data = await res.json();
         setTests(data);
@@ -44,7 +52,8 @@ export default function OnlineTestsDashboard() {
     
     try {
       const res = await fetch(`${API_URL}/online-tests/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: getAuthHeaders()
       });
       if (res.ok) {
         toast.success('Test muvaffaqiyatli o\'chirildi');
@@ -70,17 +79,28 @@ export default function OnlineTestsDashboard() {
         
         {/* Header section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-gray-900">Online Tests</h1>
-            <p className="text-gray-500 mt-1 text-sm">Create and manage your assessments.</p>
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">O'qituvchi Paneli</h1>
+              <p className="text-gray-500 mt-1">{teacher?.name} - {teacher?.subject} o'qituvchisi</p>
+            </div>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <button
+                onClick={() => navigate('/online-tests/create')}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm"
+              >
+                <Plus size={20} />
+                <span>Yangi Test</span>
+              </button>
+              <button
+                onClick={logout}
+                className="p-2.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-gray-200 hover:border-red-100 bg-white"
+                title="Chiqish"
+              >
+                <LogOut size={20} />
+              </button>
+            </div>
           </div>
-          <button
-            onClick={() => navigate('/online-tests/create')}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 shadow-sm"
-          >
-            <Plus size={16} />
-            Create Test
-          </button>
         </div>
 
         {/* Search & Filters */}

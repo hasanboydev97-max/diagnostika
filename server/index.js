@@ -8,6 +8,8 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -52,9 +54,12 @@ const Result = mongoose.model('Result', ResultSchema);
 
 const OnlineTestSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
+  teacherId: { type: String, required: true },
   title: String,
   subject: String,
   questions: Array,
+  startTime: String,
+  endTime: String,
   createdAt: String
 }, { strict: false });
 const OnlineTest = mongoose.model('OnlineTest', OnlineTestSchema);
@@ -70,6 +75,32 @@ const OnlineTestResultSchema = new mongoose.Schema({
   createdAt: String
 }, { strict: false });
 const OnlineTestResult = mongoose.model('OnlineTestResult', OnlineTestResultSchema);
+
+// Teacher Schema for Auth
+const TeacherSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  subject: { type: String, required: true }
+});
+const Teacher = mongoose.model('Teacher', TeacherSchema);
+
+const JWT_SECRET = process.env.JWT_SECRET || 'maktab-test-super-secret-key';
+
+// Middleware for protecting routes
+const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Ruxsat etilmadi (Token yo\'q)' });
+  
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.teacherId = decoded.id;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Yaroqsiz token' });
+  }
+};
+
 
 // Connect to MongoDB
 if (MONGODB_URI) {
@@ -139,11 +170,55 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
   }
 });
 
+// --- Auth Routes ---
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { name, email, password, subject } = req.body;
+    const existing = await Teacher.findOne({ email });
+    if (existing) return res.status(400).json({ error: 'Ushbu email allaqachon ro\'yxatdan o\'tgan.' });
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const teacher = new Teacher({ name, email, password: hashedPassword, subject });
+    await teacher.save();
+    
+    const token = jwt.sign({ id: teacher._id }, JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ token, teacher: { id: teacher._id, name, email, subject } });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const teacher = await Teacher.findOne({ email });
+    if (!teacher) return res.status(400).json({ error: 'Email yoki parol xato.' });
+    
+    const isMatch = await bcrypt.compare(password, teacher.password);
+    if (!isMatch) return res.status(400).json({ error: 'Email yoki parol xato.' });
+    
+    const token = jwt.sign({ id: teacher._id }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, teacher: { id: teacher._id, name: teacher.name, email, subject: teacher.subject } });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/auth/me', authMiddleware, async (req, res) => {
+  try {
+    const teacher = await Teacher.findById(req.teacherId).select('-password');
+    if (!teacher) return res.status(404).json({ error: 'Topilmadi' });
+    res.json(teacher);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // --- Online Tests Routes ---
 
-app.get('/api/online-tests', async (req, res) => {
+app.get('/api/online-tests', authMiddleware, async (req, res) => {
   try {
-    const tests = await OnlineTest.find().sort({ _id: -1 });
+    const tests = await OnlineTest.find({ teacherId: req.teacherId }).sort({ createdAt: -1 });
     res.json(tests);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -160,9 +235,13 @@ app.get('/api/online-tests/:id', async (req, res) => {
   }
 });
 
-// GET all results for a specific test
-app.get('/api/online-tests/:id/results', async (req, res) => {
+// GET all results for a specific test (Protected)
+app.get('/api/online-tests/:id/results', authMiddleware, async (req, res) => {
   try {
+    // Check if test belongs to this teacher
+    const test = await OnlineTest.findOne({ id: req.params.id, teacherId: req.teacherId });
+    if (!test) return res.status(403).json({ error: 'Forbidden' });
+    
     const results = await OnlineTestResult.find({ testId: req.params.id }).sort({ createdAt: -1 });
     res.json(results);
   } catch (error) {
@@ -170,11 +249,11 @@ app.get('/api/online-tests/:id/results', async (req, res) => {
   }
 });
 
-app.post('/api/online-tests', async (req, res) => {
+app.post('/api/online-tests', authMiddleware, async (req, res) => {
   try {
-    const data = req.body;
-    await OnlineTest.findOneAndUpdate({ id: data.id }, data, { upsert: true, new: true });
-    res.json({ success: true });
+    const test = new OnlineTest({ ...req.body, teacherId: req.teacherId });
+    await test.save();
+    res.status(201).json({ message: 'Test created successfully', id: test.id });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -238,13 +317,13 @@ Ushbu natijalarga asosan o'quvchiga o'zbek tilida qisqa (2-3 ta gap) dalda beruv
   }
 });
 
-app.delete('/api/online-tests/:id', async (req, res) => {
+app.delete('/api/online-tests/:id', authMiddleware, async (req, res) => {
   try {
     const testId = req.params.id;
-    // Delete the test itself
-    const deletedTest = await OnlineTest.findOneAndDelete({ id: testId });
+    // Delete the test itself IF it belongs to the teacher
+    const deletedTest = await OnlineTest.findOneAndDelete({ id: testId, teacherId: req.teacherId });
     if (!deletedTest) {
-      return res.status(404).json({ error: 'Test not found' });
+      return res.status(404).json({ error: 'Test not found or unauthorized' });
     }
     // Delete all results associated with this test
     await OnlineTestResult.deleteMany({ testId });
@@ -265,18 +344,20 @@ app.get('/api/online-test-results/:id', async (req, res) => {
   }
 });
 
-app.post('/api/online-tests/generate', async (req, res) => {
+app.post('/api/online-tests/generate', authMiddleware, async (req, res) => {
   try {
-    const { subject, topic, questionCount } = req.body;
+    const { topic, questionCount, subject } = req.body;
     const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: 'Gemini API key missing' });
     
+    if (!apiKey) {
+      return res.status(500).json({ error: 'Gemini API key is missing' });
+    }
+
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
-    
-    const prompt = `Yaratib berilishi kerak bo'lgan test:
-Fan: ${subject}
-Mavzu: ${topic || 'Umumiy'}
+
+    const prompt = `Siz malakali ${subject} o'qituvchisisiz. Quyidagi mavzuda maktab o'quvchilari uchun test savollari tuzing:
+Mavzu: ${topic}
 Savollar soni: ${questionCount || 5}
 
 Faqat valid JSON formatida javob qaytar. Har bir savol obyekti quydagi maydonlarga ega bo'lsin:

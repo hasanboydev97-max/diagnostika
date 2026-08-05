@@ -1,18 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Sparkles, Plus, Trash2, Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
+import { getAuthHeaders, getToken, getTeacher } from '../../lib/auth';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function CreateTest() {
   const navigate = useNavigate();
+  const teacher = getTeacher();
   const [title, setTitle] = useState('');
-  const [subject, setSubject] = useState('');
+  const [subject] = useState(teacher?.subject || '');
   const [hasTimeLimit, setHasTimeLimit] = useState(false);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [mode, setMode] = useState<'ai' | 'manual'>('ai');
+  
+  useEffect(() => {
+    if (!getToken()) {
+      navigate('/teacher/login');
+      return;
+    }
+  }, []);
   
   const [topic, setTopic] = useState('');
   const [questionCount, setQuestionCount] = useState(5);
@@ -32,7 +41,7 @@ export default function CreateTest() {
     try {
       const res = await fetch(`${API_URL}/online-tests/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ subject, topic, questionCount })
       });
       const data = await res.json();
@@ -74,19 +83,20 @@ export default function CreateTest() {
 
     setSaving(true);
     const id = 'test_' + Date.now().toString();
+    const testData = {
+      id,
+      title,
+      subject,
+      questions,
+      startTime: hasTimeLimit ? new Date(startTime).toISOString() : null,
+      endTime: hasTimeLimit ? new Date(endTime).toISOString() : null,
+      createdAt: new Date().toISOString()
+    };
     try {
       const res = await fetch(`${API_URL}/online-tests`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id,
-          title,
-          subject,
-          questions,
-          startTime: hasTimeLimit ? new Date(startTime).toISOString() : null,
-          endTime: hasTimeLimit ? new Date(endTime).toISOString() : null,
-          createdAt: new Date().toISOString()
-        })
+        headers: getAuthHeaders(),
+        body: JSON.stringify(testData)
       });
       
       if (!res.ok) throw new Error('Save failed');
@@ -147,11 +157,10 @@ export default function CreateTest() {
               <input 
                 type="text" 
                 value={subject}
-                onChange={e => setSubject(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400
-                  focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
-                placeholder="e.g. History"
+                disabled
+                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm text-gray-500 cursor-not-allowed shadow-sm"
               />
+              <p className="text-xs text-gray-400 mt-1">O'qituvchi akkauntidan olingan.</p>
             </div>
           </div>
           
