@@ -4,28 +4,8 @@ import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, 
 import { getAuthHeaders, getToken } from '../../lib/auth';
 import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
-import { autoFormatMath } from '../../utils/mathFormatter';
 import { jsPDF } from 'jspdf';
 import { toPng } from 'html-to-image';
-
-const renderMathForWord = (content: string) => {
-  if (!content) return '';
-  const cleanContent = autoFormatMath(content);
-  const parts = cleanContent.split('$');
-  let result = '';
-  
-  parts.forEach((part, index) => {
-    if (index % 2 === 0) {
-      result += part;
-    } else {
-      // Word does not parse MathML reliably from HTML files.
-      // The most bulletproof way to export equations to Word via HTML is using images.
-      const encodedMath = encodeURIComponent(part.trim());
-      result += `<img src="https://latex.codecogs.com/png.image?\\dpi{300}\\bg{white}${encodedMath}" style="vertical-align: middle;" alt="math" />`;
-    }
-  });
-  return result;
-};
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -87,42 +67,7 @@ export default function TestDetails() {
 
   const handleExportWord = () => {
     if (!test) return;
-    
-    let htmlContent = `
-      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-      <head><meta charset='utf-8'><title>${test.title}</title></head>
-      <body>
-        <h1 style="text-align:center; font-family: Arial, sans-serif;">${test.title}</h1>
-        <h3 style="text-align:center; font-family: Arial, sans-serif;">Fan: ${test.subject} | ${test.durationMinutes ? 'Vaqt: ' + test.durationMinutes + ' daqiqa' : ''}</h3>
-        <hr/>
-    `;
-
-    test.questions.forEach((q: any, i: number) => {
-      htmlContent += `<div style="font-family: Arial, sans-serif; margin-bottom: 20px;">`;
-      htmlContent += `<p><b>${i + 1}. ${renderMathForWord(q.questionText)}</b></p>`;
-      q.options.forEach((opt: string) => {
-        htmlContent += `<p style="margin-left: 20px;">&#9711; ${renderMathForWord(opt)}</p>`;
-      });
-      htmlContent += `</div>`;
-    });
-
-    htmlContent += `<br/><hr/><h2 style="font-family: Arial, sans-serif;">Kalit javoblar</h2>`;
-    test.questions.forEach((q: any, i: number) => {
-       htmlContent += `<p style="font-family: Arial, sans-serif; margin: 2px;"><b>${i + 1}.</b> ${renderMathForWord(q.correctOption)}</p>`;
-    });
-
-    htmlContent += `</body></html>`;
-
-    const blob = new Blob(['\ufeff', htmlContent], {
-        type: 'application/msword'
-    });
-    
-    const downloadLink = document.createElement("a");
-    document.body.appendChild(downloadLink);
-    downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = `${test.title}.doc`;
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
+    window.open(`${API_URL}/online-tests/${testId}/export/docx`, '_blank');
   };
 
   const handleDownloadPDF = async () => {

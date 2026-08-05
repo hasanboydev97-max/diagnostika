@@ -10,6 +10,10 @@ import fs from 'fs';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { Document, Packer, Paragraph, TextRun, ImportedXmlComponent, HeadingLevel } from 'docx';
+import katex from 'katex';
+import * as mml2ommlModule from 'mathml2omml';
+const { mml2omml } = mml2ommlModule;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -247,6 +251,161 @@ app.get('/api/online-tests/:id/results', authMiddleware, async (req, res) => {
     res.json(results);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+function isTextWord(word) {
+  const cleanWord = word.replace(/^[.,!?:;()]+|[.,!?:;()]+$/g, '');
+  if (cleanWord.length < 2) return false;
+  for (let i = 0; i < cleanWord.length; i++) {
+    const c = cleanWord[i];
+    if ("0123456789+*/=<>|[]{}^_-\\".includes(c)) return false;
+  }
+  return /^[a-zA-Z'oEʻgEʻ]+$/i.test(cleanWord);
+}
+
+function autoFormatMath(text) {
+  if (!text) return text;
+  let normalized = text.replace(/\$/g, '');
+  const tokens = normalized.split(/(\s+)/);
+  let result = "";
+  let inMath = false;
+  let mathBuffer = "";
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    if (token.trim() === '') {
+      if (inMath) mathBuffer += token;
+      else result += token;
+      continue;
+    }
+    if (isTextWord(token)) {
+      if (inMath) {
+        let trimmed = mathBuffer.trimRight();
+        let spaces = mathBuffer.substring(trimmed.length);
+        result += `$${trimmed}$${spaces}`;
+        inMath = false;
+        mathBuffer = "";
+      }
+      result += token;
+    } else {
+      if (!inMath) inMath = true;
+      mathBuffer += token;
+    }
+  }
+  if (inMath) {
+    let trimmed = mathBuffer.trimRight();
+    let spaces = mathBuffer.substring(trimmed.length);
+    if (trimmed.length > 0) result += `$${trimmed}$${spaces}`;
+  }
+  return result;
+}
+
+const buildParagraphs = (content, options = {}) => {
+  if (!content) return [new Paragraph({ children: [new TextRun("")] })];
+  const formattedContent = autoFormatMath(content);
+  const parts = formattedContent.split('$');
+  let currentParagraphChildren = [];
+  const paragraphs = [];
+  
+  parts.forEach((part, index) => {
+    if (index % 2 === 0) {
+      const lines = part.split('\\n');
+      lines.forEach((line, lineIndex) => {
+        if (line) currentParagraphChildren.push(new TextRun({ text: line, ...options }));
+        if (lineIndex < lines.length - 1) {
+          paragraphs.push(new Paragraph({ children: currentParagraphChildren, spacing: { after: 120 } }));
+          currentParagraphChildren = [];
+        }
+      });
+    } else {
+      try {
+        const mathml = katex.renderToString(part, { output: 'mathml', displayMode: false, throwOnError: false });
+        const mathMatch = mathml.match(/<math.*<\/math>/);
+        if (mathMatch) {
+          const omml = mml2omml(mathMatch[0]);
+          currentParagraphChildren.push(new ImportedXmlComponent(omml));
+        } else {
+          currentParagraphChildren.push(new TextRun({ text: `$${part}$`, ...options }));
+        }
+      } catch (e) {
+        currentParagraphChildren.push(new TextRun({ text: `$${part}$`, ...options }));
+      }
+    }
+  });
+  
+  if (currentParagraphChildren.length > 0) {
+    paragraphs.push(new Paragraph({ children: currentParagraphChildren, spacing: { after: 120 } }));
+  }
+  
+  return paragraphs;
+};
+
+// GET DOCX Export
+app.get('/api/online-tests/:id/export/docx', async (req, res) => {
+  try {
+    const test = await OnlineTest.findOne({ id: req.params.id });
+    if (!test) return res.status(404).json({ error: 'Test not found' });
+
+    const docSections = [];
+
+    // Title
+    docSections.push(new Paragraph({
+      text: test.title,
+      heading: HeadingLevel.HEADING_1,
+      alignment: "center",
+      spacing: { after: 200 }
+    }));
+
+    // Subject
+    docSections.push(new Paragraph({
+      text: `Fan: ${test.subject}`,
+      alignment: "center",
+      spacing: { after: 400 }
+    }));
+
+    // Questions
+    test.questions.forEach((q, index) => {
+      // Question text
+      const qText = `${index + 1}. ${q.questionText}`;
+      docSections.push(...buildParagraphs(qText, { bold: true }));
+
+      // Options
+      docSections.push(...buildParagraphs(`A) ${q.options[0]}`));
+      docSections.push(...buildParagraphs(`B) ${q.options[1]}`));
+      docSections.push(...buildParagraphs(`C) ${q.options[2]}`));
+      docSections.push(...buildParagraphs(`D) ${q.options[3]}`));
+      
+      // Empty line between questions
+      docSections.push(new Paragraph({ text: "", spacing: { after: 300 } }));
+    });
+    
+    // Answers (Kalit javoblar)
+    docSections.push(new Paragraph({
+      text: "Kalit javoblar",
+      heading: HeadingLevel.HEADING_2,
+      spacing: { before: 400, after: 200 }
+    }));
+    
+    test.questions.forEach((q, index) => {
+      const qAnswer = `${index + 1}. ${q.correctOption}`;
+      docSections.push(...buildParagraphs(qAnswer, { bold: true }));
+    });
+
+    const doc = new Document({
+      sections: [{
+        properties: {},
+        children: docSections
+      }]
+    });
+
+    const buffer = await Packer.toBuffer(doc);
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(test.title)}.docx"`);
+    res.send(buffer);
+  } catch (error) {
+    console.error("DOCX Export Error:", error);
+    res.status(500).json({ error: 'Server error generating DOCX' });
   }
 });
 
