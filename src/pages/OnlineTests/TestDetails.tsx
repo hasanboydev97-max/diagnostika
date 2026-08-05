@@ -17,15 +17,10 @@ const renderMathForWord = (content: string) => {
     if (index % 2 === 0) {
       result += part;
     } else {
-      try {
-        result += katex.renderToString(part, {
-          throwOnError: false,
-          output: 'mathml',
-          displayMode: false
-        });
-      } catch (e) {
-        result += `$${part}$`;
-      }
+      // Word does not parse MathML reliably from HTML files.
+      // The most bulletproof way to export equations to Word via HTML is using images.
+      const encodedMath = encodeURIComponent(part.trim());
+      result += `<img src="https://latex.codecogs.com/png.image?\\dpi{300}\\bg{white}${encodedMath}" style="vertical-align: middle;" alt="math" />`;
     }
   });
   return result;
