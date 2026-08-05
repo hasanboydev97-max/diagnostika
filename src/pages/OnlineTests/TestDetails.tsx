@@ -4,7 +4,6 @@ import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, 
 import { getAuthHeaders, getToken } from '../../lib/auth';
 import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
-import katex from 'katex';
 import { autoFormatMath } from '../../utils/mathFormatter';
 
 const renderMathForWord = (content: string) => {
