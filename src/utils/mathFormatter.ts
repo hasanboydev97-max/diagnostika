@@ -4,9 +4,13 @@ function isTextWord(word: string): boolean {
   
   if (cleanWord.length < 2) return false; // Single letters are math (x, y, a)
   
-  // If it contains any math-specific characters or digits, it's math
-  // We escape -, [, ], ^ to avoid regex errors
-  if (/[0-9\\+*/=<>|\[\]{}^_\-]/.test(cleanWord)) return false;
+  // Checking for ANY backslash, digits, or math symbols explicitly
+  for (let i = 0; i < cleanWord.length; i++) {
+    const c = cleanWord[i];
+    if ("0123456789+*/=<>|[]{}^_-\\".includes(c)) {
+      return false; // It's math
+    }
+  }
   
   // If it's purely letters (including Uzbek characters)
   return /^[a-zA-Z'oʻgʻ]+$/i.test(cleanWord);
