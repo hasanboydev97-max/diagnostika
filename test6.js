@@ -1,24 +1,29 @@
-function isTextWord(word: string): boolean {
-  // Strip trailing punctuation for the check
+const tests = [
+  "Hisoblang: \\left| 3 - \\sqrt{11} \\right| + \\left| 4 - \\sqrt{11} \\right|",
+  "Ushbu f(x) = \\frac{1}{3}x^{3} - 4x funksiyaning kritik nuqtalarini toping.",
+  "x^2 - 7x + 10 = 0 kvadrat tenglamaning ildizlari x_1 va x_2 bo'lsa, x_1^2 + x_2^2 ning qiymatini toping.",
+  "Nuqtaning to'g'ri chiziqli harakat qonuni s\\left(t\\right) = 2t^{3} - 5t^{2} + 4t + 3 (metrlarda) ko'rinishga ega. Vaqt t = 2\\text{ s} bo'lganda, nuqtaning oniy tezligini toping.",
+  "2\\sqrt{11}-7",
+  "-1",
+  "Tenglamaning ildizlari yig'indisini toping: \\left| 2x - 5 \\right| = 9",
+  "x = \\pm 2",
+  "10\\text{ m/s}",
+  "Ifodani soddalashtiring: \\frac{\\sqrt{a} - \\sqrt{b}}{\\sqrt[4]{a} - \\sqrt[4]{b}} (a > 0, b > 0, a \\neq b)",
+  "$$ \\sqrt{144} $$",
+  "2\\text{ sm}"
+];
+
+function isTextWord(word) {
   const cleanWord = word.replace(/^[.,!?:;()]+|[.,!?:;()]+$/g, '');
-  
-  if (cleanWord.length < 2) return false; // Single letters are math (x, y, a)
-  
-  // If it contains any math-specific characters or digits, it's math
-  // We escape -, [, ], ^ to avoid regex errors
+  if (cleanWord.length < 2) return false;
   if (/[0-9\\+*/=<>|\[\]{}^_\-]/.test(cleanWord)) return false;
-  
-  // If it's purely letters (including Uzbek characters)
   return /^[a-zA-Z'oʻgʻ]+$/i.test(cleanWord);
 }
 
-export function autoFormatMath(text: string): string {
+function autoFormatMath(text) {
   if (!text) return text;
   
-  // 1. Strip all existing $ to normalize the string
   let normalized = text.replace(/\$/g, '');
-  
-  // 2. Split into words preserving spaces
   const tokens = normalized.split(/(\s+)/);
   
   let result = "";
@@ -28,7 +33,6 @@ export function autoFormatMath(text: string): string {
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
     if (token.trim() === '') {
-      // Space token
       if (inMath) {
         mathBuffer += token;
       } else {
@@ -39,7 +43,6 @@ export function autoFormatMath(text: string): string {
     
     if (isTextWord(token)) {
       if (inMath) {
-        // End math block
         let trimmed = mathBuffer.trimRight();
         let spaces = mathBuffer.substring(trimmed.length);
         result += `$${trimmed}$${spaces}`;
@@ -48,7 +51,6 @@ export function autoFormatMath(text: string): string {
       }
       result += token;
     } else {
-      // Math word
       if (!inMath) {
         inMath = true;
       }
@@ -66,3 +68,9 @@ export function autoFormatMath(text: string): string {
   
   return result;
 }
+
+tests.forEach((t, i) => {
+  console.log(`\n--- Test ${i+1} ---`);
+  console.log("IN: ", t);
+  console.log("OUT:", autoFormatMath(t));
+});
