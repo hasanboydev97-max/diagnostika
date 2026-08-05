@@ -11,7 +11,7 @@ interface FormattedTextProps {
 export default function FormattedText({ content, className = '' }: FormattedTextProps) {
   if (!content) return null;
 
-  let cleanContent = content.replace(/\\\\([a-zA-Z]+)/g, '\\$1');
+  let cleanContent = content;
   cleanContent = autoFormatMath(cleanContent);
 
   const parts = cleanContent.split('$');
