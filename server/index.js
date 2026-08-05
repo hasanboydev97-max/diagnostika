@@ -66,6 +66,10 @@ app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
+app.get('/api/ping', (req, res) => {
+  res.json({ status: 'ok', message: 'Pong. API is awake.' });
+});
+
 app.get('/api/results', async (req, res) => {
   try {
     const results = await Result.find().sort({ _id: -1 });
