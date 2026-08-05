@@ -60,6 +60,7 @@ const OnlineTestSchema = new mongoose.Schema({
   questions: Array,
   startTime: String,
   endTime: String,
+  durationMinutes: Number,
   createdAt: String
 }, { strict: false });
 const OnlineTest = mongoose.model('OnlineTest', OnlineTestSchema);

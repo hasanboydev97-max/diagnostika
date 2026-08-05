@@ -17,8 +17,10 @@ export default function TakeTest() {
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [timeStatus, setTimeStatus] = useState<'open' | 'early' | 'closed'>('open');
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   const violations = useRef(0);
+  const submitRef = useRef(false);
 
   useEffect(() => {
     fetchTest();
@@ -66,8 +68,33 @@ export default function TakeTest() {
       console.warn('Fullscreen request failed', err);
     }
 
+    if (test.durationMinutes) {
+      setTimeLeft(test.durationMinutes * 60);
+    }
     setStarted(true);
   };
+
+  // Timer Effect
+  useEffect(() => {
+    if (!started || timeLeft === null || timeLeft <= 0 || submitting) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev === null) return null;
+        if (prev <= 1) {
+          clearInterval(timer);
+          if (!submitRef.current) {
+            handleSubmit(true);
+            toast.error("Vaqt tugadi! Test avtomatik yakunlandi.", { duration: 5000 });
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [started, timeLeft, submitting]);
 
   // Anti-cheating effect
   useEffect(() => {
@@ -113,6 +140,8 @@ export default function TakeTest() {
   };
 
   const handleSubmit = async (isForced: boolean = false) => {
+    if (submitRef.current) return;
+    
     if (!isForced) {
       const answeredCount = Object.keys(answers).length;
       if (answeredCount < test.questions.length) {
@@ -122,6 +151,7 @@ export default function TakeTest() {
     }
     
     setSubmitting(true);
+    submitRef.current = true;
     const toastId = toast.loading('Javoblaringiz tekshirilmoqda...');
     
     let score = 0;
@@ -259,6 +289,12 @@ export default function TakeTest() {
   const currentQ = test.questions[currentQIndex];
   const progress = ((currentQIndex + 1) / test.questions.length) * 100;
 
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div 
       className="min-h-screen bg-white text-gray-900 font-sans flex flex-col select-none"
@@ -282,17 +318,73 @@ export default function TakeTest() {
           <p className="text-xs text-gray-500">{studentName}</p>
         </div>
         <div className="flex items-center gap-4">
+          {timeLeft !== null && (
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-bold tracking-wider ${
+              timeLeft <= 60 ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-gray-100 text-gray-800'
+            }`}>
+              <Clock size={16} />
+              {formatTime(timeLeft)}
+            </div>
+          )}
           <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded text-xs font-medium border border-red-100">
             <AlertTriangle size={12} /> Ekranni tark etmang
-          </div>
-          <div className="text-sm font-medium text-gray-500">
-            {currentQIndex + 1} / {test.questions.length}
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-5xl w-full mx-auto p-6 md:p-12 flex flex-col justify-center">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-8">
+        
+        {/* Question Palette Sidebar */}
+        <div className="lg:w-72 shrink-0 order-2 lg:order-1">
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 lg:sticky lg:top-24">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-gray-900">Savollar paneli</h3>
+              <span className="text-xs font-medium text-gray-500">{Object.keys(answers).length} / {test.questions.length} belgilanmadi</span>
+            </div>
+            
+            <div className="grid grid-cols-5 gap-2">
+              {test.questions.map((_: any, idx: number) => {
+                const isAnswered = answers[idx] !== undefined;
+                const isCurrent = idx === currentQIndex;
+                
+                let btnClass = "w-10 h-10 rounded-lg text-sm font-medium transition-all flex items-center justify-center border ";
+                if (isCurrent) {
+                  btnClass += "border-black bg-black text-white shadow-md scale-105";
+                } else if (isAnswered) {
+                  btnClass += "border-green-500 bg-green-50 text-green-700 hover:bg-green-100";
+                } else {
+                  btnClass += "border-gray-200 bg-white text-gray-600 hover:border-gray-400 hover:bg-gray-50";
+                }
+                
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentQIndex(idx)}
+                    className={btnClass}
+                  >
+                    {idx + 1}
+                  </button>
+                );
+              })}
+            </div>
+            
+            <div className="mt-6 pt-4 border-t border-gray-200 flex flex-col gap-2 text-xs text-gray-500">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-black"></div> Hozirgi savol
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-green-50 border border-green-500"></div> Javob berilgan
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded bg-white border border-gray-200"></div> Javob berilmagan
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Question Area */}
+        <div className="flex-1 flex flex-col max-w-4xl order-1 lg:order-2 lg:pt-8">
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-10 leading-snug">
             {currentQ.questionText}
@@ -350,6 +442,7 @@ export default function TakeTest() {
               {submitting ? 'Yuborilmoqda...' : 'Testni Yakunlash'}
             </button>
           )}
+        </div>
         </div>
       </main>
     </div>

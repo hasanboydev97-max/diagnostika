@@ -12,6 +12,7 @@ export default function CreateTest() {
   const [title, setTitle] = useState('');
   const [subject] = useState(teacher?.subject || '');
   const [hasTimeLimit, setHasTimeLimit] = useState(false);
+  const [durationMinutes, setDurationMinutes] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [mode, setMode] = useState<'ai' | 'manual'>('ai');
@@ -88,6 +89,7 @@ export default function CreateTest() {
       title,
       subject,
       questions,
+      durationMinutes: durationMinutes ? Number(durationMinutes) : null,
       startTime: hasTimeLimit ? new Date(startTime).toISOString() : null,
       endTime: hasTimeLimit ? new Date(endTime).toISOString() : null,
       createdAt: new Date().toISOString()
@@ -165,6 +167,19 @@ export default function CreateTest() {
           </div>
           
           <div className="pt-4 border-t border-gray-100">
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Test vaqti (daqiqa)</label>
+              <input 
+                type="number"
+                min="1"
+                value={durationMinutes}
+                onChange={e => setDurationMinutes(e.target.value)}
+                className="w-full max-w-sm px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
+                placeholder="masalan, 45 (bo'sh qolsa cheklanmagan)"
+              />
+              <p className="text-xs text-gray-500 mt-1">O'quvchi testni boshlaganidan so'ng qancha vaqt beriladi.</p>
+            </div>
+            
             <label className="flex items-center gap-2 cursor-pointer mb-4">
               <input 
                 type="checkbox" 
