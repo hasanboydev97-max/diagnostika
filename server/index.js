@@ -357,26 +357,66 @@ app.post('/api/online-tests/generate', authMiddleware, async (req, res) => {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
 
-    const prompt = `Siz malakali ${subject} o'qituvchisisiz. Quyidagi mavzuda maktab o'quvchilari uchun test savollari tuzing:
-Mavzu: ${topic}
-Savollar soni: ${questionCount || 5}
+    const prompt = `# ROLE
+You are an expert ${subject} teacher and professional exam creator.
+Your job is to generate high-quality multiple-choice questions suitable for school students.
+Topic: ${topic}
+Number of questions: ${questionCount || 5}
 
-DIQQAT - MATEMATIKA VA FORMULALAR QOIDASI:
-Barcha matematik ifodalar, sonlar, tenglamalar, ildizlar va kasrlarni QAT'IY ravishda LaTeX formatida yozing va ALBATTA "$" belgilari orasiga oling. Busiz tizim formulalarni o'qiy olmaydi!
-Misollar:
-YOMON: x^2 - 5x + 6 = 0 tenglamani yeching.
-YAXSHI: $x^2 - 5x + 6 = 0$ tenglamani yeching.
-YOMON: \\sqrt{144} - \\sqrt{49} ning qiymatini toping.
-YAXSHI: $\\sqrt{144} - \\sqrt{49}$ ning qiymatini toping.
+# IMPORTANT RULES
+1. ALL mathematical expressions MUST be written using valid LaTeX.
+2. NEVER write formulas as plain text.
 
-Faqat valid JSON formatida javob qaytar. Har bir savol obyekti quydagi maydonlarga ega bo'lsin:
-- questionText (string)
-- options (array of strings, 4 ta variant)
-- correctOption (string, options ichidagi bitta qiymat bilan aynan bir xil bo'lishi kerak)
-- type (string, "multiple_choice")
-- subtopic (string, qisqa 1-2 so'z)
+❌ Wrong: \\sqrt{25}, x^2, 3/5, >=, <=, !=
+✅ Correct: $\\sqrt{25}$, $x^{2}$, $\\frac{3}{5}$, $\\ge$, $\\le$, $\\ne$
 
-JSON dan boshqa hech qanday izoh yozma. Array qaytar.`;
+3. Display equations MUST use $$ ... $$
+Example:
+$$
+\\sqrt{144}-\\sqrt{49}+\\sqrt{25}
+$$
+
+4. Inline expressions MUST use $...$
+Example: $f(x)=x^2$
+
+5. Use only KaTeX / MathJax compatible LaTeX. Allowed commands include: \\frac, \\sqrt, \\pi, \\sin, \\cos, \\tan, \\lim, \\sum, \\int, \\pm, \\times, \\div, \\neq, \\le, \\ge, \\approx, \\infty.
+6. Fractions MUST always use $\\frac{a}{b}$. Never use a/b.
+7. Exponents: $x^{2}$, $a^{10}$. Never write x^2.
+8. Subscripts: $a_{1}$, $x_{n}$.
+9. Absolute values: $\\left|x\\right|$.
+10. Parentheses: Always use \\left( \\right) when expressions become long.
+11. Systems of equations:
+$$
+\\begin{cases}
+x+y=5\\\\
+x-y=1
+\\end{cases}
+$$
+
+# QUESTION QUALITY
+Only ONE option is correct.
+Randomize the correct answer position.
+Difficulty should match the requested level.
+
+# OUTPUT FORMAT
+Return ONLY valid JSON.
+DO NOT OUTPUT ANYTHING EXCEPT A VALID JSON ARRAY.
+
+Example:
+[
+  {
+    "questionText": "Hisoblang: $$\\sqrt{144}-\\sqrt{49}+\\sqrt{25}$$",
+    "options": [
+      "$10$",
+      "$8$",
+      "$12$",
+      "$14$"
+    ],
+    "correctOption": "$10$",
+    "type": "multiple_choice",
+    "subtopic": "Arithmetic"
+  }
+]`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
