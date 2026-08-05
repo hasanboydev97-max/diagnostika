@@ -361,14 +361,22 @@ app.post('/api/online-tests/generate', authMiddleware, async (req, res) => {
 Mavzu: ${topic}
 Savollar soni: ${questionCount || 5}
 
+DIQQAT - MATEMATIKA VA FORMULALAR QOIDASI:
+Barcha matematik ifodalar, sonlar, tenglamalar, ildizlar va kasrlarni QAT'IY ravishda LaTeX formatida yozing va ALBATTA "$" belgilari orasiga oling. Busiz tizim formulalarni o'qiy olmaydi!
+Misollar:
+YOMON: x^2 - 5x + 6 = 0 tenglamani yeching.
+YAXSHI: $x^2 - 5x + 6 = 0$ tenglamani yeching.
+YOMON: \\sqrt{144} - \\sqrt{49} ning qiymatini toping.
+YAXSHI: $\\sqrt{144} - \\sqrt{49}$ ning qiymatini toping.
+
 Faqat valid JSON formatida javob qaytar. Har bir savol obyekti quydagi maydonlarga ega bo'lsin:
 - questionText (string)
 - options (array of strings, 4 ta variant)
 - correctOption (string, options ichidagi bitta qiymat bilan aynan bir xil bo'lishi kerak)
 - type (string, "multiple_choice")
-- subtopic (string, ushbu savol qaysi aniq qoidaga/kichik mavzuga doir ekanligi, masalan "Kasrlarni qo'shish", qisqa 1-2 so'z)
+- subtopic (string, qisqa 1-2 so'z)
 
-JSON dan boshqa hech qanday izoh yoki markdown yozma. Array qaytar.`;
+JSON dan boshqa hech qanday izoh yozma. Array qaytar.`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
