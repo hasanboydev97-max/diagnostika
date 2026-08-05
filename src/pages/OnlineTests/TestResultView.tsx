@@ -82,7 +82,8 @@ export default function TestResultView() {
     if (!topicStats[topic]) topicStats[topic] = { total: 0, correct: 0 };
     
     topicStats[topic].total += 1;
-    if (result.answers[i] === q.correctOption) {
+    const studentAnswers = result.answers || {};
+    if (studentAnswers[i] === q.correctOption) {
       topicStats[topic].correct += 1;
     }
   });
@@ -197,7 +198,8 @@ export default function TestResultView() {
           <h2 className="text-lg font-semibold text-gray-900 mb-6">Savollar Bo'yicha Natijalar</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {test.questions.map((q: any, i: number) => {
-              const studentAns = result.answers[i];
+              const studentAnswers = result.answers || {};
+              const studentAns = studentAnswers[i];
               const isCorrect = studentAns === q.correctOption;
               
               return (

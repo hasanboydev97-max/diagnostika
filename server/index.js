@@ -292,7 +292,7 @@ Savollar va o'quvchining javoblari:
 ${JSON.stringify(data.questions.map((q, i) => ({
   savol: q.questionText,
   togri_javob: q.correctOption,
-  oquvchi_javobi: data.answers[i]
+  oquvchi_javobi: (data.answers || {})[i] || 'Javob berilmagan'
 })), null, 2)}
 
 Ushbu natijalarga asosan o'quvchiga o'zbek tilida qisqa (2-3 ta gap) dalda beruvchi va qaysi mavzularda e'tiborli bo'lishi kerakligi haqida maslahat (feedback) yozing. Hech qanday JSON yozmang, faqat matn.`;
