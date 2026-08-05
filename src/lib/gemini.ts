@@ -55,7 +55,8 @@ Iltimos, javobni faqat va faqat quyidagi JSON formatida qaytaring, boshqa hech q
       // Attempt to parse the JSON output from Gemini
       try {
         // ba'zida AI JSON ni markdown kod bloki ichida qaytaradi
-        const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        cleanText = cleanText.replace(/(?<!\\)\\(?!["\\/bfnrt])/g, "\\\\"); // LaTeX \ larni to'g'irlash
         const parsed = JSON.parse(cleanText);
         console.log(`Muvaffaqiyatli: ${modelName} modelidan javob olindi.`);
         return {
@@ -113,7 +114,8 @@ Javobni FAQAT VA FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh y
       const result = await model.generateContent(prompt);
       const text = (await result.response).text();
       
-      const cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      cleanText = cleanText.replace(/(?<!\\)\\(?!["\\/bfnrt])/g, "\\\\");
       const parsed = JSON.parse(cleanText) as QuestionBlueprint[];
       
       if (Array.isArray(parsed) && parsed.length > 0) {
