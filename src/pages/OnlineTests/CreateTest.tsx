@@ -83,8 +83,8 @@ export default function CreateTest() {
           title,
           subject,
           questions,
-          startTime: hasTimeLimit ? startTime : null,
-          endTime: hasTimeLimit ? endTime : null,
+          startTime: hasTimeLimit ? new Date(startTime).toISOString() : null,
+          endTime: hasTimeLimit ? new Date(endTime).toISOString() : null,
           createdAt: new Date().toISOString()
         })
       });
