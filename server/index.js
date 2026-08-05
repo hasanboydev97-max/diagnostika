@@ -7,6 +7,7 @@ import multer from 'multer';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -48,6 +49,27 @@ const ResultSchema = new mongoose.Schema({
 }, { strict: false });
 
 const Result = mongoose.model('Result', ResultSchema);
+
+const OnlineTestSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  title: String,
+  subject: String,
+  questions: Array,
+  createdAt: String
+}, { strict: false });
+const OnlineTest = mongoose.model('OnlineTest', OnlineTestSchema);
+
+const OnlineTestResultSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  testId: String,
+  studentName: String,
+  answers: Object,
+  score: Number,
+  totalScore: Number,
+  aiFeedback: String,
+  createdAt: String
+}, { strict: false });
+const OnlineTestResult = mongoose.model('OnlineTestResult', OnlineTestResultSchema);
 
 // Connect to MongoDB
 if (MONGODB_URI) {
@@ -113,6 +135,126 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     res.json({ url: result.secure_url });
   } catch (error) {
     console.error('Upload Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --- Online Tests Routes ---
+
+app.get('/api/online-tests', async (req, res) => {
+  try {
+    const tests = await OnlineTest.find().sort({ _id: -1 });
+    res.json(tests);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/online-tests/:id', async (req, res) => {
+  try {
+    const test = await OnlineTest.findOne({ id: req.params.id });
+    if (!test) return res.status(404).json({ error: 'Not found' });
+    res.json(test);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/online-tests', async (req, res) => {
+  try {
+    const data = req.body;
+    await OnlineTest.findOneAndUpdate({ id: data.id }, data, { upsert: true, new: true });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/online-test-results', async (req, res) => {
+  try {
+    const data = req.body;
+    await OnlineTestResult.findOneAndUpdate({ id: data.id }, data, { upsert: true, new: true });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/online-test-results/:id', async (req, res) => {
+  try {
+    const result = await OnlineTestResult.findOne({ id: req.params.id });
+    if (!result) return res.status(404).json({ error: 'Not found' });
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/online-tests/generate', async (req, res) => {
+  try {
+    const { subject, topic, questionCount } = req.body;
+    const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: 'Gemini API key missing' });
+    
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    
+    const prompt = `Yaratib berilishi kerak bo'lgan test:
+Fan: ${subject}
+Mavzu: ${topic || 'Umumiy'}
+Savollar soni: ${questionCount || 5}
+
+Faqat valid JSON formatida javob qaytar. Har bir savol obyekti quydagi maydonlarga ega bo'lsin:
+- questionText (string)
+- options (array of strings, 4 ta variant)
+- correctOption (string, options ichidagi bitta qiymat bilan aynan bir xil bo'lishi kerak)
+- type (string, "multiple_choice")
+
+JSON dan boshqa hech qanday izoh yoki markdown yozma. Array qaytar.`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text();
+    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    
+    const questions = JSON.parse(text);
+    res.json({ questions });
+  } catch (error) {
+    console.error('AI Gen Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/online-test-results/check', async (req, res) => {
+  try {
+    const { testTitle, studentName, score, totalScore, answers, questions } = req.body;
+    const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: 'Gemini API key missing' });
+    
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    
+    const prompt = `O'quvchi test ishladi. 
+Test nomi: ${testTitle}
+O'quvchi: ${studentName}
+Natija: ${score} / ${totalScore}
+
+Savollar va o'quvchining javoblari:
+${JSON.stringify(questions.map((q, i) => ({
+  savol: q.questionText,
+  togri_javob: q.correctOption,
+  oquvchi_javobi: answers[i]
+})), null, 2)}
+
+Ushbu natijalarga asosan o'quvchiga o'zbek tilida qisqa (2-3 ta gap) dalda beruvchi va qaysi mavzularda e'tiborli bo'lishi kerakligi haqida maslahat (feedback) yozing. Hech qanday JSON yozmang, faqat matn.`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    
+    res.json({ feedback: text });
+  } catch (error) {
+    console.error('AI Check Error:', error);
     res.status(500).json({ error: error.message });
   }
 });
