@@ -282,7 +282,7 @@ app.post('/api/online-test-results', async (req, res) => {
       const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
       if (apiKey && test && data.questions) {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro', 'gemini-1.0-pro', 'gemini-flash-latest', 'gemini-pro'];
+        const modelsToTry = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-flash-latest'];
         
         const prompt = `O'quvchi test ishladi. 
 Test nomi: ${test.title}
@@ -365,7 +365,7 @@ app.post('/api/online-tests/generate', authMiddleware, async (req, res) => {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro', 'gemini-1.0-pro', 'gemini-flash-latest', 'gemini-pro'];
+    const modelsToTry = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-flash-latest'];
 
     const prompt = `# ROLE
 You are an expert ${subject} teacher and professional exam creator.

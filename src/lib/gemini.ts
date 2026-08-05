@@ -11,7 +11,7 @@ export const generateDiagnosticSummary = async (studentName: string, grade: stri
   const genAI = new GoogleGenerativeAI(apiKey);
 
   // Sizning API kalitingiz eksklyuziv tarzda mutlaqo yangi avlod (Gemini 3.x) modellariga ulangan ekan!
-  const fallbackModels = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro", "gemini-1.0-pro", "gemini-flash-latest", "gemini-pro", "gemini-3.6-flash"];
+  const fallbackModels = ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-flash-latest"];
 
   // Qaysi mavzular va ko'nikmalarda qanday xato qilinganini tahlil qilish
   const failedQuestions = blueprint.filter(q => !questionResults[q.id]);
@@ -90,7 +90,7 @@ export const generateGradeBlueprint = async (grade: string): Promise<QuestionBlu
   if (!apiKey) throw new Error("API kalit topilmadi.");
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const fallbackModels = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro", "gemini-1.0-pro", "gemini-flash-latest", "gemini-pro", "gemini-3.6-flash"];
+  const fallbackModels = ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-flash-latest"];
 
   const prompt = `Siz malakali ta'lim ekspertisiz. Menga ${grade}-sinf o'quvchilari uchun diagnostika test shablonini tuzib bering.
 Jami 30 ta savol bo'lishi shart.
