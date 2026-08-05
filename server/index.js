@@ -238,6 +238,23 @@ Ushbu natijalarga asosan o'quvchiga o'zbek tilida qisqa (2-3 ta gap) dalda beruv
   }
 });
 
+app.delete('/api/online-tests/:id', async (req, res) => {
+  try {
+    const testId = req.params.id;
+    // Delete the test itself
+    const deletedTest = await OnlineTest.findOneAndDelete({ id: testId });
+    if (!deletedTest) {
+      return res.status(404).json({ error: 'Test not found' });
+    }
+    // Delete all results associated with this test
+    await OnlineTestResult.deleteMany({ testId });
+    
+    res.json({ message: 'Test and associated results deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/online-test-results/:id', async (req, res) => {
   try {
     const result = await OnlineTestResult.findOne({ id: req.params.id });

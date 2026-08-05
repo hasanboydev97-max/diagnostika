@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChevronRight, FileText, Search } from 'lucide-react';
+import { Plus, ChevronRight, FileText, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -25,15 +25,36 @@ export default function OnlineTestsDashboard() {
 
   const fetchTests = async () => {
     try {
-      const response = await fetch(`${API_URL}/online-tests`);
-      if (!response.ok) throw new Error('Failed to fetch tests');
-      const data = await response.json();
-      setTests(data);
+      const res = await fetch(`${API_URL}/online-tests`);
+      if (res.ok) {
+        const data = await res.json();
+        setTests(data);
+      }
     } catch (error) {
       console.error(error);
-      toast.error('Failed to load tests.');
+      toast.error('Failed to fetch tests');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteTest = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!window.confirm('Haqiqatan ham ushbu testni va uning barcha natijalarini o\'chirmoqchimisiz?')) return;
+    
+    try {
+      const res = await fetch(`${API_URL}/online-tests/${id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        toast.success('Test muvaffaqiyatli o\'chirildi');
+        setTests(tests.filter(t => t.id !== id));
+      } else {
+        throw new Error('O\'chirishda xatolik');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Testni o\'chirish imkonsiz');
     }
   };
 
@@ -135,7 +156,14 @@ export default function OnlineTestsDashboard() {
                     <span className="text-sm font-medium mr-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       Natijalar
                     </span>
-                    <ChevronRight size={18} />
+                    <ChevronRight size={18} className="mr-4" />
+                    <button
+                      onClick={(e) => handleDeleteTest(e, test.id)}
+                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                      title="Testni o'chirish"
+                    >
+                      <Trash2 size={18} />
+                    </button>
                   </div>
                 </li>
               ))}
