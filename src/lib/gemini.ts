@@ -56,7 +56,12 @@ Iltimos, javobni faqat va faqat quyidagi JSON formatida qaytaring, boshqa hech q
       try {
         // ba'zida AI JSON ni markdown kod bloki ichida qaytaradi
         let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        cleanText = cleanText.replace(/(?<!\\)\\(?!["\\/bfnrt])/g, "\\\\"); // LaTeX \ larni to'g'irlash
+        cleanText = cleanText.replace(/(?<!\\)\\([^"\\/bfnrt])/g, "\\\\$1");
+        cleanText = cleanText.replace(/(?<!\\)\\b(egin|eta|ullet|ar|mod|oldsymbol|f)/g, "\\\\b$1");
+        cleanText = cleanText.replace(/(?<!\\)\\f(rac|orall)/g, "\\\\f$1");
+        cleanText = cleanText.replace(/(?<!\\)\\r(ight|ho|angle|m)/g, "\\\\r$1");
+        cleanText = cleanText.replace(/(?<!\\)\\t(an|ext|imes|o|riangle|heta|ilde)/g, "\\\\t$1");
+        cleanText = cleanText.replace(/(?<!\\)\\n(u|abla|eq|eg|exists)/g, "\\\\n$1");
         const parsed = JSON.parse(cleanText);
         console.log(`Muvaffaqiyatli: ${modelName} modelidan javob olindi.`);
         return {
@@ -115,7 +120,12 @@ Javobni FAQAT VA FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh y
       const text = (await result.response).text();
       
       let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      cleanText = cleanText.replace(/(?<!\\)\\(?!["\\/bfnrt])/g, "\\\\");
+      cleanText = cleanText.replace(/(?<!\\)\\([^"\\/bfnrt])/g, "\\\\$1");
+      cleanText = cleanText.replace(/(?<!\\)\\b(egin|eta|ullet|ar|mod|oldsymbol|f)/g, "\\\\b$1");
+      cleanText = cleanText.replace(/(?<!\\)\\f(rac|orall)/g, "\\\\f$1");
+      cleanText = cleanText.replace(/(?<!\\)\\r(ight|ho|angle|m)/g, "\\\\r$1");
+      cleanText = cleanText.replace(/(?<!\\)\\t(an|ext|imes|o|riangle|heta|ilde)/g, "\\\\t$1");
+      cleanText = cleanText.replace(/(?<!\\)\\n(u|abla|eq|eg|exists)/g, "\\\\n$1");
       const parsed = JSON.parse(cleanText) as QuestionBlueprint[];
       
       if (Array.isArray(parsed) && parsed.length > 0) {
