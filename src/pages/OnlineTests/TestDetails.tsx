@@ -156,10 +156,10 @@ export default function TestDetails() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {results.map((res) => {
+                      {results.map((res: any) => {
                         const percent = Math.round((res.score / res.totalScore) * 100);
                         return (
-                          <tr key={res._id} className="hover:bg-gray-50/50 transition-colors">
+                          <tr key={res.id || res._id} className="hover:bg-gray-50/50 transition-colors">
                             <td className="px-6 py-4 font-medium text-gray-900 capitalize">
                               {res.studentName}
                             </td>
@@ -179,7 +179,7 @@ export default function TestDetails() {
                             </td>
                             <td className="px-6 py-4 text-right">
                               <button
-                                onClick={() => navigate(`/online-tests/results/${res._id}`)}
+                                onClick={() => navigate(`/online-tests/results/${res.id || res._id}`)}
                                 className="text-blue-600 hover:text-blue-700 font-medium hover:underline"
                               >
                                 Batafsil ko'rish

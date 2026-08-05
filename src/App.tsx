@@ -24,6 +24,9 @@ function App() {
         <Route path="/online-tests/details/:testId" element={<TestDetails />} />
         <Route path="/online-tests/take/:testId" element={<TakeTest />} />
         <Route path="/online-tests/results/:resultId" element={<TestResultView />} />
+        
+        {/* Catch-all route to prevent blank screens */}
+        <Route path="*" element={<Navigate to="/online-tests" replace />} />
       </Routes>
       <Toaster position="top-right" richColors />
     </BrowserRouter>
