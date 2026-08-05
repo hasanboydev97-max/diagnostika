@@ -4,6 +4,32 @@ import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, 
 import { getAuthHeaders, getToken } from '../../lib/auth';
 import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
+import katex from 'katex';
+import { autoFormatMath } from '../../utils/mathFormatter';
+
+const renderMathForWord = (content: string) => {
+  if (!content) return '';
+  const cleanContent = autoFormatMath(content);
+  const parts = cleanContent.split('$');
+  let result = '';
+  
+  parts.forEach((part, index) => {
+    if (index % 2 === 0) {
+      result += part;
+    } else {
+      try {
+        result += katex.renderToString(part, {
+          throwOnError: false,
+          output: 'mathml',
+          displayMode: false
+        });
+      } catch (e) {
+        result += `$${part}$`;
+      }
+    }
+  });
+  return result;
+};
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -77,16 +103,16 @@ export default function TestDetails() {
 
     test.questions.forEach((q: any, i: number) => {
       htmlContent += `<div style="font-family: Arial, sans-serif; margin-bottom: 20px;">`;
-      htmlContent += `<p><b>${i + 1}. ${q.questionText}</b></p>`;
+      htmlContent += `<p><b>${i + 1}. ${renderMathForWord(q.questionText)}</b></p>`;
       q.options.forEach((opt: string) => {
-        htmlContent += `<p style="margin-left: 20px;">&#9711; ${opt}</p>`;
+        htmlContent += `<p style="margin-left: 20px;">&#9711; ${renderMathForWord(opt)}</p>`;
       });
       htmlContent += `</div>`;
     });
 
     htmlContent += `<br/><hr/><h2 style="font-family: Arial, sans-serif;">Kalit javoblar</h2>`;
     test.questions.forEach((q: any, i: number) => {
-       htmlContent += `<p style="font-family: Arial, sans-serif; margin: 2px;"><b>${i + 1}.</b> ${q.correctOption}</p>`;
+       htmlContent += `<p style="font-family: Arial, sans-serif; margin: 2px;"><b>${i + 1}.</b> ${renderMathForWord(q.correctOption)}</p>`;
     });
 
     htmlContent += `</body></html>`;
