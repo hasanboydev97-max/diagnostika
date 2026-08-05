@@ -9,6 +9,9 @@ export default function CreateTest() {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState('');
+  const [hasTimeLimit, setHasTimeLimit] = useState(false);
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [mode, setMode] = useState<'ai' | 'manual'>('ai');
   
   const [topic, setTopic] = useState('');
@@ -64,6 +67,11 @@ export default function CreateTest() {
       if (q.options.some((opt: string) => !opt.trim())) return toast.error(`Some options in question ${i + 1} are empty.`);
     }
 
+    if (hasTimeLimit) {
+      if (!startTime || !endTime) return toast.error('Iltimos, boshlanish va tugash vaqtlarini kiriting.');
+      if (new Date(startTime) >= new Date(endTime)) return toast.error('Tugash vaqti boshlanishidan keyin bo\'lishi kerak.');
+    }
+
     setSaving(true);
     const id = 'test_' + Date.now().toString();
     try {
@@ -75,6 +83,8 @@ export default function CreateTest() {
           title,
           subject,
           questions,
+          startTime: hasTimeLimit ? startTime : null,
+          endTime: hasTimeLimit ? endTime : null,
           createdAt: new Date().toISOString()
         })
       });
@@ -143,6 +153,41 @@ export default function CreateTest() {
                 placeholder="e.g. History"
               />
             </div>
+          </div>
+          
+          <div className="pt-4 border-t border-gray-100">
+            <label className="flex items-center gap-2 cursor-pointer mb-4">
+              <input 
+                type="checkbox" 
+                checked={hasTimeLimit}
+                onChange={e => setHasTimeLimit(e.target.checked)}
+                className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black"
+              />
+              <span className="text-sm font-medium text-gray-700">Vaqt chegarasini o'rnatish (Qachon ochilib yopilishi)</span>
+            </label>
+            
+            {hasTimeLimit && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Boshlanish vaqti</label>
+                  <input 
+                    type="datetime-local" 
+                    value={startTime}
+                    onChange={e => setStartTime(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Tugash vaqti</label>
+                  <input 
+                    type="datetime-local" 
+                    value={endTime}
+                    onChange={e => setEndTime(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

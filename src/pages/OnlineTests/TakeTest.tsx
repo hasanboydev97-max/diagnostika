@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Loader2, ArrowLeft, Check } from 'lucide-react';
+import { Loader2, ArrowLeft, Check, AlertTriangle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -16,6 +16,9 @@ export default function TakeTest() {
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [timeStatus, setTimeStatus] = useState<'open' | 'early' | 'closed'>('open');
+
+  const violations = useRef(0);
 
   useEffect(() => {
     fetchTest();
@@ -27,6 +30,7 @@ export default function TakeTest() {
       if (!res.ok) throw new Error('Test not found');
       const data = await res.json();
       setTest(data);
+      checkTimeLimit(data);
     } catch (error) {
       console.error(error);
       toast.error('Test not found');
@@ -36,27 +40,89 @@ export default function TakeTest() {
     }
   };
 
-  const handleStart = () => {
+  const checkTimeLimit = (testData: any) => {
+    const now = new Date();
+    if (testData.startTime && now < new Date(testData.startTime)) {
+      setTimeStatus('early');
+    } else if (testData.endTime && now > new Date(testData.endTime)) {
+      setTimeStatus('closed');
+    } else {
+      setTimeStatus('open');
+    }
+  };
+
+  const handleStart = async () => {
     if (!studentName.trim()) {
       toast.error('Please enter your name to continue.');
       return;
     }
+    
+    // Request fullscreen
+    try {
+      if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch (err) {
+      console.warn('Fullscreen request failed', err);
+    }
+
     setStarted(true);
   };
 
+  // Anti-cheating effect
+  useEffect(() => {
+    if (!started) return;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        handleViolation();
+      }
+    };
+
+    const handleViolation = () => {
+      if (submitting) return; // ignore if already submitting
+      
+      violations.current += 1;
+      
+      if (violations.current === 1) {
+        toast.error('QOIDABUZARLIK! Iltimos, testdan chiqmang yoki boshqa oynaga o\'tmang. Yana bir marta takrorlansa test avtomatik yopiladi!', {
+          duration: 10000,
+          position: 'top-center',
+          icon: <AlertTriangle className="text-red-500" />
+        });
+      } else if (violations.current >= 2) {
+        toast.error('QOIDABUZARLIK TAKRORLANDI! Test majburiy yakunlanmoqda...', {
+          duration: 5000,
+          position: 'top-center'
+        });
+        handleSubmit(true); // force submit
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleViolation); // catches split screen or clicking outside
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleViolation);
+    };
+  }, [started, answers]); // pass answers so handleSubmit closure has latest answers
+
   const handleSelectOption = (option: string) => {
-    setAnswers({ ...answers, [currentQIndex]: option });
+    setAnswers(prev => ({ ...prev, [currentQIndex]: option }));
   };
 
-  const handleSubmit = async () => {
-    const answeredCount = Object.keys(answers).length;
-    if (answeredCount < test.questions.length) {
-      const confirmSubmit = window.confirm(`You have only answered ${answeredCount} out of ${test.questions.length} questions. Submit anyway?`);
-      if (!confirmSubmit) return;
+  const handleSubmit = async (isForced: boolean = false) => {
+    if (!isForced) {
+      const answeredCount = Object.keys(answers).length;
+      if (answeredCount < test.questions.length) {
+        const confirmSubmit = window.confirm(`Siz ${test.questions.length} ta savoldan faqat ${answeredCount} tasiga javob berdingiz. Baribir yakunlaysizmi?`);
+        if (!confirmSubmit) return;
+      }
     }
     
     setSubmitting(true);
-    const toastId = toast.loading('Submitting and analyzing your answers...');
+    const toastId = toast.loading('Javoblaringiz tekshirilmoqda...');
     
     let score = 0;
     test.questions.forEach((q: any, i: number) => {
@@ -73,7 +139,7 @@ export default function TakeTest() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           testTitle: test.title,
-          studentName,
+          studentName: studentName + (isForced ? ' (Cheated)' : ''),
           score,
           totalScore: test.questions.length,
           answers,
@@ -88,7 +154,7 @@ export default function TakeTest() {
         body: JSON.stringify({
           id: resultId,
           testId,
-          studentName,
+          studentName: studentName + (isForced ? ' (Qoidabuzarlik)' : ''),
           answers,
           score,
           totalScore: test.questions.length,
@@ -97,11 +163,16 @@ export default function TakeTest() {
         })
       });
       
-      toast.success('Test submitted successfully!', { id: toastId });
+      // Exit fullscreen if active
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(err => console.log(err));
+      }
+
+      toast.success('Test muvaffaqiyatli yakunlandi!', { id: toastId });
       navigate(`/online-tests/results/${resultId}`);
     } catch (error) {
       console.error(error);
-      toast.error('Error submitting test', { id: toastId });
+      toast.error('Xatolik yuz berdi. Iltimos qayta urinib ko\'ring.', { id: toastId });
       setSubmitting(false);
     }
   };
@@ -110,6 +181,41 @@ export default function TakeTest() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <Loader2 className="animate-spin text-gray-400" size={32} />
+      </div>
+    );
+  }
+
+  // Handle Time Restrictions UI
+  if (timeStatus === 'early') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-gray-200 max-w-md w-full text-center">
+          <Clock className="mx-auto text-blue-500 mb-4" size={48} />
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">Test hali ochilmagan</h1>
+          <p className="text-gray-500 text-sm mb-6">
+            Ushbu test <strong>{new Date(test.startTime).toLocaleString('uz-UZ')}</strong> sanasida ochiladi. Iltimos kuting.
+          </p>
+          <button onClick={() => navigate('/online-tests')} className="text-sm font-medium text-blue-600 hover:underline">
+            Ortga qaytish
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (timeStatus === 'closed') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-gray-200 max-w-md w-full text-center">
+          <AlertTriangle className="mx-auto text-red-500 mb-4" size={48} />
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">Test yopilgan</h1>
+          <p className="text-gray-500 text-sm mb-6">
+            Ushbu test qabul qilishni to'xtatgan (Yopilish vaqti: {new Date(test.endTime).toLocaleString('uz-UZ')}).
+          </p>
+          <button onClick={() => navigate('/online-tests')} className="text-sm font-medium text-blue-600 hover:underline">
+            Ortga qaytish
+          </button>
+        </div>
       </div>
     );
   }
@@ -126,11 +232,15 @@ export default function TakeTest() {
           </button>
           
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">{test.title}</h1>
-          <p className="text-gray-500 text-sm mb-8">{test.subject} • {test.questions.length} Questions</p>
+          <p className="text-gray-500 text-sm mb-6">{test.subject} • {test.questions.length} ta savol</p>
           
+          <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-8 text-sm text-yellow-800">
+            <strong>QAT'IY OGOHLANTIRISH:</strong> Testni boshlagach, boshqa oynaga o'tish (tab almashtirish) qat'iyan man etiladi. Qoidabuzarlik sezilsa, test avtomatik yopiladi va baholanadi.
+          </div>
+
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Enter your full name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">To'liq ismingizni kiriting</label>
               <input 
                 type="text" 
                 value={studentName}
@@ -138,7 +248,7 @@ export default function TakeTest() {
                 onKeyDown={e => e.key === 'Enter' && handleStart()}
                 className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm placeholder-gray-400
                   focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
-                placeholder="e.g. John Doe"
+                placeholder="Masalan: Aliyev Vali"
                 autoFocus
               />
             </div>
@@ -147,7 +257,7 @@ export default function TakeTest() {
               onClick={handleStart}
               className="w-full py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
             >
-              Start Assessment
+              Testni Boshlash
             </button>
           </div>
         </div>
@@ -159,7 +269,13 @@ export default function TakeTest() {
   const progress = ((currentQIndex + 1) / test.questions.length) * 100;
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 font-sans flex flex-col">
+    <div 
+      className="min-h-screen bg-white text-gray-900 font-sans flex flex-col select-none"
+      onCopy={(e) => e.preventDefault()}
+      onCut={(e) => e.preventDefault()}
+      onPaste={(e) => e.preventDefault()}
+      onContextMenu={(e) => e.preventDefault()}
+    >
       {/* Progress Bar */}
       <div className="h-1 w-full bg-gray-100">
         <div 
@@ -174,8 +290,13 @@ export default function TakeTest() {
           <h2 className="text-sm font-medium text-gray-900">{test.title}</h2>
           <p className="text-xs text-gray-500">{studentName}</p>
         </div>
-        <div className="text-sm font-medium text-gray-500">
-          {currentQIndex + 1} of {test.questions.length}
+        <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded text-xs font-medium border border-red-100">
+            <AlertTriangle size={12} /> Ekranni tark etmang
+          </div>
+          <div className="text-sm font-medium text-gray-500">
+            {currentQIndex + 1} / {test.questions.length}
+          </div>
         </div>
       </header>
 
@@ -218,7 +339,7 @@ export default function TakeTest() {
             disabled={currentQIndex === 0}
             className="px-6 py-2.5 text-sm font-medium text-gray-600 disabled:opacity-30 hover:text-gray-900 transition-colors"
           >
-            Previous
+            Oldingi
           </button>
           
           {currentQIndex < test.questions.length - 1 ? (
@@ -226,16 +347,16 @@ export default function TakeTest() {
               onClick={() => setCurrentQIndex(prev => prev + 1)}
               className="px-8 py-2.5 bg-gray-100 text-gray-900 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors"
             >
-              Next Question
+              Keyingi Savol
             </button>
           ) : (
             <button
-              onClick={handleSubmit}
+              onClick={() => handleSubmit(false)}
               disabled={submitting}
               className="inline-flex items-center gap-2 px-8 py-2.5 bg-black text-white rounded-full text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-70"
             >
               {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
-              {submitting ? 'Submitting...' : 'Submit Assessment'}
+              {submitting ? 'Yuborilmoqda...' : 'Testni Yakunlash'}
             </button>
           )}
         </div>

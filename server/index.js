@@ -183,8 +183,22 @@ app.post('/api/online-tests', async (req, res) => {
 app.post('/api/online-test-results', async (req, res) => {
   try {
     const data = req.body;
-    await OnlineTestResult.findOneAndUpdate({ id: data.id }, data, { upsert: true, new: true });
-    res.json({ success: true });
+    
+    // Verify time limit on backend to prevent bypassing
+    const test = await OnlineTest.findOne({ id: data.testId });
+    if (test) {
+      const now = new Date();
+      if (test.startTime && now < new Date(test.startTime)) {
+        return res.status(403).json({ error: 'Test hasn\'t started yet.' });
+      }
+      if (test.endTime && now > new Date(test.endTime)) {
+        return res.status(403).json({ error: 'Test is closed.' });
+      }
+    }
+
+    const result = new OnlineTestResult(data);
+    await result.save();
+    res.status(201).json({ message: 'Result saved successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
