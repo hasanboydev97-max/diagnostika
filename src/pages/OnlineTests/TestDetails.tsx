@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, FileText, Printer } from 'lucide-react';
+import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, FileText, Download } from 'lucide-react';
 import { getAuthHeaders, getToken } from '../../lib/auth';
 import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
 import { autoFormatMath } from '../../utils/mathFormatter';
+import { jsPDF } from 'jspdf';
+import { toPng } from 'html-to-image';
 
 const renderMathForWord = (content: string) => {
   if (!content) return '';
@@ -123,6 +125,63 @@ export default function TestDetails() {
     document.body.removeChild(downloadLink);
   };
 
+  const handleDownloadPDF = async () => {
+    if (!test) return;
+    
+    const printView = document.getElementById('print-view');
+    if (!printView) {
+      toast.error("PDF yuklash uchun xatolik yuz berdi");
+      return;
+    }
+    
+    const toastId = toast.loading('PDF fayl tayyorlanmoqda, iltimos kuting... (bu jarayon biroz vaqt olishi mumkin)');
+    
+    try {
+      // Elementni ekranga chiqaramiz, lekin foydalanuvchiga ko'rinmaydigan qilib
+      printView.classList.remove('hidden');
+      printView.style.position = 'absolute';
+      printView.style.left = '-9999px';
+      printView.style.top = '0';
+      printView.style.width = '794px'; // A4 width in pixels at 96 DPI
+      printView.style.backgroundColor = '#ffffff';
+      
+      const dataUrl = await toPng(printView, { quality: 1.0, pixelRatio: 2 });
+      
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (printView.offsetHeight * pdfWidth) / printView.offsetWidth;
+      
+      // If height is larger than one page, split into multiple pages
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      let heightLeft = pdfHeight;
+      let position = 0;
+
+      pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - pdfHeight;
+        pdf.addPage();
+        pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      pdf.save(`${test.title}.pdf`);
+      toast.success('PDF muvaffaqiyatli yuklandi!', { id: toastId });
+    } catch (error) {
+      console.error(error);
+      toast.error('PDF tayyorlashda xatolik yuz berdi', { id: toastId });
+    } finally {
+      // Qayta yashiramiz
+      printView.classList.add('hidden');
+      printView.style.position = '';
+      printView.style.left = '';
+      printView.style.top = '';
+      printView.style.width = '';
+      printView.style.backgroundColor = '';
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -157,7 +216,7 @@ export default function TestDetails() {
         </button>
 
         {/* Print-only View (Hidden on screen) */}
-        <div className="hidden print:block mb-8">
+        <div id="print-view" className="hidden print:block mb-8 bg-white p-8">
           <h1 className="text-3xl font-bold text-center mb-2">{test.title}</h1>
           <p className="text-center text-gray-600 mb-8">Fan: {test.subject}</p>
           <div className="space-y-6">
@@ -214,10 +273,10 @@ export default function TestDetails() {
                     <FileText size={14} /> Word (.doc)
                   </button>
                   <button
-                    onClick={() => window.print()}
+                    onClick={handleDownloadPDF}
                     className="flex-1 flex items-center justify-center gap-2 px-2 py-2.5 bg-red-50 border border-red-200 text-red-700 text-xs font-medium rounded-lg hover:bg-red-100 transition-colors"
                   >
-                    <Printer size={14} /> Print (PDF)
+                    <Download size={14} /> PDF Yuklash
                   </button>
                 </div>
               </div>
