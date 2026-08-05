@@ -282,7 +282,7 @@ app.post('/api/online-test-results', async (req, res) => {
       const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
       if (apiKey && test && data.questions) {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+        const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro', 'gemini-1.0-pro', 'gemini-flash-latest', 'gemini-pro'];
         
         const prompt = `O'quvchi test ishladi. 
 Test nomi: ${test.title}
@@ -298,9 +298,19 @@ ${JSON.stringify(data.questions.map((q, i) => ({
 
 Ushbu natijalarga asosan o'quvchiga o'zbek tilida qisqa (2-3 ta gap) dalda beruvchi va qaysi mavzularda e'tiborli bo'lishi kerakligi haqida maslahat (feedback) yozing. Hech qanday JSON yozmang, faqat matn.`;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        aiFeedback = response.text();
+        for (const modelName of modelsToTry) {
+          try {
+            console.log(`AI Feedback uchun model sinab ko'rilmoqda: ${modelName}...`);
+            const model = genAI.getGenerativeModel({ model: modelName });
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            aiFeedback = response.text();
+            console.log(`Muvaffaqiyatli! ${modelName} orqali javob olindi.`);
+            break;
+          } catch (modelError) {
+            console.warn(`Model xatosi (${modelName}):`, modelError.message);
+          }
+        }
       }
     } catch (aiError) {
       console.error('AI Feedback skipped/failed:', aiError.message);
@@ -355,7 +365,7 @@ app.post('/api/online-tests/generate', authMiddleware, async (req, res) => {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+    const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro', 'gemini-1.0-pro', 'gemini-flash-latest', 'gemini-pro'];
 
     const prompt = `# ROLE
 You are an expert ${subject} teacher and professional exam creator.
@@ -418,9 +428,28 @@ Example:
   }
 ]`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    let text = response.text();
+    let text = "";
+    let success = false;
+    
+    for (const modelName of modelsToTry) {
+      try {
+        console.log(`Test generatsiya qilish uchun model sinab ko'rilmoqda: ${modelName}...`);
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        text = response.text();
+        success = true;
+        console.log(`Muvaffaqiyatli! ${modelName} orqali test generatsiya qilindi.`);
+        break;
+      } catch (modelError) {
+        console.warn(`Model xatosi (${modelName}):`, modelError.message);
+      }
+    }
+
+    if (!success) {
+      return res.status(500).json({ error: 'Barcha modellar limitdan oshgan yoki xatolik yuz berdi.' });
+    }
+    
     text = text.replace(/```json/g, '').replace(/```/g, '').trim();
     
     const questions = JSON.parse(text);
