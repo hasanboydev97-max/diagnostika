@@ -1,34 +1,29 @@
 export function autoFormatMath(text: string): string {
   if (!text) return text;
-  
-  // If the text already has KaTeX delimiters, assume the AI did its job correctly.
-  if (text.includes('$') || text.includes('\\[') || text.includes('\\(')) {
-    return text;
+
+  // Step 1: Temporarily hide everything that is ALREADY properly wrapped in $ or $$
+  // to avoid double-wrapping it. The AI often wraps SOME math but forgets others.
+  const placeholders: string[] = [];
+  let hiddenText = text.replace(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$)/g, (match) => {
+    placeholders.push(match);
+    return `__MATH_BLOCK_${placeholders.length - 1}__`;
+  });
+
+  // Step 2: Now find LaTeX commands that are left out in the open (unwrapped)
+  // We look for commands like \sqrt, \frac, \left, \right, \text, \sin, etc.
+  // This robust regex handles nested braces up to 2 levels deep (which covers 99% of school math).
+  // E.g., \sqrt{7-4\sqrt{3}} or \frac{\sqrt{a}}{\sqrt[4]{b}}
+  const commandRegex = /\\[a-zA-Z]+(?:\[[^\]]*\])*(?:\{(?:[^{}]|\{[^{}]*\})*\})*/g;
+
+  hiddenText = hiddenText.replace(commandRegex, (match) => {
+    return `$${match}$`;
+  });
+
+  // Step 3: Restore the properly wrapped blocks
+  for (let i = 0; i < placeholders.length; i++) {
+    hiddenText = hiddenText.replace(`__MATH_BLOCK_${i}__`, placeholders[i]);
   }
 
-  // Define patterns for math expressions that frequently miss $ signs.
-  
-  // Pattern 1: Expressions with \ (like \sqrt, \frac, \infty, \sin, \cos, \text)
-  // We match the command and any immediate arguments {}
-  let formatted = text.replace(/(\\[a-zA-Z]+(?:\{[^{}]*\})*)/g, (match) => {
-    return `$${match}$`;
-  });
-
-  // Pattern 2: Polynomials and equations (e.g., f(x) = x^2 - 5x + 6, or x^3)
-  // Match x^2, y_1, 2x+3=0 etc.
-  // We'll wrap sequences containing ^ or _ or = that have variables.
-  // To avoid breaking normal text, we only wrap if it contains ^, _, or = next to variables/numbers.
-  formatted = formatted.replace(/([a-zA-Z0-9]+[\^_][a-zA-Z0-9]+(?:[\+\-\*\/][a-zA-Z0-9]+)*)/g, (match) => {
-    // If it's already wrapped in $ from previous step, don't re-wrap.
-    // Wait, regex replace won't touch already processed parts if we are careful, but let's just do it sequentially.
-    return `$${match}$`;
-  });
-
-  // Clean up double dollar signs that might have been created
-  formatted = formatted.replace(/\$\$/g, '$');
-  
-  // Clean up empty dollars
-  formatted = formatted.replace(/\$\$/g, '');
-
-  return formatted;
+  // Return the hiddenText which now has placeholders restored
+  return hiddenText;
 }
