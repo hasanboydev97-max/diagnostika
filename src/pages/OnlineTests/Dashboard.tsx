@@ -45,7 +45,7 @@ export default function OnlineTestsDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
-      <div className="max-w-5xl mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-6 py-12">
         
         {/* Header section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">

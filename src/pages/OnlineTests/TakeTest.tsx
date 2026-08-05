@@ -180,7 +180,7 @@ export default function TakeTest() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-3xl w-full mx-auto p-6 md:p-12 flex flex-col justify-center">
+      <main className="flex-1 max-w-5xl w-full mx-auto p-6 md:p-12 flex flex-col justify-center">
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-10 leading-snug">
             {currentQ.questionText}

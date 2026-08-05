@@ -209,6 +209,7 @@ Faqat valid JSON formatida javob qaytar. Har bir savol obyekti quydagi maydonlar
 - options (array of strings, 4 ta variant)
 - correctOption (string, options ichidagi bitta qiymat bilan aynan bir xil bo'lishi kerak)
 - type (string, "multiple_choice")
+- subtopic (string, ushbu savol qaysi aniq qoidaga/kichik mavzuga doir ekanligi, masalan "Kasrlarni qo'shish", qisqa 1-2 so'z)
 
 JSON dan boshqa hech qanday izoh yoki markdown yozma. Array qaytar.`;
 

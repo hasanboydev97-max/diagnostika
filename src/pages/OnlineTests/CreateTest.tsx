@@ -102,7 +102,7 @@ export default function CreateTest() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans pb-20">
-      <div className="max-w-4xl mx-auto px-6 py-10">
+      <div className="max-w-7xl mx-auto px-6 py-10">
         
         {/* Navigation */}
         <button 
@@ -294,7 +294,7 @@ export default function CreateTest() {
 
         {/* Sticky Save Button */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10 flex justify-center">
-          <div className="max-w-4xl w-full flex justify-end">
+          <div className="max-w-7xl w-full flex justify-end">
             <button
               onClick={handleSave}
               disabled={saving}
