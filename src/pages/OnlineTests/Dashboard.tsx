@@ -77,41 +77,42 @@ export default function OnlineTestsDashboard() {
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
       <div className="max-w-7xl mx-auto px-6 py-12">
         
-        {/* Header section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">O'qituvchi Paneli</h1>
-              <p className="text-gray-500 mt-1">{teacher?.name} - {teacher?.subject} o'qituvchisi</p>
-            </div>
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <button
-                onClick={() => navigate('/online-tests/create')}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm"
-              >
-                <Plus size={20} />
-                <span>Yangi Test</span>
-              </button>
-              <button
-                onClick={logout}
-                className="p-2.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-gray-200 hover:border-red-100 bg-white"
-                title="Chiqish"
-              >
-                <LogOut size={20} />
-              </button>
-            </div>
+        {/* Minimalist Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">O'qituvchi Paneli</h1>
+            <p className="text-gray-500 mt-1">{teacher?.name} - {teacher?.subject} o'qituvchisi</p>
+          </div>
+          
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <button
+              onClick={() => navigate('/online-tests/create')}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm"
+            >
+              <Plus size={20} />
+              <span>Yangi Test</span>
+            </button>
+            <button
+              onClick={logout}
+              className="p-2.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-gray-200 hover:border-red-100 bg-white"
+              title="Chiqish"
+            >
+              <LogOut size={20} />
+            </button>
           </div>
         </div>
 
         {/* Search & Filters */}
-        <div className="mb-6 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+        <div className="mb-8 relative max-w-2xl">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
           <input
             type="text"
             placeholder="Testlarni nomi yoki fani bo'yicha qidiring..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full max-w-md pl-10 pr-4 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 transition-colors bg-white shadow-sm"
+            className="block w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent shadow-sm transition-all duration-300 hover:shadow-md"
           />
         </div>
 
