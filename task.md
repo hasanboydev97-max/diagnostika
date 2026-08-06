@@ -1,4 +1,4 @@
 - [x] Update `CustomCursor.tsx` to 64x64px white blend difference
-- [/] Rewrite `Landing.tsx` to use the 12-col asymmetric grid portfolio layout
-- [ ] Implement Framer Motion scroll animations and accordion mechanics
-- [ ] Verify functionality and mobile responsiveness
+- [x] Rewrite `Landing.tsx` to use the 12-col asymmetric grid portfolio layout
+- [x] Implement Framer Motion scroll animations and accordion mechanics
+- [x] Verify functionality and mobile responsiveness

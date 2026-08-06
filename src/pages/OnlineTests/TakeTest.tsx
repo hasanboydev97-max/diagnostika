@@ -343,12 +343,12 @@ export default function TakeTest() {
               <span className="text-[10px] font-bold text-zinc-500">{Object.keys(answers).length} / {test.questions.length}</span>
             </div>
             
-            <div className="grid grid-cols-5 gap-1.5">
+            <div className="grid grid-cols-5 gap-1 md:gap-1.5">
               {test.questions.map((_: any, idx: number) => {
                 const isAnswered = answers[idx] !== undefined;
                 const isCurrent = idx === currentQIndex;
                 
-                let btnClass = "w-full aspect-square rounded text-[11px] font-semibold transition-all flex items-center justify-center border ";
+                let btnClass = "w-full aspect-square rounded text-[10px] md:text-[11px] font-semibold transition-all flex items-center justify-center border ";
                 if (isCurrent) {
                   btnClass += "border-zinc-900 bg-zinc-900 text-white";
                 } else if (isAnswered) {

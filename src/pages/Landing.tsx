@@ -23,7 +23,7 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white">
-      <div className="max-w-5xl mx-auto px-6 py-24 md:py-32 flex flex-col gap-32">
+      <div className="max-w-5xl mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32">
         
         {/* HERO SECTION */}
         <section className="grid grid-cols-1 md:grid-cols-12 gap-12">
@@ -50,7 +50,7 @@ export default function Landing() {
         </section>
 
         {/* PORTALS SECTION */}
-        <section className="grid grid-cols-1 md:grid-cols-12 gap-12 border-t border-black/10 pt-24 md:pt-32">
+        <section className="grid grid-cols-1 md:grid-cols-12 gap-12 border-t border-black/10 pt-16 md:pt-32">
           <div className="md:col-span-4 md:sticky md:top-32 h-fit">
             <motion.h2 
               initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
@@ -108,7 +108,7 @@ export default function Landing() {
         </section>
 
         {/* FAQ SECTION */}
-        <section className="grid grid-cols-1 md:grid-cols-12 gap-12 border-t border-black/10 pt-24 md:pt-32">
+        <section className="grid grid-cols-1 md:grid-cols-12 gap-12 border-t border-black/10 pt-16 md:pt-32">
           <div className="md:col-span-4 md:sticky md:top-32 h-fit">
             <motion.h2 
               initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
@@ -162,7 +162,7 @@ export default function Landing() {
         </section>
 
         {/* FOOTER */}
-        <footer className="mt-12 flex items-center justify-between border-t border-black/10 pt-12 pb-6">
+        <footer className="mt-8 flex flex-col md:flex-row gap-4 items-center justify-between border-t border-black/10 pt-12 pb-6 text-center">
           <span className="text-xs font-semibold tracking-[0.2em] uppercase text-gray-400">
             &copy; {new Date().getFullYear()} Maktab Diagnostikasi.
           </span>

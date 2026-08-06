@@ -106,7 +106,7 @@ export default function SuperAdmin() {
   }
 
   const EmptyState = ({ message }: { message: string }) => (
-    <div className="flex flex-col items-center justify-center py-24 px-4 text-center border-b border-black/10">
+    <div className="flex flex-col items-center justify-center py-16 md:py-24 px-4 text-center border-b border-black/10">
       <div className="w-12 h-12 rounded-full border border-black/10 flex items-center justify-center mb-6">
         <Search className="w-5 h-5 text-gray-400" strokeWidth={1.5} />
       </div>
@@ -116,12 +116,12 @@ export default function SuperAdmin() {
 
   return (
     <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white">
-      <div className="max-w-7xl mx-auto px-6 py-24 md:py-32 flex flex-col gap-32">
+      <div className="max-w-7xl mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32">
         
         <section className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-24">
           
           {/* LEFT SIDEBAR (STICKY) */}
-          <div className="md:col-span-4 md:sticky md:top-32 h-fit flex flex-col gap-16">
+          <div className="md:col-span-4 md:sticky md:top-32 h-fit flex flex-col gap-12 md:gap-16">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="flex flex-col gap-6">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full overflow-hidden border border-black/10">
@@ -147,7 +147,7 @@ export default function SuperAdmin() {
                   <button 
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`flex items-center justify-between border-b border-black/10 py-6 text-left group transition-all duration-300 ${isActive ? 'text-black pl-4 border-black/30' : 'text-gray-400 hover:text-black hover:pl-2'}`}
+                    className={`flex items-center justify-between border-b border-black/10 py-5 md:py-6 text-left group transition-all duration-300 ${isActive ? 'text-black pl-4 border-black/30' : 'text-gray-400 hover:text-black hover:pl-2'}`}
                   >
                     <span className="flex items-center gap-4 text-sm font-semibold tracking-[0.1em] uppercase">
                       <Icon className="w-4 h-4" strokeWidth={isActive ? 2 : 1.5} />
@@ -159,7 +159,7 @@ export default function SuperAdmin() {
               })}
               <button 
                 onClick={() => navigate('/')}
-                className="flex items-center justify-between border-b border-black/10 py-6 text-left group transition-all duration-300 text-gray-400 hover:text-black hover:pl-2"
+                className="flex items-center justify-between border-b border-black/10 py-5 md:py-6 text-left group transition-all duration-300 text-gray-400 hover:text-black hover:pl-2"
               >
                 <span className="flex items-center gap-4 text-sm font-semibold tracking-[0.1em] uppercase">
                   <LogOut className="w-4 h-4" strokeWidth={1.5} />
@@ -183,7 +183,7 @@ export default function SuperAdmin() {
                 
                 {/* OVERVIEW TAB */}
                 {activeTab === 'overview' && (
-                  <motion.div variants={containerVariants} initial="hidden" animate="show" className="flex flex-col gap-16">
+                  <motion.div variants={containerVariants} initial="hidden" animate="show" className="flex flex-col gap-12 md:gap-16">
                     <div>
                       <motion.h2 variants={itemVariants} className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500 mb-8 border-b border-black/10 pb-4">Statistika</motion.h2>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
@@ -200,7 +200,7 @@ export default function SuperAdmin() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16">
                       {/* Recent Tests */}
                       <motion.div variants={itemVariants}>
                         <div className="flex items-center justify-between border-b border-black/10 pb-4 mb-4">
@@ -209,12 +209,12 @@ export default function SuperAdmin() {
                         {tests.length === 0 ? <p className="text-gray-400 py-8">Testlar mavjud emas.</p> : (
                           <div className="flex flex-col">
                             {tests.slice(0, 5).map(t => (
-                              <div key={t._id} className="border-b border-black/10 py-6 group flex justify-between items-center">
+                              <div key={t._id} className="border-b border-black/10 py-4 md:py-6 group flex justify-between items-center">
                                 <div className="min-w-0 pr-4">
-                                  <h3 className="text-lg font-medium mb-1 truncate">{t.title}</h3>
-                                  <p className="text-sm text-gray-500 truncate">{t.teacher?.name || 'Noma\'lum'}</p>
+                                  <h3 className="text-base md:text-lg font-medium mb-1 truncate">{t.title}</h3>
+                                  <p className="text-xs md:text-sm text-gray-500 truncate">{t.teacher?.name || 'Noma\'lum'}</p>
                                 </div>
-                                <span className="text-xs tracking-[0.1em] text-gray-400 whitespace-nowrap">
+                                <span className="text-[10px] md:text-xs tracking-[0.1em] text-gray-400 whitespace-nowrap">
                                   {new Date(t.createdAt).toLocaleDateString()}
                                 </span>
                               </div>
@@ -231,10 +231,10 @@ export default function SuperAdmin() {
                         {teachers.length === 0 ? <p className="text-gray-400 py-8">O'qituvchilar mavjud emas.</p> : (
                           <div className="flex flex-col">
                             {teachers.slice(0, 5).map(t => (
-                              <div key={t._id} className="border-b border-black/10 py-6 group flex justify-between items-center">
+                              <div key={t._id} className="border-b border-black/10 py-4 md:py-6 group flex justify-between items-center">
                                 <div className="min-w-0 pr-4">
-                                  <h3 className="text-lg font-medium mb-1 truncate">{t.name}</h3>
-                                  <p className="text-sm text-gray-500 truncate">{t.email}</p>
+                                  <h3 className="text-base md:text-lg font-medium mb-1 truncate">{t.name}</h3>
+                                  <p className="text-xs md:text-sm text-gray-500 truncate">{t.email}</p>
                                 </div>
                                 <div>
                                   {t.role === 'admin' ? (
