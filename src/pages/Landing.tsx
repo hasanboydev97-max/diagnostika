@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
 import { ArrowRight, Plus } from 'lucide-react';
 
 const containerVariants: any = {
@@ -11,19 +11,20 @@ const containerVariants: any = {
   }
 };
 
-const itemVariants: any = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
-};
-
 export default function Landing() {
   const navigate = useNavigate();
-  const [activeFaq, setActiveFaq] = useState<number | null>(null);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [activeFaq, setActiveFaq] = (useState as any)<number | null>(null);
+  
+  // High-performance cursor tracking without re-renders
+  const cursorX = useMotionValue(-100);
+  const cursorY = useMotionValue(-100);
+  const springX = useSpring(cursorX, { stiffness: 500, damping: 28, mass: 0.5 });
+  const springY = useSpring(cursorY, { stiffness: 500, damping: 28, mass: 0.5 });
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
+      cursorX.set(e.clientX - 24);
+      cursorY.set(e.clientY - 24);
     };
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
@@ -35,16 +36,15 @@ export default function Landing() {
       {/* Custom Follower Cursor */}
       <motion.div 
         className="fixed top-0 left-0 w-12 h-12 bg-[#111111] rounded-full pointer-events-none z-[100] hidden md:block"
-        animate={{ x: mousePosition.x - 24, y: mousePosition.y - 24 }}
-        transition={{ type: "spring", stiffness: 300, damping: 25, mass: 0.5 }}
+        style={{ x: springX, y: springY }}
       />
 
       {/* Interactive X-Ray Typography Background */}
-      <div 
+      <motion.div 
         className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center overflow-hidden transition-opacity duration-300"
         style={{
-          WebkitMaskImage: `radial-gradient(circle 400px at ${mousePosition.x}px ${mousePosition.y}px, black 10%, transparent 100%)`,
-          maskImage: `radial-gradient(circle 400px at ${mousePosition.x}px ${mousePosition.y}px, black 10%, transparent 100%)`
+          WebkitMaskImage: `radial-gradient(circle 400px at ${springX}px ${springY}px, black 10%, transparent 100%)`,
+          maskImage: `radial-gradient(circle 400px at ${springX}px ${springY}px, black 10%, transparent 100%)`
         }}
       >
         <div className="flex flex-col items-center justify-center rotate-[-4deg] scale-[1.2] opacity-60">
@@ -99,45 +99,52 @@ export default function Landing() {
             <motion.div 
               initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
               onClick={() => navigate('/login')}
-              className="group cursor-pointer border-b border-black/10 py-10 px-6 -mx-6 hover:bg-neutral-100 transition-colors duration-300 flex flex-col md:flex-row md:items-end justify-between gap-6 pointer-events-auto"
+              className="relative group cursor-pointer border-b border-black/10 py-10 px-6 -mx-6 flex flex-col md:flex-row md:items-end justify-between gap-6 pointer-events-auto overflow-hidden"
             >
-              <div>
+              {/* Animated Hover Background */}
+              <div className="absolute inset-0 bg-[#f5f5f5] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.87,0,0.13,1)] z-0 rounded-xl" />
+              
+              <div className="relative z-10">
                 <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300">O'quvchi Portali</h3>
                 <p className="text-gray-500 leading-relaxed max-w-md transition-all duration-300 delay-75">
                   Shaxsiy test natijalarini ko'rish va reytingni tahlil qilish.
                 </p>
               </div>
-              <ArrowRight className="w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 transition-all duration-500" strokeWidth={1.5} />
+              <ArrowRight className="relative z-10 w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 transition-all duration-500" strokeWidth={1.5} />
             </motion.div>
 
             {/* O'qituvchi Portali */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
               onClick={() => navigate('/online-tests')}
-              className="group cursor-pointer border-b border-black/10 py-10 px-6 -mx-6 hover:bg-neutral-100 transition-colors duration-300 flex flex-col md:flex-row md:items-end justify-between gap-6 pointer-events-auto"
+              className="relative group cursor-pointer border-b border-black/10 py-10 px-6 -mx-6 flex flex-col md:flex-row md:items-end justify-between gap-6 pointer-events-auto overflow-hidden"
             >
-              <div>
+              <div className="absolute inset-0 bg-[#f5f5f5] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.87,0,0.13,1)] z-0 rounded-xl" />
+
+              <div className="relative z-10">
                 <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300">O'qituvchi Portali</h3>
                 <p className="text-gray-500 leading-relaxed max-w-md transition-all duration-300 delay-75">
                   Testlarni AI yordamida yaratish va guruhlarni boshqarish.
                 </p>
               </div>
-              <ArrowRight className="w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 transition-all duration-500" strokeWidth={1.5} />
+              <ArrowRight className="relative z-10 w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 transition-all duration-500" strokeWidth={1.5} />
             </motion.div>
 
             {/* Super Admin */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
               onClick={() => navigate('/superadmin')}
-              className="group cursor-pointer border-b border-black/10 py-10 px-6 -mx-6 hover:bg-neutral-100 transition-colors duration-300 flex flex-col md:flex-row md:items-end justify-between gap-6 pointer-events-auto"
+              className="relative group cursor-pointer border-b border-black/10 py-10 px-6 -mx-6 flex flex-col md:flex-row md:items-end justify-between gap-6 pointer-events-auto overflow-hidden"
             >
-              <div>
+              <div className="absolute inset-0 bg-[#f5f5f5] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.87,0,0.13,1)] z-0 rounded-xl" />
+
+              <div className="relative z-10">
                 <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300">Boshqaruv Paneli</h3>
                 <p className="text-gray-500 leading-relaxed max-w-md transition-all duration-300 delay-75">
                   Tizimni to'liq monitoring qilish, statistikani kuzatish.
                 </p>
               </div>
-              <ArrowRight className="w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 transition-all duration-500" strokeWidth={1.5} />
+              <ArrowRight className="relative z-10 w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 transition-all duration-500" strokeWidth={1.5} />
             </motion.div>
           </div>
         </section>
