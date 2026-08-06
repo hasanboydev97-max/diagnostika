@@ -4,7 +4,7 @@ import { generateDiagnosticSummary } from '../lib/gemini';
 import { useNavigate } from 'react-router-dom';
 import type { QuestionBlueprint } from '../lib/blueprint';
 import { GRADE_BLUEPRINTS } from '../lib/gradeBlueprints';
-import { Check, Settings2, Users, PlusCircle } from 'lucide-react';
+import { Check, Settings2, Users, PlusCircle, ChevronDown } from 'lucide-react';
 import BlueprintEditorModal from '../components/BlueprintEditorModal';
 
 export default function Admin() {
@@ -13,6 +13,7 @@ export default function Admin() {
   
   const [studentName, setStudentName] = useState('');
   const [grade, setGrade] = useState('5');
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [currentBlueprint, setCurrentBlueprint] = useState<QuestionBlueprint[]>(GRADE_BLUEPRINTS['5']);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [questionResults, setQuestionResults] = useState<Record<number, boolean>>(() => {
@@ -277,18 +278,32 @@ export default function Admin() {
                       required
                     />
                   </div>
-                  <div className="w-full md:w-48">
+                  <div className="w-full md:w-48 relative">
                     <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-4">Sinf</label>
-                    <select 
-                      value={grade}
-                      onChange={e => setGrade(e.target.value)}
-                      className="w-full border-b border-black/20 pb-3 bg-transparent text-lg md:text-xl focus:outline-none focus:border-black transition-colors cursor-pointer appearance-none"
-                      style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23111111%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem top 50%', backgroundSize: '0.65rem auto' }}
+                    <div 
+                      onClick={() => setIsSelectOpen(!isSelectOpen)}
+                      className="w-full border-b border-black/20 pb-3 bg-transparent text-lg md:text-xl cursor-pointer flex justify-between items-center transition-colors hover:border-black"
                     >
-                      {[5, 6, 7, 8, 9, 10, 11].map(g => (
-                        <option key={g} value={String(g)}>{g}-sinf</option>
-                      ))}
-                    </select>
+                      <span>{grade}-sinf</span>
+                      <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isSelectOpen ? 'rotate-180' : ''}`} />
+                    </div>
+                    
+                    {isSelectOpen && (
+                      <div className="absolute top-full left-0 w-full mt-2 bg-white border border-black/10 shadow-xl z-50">
+                        {[5, 6, 7, 8, 9, 10, 11].map(g => (
+                          <div 
+                            key={g}
+                            onClick={() => {
+                              setGrade(String(g));
+                              setIsSelectOpen(false);
+                            }}
+                            className="px-6 py-4 text-lg hover:bg-[#f8f8f8] hover:pl-8 transition-all cursor-pointer border-b border-black/5 last:border-0"
+                          >
+                            {g}-sinf
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
