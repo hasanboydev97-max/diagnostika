@@ -21,43 +21,34 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
-      {/* Animated Mesh Gradient Background */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none flex justify-center items-center opacity-40">
-        <motion.div 
-          animate={{ 
-            x: [0, 150, -50, -150, 0],
-            y: [0, -100, 150, -50, 0],
-            scale: [1, 1.2, 0.8, 1.3, 1]
-          }}
-          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          className="absolute w-[40vw] h-[40vw] rounded-full bg-blue-500 blur-[120px] mix-blend-multiply"
+      {/* Aceternity Aurora Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 bg-[#fdfdfd]">
+        <div className="absolute inset-0 opacity-50"
+             style={{
+               backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+             }}
         />
-        <motion.div 
-          animate={{ 
-            x: [0, -150, 50, 150, 0],
-            y: [0, 150, -100, 50, 0],
-            scale: [1, 1.3, 0.9, 1.1, 1]
+        <div
+          className="absolute -inset-[10px] opacity-40 will-change-transform"
+          style={{
+            backgroundImage: `repeating-linear-gradient(100deg, #fff 10%, #fff 15%, transparent 20%, transparent 25%), repeating-linear-gradient(100deg, #3b82f6 10%, #a855f7 15%, #3b82f6 20%, #ec4899 25%, #3b82f6 30%)`,
+            backgroundSize: '200% 200%',
+            backgroundPosition: '50% 50%, 50% 50%',
+            filter: 'blur(30px)',
+            maskImage: 'radial-gradient(ellipse at 100% 0%, black 10%, transparent 70%)',
+            animation: 'aurora 25s linear infinite'
           }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute w-[35vw] h-[35vw] rounded-full bg-purple-500 blur-[120px] mix-blend-multiply"
         />
-        <motion.div 
-          animate={{ 
-            x: [0, 100, -150, 100, 0],
-            y: [0, 50, 150, -150, 0],
-            scale: [1, 0.9, 1.4, 0.8, 1]
+        <div
+          className="absolute -inset-[10px] opacity-30 will-change-transform mix-blend-difference"
+          style={{
+            backgroundImage: `repeating-linear-gradient(100deg, #fff 10%, #fff 15%, transparent 20%, transparent 25%), repeating-linear-gradient(100deg, #10b981 10%, #3b82f6 15%, #8b5cf6 20%, #f43f5e 25%, #10b981 30%)`,
+            backgroundSize: '200% 200%',
+            backgroundPosition: '50% 50%, 50% 50%',
+            filter: 'blur(40px)',
+            maskImage: 'radial-gradient(ellipse at 0% 100%, black 10%, transparent 70%)',
+            animation: 'aurora-reverse 30s linear infinite'
           }}
-          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-          className="absolute w-[45vw] h-[45vw] rounded-full bg-pink-500 blur-[120px] mix-blend-multiply"
-        />
-        <motion.div 
-          animate={{ 
-            x: [0, -100, 150, -100, 0],
-            y: [0, -150, -50, 150, 0],
-            scale: [1, 1.4, 0.8, 1.2, 1]
-          }}
-          transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
-          className="absolute w-[30vw] h-[30vw] rounded-full bg-amber-400 blur-[120px] mix-blend-multiply"
         />
       </div>
 
