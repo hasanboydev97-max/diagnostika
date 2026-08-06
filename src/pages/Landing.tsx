@@ -39,9 +39,9 @@ export default function Landing() {
         },
         modes: {
           grab: {
-            distance: 140,
+            distance: 200,
             links: {
-              opacity: 0.15,
+              opacity: 0.8,
             },
           },
         },
@@ -52,10 +52,10 @@ export default function Landing() {
         },
         links: {
           color: "#000000",
-          distance: 150,
+          distance: 180,
           enable: true,
-          opacity: 0.08,
-          width: 1,
+          opacity: 0.35,
+          width: 1.5,
         },
         move: {
           direction: "none" as const,
@@ -64,7 +64,7 @@ export default function Landing() {
             default: "bounce" as const,
           },
           random: false,
-          speed: 0.8,
+          speed: 1.2,
           straight: false,
         },
         number: {
@@ -72,16 +72,16 @@ export default function Landing() {
             enable: true,
             area: 800,
           },
-          value: 60,
+          value: 80,
         },
         opacity: {
-          value: 0.15,
+          value: 0.5,
         },
         shape: {
           type: "circle",
         },
         size: {
-          value: { min: 1, max: 2 },
+          value: { min: 2, max: 4 },
         },
       },
       detectRetina: true,
