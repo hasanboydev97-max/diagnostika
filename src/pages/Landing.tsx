@@ -30,18 +30,27 @@ export default function Landing() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
-      {/* Interactive Architect Grid Background */}
+    <div className="min-h-screen bg-[#fafafa] text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
+      
+      {/* Heavy Visible Grid */}
       <div 
         className="absolute inset-0 z-0 pointer-events-none"
         style={{
           background: `
-            radial-gradient(800px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(0,0,0,0.03), transparent 60%),
-            linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px)
+            linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,0,0,0.15) 1px, transparent 1px)
           `,
-          backgroundSize: '100% 100%, 40px 40px, 40px 40px',
-          backgroundPosition: '0 0, 0 0, 0 0'
+          backgroundSize: '40px 40px',
+        }}
+      />
+
+      {/* Visible Mouse Orb */}
+      <div 
+        className="absolute w-[600px] h-[600px] bg-black/5 rounded-full blur-[100px] pointer-events-none transition-transform duration-700 ease-out z-0"
+        style={{
+          transform: `translate(${mousePosition.x - 300}px, ${mousePosition.y - 300}px)`,
+          top: 0,
+          left: 0,
         }}
       />
 
