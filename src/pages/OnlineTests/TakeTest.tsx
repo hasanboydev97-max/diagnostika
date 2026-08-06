@@ -23,9 +23,38 @@ export default function TakeTest() {
   const violations = useRef(0);
   const submitRef = useRef(false);
 
+  const SAVE_KEY = `test_progress_${testId}`;
+
+  // Keshdan saqlangan ma'lumotlarni o'qish (Auto-save)
   useEffect(() => {
     fetchTest();
+    const savedProgress = localStorage.getItem(SAVE_KEY);
+    if (savedProgress) {
+      try {
+        const parsed = JSON.parse(savedProgress);
+        if (parsed.studentName) setStudentName(parsed.studentName);
+        if (parsed.answers) setAnswers(parsed.answers);
+        if (parsed.timeLeft) setTimeLeft(parsed.timeLeft);
+        if (parsed.started) setStarted(parsed.started);
+        if (parsed.currentQIndex) setCurrentQIndex(parsed.currentQIndex);
+      } catch (e) {
+        console.warn("Keshni o'qishda xatolik", e);
+      }
+    }
   }, [testId]);
+
+  // Har safar javob yoki vaqt o'zgarganda keshga saqlash
+  useEffect(() => {
+    if (started) {
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        studentName,
+        answers,
+        timeLeft,
+        started,
+        currentQIndex
+      }));
+    }
+  }, [answers, timeLeft, started, studentName, currentQIndex]);
 
   const fetchTest = async () => {
     try {
@@ -68,7 +97,7 @@ export default function TakeTest() {
       console.warn('Fullscreen request failed', err);
     }
 
-    if (test.durationMinutes) {
+    if (test.durationMinutes && timeLeft === null) {
       setTimeLeft(test.durationMinutes * 60);
     }
     setStarted(true);
@@ -185,6 +214,9 @@ export default function TakeTest() {
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(err => console.log(err));
       }
+
+      // Muvaffaqiyatli topshirilgach keshni tozalash
+      localStorage.removeItem(SAVE_KEY);
 
       toast.success('Test muvaffaqiyatli yakunlandi!', { id: toastId });
       navigate(`/online-tests/results/${resultId}`);

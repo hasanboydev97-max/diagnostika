@@ -405,6 +405,8 @@ function latexToOmml(latex) {
     // Strip namespace declarations — they conflict with the parent document namespaces
     // and cause Word to reject the file as corrupted
     omml = omml.replace(/\s+xmlns:[a-zA-Z0-9]+=["'][^"']*["']/g, '');
+    // Fix undefined styles that cause Word document corruption
+    omml = omml.replace(/<m:sty m:val="undefined"\/>/g, '<m:sty m:val="p"/>');
     return omml;
   } catch (e) {
     return null;
