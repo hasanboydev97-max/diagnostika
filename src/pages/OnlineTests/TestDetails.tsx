@@ -8,7 +8,8 @@ import FormattedText from '../../components/FormattedText';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 interface Result {
-  _id: string;
+  _id?: string;
+  id?: string;
   studentName: string;
   score: number;
   totalScore: number;
@@ -97,17 +98,18 @@ export default function TestDetails() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="animate-spin text-gray-400" size={32} />
+      <div className="min-h-screen bg-white flex flex-col justify-center items-center font-sans">
+        <div className="w-5 h-5 border-2 border-zinc-200 border-t-zinc-900 rounded-full animate-spin mb-3"></div>
+        <p className="text-zinc-500 font-medium text-[11px] uppercase tracking-wider">Yuklanmoqda</p>
       </div>
     );
   }
 
   if (!test) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
-        <h2 className="text-xl font-medium mb-4">Test topilmadi</h2>
-        <button onClick={() => navigate('/online-tests')} className="text-sm text-blue-600 hover:underline">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center font-sans text-zinc-900">
+        <h2 className="text-lg font-medium mb-4">Test topilmadi</h2>
+        <button onClick={() => navigate('/online-tests')} className="text-xs font-semibold uppercase tracking-wider text-zinc-500 hover:text-zinc-900 transition-colors">
           Dashboard'ga qaytish
         </button>
       </div>
@@ -119,19 +121,29 @@ export default function TestDetails() {
   const averagePercentage = results.length > 0 ? Math.round(totalPercentage / results.length) : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans pb-20">
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <button 
-          onClick={() => navigate('/online-tests')} 
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-8 w-fit"
-        >
-          <ArrowLeft size={16} /> Dashboard'ga qaytish
-        </button>
+    <div className="min-h-screen bg-white text-zinc-900 font-sans pb-24 selection:bg-zinc-200 selection:text-black">
+      
+      {/* Header */}
+      <header className="border-b border-zinc-200 bg-white sticky top-0 z-20">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+          <button 
+            onClick={() => navigate('/online-tests')}
+            className="flex items-center gap-2 text-xs font-medium text-zinc-500 hover:text-zinc-900 transition-colors"
+          >
+            <ArrowLeft size={14} />
+            Dashboard'ga qaytish
+          </button>
+          <div className="text-sm font-semibold tracking-tight">{test.title}</div>
+          <div className="w-20"></div> {/* Spacer for centering */}
+        </div>
+      </header>
+
+      <div className="max-w-6xl mx-auto px-6 py-8">
 
         {/* Print-only View (Hidden on screen) */}
         <div id="print-view" className="hidden print:block mb-8 bg-white p-8">
           <h1 className="text-3xl font-bold text-center mb-2">{test.title}</h1>
-          <p className="text-center text-gray-600 mb-8">Fan: {test.subject}</p>
+          <p className="text-center text-zinc-600 mb-8">Fan: {test.subject}</p>
           <div className="space-y-6">
             {test.questions.map((q: any, i: number) => (
               <div key={i} className="mb-4 page-break-inside-avoid">
@@ -149,122 +161,128 @@ export default function TestDetails() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 print:hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 print:hidden">
           
           {/* Sidebar Info */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-              <span className="inline-block px-2.5 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded mb-4">
+          <div className="lg:col-span-4 flex flex-col gap-5">
+            <div className="bg-white p-5 rounded-md border border-zinc-200">
+              <span className="inline-block px-2 py-0.5 bg-zinc-100 text-zinc-600 text-[10px] font-bold uppercase tracking-wider rounded-sm mb-3">
                 {test.subject}
               </span>
-              <h1 className="text-2xl font-semibold tracking-tight text-gray-900 mb-2">
+              <h1 className="text-xl font-semibold tracking-tight text-zinc-900 mb-1.5 leading-tight">
                 {test.title}
               </h1>
-              <p className="text-gray-500 text-sm mb-6 flex items-center gap-2">
-                <Calendar size={14} /> 
+              <p className="text-zinc-500 text-xs mb-5 flex items-center gap-1.5 font-medium">
+                <Calendar size={12} /> 
                 {new Date(test.createdAt).toLocaleDateString('uz-UZ')}
               </p>
               
-              <div className="pt-6 border-t border-gray-100 flex flex-col gap-3">
+              <div className="pt-4 border-t border-zinc-100 flex flex-col gap-2.5">
                 <button
                   onClick={copyTestLink}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-zinc-900 text-white text-xs font-semibold rounded-md hover:bg-zinc-800 transition-colors shadow-sm"
                 >
-                  <Copy size={16} /> Ulashish (Link nusxalash)
+                  <Copy size={14} /> Link Nusxalash
                 </button>
                 <button
                   onClick={() => navigate(`/online-tests/take/${testId}`)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white border border-zinc-200 text-zinc-700 text-xs font-medium rounded-md hover:bg-zinc-50 hover:border-zinc-300 transition-colors"
                 >
-                  <ExternalLink size={16} /> O'zim yechib ko'rish
+                  <ExternalLink size={14} /> Yechib ko'rish
                 </button>
-                <div className="flex gap-2 w-full mt-2">
+                
+                <div className="flex gap-2 w-full mt-1.5">
                   <button
                     onClick={handleExportWord}
-                    className="flex-1 flex items-center justify-center gap-2 px-2 py-2.5 bg-blue-50 border border-blue-200 text-blue-700 text-xs font-medium rounded-lg hover:bg-blue-100 transition-colors"
-                    title="Word faylga eksport — formulalar tahrirlash imkoni bilan"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 bg-white border border-zinc-200 text-zinc-700 text-[11px] font-semibold rounded-md hover:bg-zinc-50 transition-colors"
                   >
-                    <FileText size={14} /> Word (.docx)
+                    <FileText size={12} /> Word
                   </button>
                   <button
                     onClick={handleDownloadPDF}
                     disabled={isDownloadingPdf}
-                    className="flex-1 flex items-center justify-center gap-2 px-2 py-2.5 bg-red-50 border border-red-200 text-red-700 text-xs font-medium rounded-lg hover:bg-red-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 bg-white border border-zinc-200 text-zinc-700 text-[11px] font-semibold rounded-md hover:bg-zinc-50 transition-colors disabled:opacity-50"
                   >
                     {isDownloadingPdf
-                      ? <><Loader2 size={14} className="animate-spin" /> Tayyorlanmoqda...</>
-                      : <><Download size={14} /> PDF Yuklash</>
+                      ? <><Loader2 size={12} className="animate-spin" /> Tayyor...</>
+                      : <><Download size={12} /> PDF</>
                     }
                   </button>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm grid grid-cols-2 gap-4">
+            <div className="bg-white p-5 rounded-md border border-zinc-200 grid grid-cols-2 gap-4">
                <div>
-                 <p className="text-sm text-gray-500 mb-1 flex items-center gap-1.5"><Users size={14}/> Qatnashuvchilar</p>
-                 <p className="text-2xl font-semibold text-gray-900">{results.length}</p>
+                 <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1 flex items-center gap-1.5">
+                   <Users size={12}/> Qatnashuvchilar
+                 </p>
+                 <p className="text-xl font-semibold text-zinc-900">{results.length}</p>
                </div>
                <div>
-                 <p className="text-sm text-gray-500 mb-1 flex items-center gap-1.5"><BrainCircuit size={14}/> O'rtacha o'zlashtirish</p>
-                 <p className="text-2xl font-semibold text-gray-900">{averagePercentage}%</p>
+                 <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1 flex items-center gap-1.5">
+                   <BrainCircuit size={12}/> O'rtacha foiz
+                 </p>
+                 <p className="text-xl font-semibold text-zinc-900">{averagePercentage}%</p>
                </div>
             </div>
           </div>
 
           {/* Results Table */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-              <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
-                <h3 className="font-semibold text-gray-900">O'quvchilar Natijalari ({results.length})</h3>
+          <div className="lg:col-span-8">
+            <div className="bg-white rounded-md border border-zinc-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-zinc-200 bg-zinc-50">
+                <h3 className="text-sm font-semibold text-zinc-900">O'quvchilar Natijalari <span className="text-zinc-500 font-normal">({results.length})</span></h3>
               </div>
               
               {results.length === 0 ? (
-                <div className="p-12 text-center text-gray-500">
-                  <Users size={32} className="mx-auto text-gray-300 mb-3" />
-                  <p>Hali hech kim testni topshirmagan.</p>
-                  <p className="text-sm mt-1">Ulashish tugmasi orqali test ssilkasini o'quvchilarga yuboring.</p>
+                <div className="p-12 text-center flex flex-col items-center">
+                  <Users size={24} className="text-zinc-300 mb-3" />
+                  <p className="text-sm font-medium text-zinc-900 mb-1">Hech kim topshirmagan</p>
+                  <p className="text-xs text-zinc-500">Linkni nusxalab o'quvchilarga yuboring.</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-gray-50 border-b border-gray-100 text-gray-500">
+                  <table className="w-full text-left text-sm whitespace-nowrap">
+                    <thead className="bg-white border-b border-zinc-200">
                       <tr>
-                        <th className="px-6 py-3 font-medium">O'quvchi Ismi</th>
-                        <th className="px-6 py-3 font-medium">Natija</th>
-                        <th className="px-6 py-3 font-medium">Foiz</th>
-                        <th className="px-6 py-3 font-medium">Topshirgan Vaqti</th>
-                        <th className="px-6 py-3 font-medium text-right">Amal</th>
+                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500">O'quvchi</th>
+                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Natija</th>
+                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Vaqti</th>
+                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500 text-right">Amal</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-zinc-100">
                       {results.map((res: any) => {
                         const percent = Math.round((res.score / res.totalScore) * 100);
                         return (
-                          <tr key={res.id || res._id} className="hover:bg-gray-50/50 transition-colors">
-                            <td className="px-6 py-4 font-medium text-gray-900 capitalize">
+                          <tr key={res.id || res._id} className="hover:bg-zinc-50 transition-colors">
+                            <td className="px-5 py-3.5 text-xs font-medium text-zinc-900 capitalize">
                               {res.studentName}
                             </td>
-                            <td className="px-6 py-4 text-gray-600">
-                              {res.score} / {res.totalScore}
+                            <td className="px-5 py-3.5 text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-zinc-900">{res.score} <span className="text-zinc-400 font-normal">/ {res.totalScore}</span></span>
+                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold tracking-wider ${
+                                  percent >= 80 ? 'bg-zinc-900 text-white' : 
+                                  percent >= 50 ? 'bg-zinc-200 text-zinc-900' : 'bg-red-50 text-red-600 border border-red-100'
+                                }`}>
+                                  {percent}%
+                                </span>
+                              </div>
                             </td>
-                            <td className="px-6 py-4">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                                percent >= 80 ? 'bg-green-100 text-green-700' : 
-                                percent >= 50 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
-                              }`}>
-                                {percent}%
-                              </span>
+                            <td className="px-5 py-3.5 text-xs text-zinc-500">
+                              {new Date(res.createdAt).toLocaleString('uz-UZ', {
+                                day: '2-digit', month: '2-digit', year: 'numeric',
+                                hour: '2-digit', minute: '2-digit'
+                              })}
                             </td>
-                            <td className="px-6 py-4 text-gray-500">
-                              {new Date(res.createdAt).toLocaleString('uz-UZ')}
-                            </td>
-                            <td className="px-6 py-4 text-right">
+                            <td className="px-5 py-3.5 text-right">
                               <button
                                 onClick={() => navigate(`/online-tests/results/${res.id || res._id}`)}
-                                className="text-blue-600 hover:text-blue-700 font-medium hover:underline"
+                                className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 hover:text-zinc-900 transition-colors"
                               >
-                                Batafsil ko'rish
+                                Ko'rish
                               </button>
                             </td>
                           </tr>
