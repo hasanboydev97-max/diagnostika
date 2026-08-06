@@ -23,6 +23,7 @@ export interface StudentResult {
   questionResults: Record<number, boolean>;
   aiSummaryText?: string;
   aiAdviceText?: string;
+  aiRoadmap?: import('../components/RoadmapJourney').RoadmapStep[];
   createdAt: string;
 }
 
