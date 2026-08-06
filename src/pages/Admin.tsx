@@ -4,7 +4,7 @@ import { generateDiagnosticSummary } from '../lib/gemini';
 import { useNavigate } from 'react-router-dom';
 import type { QuestionBlueprint } from '../lib/blueprint';
 import { GRADE_BLUEPRINTS } from '../lib/gradeBlueprints';
-import { Check, X, Settings2, Users, PlusCircle } from 'lucide-react';
+import { Check, Settings2, Users, PlusCircle } from 'lucide-react';
 import BlueprintEditorModal from '../components/BlueprintEditorModal';
 
 export default function Admin() {
@@ -217,6 +217,7 @@ export default function Admin() {
               </>
             )}
           </div>
+        ) : (
           /* New Result Tab */
           generatedCredentials ? (
             <div className="border border-black/10 p-8 md:p-16 text-center space-y-12">
@@ -339,7 +340,6 @@ export default function Admin() {
                 <div className="md:col-span-8 space-y-16">
                   {Array.from(new Set(currentBlueprint.map(q => q.category))).map(category => {
                     const categoryQuestions = currentBlueprint.filter(q => q.category === category);
-                    const isAllSelected = categoryQuestions.every(q => questionResults[q.id]);
                     
                     return (
                       <div key={category} className="space-y-6">
