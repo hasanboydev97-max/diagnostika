@@ -8,10 +8,8 @@ import {
   ShieldAlert, 
   LayoutDashboard,
   LogOut,
-  ChevronRight,
   TrendingUp,
-  Activity,
-  UserCheck
+  Activity
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getToken, getTeacher } from '../lib/auth';
