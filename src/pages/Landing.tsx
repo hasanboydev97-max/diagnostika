@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Plus } from 'lucide-react';
+import Particles, { ParticlesProvider } from "@tsparticles/react";
+import { loadSlim } from "@tsparticles/slim";
+import type { Engine } from "@tsparticles/engine";
 const containerVariants: any = {
   hidden: { opacity: 0 },
   show: {
@@ -19,40 +22,86 @@ export default function Landing() {
   const navigate = useNavigate();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
-  return (
-    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
-      {/* Aceternity Aurora Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 bg-[#fdfdfd]">
-        <div className="absolute inset-0 opacity-50"
-             style={{
-               backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-             }}
-        />
-        <div
-          className="absolute -inset-[10px] opacity-40 will-change-transform"
-          style={{
-            backgroundImage: `repeating-linear-gradient(100deg, #fff 10%, #fff 15%, transparent 20%, transparent 25%), repeating-linear-gradient(100deg, #3b82f6 10%, #a855f7 15%, #3b82f6 20%, #ec4899 25%, #3b82f6 30%)`,
-            backgroundSize: '200% 200%',
-            backgroundPosition: '50% 50%, 50% 50%',
-            filter: 'blur(30px)',
-            maskImage: 'radial-gradient(ellipse at 100% 0%, black 10%, transparent 70%)',
-            animation: 'aurora 25s linear infinite'
-          }}
-        />
-        <div
-          className="absolute -inset-[10px] opacity-30 will-change-transform mix-blend-difference"
-          style={{
-            backgroundImage: `repeating-linear-gradient(100deg, #fff 10%, #fff 15%, transparent 20%, transparent 25%), repeating-linear-gradient(100deg, #10b981 10%, #3b82f6 15%, #8b5cf6 20%, #f43f5e 25%, #10b981 30%)`,
-            backgroundSize: '200% 200%',
-            backgroundPosition: '50% 50%, 50% 50%',
-            filter: 'blur(40px)',
-            maskImage: 'radial-gradient(ellipse at 0% 100%, black 10%, transparent 70%)',
-            animation: 'aurora-reverse 30s linear infinite'
-          }}
-        />
-      </div>
+  const particlesOptions = useMemo(
+    () => ({
+      background: {
+        color: {
+          value: "transparent",
+        },
+      },
+      fpsLimit: 120,
+      interactivity: {
+        events: {
+          onHover: {
+            enable: true,
+            mode: "grab",
+          },
+        },
+        modes: {
+          grab: {
+            distance: 140,
+            links: {
+              opacity: 0.15,
+            },
+          },
+        },
+      },
+      particles: {
+        color: {
+          value: "#000000",
+        },
+        links: {
+          color: "#000000",
+          distance: 150,
+          enable: true,
+          opacity: 0.08,
+          width: 1,
+        },
+        move: {
+          direction: "none" as const,
+          enable: true,
+          outModes: {
+            default: "bounce" as const,
+          },
+          random: false,
+          speed: 0.8,
+          straight: false,
+        },
+        number: {
+          density: {
+            enable: true,
+            area: 800,
+          },
+          value: 60,
+        },
+        opacity: {
+          value: 0.15,
+        },
+        shape: {
+          type: "circle",
+        },
+        size: {
+          value: { min: 1, max: 2 },
+        },
+      },
+      detectRetina: true,
+    }),
+    [],
+  );
 
-      <div className="max-w-5xl mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32 relative z-10">
+  return (
+    <ParticlesProvider init={async (engine: Engine) => { await loadSlim(engine); }}>
+      <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
+        {/* Network Particle Background */}
+        <div className="absolute inset-0 z-0 pointer-events-auto">
+          <Particles
+            id="tsparticles"
+            options={particlesOptions}
+            className="w-full h-full"
+          />
+        </div>
+
+        <div className="max-w-5xl mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32 relative z-10 pointer-events-none">
         
         {/* HERO SECTION */}
         <section className="grid grid-cols-1 md:grid-cols-12 gap-12">
@@ -93,7 +142,7 @@ export default function Landing() {
             <motion.div 
               initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
               onClick={() => navigate('/login')}
-              className="group cursor-pointer border-b border-black/10 py-10 flex flex-col md:flex-row md:items-end justify-between gap-6"
+              className="group cursor-pointer border-b border-black/10 py-10 flex flex-col md:flex-row md:items-end justify-between gap-6 pointer-events-auto"
             >
               <div>
                 <h3 className="text-2xl md:text-3xl font-medium mb-3 group-hover:pl-4 transition-all duration-300">O'quvchi Portali</h3>
@@ -108,7 +157,7 @@ export default function Landing() {
             <motion.div 
               initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
               onClick={() => navigate('/online-tests')}
-              className="group cursor-pointer border-b border-black/10 py-10 flex flex-col md:flex-row md:items-end justify-between gap-6"
+              className="group cursor-pointer border-b border-black/10 py-10 flex flex-col md:flex-row md:items-end justify-between gap-6 pointer-events-auto"
             >
               <div>
                 <h3 className="text-2xl md:text-3xl font-medium mb-3 group-hover:pl-4 transition-all duration-300">O'qituvchi Portali</h3>
@@ -123,7 +172,7 @@ export default function Landing() {
             <motion.div 
               initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
               onClick={() => navigate('/superadmin')}
-              className="group cursor-pointer border-b border-black/10 py-10 flex flex-col md:flex-row md:items-end justify-between gap-6"
+              className="group cursor-pointer border-b border-black/10 py-10 flex flex-col md:flex-row md:items-end justify-between gap-6 pointer-events-auto"
             >
               <div>
                 <h3 className="text-2xl md:text-3xl font-medium mb-3 group-hover:pl-4 transition-all duration-300">Boshqaruv Paneli</h3>
@@ -159,7 +208,7 @@ export default function Landing() {
               >
                 <button 
                   onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
-                  className="w-full py-8 flex items-center justify-between text-left focus:outline-none group"
+                  className="w-full py-8 flex items-center justify-between text-left focus:outline-none group pointer-events-auto"
                 >
                   <span className="text-xl font-medium pr-8">{item.q}</span>
                   <motion.div
@@ -191,16 +240,15 @@ export default function Landing() {
         </section>
 
         {/* FOOTER */}
-        <footer className="mt-8 flex flex-col md:flex-row gap-4 items-center justify-between border-t border-black/10 pt-12 pb-6 text-center">
-          <span className="text-xs font-semibold tracking-[0.2em] uppercase text-gray-400">
-            &copy; {new Date().getFullYear()} Maktab Diagnostikasi.
-          </span>
-          <span className="text-xs font-semibold tracking-[0.2em] uppercase text-gray-400">
-            Barcha huquqlar himoyalangan.
-          </span>
+        <footer className="pt-20 pb-8 flex flex-col md:flex-row items-center justify-between gap-6 pointer-events-auto border-t border-black/10">
+          <div className="flex items-center gap-2">
+            <span className="font-display font-semibold text-lg">HB.</span>
+            <span className="text-sm font-medium tracking-[0.2em] text-[#111111]">DIAGNOSTIKA</span>
+          </div>
+          <p className="text-sm text-neutral-500 font-medium">© {new Date().getFullYear()} HB. Barcha huquqlar himoyalangan.</p>
         </footer>
-
       </div>
-    </div>
+      </div>
+    </ParticlesProvider>
   );
 }

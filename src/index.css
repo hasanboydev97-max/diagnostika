@@ -82,22 +82,3 @@
     cursor: none !important;
   }
 }
-
-/* Aurora Animation Keyframes */
-@keyframes aurora {
-  from {
-    background-position: 50% 50%, 50% 50%;
-  }
-  to {
-    background-position: 350% 50%, 350% 50%;
-  }
-}
-
-@keyframes aurora-reverse {
-  from {
-    background-position: 50% 50%, 50% 50%;
-  }
-  to {
-    background-position: -350% 50%, -350% 50%;
-  }
-}
