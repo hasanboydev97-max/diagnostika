@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Lock, ArrowRight, Activity } from 'lucide-react';
+import { Search, Lock, ArrowRight, Activity, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../lib/db';
 import logo from '../assets/logo.jpg';
@@ -126,7 +126,15 @@ export default function Login() {
       {/* Subtle grid background for premium engineering feel */}
       <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-60"></div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md z-10">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md z-10 relative">
+        <button 
+          onClick={() => navigate('/')} 
+          className="absolute top-0 -left-12 hidden md:flex items-center justify-center p-2 text-slate-400 hover:text-slate-900 bg-white border border-slate-200 rounded-full shadow-sm hover:shadow-md transition-all hover:-translate-x-1"
+          title="Bosh sahifaga qaytish"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        
         <div className="flex justify-center mb-6">
           <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg transform -rotate-3 transition-transform hover:rotate-0 duration-300 overflow-hidden border-2 border-white ring-1 ring-slate-100">
             <img src={logo} alt="Maktab Logosi" className="w-full h-full object-contain" />
@@ -214,21 +222,14 @@ export default function Login() {
             </div>
           </form>
 
-          <div className="mt-8">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-100" />
-              </div>
-              <div className="relative flex justify-center text-sm font-medium leading-6">
-                <span className="bg-white px-6 text-slate-400">O'qituvchimisiz?</span>
-              </div>
-            </div>
-
-            <div className="mt-4 text-center">
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Tizimga kirish uchun Login qismiga <kbd className="font-sans px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-slate-600 font-semibold ml-1">admin</kbd> va Parol qismiga maxfiy kodni yozing
-              </p>
-            </div>
+          <div className="mt-8 md:hidden">
+            <button 
+              onClick={() => navigate('/')}
+              className="w-full flex items-center justify-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 py-3 rounded-lg transition-colors border border-slate-200"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Bosh sahifaga qaytish
+            </button>
           </div>
         </div>
       </div>
