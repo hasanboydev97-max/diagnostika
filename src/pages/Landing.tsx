@@ -22,33 +22,42 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
       {/* Animated Mesh Gradient Background */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none flex justify-center items-center opacity-40">
         <motion.div 
           animate={{ 
-            x: [0, 100, 0, -100, 0],
-            y: [0, -50, 100, -50, 0],
-            scale: [1, 1.1, 0.9, 1.2, 1]
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-r from-blue-100/60 to-indigo-100/60 blur-[100px]"
-        />
-        <motion.div 
-          animate={{ 
-            x: [0, -100, 0, 100, 0],
-            y: [0, 100, -50, 50, 0],
-            scale: [1, 1.2, 0.8, 1.1, 1]
+            x: [0, 150, -50, -150, 0],
+            y: [0, -100, 150, -50, 0],
+            scale: [1, 1.2, 0.8, 1.3, 1]
           }}
           transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          className="absolute top-[20%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-gradient-to-r from-purple-100/50 to-pink-100/40 blur-[100px]"
+          className="absolute w-[40vw] h-[40vw] rounded-full bg-blue-500 blur-[120px] mix-blend-multiply"
         />
         <motion.div 
           animate={{ 
-            x: [0, 50, -50, 50, 0],
-            y: [0, -100, 50, 100, 0],
-            scale: [1, 0.9, 1.1, 0.9, 1]
+            x: [0, -150, 50, 150, 0],
+            y: [0, 150, -100, 50, 0],
+            scale: [1, 1.3, 0.9, 1.1, 1]
           }}
-          transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
-          className="absolute bottom-[-10%] left-[20%] w-[55vw] h-[55vw] rounded-full bg-gradient-to-r from-gray-200/60 to-slate-200/60 blur-[100px]"
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute w-[35vw] h-[35vw] rounded-full bg-purple-500 blur-[120px] mix-blend-multiply"
+        />
+        <motion.div 
+          animate={{ 
+            x: [0, 100, -150, 100, 0],
+            y: [0, 50, 150, -150, 0],
+            scale: [1, 0.9, 1.4, 0.8, 1]
+          }}
+          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+          className="absolute w-[45vw] h-[45vw] rounded-full bg-pink-500 blur-[120px] mix-blend-multiply"
+        />
+        <motion.div 
+          animate={{ 
+            x: [0, -100, 150, -100, 0],
+            y: [0, -150, -50, 150, 0],
+            scale: [1, 1.4, 0.8, 1.2, 1]
+          }}
+          transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
+          className="absolute w-[30vw] h-[30vw] rounded-full bg-amber-400 blur-[120px] mix-blend-multiply"
         />
       </div>
 
