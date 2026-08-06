@@ -114,8 +114,8 @@ export default function SuperAdmin() {
   );
 
   return (
-    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white">
-      <div className="max-w-7xl mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32">
+    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white pb-32">
+      <div className="max-w-[1600px] mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32">
         
         <section className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-24">
           
@@ -123,14 +123,14 @@ export default function SuperAdmin() {
           <div className="md:col-span-4 md:sticky md:top-32 h-fit flex flex-col gap-12 md:gap-16">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="flex flex-col gap-6">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full border border-black/10 flex items-center justify-center font-bold text-xs tracking-tighter bg-white text-black">
+                <div className="w-10 h-10 rounded-none border border-black/10 flex items-center justify-center font-bold text-xs tracking-tighter bg-white text-black">
                   HB.
                 </div>
-                <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500 flex items-center gap-2">
-                  <ShieldAlert className="w-3.5 h-3.5" /> Boshqaruv Paneli
+                <span className="text-[10px] font-semibold tracking-[0.3em] uppercase text-gray-500 flex items-center gap-2">
+                  <ShieldAlert className="w-3.5 h-3.5" /> Boshqaruv
                 </span>
               </div>
-              <h1 className="text-3xl font-medium tracking-tight">Super Admin</h1>
+              <h1 className="text-4xl md:text-5xl font-medium tracking-tight">Super Admin</h1>
             </motion.div>
 
             <nav className="flex flex-col gap-0 border-t border-black/10">
@@ -203,9 +203,9 @@ export default function SuperAdmin() {
                       {/* Recent Tests */}
                       <motion.div variants={itemVariants}>
                         <div className="flex items-center justify-between border-b border-black/10 pb-4 mb-4">
-                          <h2 className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500">So'nggi Testlar</h2>
+                          <h2 className="text-[10px] font-semibold tracking-[0.3em] uppercase text-gray-500">So'nggi Testlar</h2>
                         </div>
-                        {tests.length === 0 ? <p className="text-gray-400 py-8">Testlar mavjud emas.</p> : (
+                        {tests.length === 0 ? <p className="text-gray-400 py-8 text-sm uppercase tracking-widest">Testlar mavjud emas.</p> : (
                           <div className="flex flex-col">
                             {tests.slice(0, 5).map(t => (
                               <div key={t._id} className="border-b border-black/10 py-4 md:py-6 group flex justify-between items-center">
@@ -225,9 +225,9 @@ export default function SuperAdmin() {
                       {/* Recent Teachers */}
                       <motion.div variants={itemVariants}>
                         <div className="flex items-center justify-between border-b border-black/10 pb-4 mb-4">
-                          <h2 className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500">So'nggi Ustozlar</h2>
+                          <h2 className="text-[10px] font-semibold tracking-[0.3em] uppercase text-gray-500">So'nggi Ustozlar</h2>
                         </div>
-                        {teachers.length === 0 ? <p className="text-gray-400 py-8">O'qituvchilar mavjud emas.</p> : (
+                        {teachers.length === 0 ? <p className="text-gray-400 py-8 text-sm uppercase tracking-widest">O'qituvchilar mavjud emas.</p> : (
                           <div className="flex flex-col">
                             {teachers.slice(0, 5).map(t => (
                               <div key={t._id} className="border-b border-black/10 py-4 md:py-6 group flex justify-between items-center">
@@ -283,18 +283,18 @@ export default function SuperAdmin() {
                           </thead>
                           <tbody>
                             {filteredTeachers.map(t => (
-                              <tr key={t._id} className="group hover:bg-black/[0.02] transition-colors">
-                                <td className="py-6 border-b border-black/5">
-                                  <div className="text-lg font-medium">{t.name}</div>
-                                  <div className="text-sm text-gray-500 mt-1">{t.email}</div>
+                              <tr key={t._id} className="group hover:bg-[#f8f8f8] transition-colors border-b border-black/10">
+                                <td className="py-6 pl-4 md:pl-0 group-hover:pl-4 transition-all duration-300">
+                                  <div className="text-lg md:text-xl font-medium tracking-tight">{t.name}</div>
+                                  <div className="text-xs tracking-wider text-gray-500 mt-1 uppercase">{t.email}</div>
                                 </td>
-                                <td className="py-6 border-b border-black/5 pl-6 text-gray-600">{t.subject || '—'}</td>
-                                <td className="py-6 border-b border-black/5 pl-6 text-lg font-medium">{t.testCount || 0}</td>
-                                <td className="py-6 border-b border-black/5 text-right">
+                                <td className="py-6 pl-6 text-gray-600 font-medium">{t.subject || '—'}</td>
+                                <td className="py-6 pl-6 text-xl font-medium">{t.testCount || 0}</td>
+                                <td className="py-6 pr-4 md:pr-0 text-right">
                                   {t.role === 'admin' ? (
-                                    <span className="text-[10px] uppercase tracking-widest font-bold text-black">Admin</span>
+                                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-black border border-black/10 px-3 py-1 rounded-full">Admin</span>
                                   ) : (
-                                    <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Ustoz</span>
+                                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-500 border border-black/10 px-3 py-1 rounded-full">Ustoz</span>
                                   )}
                                 </td>
                               </tr>
@@ -338,17 +338,17 @@ export default function SuperAdmin() {
                           </thead>
                           <tbody>
                             {filteredTests.map(t => (
-                              <tr key={t._id} className="group hover:bg-black/[0.02] transition-colors">
-                                <td className="py-6 border-b border-black/5">
-                                  <div className="text-lg font-medium">{t.title}</div>
-                                  <div className="text-[11px] font-mono text-gray-400 mt-1">#{t.id}</div>
+                              <tr key={t._id} className="group hover:bg-[#f8f8f8] transition-colors border-b border-black/10">
+                                <td className="py-6 pl-4 md:pl-0 group-hover:pl-4 transition-all duration-300">
+                                  <div className="text-lg md:text-xl font-medium tracking-tight">{t.title}</div>
+                                  <div className="text-[11px] font-mono tracking-widest text-gray-400 mt-1 uppercase">#{t.id}</div>
                                 </td>
-                                <td className="py-6 border-b border-black/5 pl-6">
-                                  <div className="text-base text-black">{t.teacher?.name || 'Noma\'lum'}</div>
-                                  <div className="text-xs text-gray-500 mt-1">{t.teacher?.subject || t.subject}</div>
+                                <td className="py-6 pl-6">
+                                  <div className="text-base text-black font-medium">{t.teacher?.name || 'Noma\'lum'}</div>
+                                  <div className="text-xs text-gray-500 mt-1 tracking-wider uppercase">{t.teacher?.subject || t.subject}</div>
                                 </td>
-                                <td className="py-6 border-b border-black/5 pl-6 text-lg font-medium">{t.questions?.length || 0}</td>
-                                <td className="py-6 border-b border-black/5 text-right text-gray-500 text-sm">
+                                <td className="py-6 pl-6 text-xl font-medium">{t.questions?.length || 0}</td>
+                                <td className="py-6 pr-4 md:pr-0 text-right text-gray-500 text-sm tracking-wider">
                                   {new Date(t.createdAt).toLocaleDateString()}
                                 </td>
                               </tr>
@@ -392,15 +392,17 @@ export default function SuperAdmin() {
                           </thead>
                           <tbody>
                             {filteredResults.map((r, idx) => (
-                              <tr key={r._id || idx} className="group hover:bg-black/[0.02] transition-colors">
-                                <td className="py-6 border-b border-black/5 text-lg font-medium text-black capitalize">{r.studentName}</td>
-                                <td className="py-6 border-b border-black/5 pl-6">
-                                  <div className="text-base text-black">{r.test?.title || 'Oflayn Test'}</div>
-                                  <div className="text-[11px] font-mono text-gray-400 mt-1">#{r.testId || r.id}</div>
+                              <tr key={r._id || idx} className="group hover:bg-[#f8f8f8] transition-colors border-b border-black/10">
+                                <td className="py-6 pl-4 md:pl-0 group-hover:pl-4 transition-all duration-300 text-lg md:text-xl font-medium tracking-tight text-black capitalize">
+                                  {r.studentName}
                                 </td>
-                                <td className="py-6 border-b border-black/5 pl-6 text-base text-gray-500">{r.teacher?.name || '—'}</td>
-                                <td className="py-6 border-b border-black/5 text-right">
-                                  <span className={`text-2xl font-medium tracking-tight ${
+                                <td className="py-6 pl-6">
+                                  <div className="text-base font-medium text-black">{r.test?.title || 'Oflayn Test'}</div>
+                                  <div className="text-[11px] font-mono tracking-widest text-gray-400 mt-1 uppercase">#{r.testId || r.id}</div>
+                                </td>
+                                <td className="py-6 pl-6 text-base text-gray-500 font-medium">{r.teacher?.name || '—'}</td>
+                                <td className="py-6 pr-4 md:pr-0 text-right">
+                                  <span className={`text-2xl md:text-3xl font-medium tracking-tight ${
                                     r.totalScore >= 70 ? 'text-black' : 
                                     r.totalScore >= 50 ? 'text-gray-500' : 
                                     'text-red-400'
