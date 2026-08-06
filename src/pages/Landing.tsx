@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Plus } from 'lucide-react';
 
 const containerVariants: any = {
@@ -19,30 +19,10 @@ const itemVariants: any = {
 export default function Landing() {
   const navigate = useNavigate();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
-  
-  // High-performance cursor tracking without re-renders
-  const cursorX = useMotionValue(-100);
-  const cursorY = useMotionValue(-100);
-  const springX = useSpring(cursorX, { stiffness: 500, damping: 28, mass: 0.5 });
-  const springY = useSpring(cursorY, { stiffness: 500, damping: 28, mass: 0.5 });
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      cursorX.set(e.clientX - 24);
-      cursorY.set(e.clientY - 24);
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
 
   return (
     <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
-      
-      {/* Custom Follower Cursor */}
-      <motion.div 
-        className="fixed top-0 left-0 w-12 h-12 bg-[#111111] rounded-full pointer-events-none z-[100] hidden md:block"
-        style={{ x: springX, y: springY }}
-      />
+
 
       <div className="max-w-5xl mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32 relative z-10 pointer-events-none">
         
