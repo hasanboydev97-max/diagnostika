@@ -31,16 +31,17 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
-      {/* Interactive Dot Grid Background */}
+      {/* Interactive Architect Grid Background */}
       <div 
-        className="absolute inset-0 z-0 pointer-events-none transition-opacity duration-300"
+        className="absolute inset-0 z-0 pointer-events-none"
         style={{
           background: `
-            radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(0,0,0,0.06), transparent 40%),
-            radial-gradient(rgba(0,0,0,0.08) 1px, transparent 1px)
+            radial-gradient(800px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(0,0,0,0.03), transparent 60%),
+            linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px)
           `,
-          backgroundSize: '100% 100%, 32px 32px',
-          backgroundPosition: '0 0, 0 0'
+          backgroundSize: '100% 100%, 40px 40px, 40px 40px',
+          backgroundPosition: '0 0, 0 0, 0 0'
         }}
       />
 
