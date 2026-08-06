@@ -32,6 +32,13 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
       
+      {/* Custom Follower Cursor */}
+      <motion.div 
+        className="fixed top-0 left-0 w-12 h-12 bg-[#111111] rounded-full pointer-events-none z-[100] hidden md:block"
+        animate={{ x: mousePosition.x - 24, y: mousePosition.y - 24 }}
+        transition={{ type: "spring", stiffness: 300, damping: 25, mass: 0.5 }}
+      />
+
       {/* Interactive X-Ray Typography Background */}
       <div 
         className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center overflow-hidden transition-opacity duration-300"
@@ -87,50 +94,50 @@ export default function Landing() {
               Portals
             </motion.h2>
           </div>
-          <div className="md:col-span-8 flex flex-col gap-0">
+             <div className="md:col-span-8 flex flex-col">
             {/* O'quvchi Portali */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
               onClick={() => navigate('/login')}
-              className="group cursor-pointer border-b border-black/10 py-10 flex flex-col md:flex-row md:items-end justify-between gap-6 pointer-events-auto"
+              className="group cursor-pointer border-b border-black/10 py-10 px-6 -mx-6 hover:bg-neutral-100 transition-colors duration-300 flex flex-col md:flex-row md:items-end justify-between gap-6 pointer-events-auto"
             >
               <div>
-                <h3 className="text-2xl md:text-3xl font-medium mb-3 group-hover:pl-4 transition-all duration-300">O'quvchi Portali</h3>
-                <p className="text-gray-500 leading-relaxed max-w-md group-hover:pl-4 transition-all duration-300 delay-75">
+                <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300">O'quvchi Portali</h3>
+                <p className="text-gray-500 leading-relaxed max-w-md transition-all duration-300 delay-75">
                   Shaxsiy test natijalarini ko'rish va reytingni tahlil qilish.
                 </p>
               </div>
-              <ArrowRight className="w-6 h-6 transform -rotate-45 group-hover:rotate-0 transition-transform duration-500" strokeWidth={1.5} />
+              <ArrowRight className="w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 transition-all duration-500" strokeWidth={1.5} />
             </motion.div>
 
             {/* O'qituvchi Portali */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
               onClick={() => navigate('/online-tests')}
-              className="group cursor-pointer border-b border-black/10 py-10 flex flex-col md:flex-row md:items-end justify-between gap-6 pointer-events-auto"
+              className="group cursor-pointer border-b border-black/10 py-10 px-6 -mx-6 hover:bg-neutral-100 transition-colors duration-300 flex flex-col md:flex-row md:items-end justify-between gap-6 pointer-events-auto"
             >
               <div>
-                <h3 className="text-2xl md:text-3xl font-medium mb-3 group-hover:pl-4 transition-all duration-300">O'qituvchi Portali</h3>
-                <p className="text-gray-500 leading-relaxed max-w-md group-hover:pl-4 transition-all duration-300 delay-75">
+                <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300">O'qituvchi Portali</h3>
+                <p className="text-gray-500 leading-relaxed max-w-md transition-all duration-300 delay-75">
                   Testlarni AI yordamida yaratish va guruhlarni boshqarish.
                 </p>
               </div>
-              <ArrowRight className="w-6 h-6 transform -rotate-45 group-hover:rotate-0 transition-transform duration-500" strokeWidth={1.5} />
+              <ArrowRight className="w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 transition-all duration-500" strokeWidth={1.5} />
             </motion.div>
 
             {/* Super Admin */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
               onClick={() => navigate('/superadmin')}
-              className="group cursor-pointer border-b border-black/10 py-10 flex flex-col md:flex-row md:items-end justify-between gap-6 pointer-events-auto"
+              className="group cursor-pointer border-b border-black/10 py-10 px-6 -mx-6 hover:bg-neutral-100 transition-colors duration-300 flex flex-col md:flex-row md:items-end justify-between gap-6 pointer-events-auto"
             >
               <div>
-                <h3 className="text-2xl md:text-3xl font-medium mb-3 group-hover:pl-4 transition-all duration-300">Boshqaruv Paneli</h3>
-                <p className="text-gray-500 leading-relaxed max-w-md group-hover:pl-4 transition-all duration-300 delay-75">
+                <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300">Boshqaruv Paneli</h3>
+                <p className="text-gray-500 leading-relaxed max-w-md transition-all duration-300 delay-75">
                   Tizimni to'liq monitoring qilish, statistikani kuzatish.
                 </p>
               </div>
-              <ArrowRight className="w-6 h-6 transform -rotate-45 group-hover:rotate-0 transition-transform duration-500" strokeWidth={1.5} />
+              <ArrowRight className="w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 transition-all duration-500" strokeWidth={1.5} />
             </motion.div>
           </div>
         </section>
