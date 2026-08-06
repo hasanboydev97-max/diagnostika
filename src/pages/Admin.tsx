@@ -114,29 +114,25 @@ export default function Admin() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row items-start md:items-center justify-center md:p-6" style={{ 
-      backgroundImage: 'radial-gradient(circle at center, #ffffff 0%, #f1f5f9 100%)' 
-    }}>
-      <div className="bg-white max-w-7xl w-full min-h-screen md:min-h-0 p-4 sm:p-8 md:rounded-3xl shadow-xl md:border border-slate-200">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 gap-5">
+    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white pb-32">
+      <div className="max-w-[1600px] mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 md:mb-8 gap-8 border-b border-black/10 pb-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-neutral-main tracking-tight">Admin Panel</h1>
-            <p className="text-sm text-neutral-secondary mt-1">O'quvchi natijalarini boshqarish va diagnostika yaratish.</p>
+            <h1 className="text-4xl md:text-5xl font-medium tracking-tight">Admin Panel</h1>
+            <p className="text-sm text-gray-500 mt-2">O'quvchi natijalarini boshqarish va diagnostika yaratish.</p>
           </div>
           
-          <div className="flex w-full md:w-auto bg-slate-100/80 p-1.5 rounded-xl border border-slate-200/60 shadow-inner relative">
+          <div className="flex w-full md:w-auto gap-2">
             <button 
               onClick={() => setActiveTab('new')}
-              className={`flex-1 flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 relative z-10 ${activeTab === 'new' ? 'text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-6 py-3 font-semibold text-xs uppercase tracking-widest transition-all duration-300 border ${activeTab === 'new' ? 'bg-black text-white border-black' : 'bg-transparent text-gray-400 border-black/10 hover:border-black hover:text-black'}`}
             >
-              {activeTab === 'new' && <div className="absolute inset-0 bg-white rounded-lg shadow-sm border border-slate-200/50 -z-10"></div>}
               <PlusCircle className="w-4 h-4" /> Qo'shish
             </button>
             <button 
               onClick={() => setActiveTab('dashboard')}
-              className={`flex-1 flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 relative z-10 ${activeTab === 'dashboard' ? 'text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-6 py-3 font-semibold text-xs uppercase tracking-widest transition-all duration-300 border ${activeTab === 'dashboard' ? 'bg-black text-white border-black' : 'bg-transparent text-gray-400 border-black/10 hover:border-black hover:text-black'}`}
             >
-              {activeTab === 'dashboard' && <div className="absolute inset-0 bg-white rounded-lg shadow-sm border border-slate-200/50 -z-10"></div>}
               <Users className="w-4 h-4" /> Barchasi
             </button>
           </div>
@@ -145,33 +141,33 @@ export default function Admin() {
         {activeTab === 'dashboard' ? (
           <div className="space-y-4">
             {allResults.length === 0 ? (
-              <div className="text-center py-16 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-400">Hozircha natijalar yo'q.</div>
+              <div className="text-center py-16 text-[10px] tracking-widest uppercase font-semibold text-gray-400 border-b border-black/10">Hozircha natijalar yo'q.</div>
             ) : (
               <>
                 {/* Mobile Cards View */}
-                <div className="grid grid-cols-1 gap-4 md:hidden">
+                <div className="grid grid-cols-1 gap-6 md:hidden">
                   {allResults.map(r => (
-                    <div key={r.id} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col gap-3">
-                      <div className="flex justify-between items-start border-b border-slate-100 pb-3">
+                    <div key={r.id} className="border-b border-black/10 pb-6 flex flex-col gap-4">
+                      <div className="flex justify-between items-start">
                         <div>
-                          <div className="font-bold text-slate-800 text-base">{r.studentName}</div>
-                          <div className="text-xs text-slate-500 mt-0.5">{new Date(r.createdAt).toLocaleDateString()} &bull; {r.grade}-sinf</div>
+                          <div className="text-lg font-medium">{r.studentName}</div>
+                          <div className="text-xs text-gray-500 tracking-wider uppercase mt-1">{new Date(r.createdAt).toLocaleDateString()} &bull; {r.grade}-sinf</div>
                         </div>
-                        <span className={`px-2.5 py-1 rounded-md text-xs font-black ${r.totalScore >= 50 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                        <span className={`text-xl font-medium ${r.totalScore >= 50 ? 'text-black' : 'text-gray-400'}`}>
                           {r.totalScore}%
                         </span>
                       </div>
-                      <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+                      <div className="flex justify-between items-center bg-[#f8f8f8] p-4">
                         <div>
-                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">ID / LOGIN</div>
-                          <div className="font-mono font-bold text-slate-700">{r.id}</div>
+                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">ID / LOGIN</div>
+                          <div className="font-mono text-sm tracking-wider text-black">{r.id}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">PAROL (PIN)</div>
-                          <div className="font-mono font-bold text-slate-700">{r.pin || '---'}</div>
+                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">PAROL (PIN)</div>
+                          <div className="font-mono text-sm tracking-wider text-black">{r.pin || '---'}</div>
                         </div>
                       </div>
-                      <button onClick={() => navigate('/summary/' + r.id)} className="w-full mt-1 bg-primary/5 text-primary hover:bg-primary/10 py-2.5 rounded-xl text-sm font-bold transition-colors">
+                      <button onClick={() => navigate('/summary/' + r.id)} className="w-full mt-2 border border-black text-black hover:bg-black hover:text-white py-3 text-xs tracking-[0.2em] uppercase font-bold transition-colors">
                         Xulosani Ko'rish
                       </button>
                     </div>
@@ -179,35 +175,37 @@ export default function Admin() {
                 </div>
 
                 {/* Desktop Table View */}
-                <div className="hidden md:block overflow-x-auto bg-white rounded-2xl border border-slate-200 shadow-sm">
-                  <table className="w-full text-left border-collapse">
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left whitespace-nowrap border-collapse">
                     <thead>
-                      <tr className="bg-slate-50/80 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
-                        <th className="p-4 font-bold rounded-tl-2xl">O'quvchi</th>
-                        <th className="p-4 font-bold">Sinf / Sana</th>
-                        <th className="p-4 font-bold">Natija</th>
-                        <th className="p-4 font-bold">Login (ID)</th>
-                        <th className="p-4 font-bold">Parol (PIN)</th>
-                        <th className="p-4 font-bold rounded-tr-2xl">Amallar</th>
+                      <tr>
+                        <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">O'quvchi</th>
+                        <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Sinf / Sana</th>
+                        <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Natija</th>
+                        <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Login (ID)</th>
+                        <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Parol (PIN)</th>
+                        <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest text-right">Amallar</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody>
                       {allResults.map(r => (
-                        <tr key={r.id} className="hover:bg-slate-50/50 transition-colors group">
-                          <td className="p-4 font-bold text-slate-800">{r.studentName}</td>
-                          <td className="p-4">
-                            <div className="text-sm font-medium text-slate-700">{r.grade}-sinf</div>
-                            <div className="text-xs text-slate-400">{new Date(r.createdAt).toLocaleDateString()}</div>
+                        <tr key={r.id} className="group hover:bg-[#f8f8f8] transition-colors border-b border-black/10">
+                          <td className="py-6 pl-4 md:pl-0 group-hover:pl-4 transition-all duration-300">
+                            <div className="text-lg md:text-xl font-medium tracking-tight capitalize">{r.studentName}</div>
                           </td>
-                          <td className="p-4">
-                            <span className={`px-2.5 py-1 rounded-md text-xs font-black ${r.totalScore >= 50 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                              {r.totalScore}%
+                          <td className="py-6 pl-6">
+                            <div className="text-base text-black">{r.grade}-sinf</div>
+                            <div className="text-xs text-gray-500 mt-1 tracking-wider uppercase">{new Date(r.createdAt).toLocaleDateString()}</div>
+                          </td>
+                          <td className="py-6 pl-6">
+                            <span className={`text-2xl font-medium tracking-tight ${r.totalScore >= 50 ? 'text-black' : 'text-gray-400'}`}>
+                              {r.totalScore}<span className="text-sm font-normal text-gray-400 ml-1">%</span>
                             </span>
                           </td>
-                          <td className="p-4 font-mono font-bold text-slate-700 bg-slate-50/50 group-hover:bg-white">{r.id}</td>
-                          <td className="p-4 font-mono font-bold text-slate-500 bg-slate-50/50 group-hover:bg-white">{r.pin || '---'}</td>
-                          <td className="p-4">
-                            <button onClick={() => navigate('/summary/' + r.id)} className="text-primary bg-primary/5 hover:bg-primary/10 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors">
+                          <td className="py-6 pl-6 font-mono text-sm tracking-widest text-black">{r.id}</td>
+                          <td className="py-6 pl-6 font-mono text-sm tracking-widest text-gray-500">{r.pin || '---'}</td>
+                          <td className="py-6 pr-4 md:pr-0 text-right">
+                            <button onClick={() => navigate('/summary/' + r.id)} className="border border-black/10 hover:border-black text-black px-4 py-2 text-[10px] uppercase tracking-widest font-bold transition-colors">
                               Ko'rish
                             </button>
                           </td>
@@ -219,38 +217,30 @@ export default function Admin() {
               </>
             )}
           </div>
-        ) : (
           /* New Result Tab */
           generatedCredentials ? (
-            <div className="bg-emerald-50 border border-emerald-200 p-6 md:p-10 rounded-2xl md:rounded-3xl text-center space-y-6 md:space-y-8 relative overflow-hidden shadow-inner">
-              <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none"></div>
-              <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none"></div>
-              
-              <div className="relative z-10">
-                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-sm">
-                  <Check className="w-8 h-8" />
+            <div className="border border-black/10 p-8 md:p-16 text-center space-y-12">
+              <div>
+                <div className="w-16 h-16 border border-black/10 text-black flex items-center justify-center mx-auto mb-6">
+                  <Check className="w-6 h-6" />
                 </div>
-                <h2 className="text-2xl md:text-3xl font-black text-emerald-800 tracking-tight">Muvaffaqiyatli saqlandi!</h2>
-                <p className="text-emerald-700/80 text-sm md:text-base mt-2 font-medium">O'quvchiga quyidagi ma'lumotlarni taqdim eting:</p>
+                <h2 className="text-3xl md:text-4xl font-medium tracking-tight">Muvaffaqiyatli saqlandi</h2>
+                <p className="text-gray-500 text-sm mt-4 tracking-wider uppercase">O'quvchiga quyidagi ma'lumotlarni taqdim eting</p>
               </div>
               
-              <div className="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
-                <div className="bg-white/80 backdrop-blur-sm p-5 md:p-6 rounded-2xl shadow-sm border border-emerald-100 flex-1 max-w-[240px] mx-auto sm:mx-0 w-full">
-                  <div className="text-xs font-bold text-emerald-400/80 mb-2 uppercase tracking-widest">Login (ID)</div>
-                  <div className="text-3xl md:text-4xl font-black text-slate-800 tracking-widest select-all">{generatedCredentials.id}</div>
+              <div className="flex flex-col sm:flex-row justify-center gap-6">
+                <div className="p-6 md:p-8 border border-black/10 flex-1 max-w-[280px] mx-auto sm:mx-0 w-full bg-[#f8f8f8]">
+                  <div className="text-[10px] font-bold text-gray-500 mb-3 uppercase tracking-[0.3em]">Login (ID)</div>
+                  <div className="text-4xl md:text-5xl font-medium tracking-widest text-black select-all">{generatedCredentials.id}</div>
                 </div>
-                <div className="bg-white/80 backdrop-blur-sm p-5 md:p-6 rounded-2xl shadow-sm border border-emerald-100 flex-1 max-w-[240px] mx-auto sm:mx-0 w-full">
-                  <div className="text-xs font-bold text-emerald-400/80 mb-2 uppercase tracking-widest">Parol (PIN)</div>
-                  <div className="text-3xl md:text-4xl font-black text-primary tracking-widest select-all">{generatedCredentials.pin}</div>
+                <div className="p-6 md:p-8 border border-black/10 flex-1 max-w-[280px] mx-auto sm:mx-0 w-full bg-[#f8f8f8]">
+                  <div className="text-[10px] font-bold text-gray-500 mb-3 uppercase tracking-[0.3em]">Parol (PIN)</div>
+                  <div className="text-4xl md:text-5xl font-medium tracking-widest text-black select-all">{generatedCredentials.pin}</div>
                 </div>
               </div>
               
-              <p className="text-xs md:text-sm text-emerald-700/70 max-w-lg mx-auto font-medium relative z-10">
-                Ota-ona tizimga aynan shu login va parol orqali kirib, farzandining batafsil diagnostikasini ko'ra oladi.
-              </p>
-              
-              <div className="pt-6 flex flex-col sm:flex-row justify-center gap-3 relative z-10">
-                <button onClick={() => navigate('/summary/' + generatedCredentials.id)} className="w-full sm:w-auto bg-emerald-600 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20">
+              <div className="pt-8 border-t border-black/10 flex flex-col sm:flex-row justify-center gap-4">
+                <button onClick={() => navigate('/summary/' + generatedCredentials.id)} className="w-full sm:w-auto bg-black text-white px-8 py-4 text-xs font-bold tracking-[0.2em] uppercase hover:bg-black/80 transition-colors">
                   Xulosani ko'rish
                 </button>
                 <button 
@@ -262,146 +252,126 @@ export default function Admin() {
                     setQuestionResults(initial);
                     setGeneratedCredentials(null);
                   }} 
-                  className="w-full sm:w-auto bg-white text-emerald-700 border border-emerald-200 px-8 py-3.5 rounded-xl font-bold hover:bg-emerald-50 transition-colors"
+                  className="w-full sm:w-auto bg-transparent text-black border border-black/20 px-8 py-4 text-xs font-bold tracking-[0.2em] uppercase hover:border-black transition-colors"
                 >
                   Yangi qo'shish
                 </button>
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-neutral-secondary mb-1">O'quvchi Ism-familiyasi</label>
-                  <input 
-                    type="text" 
-                    value={studentName}
-                    onChange={e => setStudentName(e.target.value)}
-                    placeholder="Masalan: Abdulaziz Telmonov"
-                    className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                    required
-                  />
+            <form onSubmit={handleSubmit} className="flex flex-col gap-16 md:gap-24">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-24">
+                <div className="md:col-span-4">
+                  <h2 className="text-[10px] font-semibold tracking-[0.3em] uppercase text-gray-500 mb-6">O'quvchi ma'lumotlari</h2>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-neutral-secondary mb-1">Sinfni tanlang</label>
-                  <select 
-                    value={grade}
-                    onChange={e => setGrade(e.target.value)}
-                    className="w-full border border-slate-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    {[5, 6, 7, 8, 9, 10, 11].map(g => (
-                      <option key={g} value={String(g)}>{g}-sinf</option>
-                    ))}
-                  </select>
+                <div className="md:col-span-8 flex flex-col md:flex-row gap-8 md:gap-12">
+                  <div className="flex-1">
+                    <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-4">Ism-familiya</label>
+                    <input 
+                      type="text" 
+                      value={studentName}
+                      onChange={e => setStudentName(e.target.value)}
+                      placeholder="Masalan: Abdulaziz Telmonov"
+                      className="w-full border-b border-black/20 pb-3 bg-transparent text-lg md:text-xl focus:outline-none focus:border-black transition-colors placeholder:text-gray-300"
+                      required
+                    />
+                  </div>
+                  <div className="w-full md:w-48">
+                    <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-4">Sinf</label>
+                    <select 
+                      value={grade}
+                      onChange={e => setGrade(e.target.value)}
+                      className="w-full border-b border-black/20 pb-3 bg-transparent text-lg md:text-xl focus:outline-none focus:border-black transition-colors cursor-pointer appearance-none"
+                      style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23111111%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem top 50%', backgroundSize: '0.65rem auto' }}
+                    >
+                      {[5, 6, 7, 8, 9, 10, 11].map(g => (
+                        <option key={g} value={String(g)}>{g}-sinf</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
               {/* Questions Section */}
-              <div className="space-y-6 pt-8 mt-2 border-t border-slate-100">
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                  <div>
-                    <h3 className="font-black text-xl text-neutral-main">Imtihon savollari ({grade}-sinf)</h3>
-                    <p className="text-xs md:text-sm text-neutral-secondary mt-1">
-                      O'quvchi to'g'ri topgan savollarni belgilang.
-                    </p>
-                  </div>
-                  
-                  {/* Action Bar */}
-                  <div className="flex flex-wrap items-center bg-slate-50 border border-slate-200 p-1.5 rounded-xl gap-1">
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        const all: Record<number, boolean> = {};
-                        currentBlueprint.forEach(q => all[q.id] = true);
-                        setQuestionResults(all);
-                      }}
-                      className="flex-1 md:flex-none text-[11px] md:text-xs font-bold bg-white text-emerald-700 hover:bg-emerald-50 px-3 py-2 rounded-lg transition-colors border border-slate-200 shadow-sm"
-                    >
-                      Barchasi
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        const inverted: Record<number, boolean> = {};
-                        currentBlueprint.forEach(q => inverted[q.id] = !questionResults[q.id]);
-                        setQuestionResults(inverted);
-                      }}
-                      className="flex-1 md:flex-none text-[11px] md:text-xs font-bold bg-white text-indigo-700 hover:bg-indigo-50 px-3 py-2 rounded-lg transition-colors border border-slate-200 shadow-sm"
-                    >
-                      Invert
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        const none: Record<number, boolean> = {};
-                        currentBlueprint.forEach(q => none[q.id] = false);
-                        setQuestionResults(none);
-                      }}
-                      className="flex-1 md:flex-none text-[11px] md:text-xs font-bold bg-white text-slate-600 hover:bg-slate-100 px-3 py-2 rounded-lg transition-colors border border-slate-200 shadow-sm"
-                    >
-                      Tozalash
-                    </button>
-                    <div className="w-px h-6 bg-slate-200 mx-1 hidden md:block"></div>
-                    <button 
-                      type="button"
-                      onClick={() => setIsEditorOpen(true)}
-                      className="w-full md:w-auto flex justify-center items-center gap-1.5 text-[11px] md:text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 px-4 py-2 rounded-lg transition-colors shadow-sm mt-1 md:mt-0"
-                    >
-                      <Settings2 className="w-3.5 h-3.5" /> Shablon
-                    </button>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-24 border-t border-black/10 pt-16">
+                <div className="md:col-span-4">
+                  <div className="md:sticky md:top-32 flex flex-col gap-6">
+                    <div>
+                      <h2 className="text-[10px] font-semibold tracking-[0.3em] uppercase text-gray-500 mb-2">Imtihon savollari</h2>
+                      <p className="text-xl font-medium tracking-tight">O'quvchi to'g'ri topgan savollarni belgilang</p>
+                    </div>
+                    
+                    <div className="flex flex-col gap-3 mt-4">
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const all: Record<number, boolean> = {};
+                          currentBlueprint.forEach(q => all[q.id] = true);
+                          setQuestionResults(all);
+                        }}
+                        className="w-full text-left py-3 border-b border-black/10 text-xs font-bold uppercase tracking-[0.2em] hover:pl-2 hover:border-black transition-all text-gray-400 hover:text-black"
+                      >
+                        Barchasini belgilash
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const none: Record<number, boolean> = {};
+                          currentBlueprint.forEach(q => none[q.id] = false);
+                          setQuestionResults(none);
+                        }}
+                        className="w-full text-left py-3 border-b border-black/10 text-xs font-bold uppercase tracking-[0.2em] hover:pl-2 hover:border-black transition-all text-gray-400 hover:text-black"
+                      >
+                        Barchasini tozalash
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => setIsEditorOpen(true)}
+                        className="w-full text-left py-3 border-b border-black/10 text-xs font-bold uppercase tracking-[0.2em] hover:pl-2 hover:border-black transition-all text-gray-400 hover:text-black flex items-center justify-between mt-8"
+                      >
+                        <span>Shablonni o'zgartirish</span>
+                        <Settings2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
                 
-                <div className="space-y-8">
+                <div className="md:col-span-8 space-y-16">
                   {Array.from(new Set(currentBlueprint.map(q => q.category))).map(category => {
                     const categoryQuestions = currentBlueprint.filter(q => q.category === category);
                     const isAllSelected = categoryQuestions.every(q => questionResults[q.id]);
                     
                     return (
-                      <div key={category} className="space-y-3">
-                        <div className="flex items-center justify-between border-b pb-2">
-                          <h4 className="font-semibold text-slate-700 uppercase tracking-wider text-sm flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-primary"></span>
+                      <div key={category} className="space-y-6">
+                        <div className="flex items-center justify-between border-b border-black/10 pb-4">
+                          <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em]">
                             {category}
                           </h4>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setQuestionResults(prev => {
-                                const next = { ...prev };
-                                categoryQuestions.forEach(q => next[q.id] = !isAllSelected);
-                                return next;
-                              });
-                            }}
-                            className={`text-xs font-medium px-2.5 py-1 rounded transition-colors ${isAllSelected ? 'text-emerald-700 bg-emerald-100 hover:bg-emerald-200' : 'text-slate-600 bg-slate-100 hover:bg-slate-200'}`}
-                          >
-                            {isAllSelected ? "Guruhni tozalash" : "Guruhni belgilash"}
-                          </button>
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {categoryQuestions.map(q => {
                             const isCorrect = questionResults[q.id];
                             return (
                               <div 
                                 key={q.id} 
                                 onClick={() => handleToggleQuestion(q.id)}
-                                className={`cursor-pointer border rounded-lg p-3 flex flex-col gap-2 transition-all ${isCorrect ? 'bg-emerald-50 border-emerald-300 shadow-sm' : 'bg-slate-50 border-slate-200 hover:border-slate-300'}`}
+                                className={`cursor-pointer border p-5 flex flex-col gap-4 transition-all duration-300 ${isCorrect ? 'border-black bg-black text-white' : 'border-black/10 bg-transparent text-black hover:border-black/30'}`}
                               >
                                 <div className="flex justify-between items-start">
-                                  <span className="text-xs font-bold text-slate-400">#{String(q.id).padStart(2, '0')}</span>
-                                  <div className={`w-5 h-5 rounded-full flex items-center justify-center ${isCorrect ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-400'}`}>
-                                    {isCorrect ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
+                                  <span className={`text-[10px] font-bold tracking-widest ${isCorrect ? 'text-gray-400' : 'text-gray-400'}`}>#{String(q.id).padStart(2, '0')}</span>
+                                  <div className={`w-5 h-5 border flex items-center justify-center transition-colors ${isCorrect ? 'border-white text-white' : 'border-black/20 text-transparent'}`}>
+                                    {isCorrect && <Check className="w-3 h-3" />}
                                   </div>
                                 </div>
-                                <div className={`text-sm font-medium leading-tight ${isCorrect ? 'text-emerald-900' : 'text-slate-600'}`}>
+                                <div className="text-base font-medium leading-relaxed tracking-tight">
                                   {q.topic}
                                 </div>
-                                <div className="flex items-center gap-2 mt-auto pt-2">
-                                  <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                                <div className="flex items-center gap-3 mt-auto pt-4">
+                                  <span className={`text-[9px] uppercase tracking-[0.2em] font-bold ${isCorrect ? 'text-gray-400' : 'text-gray-500'}`}>
                                     {q.difficulty}
                                   </span>
-                                  <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded truncate max-w-[100px]">
+                                  <span className={`text-[9px] uppercase tracking-[0.2em] font-bold truncate max-w-[150px] ${isCorrect ? 'text-gray-400' : 'text-gray-500'}`}>
                                     {q.skill}
                                   </span>
                                 </div>
@@ -416,15 +386,18 @@ export default function Admin() {
               </div>
 
               {/* Sticky Mobile Bottom Bar for Save Button */}
-              <div className="sticky bottom-0 bg-white/90 backdrop-blur-xl p-4 -mx-4 sm:mx-0 sm:p-0 sm:bg-transparent z-40 border-t border-slate-200 sm:border-0 pb-safe sm:pb-0 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] sm:shadow-none mt-8">
-                <button 
-                  type="submit" 
-                  disabled={isLoading}
-                  className={`w-full py-4 rounded-xl text-white font-black text-base md:text-lg transition-all shadow-lg flex items-center justify-center gap-3 ${isLoading ? 'bg-slate-400 cursor-not-allowed shadow-none' : 'bg-primary hover:bg-blue-700 hover:shadow-xl hover:-translate-y-0.5 shadow-primary/30'}`}
-                >
-                  {isLoading && <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
-                  {isLoading ? "Xulosa yozilmoqda..." : "Saqlash va AI xulosa yaratish"}
-                </button>
+              <div className="pt-16 border-t border-black/10 grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-24">
+                <div className="md:col-span-4 hidden md:block"></div>
+                <div className="md:col-span-8">
+                  <button 
+                    type="submit" 
+                    disabled={isLoading}
+                    className={`w-full py-6 md:py-8 text-white font-bold text-xs uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-4 ${isLoading ? 'bg-black/50 cursor-not-allowed' : 'bg-black hover:bg-black/80'}`}
+                  >
+                    {isLoading && <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>}
+                    {isLoading ? "Xulosa yozilmoqda..." : "Saqlash va AI xulosa yaratish"}
+                  </button>
+                </div>
               </div>
             </form>
           )
