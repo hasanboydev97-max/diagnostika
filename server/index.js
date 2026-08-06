@@ -374,10 +374,8 @@ function buildXmlParagraphs(content, bold = false, heading = null, align = null)
       // Math expression
       const omml = latexToOmml(part);
       if (omml) {
-        // Flush pending text paragraph first
-        if (currentRuns.length > 0) flushParagraph();
-        // oMath is a direct child of w:p (NOT inside w:r)
-        paragraphs.push(`<w:p>${omml}</w:p>`);
+        // oMath is inline math, it belongs inside w:p along with w:r
+        currentRuns.push(omml);
       } else {
         currentRuns.push(makeRun(`$${part}$`, bold));
       }
