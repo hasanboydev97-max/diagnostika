@@ -30,7 +30,7 @@ export default function Landing() {
             scale: [1, 1.1, 0.9, 1.2, 1]
           }}
           transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-r from-gray-200/50 to-gray-100/50 blur-3xl mix-blend-multiply"
+          className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-r from-blue-100/60 to-indigo-100/60 blur-[100px]"
         />
         <motion.div 
           animate={{ 
@@ -39,7 +39,7 @@ export default function Landing() {
             scale: [1, 1.2, 0.8, 1.1, 1]
           }}
           transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          className="absolute top-[20%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-gradient-to-r from-slate-200/50 to-gray-200/50 blur-3xl mix-blend-multiply"
+          className="absolute top-[20%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-gradient-to-r from-purple-100/50 to-pink-100/40 blur-[100px]"
         />
         <motion.div 
           animate={{ 
@@ -48,7 +48,7 @@ export default function Landing() {
             scale: [1, 0.9, 1.1, 0.9, 1]
           }}
           transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
-          className="absolute bottom-[-10%] left-[20%] w-[55vw] h-[55vw] rounded-full bg-gradient-to-r from-neutral-200/50 to-stone-200/50 blur-3xl mix-blend-multiply"
+          className="absolute bottom-[-10%] left-[20%] w-[55vw] h-[55vw] rounded-full bg-gradient-to-r from-gray-200/60 to-slate-200/60 blur-[100px]"
         />
       </div>
 
