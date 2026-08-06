@@ -87,7 +87,8 @@ const TeacherSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  subject: { type: String, required: true }
+  subject: { type: String, required: true },
+  role: { type: String, enum: ['teacher', 'admin'], default: 'teacher' }
 });
 const Teacher = mongoose.model('Teacher', TeacherSchema);
 
@@ -101,10 +102,18 @@ const authMiddleware = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.teacherId = decoded.id;
+    req.userRole = decoded.role || 'teacher';
     next();
   } catch (error) {
     res.status(401).json({ error: 'Yaroqsiz token' });
   }
+};
+
+const adminMiddleware = (req, res, next) => {
+  if (req.userRole !== 'admin') {
+    return res.status(403).json({ error: 'Ruxsat etilmadi. Faqat admin uchun.' });
+  }
+  next();
 };
 
 
@@ -184,11 +193,13 @@ app.post('/api/auth/register', async (req, res) => {
     if (existing) return res.status(400).json({ error: 'Ushbu email allaqachon ro\'yxatdan o\'tgan.' });
     
     const hashedPassword = await bcrypt.hash(password, 10);
-    const teacher = new Teacher({ name, email, password: hashedPassword, subject });
+    // Hardcoded logic: Make admin@maktab.uz an admin automatically
+    const role = email.toLowerCase() === 'admin@maktab.uz' ? 'admin' : 'teacher';
+    const teacher = new Teacher({ name, email, password: hashedPassword, subject, role });
     await teacher.save();
     
-    const token = jwt.sign({ id: teacher._id }, JWT_SECRET, { expiresIn: '7d' });
-    res.status(201).json({ token, teacher: { id: teacher._id, name, email, subject } });
+    const token = jwt.sign({ id: teacher._id, role: teacher.role }, JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ token, teacher: { id: teacher._id, name, email, subject, role: teacher.role } });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -203,8 +214,8 @@ app.post('/api/auth/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, teacher.password);
     if (!isMatch) return res.status(400).json({ error: 'Email yoki parol xato.' });
     
-    const token = jwt.sign({ id: teacher._id }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, teacher: { id: teacher._id, name: teacher.name, email, subject: teacher.subject } });
+    const token = jwt.sign({ id: teacher._id, role: teacher.role || 'teacher' }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, teacher: { id: teacher._id, name: teacher.name, email, subject: teacher.subject, role: teacher.role || 'teacher' } });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -215,6 +226,79 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
     const teacher = await Teacher.findById(req.teacherId).select('-password');
     if (!teacher) return res.status(404).json({ error: 'Topilmadi' });
     res.json(teacher);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --- Admin Routes ---
+app.get('/api/admin/stats', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const totalTeachers = await Teacher.countDocuments();
+    const totalOnlineTests = await OnlineTest.countDocuments();
+    const totalOnlineResults = await OnlineTestResult.countDocuments();
+    const totalOfflineResults = await Result.countDocuments();
+    
+    res.json({
+      teachers: totalTeachers,
+      tests: totalOnlineTests,
+      results: totalOnlineResults + totalOfflineResults
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/admin/teachers', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const teachers = await Teacher.find().select('-password').sort({ _id: -1 });
+    
+    // Annotate with their test count
+    const teachersWithStats = await Promise.all(teachers.map(async (t) => {
+      const testCount = await OnlineTest.countDocuments({ teacherId: t._id });
+      return { ...t.toObject(), testCount };
+    }));
+    
+    res.json(teachersWithStats);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/admin/tests', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    // Populate teacher info manually since we don't have refs set up perfectly
+    const tests = await OnlineTest.find().sort({ createdAt: -1 }).lean();
+    
+    const testsWithTeachers = await Promise.all(tests.map(async (test) => {
+      let teacher = null;
+      if (test.teacherId) {
+        teacher = await Teacher.findById(test.teacherId).select('name email subject').lean();
+      }
+      return { ...test, teacher };
+    }));
+    
+    res.json(testsWithTeachers);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/admin/results', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    // Get recent online test results
+    const results = await OnlineTestResult.find().sort({ createdAt: -1 }).limit(100).lean();
+    
+    const resultsWithTestInfo = await Promise.all(results.map(async (res) => {
+      const test = await OnlineTest.findOne({ id: res.testId }).select('title subject teacherId').lean();
+      let teacher = null;
+      if (test && test.teacherId) {
+        teacher = await Teacher.findById(test.teacherId).select('name').lean();
+      }
+      return { ...res, test, teacher };
+    }));
+    
+    res.json(resultsWithTestInfo);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

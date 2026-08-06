@@ -130,5 +130,38 @@ export const db = {
        const timeB = new Date(b.createdAt || 0).getTime();
        return timeB - timeA;
     });
+  },
+
+  // --- Admin Methods ---
+  async getAdminStats(token: string) {
+    const res = await fetch(`${API_URL}/admin/stats`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  
+  async getAdminTeachers(token: string) {
+    const res = await fetch(`${API_URL}/admin/teachers`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  async getAdminTests(token: string) {
+    const res = await fetch(`${API_URL}/admin/tests`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  async getAdminResults(token: string) {
+    const res = await fetch(`${API_URL}/admin/results`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
   }
 };

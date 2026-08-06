@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChevronRight, FileText, Search, Trash2, LogOut } from 'lucide-react';
+import { Plus, ChevronRight, FileText, Search, Trash2, LogOut, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAuthHeaders, getToken, logout, getTeacher } from '../../lib/auth';
 
@@ -85,6 +85,15 @@ export default function OnlineTestsDashboard() {
           </div>
           
           <div className="flex items-center gap-3 w-full sm:w-auto">
+            {teacher?.role === 'admin' && (
+              <button
+                onClick={() => navigate('/superadmin')}
+                className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm"
+              >
+                <ShieldAlert size={20} />
+                <span className="hidden sm:inline">Super Admin</span>
+              </button>
+            )}
             <button
               onClick={() => navigate('/online-tests/create')}
               className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm"
