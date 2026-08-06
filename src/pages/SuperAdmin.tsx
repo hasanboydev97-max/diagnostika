@@ -145,11 +145,11 @@ export default function SuperAdmin() {
 
         <div className="p-4">
           <button 
-            onClick={() => navigate('/online-tests')}
+            onClick={() => navigate('/')}
             className="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors group"
           >
             <LogOut className="w-4 h-4 text-slate-400 group-hover:text-slate-900" />
-            Portalni tark etish
+            Bosh sahifaga qaytish
           </button>
         </div>
       </div>
@@ -164,7 +164,7 @@ export default function SuperAdmin() {
               <ShieldAlert className="w-5 h-5 text-slate-900" />
               <h1 className="font-bold text-slate-900 text-sm tracking-wide">Admin Portal</h1>
             </div>
-            <button onClick={() => navigate('/online-tests')} className="text-slate-400 hover:text-slate-900 p-1">
+            <button onClick={() => navigate('/')} className="text-slate-400 hover:text-slate-900 p-1" title="Bosh sahifaga qaytish">
               <LogOut className="w-5 h-5" />
             </button>
           </div>
