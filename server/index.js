@@ -10,8 +10,8 @@ import fs from 'fs';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { Document, Packer, Paragraph, TextRun, ImportedXmlComponent, HeadingLevel } from 'docx';
 import katex from 'katex';
+import JSZip from 'jszip';
 import * as mml2ommlModule from 'mathml2omml';
 const { mml2omml } = mml2ommlModule;
 
@@ -254,6 +254,16 @@ app.get('/api/online-tests/:id/results', authMiddleware, async (req, res) => {
   }
 });
 
+function escapeXml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
 function isTextWord(word) {
   const cleanWord = word.replace(/^[.,!?:;()]+|[.,!?:;()]+$/g, '');
   if (cleanWord.length < 2) return false;
@@ -303,10 +313,8 @@ function autoFormatMath(text) {
 function latexToOmml(latex) {
   try {
     const mathml = katex.renderToString(latex.trim(), { output: 'mathml', displayMode: false, throwOnError: false });
-    // Use multiline-safe regex and strip the katex wrapper <span>
     const mathMatch = mathml.match(/<math[\s\S]*?<\/math>/);
     if (!mathMatch) return null;
-    // Remove <annotation> tags that cause mml2omml errors
     let mathStr = mathMatch[0].replace(/<annotation[^>]*>[\s\S]*?<\/annotation>/g, '');
     return mml2omml(mathStr);
   } catch (e) {
@@ -314,50 +322,171 @@ function latexToOmml(latex) {
   }
 }
 
-const buildParagraphs = (content, options = {}) => {
-  if (!content) return [new Paragraph({ children: [new TextRun("")] })];
-  const formattedContent = autoFormatMath(content);
-  const parts = formattedContent.split('$');
-  let currentParagraphChildren = [];
+// Build XML paragraphs for a content string (returns array of XML strings)
+function buildXmlParagraphs(content, bold = false, heading = null, align = null) {
   const paragraphs = [];
 
-  const flushParagraph = () => {
-    if (currentParagraphChildren.length > 0) {
-      paragraphs.push(new Paragraph({ children: currentParagraphChildren, spacing: { after: 120 } }));
-      currentParagraphChildren = [];
+  const makePara = (innerXml, extraPPr = '') => {
+    let pPr = '';
+    if (heading || align || extraPPr) {
+      pPr = '<w:pPr>';
+      if (heading === 1) pPr += '<w:pStyle w:val="Heading1"/>';
+      else if (heading === 2) pPr += '<w:pStyle w:val="Heading2"/>';
+      if (align) pPr += `<w:jc w:val="${align}"/>`;
+      pPr += extraPPr + '</w:pPr>';
     }
+    return `<w:p>${pPr}${innerXml}</w:p>`;
+  };
+
+  const makeRun = (text, isBold) => {
+    const rPr = isBold ? '<w:rPr><w:b/><w:bCs/></w:rPr>' : '';
+    return `<w:r>${rPr}<w:t xml:space="preserve">${escapeXml(text)}</w:t></w:r>`;
+  };
+
+  if (!content) {
+    paragraphs.push(makePara(''));
+    return paragraphs;
+  }
+
+  const formattedContent = autoFormatMath(content);
+  const parts = formattedContent.split('$');
+  let currentRuns = [];
+
+  const flushParagraph = () => {
+    paragraphs.push(makePara(currentRuns.join('')));
+    currentRuns = [];
   };
 
   parts.forEach((part, index) => {
     if (index % 2 === 0) {
-      // Regular text — split by real newlines
+      // Plain text
       const lines = part.split('\n');
       lines.forEach((line, lineIndex) => {
-        if (line) currentParagraphChildren.push(new TextRun({ text: line, ...options }));
-        if (lineIndex < lines.length - 1) {
-          flushParagraph();
-        }
+        if (line) currentRuns.push(makeRun(line, bold));
+        if (lineIndex < lines.length - 1) flushParagraph();
       });
     } else {
-      // Math expression between $ ... $
+      // Math expression
       const omml = latexToOmml(part);
       if (omml) {
-        // oMath must be a direct child of <w:p>, not inside <w:r>
-        // So we flush current paragraph, emit a math-only paragraph, then continue
-        flushParagraph();
-        // Build a raw XML paragraph containing the oMath element
-        const mathParaXml = `<w:p xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math">${omml}</w:p>`;
-        paragraphs.push(new ImportedXmlComponent(mathParaXml));
+        // Flush pending text paragraph first
+        if (currentRuns.length > 0) flushParagraph();
+        // oMath is a direct child of w:p (NOT inside w:r)
+        paragraphs.push(`<w:p>${omml}</w:p>`);
       } else {
-        currentParagraphChildren.push(new TextRun({ text: `$${part}$`, ...options }));
+        currentRuns.push(makeRun(`$${part}$`, bold));
       }
     }
   });
 
-  flushParagraph();
-
+  if (currentRuns.length > 0) flushParagraph();
   return paragraphs;
-};
+}
+
+function buildDocxXml(title, subject, questions) {
+  const NS = [
+    'xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"',
+    'xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"',
+    'xmlns:o="urn:schemas-microsoft-com:office:office"',
+    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"',
+    'xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"',
+    'xmlns:v="urn:schemas-microsoft-com:vml"',
+    'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"',
+    'xmlns:w10="urn:schemas-microsoft-com:office:word"',
+    'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"',
+    'xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"',
+    'xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml"',
+    'mc:Ignorable="w14 w15"'
+  ].join(' ');
+
+  const bodyParts = [];
+
+  // Title
+  bodyParts.push(`<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:jc w:val="center"/></w:pPr><w:r><w:t>${escapeXml(title)}</w:t></w:r></w:p>`);
+
+  // Subject
+  bodyParts.push(`<w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>${escapeXml('Fan: ' + subject)}</w:t></w:r></w:p>`);
+  bodyParts.push(`<w:p><w:r><w:t></w:t></w:r></w:p>`);
+
+  // Questions
+  questions.forEach((q, index) => {
+    const qText = `${index + 1}. ${q.questionText}`;
+    bodyParts.push(...buildXmlParagraphs(qText, true));
+    bodyParts.push(...buildXmlParagraphs(`A) ${q.options[0]}`, false));
+    bodyParts.push(...buildXmlParagraphs(`B) ${q.options[1]}`, false));
+    bodyParts.push(...buildXmlParagraphs(`C) ${q.options[2]}`, false));
+    bodyParts.push(...buildXmlParagraphs(`D) ${q.options[3]}`, false));
+    bodyParts.push(`<w:p><w:r><w:t></w:t></w:r></w:p>`);
+  });
+
+  // Answer key
+  bodyParts.push(`<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>Kalit javoblar</w:t></w:r></w:p>`);
+  questions.forEach((q, index) => {
+    bodyParts.push(...buildXmlParagraphs(`${index + 1}. ${q.correctOption}`, true));
+  });
+
+  const sectPr = `<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="850" w:bottom="1134" w:left="1701" w:header="709" w:footer="709" w:gutter="0"/></w:sectPr>`;
+
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body>${bodyParts.join('')}${sectPr}</w:body></w:document>`;
+}
+
+function buildStylesXml() {
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+          xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"
+          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+          mc:Ignorable="w14">
+  <w:docDefaults>
+    <w:rPrDefault><w:rPr>
+      <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>
+      <w:sz w:val="24"/><w:szCs w:val="24"/>
+    </w:rPr></w:rPrDefault>
+  </w:docDefaults>
+  <w:style w:type="paragraph" w:styleId="Normal">
+    <w:name w:val="Normal"/>
+    <w:rPr><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>
+  </w:style>
+  <w:style w:type="paragraph" w:styleId="Heading1">
+    <w:name w:val="heading 1"/>
+    <w:pPr><w:jc w:val="center"/></w:pPr>
+    <w:rPr><w:b/><w:bCs/><w:sz w:val="32"/><w:szCs w:val="32"/></w:rPr>
+  </w:style>
+  <w:style w:type="paragraph" w:styleId="Heading2">
+    <w:name w:val="heading 2"/>
+    <w:rPr><w:b/><w:bCs/><w:sz w:val="28"/><w:szCs w:val="28"/></w:rPr>
+  </w:style>
+</w:styles>`;
+}
+
+async function buildDocxBuffer(title, subject, questions) {
+  const zip = new JSZip();
+
+  zip.file('[Content_Types].xml',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+  <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+</Types>`);
+
+  zip.file('_rels/.rels',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`);
+
+  zip.file('word/_rels/document.xml.rels',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`);
+
+  zip.file('word/document.xml', buildDocxXml(title, subject, questions));
+  zip.file('word/styles.xml', buildStylesXml());
+
+  return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+}
 
 // GET DOCX Export
 app.get('/api/online-tests/:id/export/docx', async (req, res) => {
@@ -365,60 +494,8 @@ app.get('/api/online-tests/:id/export/docx', async (req, res) => {
     const test = await OnlineTest.findOne({ id: req.params.id });
     if (!test) return res.status(404).json({ error: 'Test not found' });
 
-    const docSections = [];
+    const buffer = await buildDocxBuffer(test.title, test.subject, test.questions);
 
-    // Title
-    docSections.push(new Paragraph({
-      text: test.title,
-      heading: HeadingLevel.HEADING_1,
-      alignment: "center",
-      spacing: { after: 200 }
-    }));
-
-    // Subject
-    docSections.push(new Paragraph({
-      text: `Fan: ${test.subject}`,
-      alignment: "center",
-      spacing: { after: 400 }
-    }));
-
-    // Questions
-    test.questions.forEach((q, index) => {
-      // Question text
-      const qText = `${index + 1}. ${q.questionText}`;
-      docSections.push(...buildParagraphs(qText, { bold: true }));
-
-      // Options
-      docSections.push(...buildParagraphs(`A) ${q.options[0]}`));
-      docSections.push(...buildParagraphs(`B) ${q.options[1]}`));
-      docSections.push(...buildParagraphs(`C) ${q.options[2]}`));
-      docSections.push(...buildParagraphs(`D) ${q.options[3]}`));
-      
-      // Empty line between questions
-      docSections.push(new Paragraph({ text: "", spacing: { after: 300 } }));
-    });
-    
-    // Answers (Kalit javoblar)
-    docSections.push(new Paragraph({
-      text: "Kalit javoblar",
-      heading: HeadingLevel.HEADING_2,
-      spacing: { before: 400, after: 200 }
-    }));
-    
-    test.questions.forEach((q, index) => {
-      const qAnswer = `${index + 1}. ${q.correctOption}`;
-      docSections.push(...buildParagraphs(qAnswer, { bold: true }));
-    });
-
-    const doc = new Document({
-      sections: [{
-        properties: {},
-        children: docSections
-      }]
-    });
-
-    const buffer = await Packer.toBuffer(doc);
-    
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(test.title)}.docx"`);
     res.send(buffer);
