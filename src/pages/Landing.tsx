@@ -30,29 +30,26 @@ export default function Landing() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#fafafa] text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
+    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
       
-      {/* Heavy Visible Grid */}
+      {/* Interactive X-Ray Typography Background */}
       <div 
-        className="absolute inset-0 z-0 pointer-events-none"
+        className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center overflow-hidden transition-opacity duration-300"
         style={{
-          background: `
-            linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0,0,0,0.15) 1px, transparent 1px)
-          `,
-          backgroundSize: '40px 40px',
+          WebkitMaskImage: `radial-gradient(circle 400px at ${mousePosition.x}px ${mousePosition.y}px, black 10%, transparent 100%)`,
+          maskImage: `radial-gradient(circle 400px at ${mousePosition.x}px ${mousePosition.y}px, black 10%, transparent 100%)`
         }}
-      />
-
-      {/* Visible Mouse Orb */}
-      <div 
-        className="absolute w-[600px] h-[600px] bg-black/5 rounded-full blur-[100px] pointer-events-none transition-transform duration-700 ease-out z-0"
-        style={{
-          transform: `translate(${mousePosition.x - 300}px, ${mousePosition.y - 300}px)`,
-          top: 0,
-          left: 0,
-        }}
-      />
+      >
+        <div className="flex flex-col items-center justify-center rotate-[-4deg] scale-[1.2] opacity-60">
+          <h1 className="text-[8vw] font-black text-black/5 select-none whitespace-nowrap tracking-tighter leading-tight uppercase">HB Diagnostika AI — HB Diagnostika AI</h1>
+          <h1 className="text-[8vw] font-black text-black/5 select-none whitespace-nowrap tracking-tighter leading-tight uppercase">HB Diagnostika AI — HB Diagnostika AI</h1>
+          <h1 className="text-[8vw] font-black text-black/5 select-none whitespace-nowrap tracking-tighter leading-tight uppercase">HB Diagnostika AI — HB Diagnostika AI</h1>
+          <h1 className="text-[8vw] font-black text-black/5 select-none whitespace-nowrap tracking-tighter leading-tight uppercase">HB Diagnostika AI — HB Diagnostika AI</h1>
+          <h1 className="text-[8vw] font-black text-black/5 select-none whitespace-nowrap tracking-tighter leading-tight uppercase">HB Diagnostika AI — HB Diagnostika AI</h1>
+          <h1 className="text-[8vw] font-black text-black/5 select-none whitespace-nowrap tracking-tighter leading-tight uppercase">HB Diagnostika AI — HB Diagnostika AI</h1>
+          <h1 className="text-[8vw] font-black text-black/5 select-none whitespace-nowrap tracking-tighter leading-tight uppercase">HB Diagnostika AI — HB Diagnostika AI</h1>
+        </div>
+      </div>
 
       <div className="max-w-5xl mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32 relative z-10 pointer-events-none">
         
