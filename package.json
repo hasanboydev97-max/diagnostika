@@ -37,6 +37,7 @@
     "mathml2omml": "^0.5.0",
     "mongoose": "^9.9.1",
     "multer": "^2.2.0",
+    "pdfkit": "^0.19.1",
     "postcss": "^8.5.25",
     "puppeteer": "^25.5.0",
     "puppeteer-core": "^25.5.0",

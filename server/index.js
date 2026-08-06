@@ -12,31 +12,9 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import katex from 'katex';
 import JSZip from 'jszip';
+import PDFDocument from 'pdfkit';
 import * as mml2ommlModule from 'mathml2omml';
 const { mml2omml } = mml2ommlModule;
-
-// Puppeteer: local dev uses 'puppeteer', production/serverless uses puppeteer-core + @sparticuz/chromium
-let getBrowser;
-try {
-  const puppeteer = await import('puppeteer');
-  getBrowser = async () => puppeteer.default.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-  });
-} catch {
-  // fallback: puppeteer-core + @sparticuz/chromium (Vercel/serverless)
-  const [puppeteerCore, chromiumMod] = await Promise.all([
-    import('puppeteer-core'),
-    import('@sparticuz/chromium'),
-  ]);
-  const chromium = chromiumMod.default;
-  getBrowser = async () => puppeteerCore.default.launch({
-    args: chromium.args,
-    defaultViewport: chromium.defaultViewport,
-    executablePath: await chromium.executablePath(),
-    headless: chromium.headless,
-  });
-}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -339,7 +317,11 @@ function latexToOmml(latex) {
     const mathMatch = mathml.match(/<math[\s\S]*?<\/math>/);
     if (!mathMatch) return null;
     let mathStr = mathMatch[0].replace(/<annotation[^>]*>[\s\S]*?<\/annotation>/g, '');
-    return mml2omml(mathStr);
+    let omml = mml2omml(mathStr);
+    // Strip namespace declarations — they conflict with the parent document namespaces
+    // and cause Word to reject the file as corrupted
+    omml = omml.replace(/\s+xmlns:[a-zA-Z0-9]+=["'][^"']*["']/g, '');
+    return omml;
   } catch (e) {
     return null;
   }
@@ -703,35 +685,143 @@ function buildTestHtml(title, subject, questions) {
 </html>`;
 }
 
-// GET PDF Export (server-side, Puppeteer / serverless Chromium)
+// Helper: strip LaTeX to readable unicode text for PDF
+function latexToText(latex) {
+  if (!latex) return '';
+  return latex
+    .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
+    .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
+    .replace(/\\sqrt/g, '√')
+    .replace(/\^2/g, '²')
+    .replace(/\^3/g, '³')
+    .replace(/\^{([^}]+)}/g, '^($1)')
+    .replace(/\\times/g, '×')
+    .replace(/\\div/g, '÷')
+    .replace(/\\pm/g, '±')
+    .replace(/\\leq/g, '≤')
+    .replace(/\\geq/g, '≥')
+    .replace(/\\neq/g, '≠')
+    .replace(/\\infty/g, '∞')
+    .replace(/\\pi/g, 'π')
+    .replace(/\\alpha/g, 'α')
+    .replace(/\\beta/g, 'β')
+    .replace(/\\gamma/g, 'γ')
+    .replace(/\\theta/g, 'θ')
+    .replace(/\\sum/g, 'Σ')
+    .replace(/\\int/g, '∫')
+    .replace(/\\cdot/g, '·')
+    .replace(/\{|\}/g, '')
+    .replace(/\\\\/g, ' ')
+    .replace(/\\[a-zA-Z]+/g, '')
+    .trim();
+}
+
+// Render content string to PDF (handles $math$ inline)
+function pdfRenderLine(doc, content, opts = {}) {
+  if (!content) return;
+  const formatted = autoFormatMath(String(content));
+  const parts = formatted.split('$');
+  let line = '';
+  parts.forEach((part, i) => {
+    if (i % 2 === 0) {
+      line += part;
+    } else {
+      line += latexToText(part);
+    }
+  });
+  if (opts.bold) doc.font('Helvetica-Bold');
+  else doc.font('Helvetica');
+  doc.fontSize(opts.fontSize || 11).text(line.trim(), opts);
+}
+
+// GET PDF Export — pure JS pdfkit (works everywhere, no Chrome needed)
 app.get('/api/online-tests/:id/export/pdf', async (req, res) => {
-  let browser = null;
   try {
     const test = await OnlineTest.findOne({ id: req.params.id });
     if (!test) return res.status(404).json({ error: 'Test not found' });
 
-    const html = buildTestHtml(test.title, test.subject, test.questions);
-
-    browser = await getBrowser();
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
-
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: { top: '20mm', right: '25mm', bottom: '20mm', left: '30mm' },
+    const doc = new PDFDocument({
+      size: 'A4',
+      margins: { top: 56, bottom: 56, left: 70, right: 56 },
+      bufferPages: true,
     });
+
+    const chunks = [];
+    doc.on('data', chunk => chunks.push(chunk));
+
+    const optionLetters = ['A', 'B', 'C', 'D'];
+
+    // Title
+    doc.font('Helvetica-Bold').fontSize(18)
+      .text(test.title || 'Test', { align: 'center' });
+    doc.font('Helvetica').fontSize(12)
+      .text(`Fan: ${test.subject || ''}`, { align: 'center' });
+    doc.moveDown(1);
+
+    // Questions
+    (test.questions || []).forEach((q, i) => {
+      doc.moveDown(0.4);
+
+      // Question text
+      const qLabel = `${i + 1}. `;
+      const formatted = autoFormatMath(String(q.questionText || ''));
+      const parts = formatted.split('$');
+      let qText = qLabel;
+      parts.forEach((p, pi) => {
+        qText += pi % 2 === 0 ? p : latexToText(p);
+      });
+
+      // Check if near bottom — manual page break
+      if (doc.y > 720) doc.addPage();
+
+      doc.font('Helvetica-Bold').fontSize(11).text(qText.trim(), { lineGap: 2 });
+
+      // Options
+      (q.options || []).forEach((opt, oi) => {
+        const letterLabel = `   ${optionLetters[oi]}) `;
+        const fmtOpt = autoFormatMath(String(opt || ''));
+        const optParts = fmtOpt.split('$');
+        let optText = letterLabel;
+        optParts.forEach((p, pi) => {
+          optText += pi % 2 === 0 ? p : latexToText(p);
+        });
+        doc.font('Helvetica').fontSize(11).text(optText.trim(), { lineGap: 1 });
+      });
+    });
+
+    // Answer key section
+    doc.moveDown(1.5);
+    if (doc.y > 700) doc.addPage();
+    doc.font('Helvetica-Bold').fontSize(13).text('Kalit javoblar:', { underline: false });
+    doc.moveDown(0.3);
+
+    // Grid layout for answers
+    const answersPerRow = 5;
+    const answers = (test.questions || []).map((q, i) => {
+      const correctIdx = (q.options || []).findIndex(o => o === q.correctOption);
+      const letter = correctIdx >= 0 ? optionLetters[correctIdx] : (q.correctOption || '?');
+      return `${i + 1}. ${letter}`;
+    });
+
+    for (let row = 0; row < Math.ceil(answers.length / answersPerRow); row++) {
+      const rowItems = answers.slice(row * answersPerRow, (row + 1) * answersPerRow);
+      doc.font('Helvetica').fontSize(11).text(rowItems.join('    '), { lineGap: 3 });
+    }
+
+    doc.end();
+
+    await new Promise(resolve => doc.on('end', resolve));
+    const pdfBuffer = Buffer.concat(chunks);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(test.title)}.pdf"`);
     res.send(pdfBuffer);
   } catch (error) {
-    console.error("PDF Export Error:", error);
+    console.error('PDF Export Error:', error);
     res.status(500).json({ error: 'Server error generating PDF: ' + error.message });
-  } finally {
-    if (browser) await browser.close();
   }
 });
+
 
 
 app.post('/api/online-tests', authMiddleware, async (req, res) => {
