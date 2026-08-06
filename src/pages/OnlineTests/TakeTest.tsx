@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Loader2, ArrowLeft, Check, AlertTriangle, Clock } from 'lucide-react';
+import { Loader2, ArrowLeft, AlertTriangle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
 
@@ -60,7 +60,6 @@ export default function TakeTest() {
       return;
     }
     
-    // Request fullscreen
     try {
       if (document.documentElement.requestFullscreen) {
         await document.documentElement.requestFullscreen();
@@ -75,7 +74,6 @@ export default function TakeTest() {
     setStarted(true);
   };
 
-  // Timer Effect
   useEffect(() => {
     if (!started || timeLeft === null || timeLeft <= 0 || submitting) return;
 
@@ -97,7 +95,6 @@ export default function TakeTest() {
     return () => clearInterval(timer);
   }, [started, timeLeft, submitting]);
 
-  // Anti-cheating effect
   useEffect(() => {
     if (!started) return;
 
@@ -108,7 +105,7 @@ export default function TakeTest() {
     };
 
     const handleViolation = () => {
-      if (submitting) return; // ignore if already submitting
+      if (submitting) return;
       
       violations.current += 1;
       
@@ -123,18 +120,18 @@ export default function TakeTest() {
           duration: 5000,
           position: 'top-center'
         });
-        handleSubmit(true); // force submit
+        handleSubmit(true);
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('blur', handleViolation); // catches split screen or clicking outside
+    window.addEventListener('blur', handleViolation); 
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleViolation);
     };
-  }, [started, answers]); // pass answers so handleSubmit closure has latest answers
+  }, [started, answers]); 
 
   const handleSelectOption = (option: string) => {
     setAnswers(prev => ({ ...prev, [currentQIndex]: option }));
@@ -185,7 +182,6 @@ export default function TakeTest() {
         throw new Error(errData.error || 'Server xatosi');
       }
 
-      // Exit fullscreen if active
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(err => console.log(err));
       }
@@ -201,23 +197,23 @@ export default function TakeTest() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <Loader2 className="animate-spin text-gray-400" size={32} />
+      <div className="min-h-screen bg-white flex flex-col justify-center items-center font-sans">
+        <div className="w-5 h-5 border-2 border-zinc-200 border-t-zinc-900 rounded-full animate-spin mb-3"></div>
+        <p className="text-zinc-500 font-medium text-[11px] uppercase tracking-wider">Yuklanmoqda</p>
       </div>
     );
   }
 
-  // Handle Time Restrictions UI
   if (timeStatus === 'early') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-gray-200 max-w-md w-full text-center">
-          <Clock className="mx-auto text-blue-500 mb-4" size={48} />
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">Test hali ochilmagan</h1>
-          <p className="text-gray-500 text-sm mb-6">
-            Ushbu test <strong>{new Date(test.startTime).toLocaleString('uz-UZ')}</strong> sanasida ochiladi. Iltimos kuting.
+      <div className="min-h-screen bg-white flex items-center justify-center p-6 text-zinc-900 selection:bg-zinc-200 selection:text-black">
+        <div className="border border-zinc-200 p-8 rounded-md max-w-sm w-full text-center">
+          <Clock className="mx-auto text-zinc-400 mb-4" size={32} />
+          <h1 className="text-lg font-semibold text-zinc-900 mb-2">Test hali ochilmagan</h1>
+          <p className="text-zinc-500 text-sm mb-6">
+            Ushbu test <strong>{new Date(test.startTime).toLocaleString('uz-UZ')}</strong> sanasida ochiladi.
           </p>
-          <button onClick={() => navigate('/online-tests')} className="text-sm font-medium text-blue-600 hover:underline">
+          <button onClick={() => navigate('/online-tests')} className="text-xs font-medium text-zinc-900 hover:underline">
             Ortga qaytish
           </button>
         </div>
@@ -227,14 +223,14 @@ export default function TakeTest() {
 
   if (timeStatus === 'closed') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-gray-200 max-w-md w-full text-center">
-          <AlertTriangle className="mx-auto text-red-500 mb-4" size={48} />
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">Test yopilgan</h1>
-          <p className="text-gray-500 text-sm mb-6">
-            Ushbu test qabul qilishni to'xtatgan (Yopilish vaqti: {new Date(test.endTime).toLocaleString('uz-UZ')}).
+      <div className="min-h-screen bg-white flex items-center justify-center p-6 text-zinc-900 selection:bg-zinc-200 selection:text-black">
+        <div className="border border-zinc-200 p-8 rounded-md max-w-sm w-full text-center">
+          <AlertTriangle className="mx-auto text-zinc-400 mb-4" size={32} />
+          <h1 className="text-lg font-semibold text-zinc-900 mb-2">Test yopilgan</h1>
+          <p className="text-zinc-500 text-sm mb-6">
+            Ushbu test qabul qilishni to'xtatgan.
           </p>
-          <button onClick={() => navigate('/online-tests')} className="text-sm font-medium text-blue-600 hover:underline">
+          <button onClick={() => navigate('/online-tests')} className="text-xs font-medium text-zinc-900 hover:underline">
             Ortga qaytish
           </button>
         </div>
@@ -244,32 +240,35 @@ export default function TakeTest() {
 
   if (!started) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-gray-200 max-w-md w-full">
+      <div className="min-h-screen bg-white flex items-center justify-center p-6 font-sans text-zinc-900 selection:bg-zinc-200 selection:text-black">
+        <div className="border border-zinc-200 p-8 rounded-md max-w-sm w-full bg-white shadow-sm">
           <button 
             onClick={() => navigate('/online-tests')}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-8"
+            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-900 transition-colors mb-6 font-medium"
           >
-            <ArrowLeft size={16} /> Back
+            <ArrowLeft size={14} /> Ortga
           </button>
           
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">{test.title}</h1>
-          <p className="text-gray-500 text-sm mb-6">{test.subject} • {test.questions.length} ta savol</p>
+          <h1 className="text-xl font-semibold text-zinc-900 mb-1 leading-tight">{test.title}</h1>
+          <div className="flex items-center gap-2 text-xs text-zinc-500 mb-6">
+            <span className="font-medium px-1.5 py-0.5 bg-zinc-100 border border-zinc-200 rounded">{test.subject}</span>
+            <span>•</span>
+            <span>{test.questions.length} savol</span>
+          </div>
           
-          <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-8 text-sm text-yellow-800">
-            <strong>QAT'IY OGOHLANTIRISH:</strong> Testni boshlagach, boshqa oynaga o'tish (tab almashtirish) qat'iyan man etiladi. Qoidabuzarlik sezilsa, test avtomatik yopiladi va baholanadi.
+          <div className="bg-zinc-50 border border-zinc-200 p-3 rounded-md mb-6 text-xs text-zinc-700 leading-relaxed">
+            <strong className="text-zinc-900">Qat'iy ogohlantirish:</strong> Testni boshlagach, boshqa oynaga o'tish (tab almashtirish) qat'iyan man etiladi.
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">To'liq ismingizni kiriting</label>
+              <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">To'liq ismingizni kiriting</label>
               <input 
                 type="text" 
                 value={studentName}
                 onChange={e => setStudentName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleStart()}
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm placeholder-gray-400
-                  focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
+                className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-md text-sm placeholder-zinc-400 focus:outline-none focus:border-zinc-900 transition-colors"
                 placeholder="Masalan: Aliyev Vali"
                 autoFocus
               />
@@ -277,7 +276,7 @@ export default function TakeTest() {
             
             <button 
               onClick={handleStart}
-              className="w-full py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+              className="w-full py-2.5 bg-zinc-900 text-white rounded-md text-sm font-medium hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-900 shadow-sm"
             >
               Testni Boshlash
             </button>
@@ -298,64 +297,64 @@ export default function TakeTest() {
 
   return (
     <div 
-      className="min-h-screen bg-white text-gray-900 font-sans flex flex-col select-none"
+      className="min-h-screen bg-white text-zinc-900 font-sans flex flex-col select-none selection:bg-zinc-200 selection:text-black"
       onCopy={(e) => e.preventDefault()}
       onCut={(e) => e.preventDefault()}
       onPaste={(e) => e.preventDefault()}
       onContextMenu={(e) => e.preventDefault()}
     >
       {/* Progress Bar */}
-      <div className="h-1 w-full bg-gray-100">
+      <div className="h-[2px] w-full bg-zinc-100">
         <div 
-          className="h-full bg-black transition-all duration-300 ease-out"
+          className="h-full bg-zinc-900 transition-all duration-300 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
 
       {/* Header */}
-      <header className="border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 bg-white z-10">
-        <div>
-          <h2 className="text-sm font-medium text-gray-900">{test.title}</h2>
-          <p className="text-xs text-gray-500">{studentName}</p>
+      <header className="border-b border-zinc-200 px-6 h-14 flex items-center justify-between sticky top-0 bg-white z-10">
+        <div className="flex flex-col">
+          <h2 className="text-xs font-semibold text-zinc-900 leading-tight">{test.title}</h2>
+          <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">{studentName}</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-1.5 px-2 py-1 bg-zinc-50 text-zinc-600 rounded-md border border-zinc-200 text-[10px] font-bold uppercase tracking-wider">
+            <AlertTriangle size={10} /> Oynani tark etmang
+          </div>
           {timeLeft !== null && (
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-bold tracking-wider ${
-              timeLeft <= 60 ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-gray-100 text-gray-800'
+            <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-bold font-mono tracking-wider border ${
+              timeLeft <= 60 ? 'bg-red-50 text-red-600 border-red-200 animate-pulse' : 'bg-zinc-50 text-zinc-900 border-zinc-200'
             }`}>
-              <Clock size={16} />
+              <Clock size={12} />
               {formatTime(timeLeft)}
             </div>
           )}
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded text-xs font-medium border border-red-100">
-            <AlertTriangle size={12} /> Ekranni tark etmang
-          </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-8">
+      <main className="flex-1 max-w-5xl w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-6 md:gap-10">
         
         {/* Question Palette Sidebar */}
-        <div className="lg:w-72 shrink-0 order-2 lg:order-1">
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 lg:sticky lg:top-24">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-gray-900">Savollar paneli</h3>
-              <span className="text-xs font-medium text-gray-500">{Object.keys(answers).length} / {test.questions.length} belgilanmadi</span>
+        <div className="lg:w-64 shrink-0 order-2 lg:order-1">
+          <div className="bg-white border border-zinc-200 rounded-md p-4 lg:sticky lg:top-24">
+            <div className="flex items-center justify-between mb-3 border-b border-zinc-100 pb-2">
+              <h3 className="text-xs font-semibold text-zinc-900 uppercase tracking-wider">Savollar</h3>
+              <span className="text-[10px] font-bold text-zinc-500">{Object.keys(answers).length} / {test.questions.length}</span>
             </div>
             
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-5 gap-1.5">
               {test.questions.map((_: any, idx: number) => {
                 const isAnswered = answers[idx] !== undefined;
                 const isCurrent = idx === currentQIndex;
                 
-                let btnClass = "w-10 h-10 rounded-lg text-sm font-medium transition-all flex items-center justify-center border ";
+                let btnClass = "w-full aspect-square rounded text-[11px] font-semibold transition-all flex items-center justify-center border ";
                 if (isCurrent) {
-                  btnClass += "border-black bg-black text-white shadow-md scale-105";
+                  btnClass += "border-zinc-900 bg-zinc-900 text-white";
                 } else if (isAnswered) {
-                  btnClass += "border-green-500 bg-green-50 text-green-700 hover:bg-green-100";
+                  btnClass += "border-zinc-900 bg-zinc-50 text-zinc-900";
                 } else {
-                  btnClass += "border-gray-200 bg-white text-gray-600 hover:border-gray-400 hover:bg-gray-50";
+                  btnClass += "border-zinc-200 bg-white text-zinc-400 hover:border-zinc-400";
                 }
                 
                 return (
@@ -369,83 +368,74 @@ export default function TakeTest() {
                 );
               })}
             </div>
-            
-            <div className="mt-6 pt-4 border-t border-gray-200 flex flex-col gap-2 text-xs text-gray-500">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-black"></div> Hozirgi savol
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-green-50 border border-green-500"></div> Javob berilgan
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded bg-white border border-gray-200"></div> Javob berilmagan
-              </div>
-            </div>
           </div>
         </div>
 
         {/* Question Area */}
-        <div className="flex-1 flex flex-col max-w-4xl order-1 lg:order-2 lg:pt-8">
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <h3 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-10 leading-snug">
-            <FormattedText content={currentQ.questionText} />
-          </h3>
+        <div className="flex-1 flex flex-col max-w-2xl order-1 lg:order-2 lg:pt-4">
+          <div className="mb-8">
+            <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">
+              {currentQIndex + 1}-Savol
+            </div>
+            <h3 className="text-lg font-medium text-zinc-900 leading-relaxed">
+              <FormattedText content={currentQ.questionText} />
+            </h3>
+          </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2">
             {currentQ.options.map((opt: string, i: number) => {
               const isSelected = answers[currentQIndex] === opt;
               return (
                 <button
                   key={i}
                   onClick={() => handleSelectOption(opt)}
-                  className={`w-full text-left p-4 md:p-5 rounded-xl border text-base md:text-lg transition-all flex items-center justify-between group ${
+                  className={`w-full text-left px-4 py-3 rounded-md border text-sm transition-all flex items-center gap-3 group ${
                     isSelected 
-                      ? 'border-black bg-gray-50 text-black' 
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                      ? 'border-zinc-900 bg-zinc-50/50' 
+                      : 'border-zinc-200 bg-white hover:border-zinc-400'
                   }`}
                 >
-                  <span className={isSelected ? 'font-medium' : ''}>
+                  <div className={`w-4 h-4 shrink-0 rounded-full border flex items-center justify-center transition-colors ${
+                    isSelected ? 'border-zinc-900 bg-zinc-900 text-white' : 'border-zinc-300 group-hover:border-zinc-400'
+                  }`}>
+                    {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
+                  </div>
+                  <span className={`flex-1 ${isSelected ? 'font-medium text-zinc-900' : 'text-zinc-700'}`}>
                     <FormattedText content={opt} />
                   </span>
-                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
-                    isSelected ? 'border-black bg-black text-white' : 'border-gray-300 group-hover:border-gray-400'
-                  }`}>
-                    {isSelected && <Check size={12} strokeWidth={3} />}
-                  </div>
                 </button>
               );
             })}
           </div>
-        </div>
 
-        {/* Footer Navigation */}
-        <div className="mt-16 flex items-center justify-between pt-6 border-t border-gray-100">
-          <button
-            onClick={() => setCurrentQIndex(prev => Math.max(0, prev - 1))}
-            disabled={currentQIndex === 0}
-            className="px-6 py-2.5 text-sm font-medium text-gray-600 disabled:opacity-30 hover:text-gray-900 transition-colors"
-          >
-            Oldingi
-          </button>
-          
-          {currentQIndex < test.questions.length - 1 ? (
+          {/* Footer Navigation */}
+          <div className="mt-12 flex items-center justify-between pt-4 border-t border-zinc-100">
             <button
-              onClick={() => setCurrentQIndex(prev => prev + 1)}
-              className="px-8 py-2.5 bg-gray-100 text-gray-900 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors"
+              onClick={() => setCurrentQIndex(prev => Math.max(0, prev - 1))}
+              disabled={currentQIndex === 0}
+              className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 disabled:opacity-30 hover:text-zinc-900 transition-colors"
             >
-              Keyingi Savol
+              Oldingi
             </button>
-          ) : (
-            <button
-              onClick={() => handleSubmit(false)}
-              disabled={submitting}
-              className="inline-flex items-center gap-2 px-8 py-2.5 bg-black text-white rounded-full text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-70"
-            >
-              {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
-              {submitting ? 'Yuborilmoqda...' : 'Testni Yakunlash'}
-            </button>
-          )}
-        </div>
+            
+            {currentQIndex < test.questions.length - 1 ? (
+              <button
+                onClick={() => setCurrentQIndex(prev => prev + 1)}
+                className="px-5 py-2 bg-zinc-100 border border-zinc-200 text-zinc-900 rounded-md text-xs font-semibold uppercase tracking-wider hover:bg-zinc-200 transition-colors"
+              >
+                Keyingi
+              </button>
+            ) : (
+              <button
+                onClick={() => handleSubmit(false)}
+                disabled={submitting}
+                className="inline-flex items-center gap-2 px-5 py-2 bg-zinc-900 text-white rounded-md text-xs font-semibold uppercase tracking-wider hover:bg-zinc-800 transition-colors disabled:opacity-70"
+              >
+                {submitting ? <Loader2 size={14} className="animate-spin" /> : null}
+                {submitting ? 'Yuborilmoqda...' : 'Yakunlash'}
+              </button>
+            )}
+          </div>
         </div>
       </main>
     </div>

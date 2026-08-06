@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Sparkles, Plus, Trash2, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, Sparkles, Plus, Trash2, Loader2, Save, Settings2, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
 import { getAuthHeaders, getToken, getTeacher } from '../../lib/auth';
@@ -23,7 +23,7 @@ export default function CreateTest() {
       navigate('/teacher/login');
       return;
     }
-  }, []);
+  }, [navigate]);
   
   const [topic, setTopic] = useState('');
   const [questionCount, setQuestionCount] = useState(5);
@@ -124,112 +124,122 @@ export default function CreateTest() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans pb-20">
-      <div className="max-w-7xl mx-auto px-6 py-10">
-        
-        {/* Navigation */}
-        <button 
-          onClick={() => navigate('/online-tests')}
-          className="group flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-8 font-medium"
-        >
-          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-          Testlarga qaytish
-        </button>
-
-        <div className="mb-8">
-          <h1 className="text-3xl font-semibold tracking-tight text-gray-900">Test yaratish</h1>
-          <p className="text-gray-500 mt-1 text-sm">Yangi test sozlamalarini kiriting.</p>
+    <div className="min-h-screen bg-white text-zinc-900 font-sans pb-24 selection:bg-zinc-200 selection:text-black">
+      
+      {/* Header */}
+      <header className="border-b border-zinc-200 bg-white sticky top-0 z-20">
+        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
+          <button 
+            onClick={() => navigate('/online-tests')}
+            className="flex items-center gap-2 text-xs font-medium text-zinc-500 hover:text-zinc-900 transition-colors"
+          >
+            <ArrowLeft size={14} />
+            Orqaga
+          </button>
+          <div className="text-sm font-semibold tracking-tight">Yangi Test Yaratish</div>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-1.5 bg-zinc-900 text-white px-3 py-1.5 rounded-md text-xs font-medium hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            Saqlash
+          </button>
         </div>
+      </header>
 
-        {/* Basic Info Card */}
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-8 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <main className="max-w-4xl mx-auto px-6 py-8">
+        
+        {/* Settings Section */}
+        <section className="mb-10">
+          <div className="flex items-center gap-2 mb-4 border-b border-zinc-200 pb-2">
+            <Settings2 size={16} className="text-zinc-400" />
+            <h2 className="text-sm font-semibold">Test Sozlamalari</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Test nomi</label>
+              <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Test Nomi</label>
               <input 
                 type="text" 
                 value={title}
                 onChange={e => setTitle(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400
-                  focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
-                placeholder="masalan, Tarixdan choraklik imtihon"
+                className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-md text-sm placeholder-zinc-400 focus:outline-none focus:border-zinc-400 transition-colors"
+                placeholder="Masalan: Tarixdan choraklik imtihon"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Fan</label>
+              <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Fan</label>
               <input 
                 type="text" 
                 value={subject}
                 disabled
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-sm text-gray-500 cursor-not-allowed shadow-sm"
+                className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-md text-sm text-zinc-500 cursor-not-allowed"
               />
-              <p className="text-xs text-gray-400 mt-1">O'qituvchi akkauntidan olingan.</p>
             </div>
-          </div>
-          
-          <div className="pt-4 border-t border-gray-100">
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Test vaqti (daqiqa)</label>
+            <div>
+              <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Vaqt Limiti (daqiqa)</label>
               <input 
                 type="number"
                 min="1"
                 value={durationMinutes}
                 onChange={e => setDurationMinutes(e.target.value)}
-                className="w-full max-w-sm px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
-                placeholder="masalan, 45 (bo'sh qolsa cheklanmagan)"
+                className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-md text-sm placeholder-zinc-400 focus:outline-none focus:border-zinc-400 transition-colors"
+                placeholder="Bo'sh qolsa cheklanmagan"
               />
-              <p className="text-xs text-gray-500 mt-1">O'quvchi testni boshlaganidan so'ng qancha vaqt beriladi.</p>
             </div>
-            
-            <label className="flex items-center gap-2 cursor-pointer mb-4">
+          </div>
+          
+          <div className="mt-5">
+            <label className="flex items-center gap-2 cursor-pointer w-max">
               <input 
                 type="checkbox" 
                 checked={hasTimeLimit}
                 onChange={e => setHasTimeLimit(e.target.checked)}
-                className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black"
+                className="w-4 h-4 text-zinc-900 border-zinc-300 rounded focus:ring-zinc-900"
               />
-              <span className="text-sm font-medium text-gray-700">Vaqt chegarasini o'rnatish (Qachon ochilib yopilishi)</span>
+              <span className="text-xs font-medium text-zinc-700">Mavjudlik vaqtini belgilash (Ochilish/Yopilish)</span>
             </label>
             
             {hasTimeLimit && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-lg border border-gray-100">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 bg-zinc-50/50 p-4 border border-zinc-200 rounded-md">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Boshlanish vaqti</label>
+                  <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Boshlanish</label>
                   <input 
                     type="datetime-local" 
                     value={startTime}
                     onChange={e => setStartTime(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
+                    className="w-full px-3 py-1.5 bg-white border border-zinc-200 rounded text-xs focus:outline-none focus:border-zinc-400 transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Tugash vaqti</label>
+                  <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Tugash</label>
                   <input 
                     type="datetime-local" 
                     value={endTime}
                     onChange={e => setEndTime(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-colors"
+                    className="w-full px-3 py-1.5 bg-white border border-zinc-200 rounded text-xs focus:outline-none focus:border-zinc-400 transition-colors"
                   />
                 </div>
               </div>
             )}
           </div>
-        </div>
+        </section>
 
         {/* Builder Mode Selector */}
-        <div className="flex bg-gray-100 p-1 rounded-lg w-full max-w-sm mb-6 border border-gray-200">
+        <div className="flex bg-zinc-100 p-1 rounded-md w-full max-w-[240px] mb-6">
           <button
             onClick={() => setMode('ai')}
-            className={`flex-1 text-sm font-medium py-1.5 rounded-md transition-all ${
-              mode === 'ai' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            className={`flex-1 text-[11px] font-semibold uppercase tracking-wider py-1.5 rounded-sm transition-all ${
+              mode === 'ai' ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200/50' : 'text-zinc-500 hover:text-zinc-700'
             }`}
           >
             AI Yordamida
           </button>
           <button
             onClick={() => setMode('manual')}
-            className={`flex-1 text-sm font-medium py-1.5 rounded-md transition-all ${
-              mode === 'manual' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            className={`flex-1 text-[11px] font-semibold uppercase tracking-wider py-1.5 rounded-sm transition-all ${
+              mode === 'manual' ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200/50' : 'text-zinc-500 hover:text-zinc-700'
             }`}
           >
             Qo'lda kiritish
@@ -238,39 +248,39 @@ export default function CreateTest() {
 
         {/* AI Form */}
         {mode === 'ai' && (
-          <div className="bg-blue-50/50 p-6 rounded-xl border border-blue-100 mb-8">
+          <div className="bg-white border border-zinc-200 p-5 rounded-md mb-8">
             <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="text-blue-500" size={18} />
-              <h3 className="text-sm font-semibold text-blue-900">Gemini AI yordamida yaratish</h3>
+              <Sparkles className="text-zinc-900" size={14} />
+              <h3 className="text-xs font-semibold text-zinc-900">AI Savollar Generatsiyasi</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Aniq mavzu (Ixtiyoriy)</label>
+                <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Aniq mavzu (Ixtiyoriy)</label>
                 <input 
                   type="text" 
                   value={topic}
                   onChange={e => setTopic(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-                  placeholder="masalan, 2-Jahon urushi"
+                  className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-md text-sm placeholder-zinc-400 focus:outline-none focus:border-zinc-400 transition-colors"
+                  placeholder="masalan: 2-Jahon urushi"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Savollar soni</label>
+                <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Savollar soni</label>
                 <input 
                   type="number" 
                   min="1" max="20"
                   value={questionCount}
                   onChange={e => setQuestionCount(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                  className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-md text-sm focus:outline-none focus:border-zinc-400 transition-colors"
                 />
               </div>
             </div>
             <button
               onClick={handleGenerate}
               disabled={generating || !subject.trim()}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 shadow-sm"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-zinc-900 text-white text-xs font-medium rounded-md hover:bg-zinc-800 disabled:opacity-50 transition-colors focus:outline-none"
             >
-              {generating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+              {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
               {generating ? 'Yaratilmoqda...' : 'Savollarni yaratish'}
             </button>
           </div>
@@ -278,16 +288,17 @@ export default function CreateTest() {
 
         {/* Questions Editor */}
         {questions.length > 0 && (
-          <div className="space-y-6 mb-8">
-            <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-              <h2 className="text-lg font-semibold text-gray-900">Savollar ({questions.length})</h2>
+          <div className="space-y-4 mb-8">
+            <div className="flex items-center gap-2 mb-2 border-b border-zinc-200 pb-2">
+              <FileText size={16} className="text-zinc-400" />
+              <h2 className="text-sm font-semibold">Savollar Listi ({questions.length})</h2>
             </div>
             
             {questions.map((q, qIndex) => (
-              <div key={qIndex} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                <div className="flex gap-4 items-start mb-6">
-                  <span className="font-mono text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded mt-2">
-                    Q{qIndex + 1}
+              <div key={qIndex} className="bg-white p-4 sm:p-5 rounded-md border border-zinc-200">
+                <div className="flex gap-4 items-start mb-4">
+                  <span className="font-mono text-[10px] font-bold text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded mt-1.5">
+                    {String(qIndex + 1).padStart(2, '0')}
                   </span>
                   <div className="flex-1 min-w-0">
                     <MathInput
@@ -297,35 +308,35 @@ export default function CreateTest() {
                         newQ[qIndex].questionText = e.target.value;
                         setQuestions(newQ);
                       }}
-                      placeholder="Savolingizni bu yerga yozing..."
+                      placeholder="Savol matni..."
                       isTextarea={true}
                     />
                   </div>
                   <button
                     onClick={() => setQuestions(questions.filter((_, i) => i !== qIndex))}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors mt-1"
-                    title="Savolni o'chirish"
+                    className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors mt-0.5"
+                    title="O'chirish"
                   >
-                    <Trash2 size={18} />
+                    <Trash2 size={16} />
                   </button>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-9">
                   {q.options.map((opt: string, oIndex: number) => {
                     const isCorrect = q.correctOption === opt && opt !== '';
                     return (
-                      <div key={oIndex} className={`flex items-center gap-3 p-2 rounded-md border ${isCorrect ? 'border-green-500 bg-green-50/30' : 'border-transparent'}`}>
+                      <div key={oIndex} className={`flex items-start gap-2.5 p-2 rounded border ${isCorrect ? 'border-zinc-900 bg-zinc-50/50' : 'border-transparent'}`}>
                         <input
                           type="radio"
                           name={`correct-${qIndex}`}
                           checked={isCorrect}
                           onChange={() => {
-                            if (!opt.trim()) return toast.warning('Please enter option text first.');
+                            if (!opt.trim()) return toast.warning('Iltimos, avval variantni yozing.');
                             const newQ = [...questions];
                             newQ[qIndex].correctOption = opt;
                             setQuestions(newQ);
                           }}
-                          className="w-4 h-4 text-black border-gray-300 focus:ring-black cursor-pointer"
+                          className="w-3.5 h-3.5 text-zinc-900 border-zinc-300 focus:ring-zinc-900 cursor-pointer mt-1"
                         />
                         <div className="flex-1 min-w-0">
                           <MathInput
@@ -340,7 +351,7 @@ export default function CreateTest() {
                               }
                               setQuestions(newQ);
                             }}
-                            placeholder={`Variant ${oIndex + 1}`}
+                            placeholder={`Variant ${String.fromCharCode(65 + oIndex)}`}
                           />
                         </div>
                       </div>
@@ -356,28 +367,14 @@ export default function CreateTest() {
         {mode === 'manual' && (
           <button
             onClick={addManualQuestion}
-            className="w-full py-4 flex items-center justify-center gap-2 text-sm font-medium text-gray-500 bg-gray-50 border border-dashed border-gray-300 rounded-xl hover:bg-gray-100 hover:text-gray-900 transition-colors mb-8"
+            className="w-full py-3 flex items-center justify-center gap-2 text-xs font-medium text-zinc-500 bg-white border border-dashed border-zinc-300 rounded-md hover:bg-zinc-50 hover:text-zinc-900 hover:border-zinc-400 transition-colors"
           >
-            <Plus size={16} />
-            Add a new question
+            <Plus size={14} />
+            Yangi savol qo'shish
           </button>
         )}
 
-        {/* Sticky Save Button */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10 flex justify-center">
-          <div className="max-w-7xl w-full flex justify-end">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-black text-white text-sm font-medium rounded-md hover:bg-gray-800 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 shadow-sm"
-            >
-              {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-              {saving ? 'Saving Test...' : 'Save Test'}
-            </button>
-          </div>
-        </div>
-
-      </div>
+      </main>
     </div>
   );
 }
@@ -396,12 +393,11 @@ function MathInput({
 }) {
   const [isEditing, setIsEditing] = useState(false);
 
-  // If we are not editing and the value exists, show the rendered math
   if (!isEditing && value) {
     return (
       <div 
         onClick={() => setIsEditing(true)} 
-        className={`cursor-text border border-transparent hover:border-gray-300 hover:bg-gray-50 rounded px-3 py-2 transition-colors min-h-[40px] w-full flex items-center ${isTextarea ? 'items-start' : ''}`}
+        className={`cursor-text border border-transparent hover:border-zinc-200 hover:bg-zinc-50 rounded px-2 py-1.5 transition-colors min-h-[32px] w-full flex items-center text-sm ${isTextarea ? 'items-start' : ''}`}
         title="Tahrirlash uchun bosing"
       >
         <FormattedText content={value} />
@@ -409,7 +405,6 @@ function MathInput({
     );
   }
 
-  // If editing or empty, show input field
   if (isTextarea) {
     return (
       <textarea
@@ -418,7 +413,7 @@ function MathInput({
         onBlur={() => setIsEditing(false)}
         autoFocus={isEditing}
         rows={2}
-        className="w-full px-3 py-2 bg-white border border-black rounded shadow-sm focus:outline-none focus:ring-1 focus:ring-black resize-none"
+        className="w-full px-2 py-1.5 bg-white border border-zinc-400 rounded text-sm focus:outline-none focus:border-zinc-900 resize-none"
         placeholder={placeholder}
       />
     );
@@ -431,7 +426,7 @@ function MathInput({
       onChange={onChange}
       onBlur={() => setIsEditing(false)}
       autoFocus={isEditing}
-      className="w-full bg-white border-b-2 border-black px-2 py-1 text-sm focus:outline-none transition-colors"
+      className="w-full bg-white border-b border-zinc-400 px-1 py-1 text-sm focus:outline-none focus:border-zinc-900 transition-colors"
       placeholder={placeholder}
     />
   );
