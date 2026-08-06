@@ -74,133 +74,134 @@ export default function OnlineTestsDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        
-        {/* Minimalist Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">O'qituvchi Paneli</h1>
-            <p className="text-gray-500 mt-1">{teacher?.name} - {teacher?.subject} o'qituvchisi</p>
+    <div className="min-h-screen bg-white text-zinc-900 font-sans selection:bg-zinc-200 selection:text-black">
+      {/* Top Navbar / Header Area */}
+      <header className="border-b border-zinc-200 bg-white sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-zinc-900 text-white rounded flex items-center justify-center font-bold text-sm">
+              M
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold text-zinc-900 leading-tight">O'qituvchi Portali</h1>
+              <p className="text-[11px] text-zinc-500 font-medium">{teacher?.name}</p>
+            </div>
           </div>
           
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-2">
             {teacher?.role === 'admin' && (
               <button
                 onClick={() => navigate('/superadmin')}
-                className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-zinc-200 hover:border-zinc-400 hover:bg-zinc-50 text-xs font-medium text-zinc-700 transition-colors"
               >
-                <ShieldAlert size={20} />
-                <span className="hidden sm:inline">Super Admin</span>
+                <ShieldAlert size={14} />
+                <span className="hidden sm:inline">Admin Panel</span>
               </button>
             )}
             <button
               onClick={() => navigate('/online-tests/create')}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm"
+              className="flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
             >
-              <Plus size={20} />
-              <span>Yangi Test</span>
+              <Plus size={14} />
+              <span className="hidden sm:inline">Yangi Test</span>
             </button>
             <button
               onClick={logout}
-              className="p-2.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-gray-200 hover:border-red-100 bg-white"
+              className="p-1.5 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-md transition-colors"
               title="Chiqish"
             >
-              <LogOut size={20} />
+              <LogOut size={16} />
             </button>
           </div>
         </div>
+      </header>
 
-        {/* Search & Filters */}
-        <div className="mb-8 relative max-w-2xl">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
+      <main className="max-w-5xl mx-auto px-6 py-8">
+        
+        {/* Search Bar */}
+        <div className="mb-6 relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-4 w-4 text-zinc-400" />
           </div>
           <input
             type="text"
-            placeholder="Testlarni nomi yoki fani bo'yicha qidiring..."
+            placeholder="Test qidirish..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="block w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent shadow-sm transition-all duration-300 hover:shadow-md"
+            className="block w-full pl-9 pr-4 py-2 bg-white border border-zinc-200 rounded-md text-sm font-medium text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:ring-0 transition-colors"
           />
         </div>
 
         {/* List Section */}
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+        <div className="border border-zinc-200 rounded-md overflow-hidden bg-white">
           {loading ? (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-zinc-100">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="p-6 flex items-center justify-between animate-pulse">
-                  <div className="space-y-3 w-1/2">
-                    <div className="h-5 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-4 bg-gray-100 rounded w-1/2"></div>
+                <div key={i} className="p-4 flex items-center justify-between animate-pulse">
+                  <div className="space-y-2 w-1/3">
+                    <div className="h-4 bg-zinc-100 rounded w-full"></div>
+                    <div className="h-3 bg-zinc-50 rounded w-2/3"></div>
                   </div>
-                  <div className="h-8 w-24 bg-gray-100 rounded-md"></div>
                 </div>
               ))}
             </div>
           ) : filteredTests.length === 0 ? (
-            <div className="text-center py-20">
-              <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FileText className="text-gray-400" size={24} />
+            <div className="text-center py-16 flex flex-col items-center">
+              <div className="w-12 h-12 border border-zinc-200 rounded-md flex items-center justify-center mb-3 bg-zinc-50">
+                <FileText className="text-zinc-400 w-5 h-5" />
               </div>
-              <h3 className="text-gray-900 font-medium mb-1">Testlar topilmadi</h3>
-              <p className="text-sm text-gray-500 mb-6">
-                {search ? "Boshqa so'z bilan qidirib ko'ring." : "Birinchi testingizni yaratishdan boshlang."}
+              <h3 className="text-sm font-medium text-zinc-900 mb-1">Ma'lumot topilmadi</h3>
+              <p className="text-xs text-zinc-500 mb-4">
+                {search ? "Qidiruvingizga mos test yo'q." : "Hali hech qanday test yaratmagansiz."}
               </p>
               {!search && (
                 <button
                   onClick={() => navigate('/online-tests/create')}
-                  className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                  className="text-xs font-medium text-zinc-900 hover:underline underline-offset-2 flex items-center gap-1"
                 >
-                  Birinchi testingizni yarating &rarr;
+                  <Plus size={12} /> Test yaratish
                 </button>
               )}
             </div>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-zinc-100">
               {filteredTests.map((test) => (
                 <li
                   key={test.id}
-                  className="group hover:bg-gray-50/80 transition-colors flex items-center justify-between p-4 sm:p-6 cursor-pointer"
+                  className="group hover:bg-zinc-50 transition-colors flex items-center justify-between p-4 cursor-pointer"
                   onClick={() => navigate(`/online-tests/details/${test.id}`)}
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="mt-1 bg-gray-100 p-2 rounded-md text-gray-500 group-hover:bg-white group-hover:shadow-sm transition-all border border-transparent group-hover:border-gray-200">
-                      <FileText size={18} />
-                    </div>
+                  <div className="flex items-center gap-4">
                     <div>
-                      <h3 className="text-gray-900 font-medium">{test.title}</h3>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                        <span className="font-medium bg-gray-100 px-2 py-0.5 rounded text-gray-600">
+                      <h3 className="text-sm font-medium text-zinc-900 leading-none mb-1.5">{test.title}</h3>
+                      <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+                        <span className="font-medium bg-zinc-100 border border-zinc-200 px-1.5 py-0.5 rounded text-zinc-700">
                           {test.subject}
                         </span>
-                        <span>•</span>
-                        <span>{test.questions?.length || 0} ta savol</span>
+                        <span>{test.questions?.length || 0} savol</span>
                         <span>•</span>
                         <span>{new Date(test.createdAt).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center text-gray-400 group-hover:text-gray-900 transition-colors">
-                    <span className="text-sm font-medium mr-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      Natijalar
-                    </span>
-                    <ChevronRight size={18} className="mr-4" />
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={(e) => handleDeleteTest(e, test.id)}
-                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                      title="Testni o'chirish"
+                      className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100"
+                      title="O'chirish"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={14} />
                     </button>
+                    <div className="text-zinc-400 group-hover:text-zinc-900 transition-colors">
+                      <ChevronRight size={16} />
+                    </div>
                   </div>
                 </li>
               ))}
             </ul>
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }
