@@ -300,43 +300,62 @@ function autoFormatMath(text) {
   return result;
 }
 
+function latexToOmml(latex) {
+  try {
+    const mathml = katex.renderToString(latex.trim(), { output: 'mathml', displayMode: false, throwOnError: false });
+    // Use multiline-safe regex and strip the katex wrapper <span>
+    const mathMatch = mathml.match(/<math[\s\S]*?<\/math>/);
+    if (!mathMatch) return null;
+    // Remove <annotation> tags that cause mml2omml errors
+    let mathStr = mathMatch[0].replace(/<annotation[^>]*>[\s\S]*?<\/annotation>/g, '');
+    return mml2omml(mathStr);
+  } catch (e) {
+    return null;
+  }
+}
+
 const buildParagraphs = (content, options = {}) => {
   if (!content) return [new Paragraph({ children: [new TextRun("")] })];
   const formattedContent = autoFormatMath(content);
   const parts = formattedContent.split('$');
   let currentParagraphChildren = [];
   const paragraphs = [];
-  
+
+  const flushParagraph = () => {
+    if (currentParagraphChildren.length > 0) {
+      paragraphs.push(new Paragraph({ children: currentParagraphChildren, spacing: { after: 120 } }));
+      currentParagraphChildren = [];
+    }
+  };
+
   parts.forEach((part, index) => {
     if (index % 2 === 0) {
-      const lines = part.split('\\n');
+      // Regular text — split by real newlines
+      const lines = part.split('\n');
       lines.forEach((line, lineIndex) => {
         if (line) currentParagraphChildren.push(new TextRun({ text: line, ...options }));
         if (lineIndex < lines.length - 1) {
-          paragraphs.push(new Paragraph({ children: currentParagraphChildren, spacing: { after: 120 } }));
-          currentParagraphChildren = [];
+          flushParagraph();
         }
       });
     } else {
-      try {
-        const mathml = katex.renderToString(part, { output: 'mathml', displayMode: false, throwOnError: false });
-        const mathMatch = mathml.match(/<math.*<\/math>/);
-        if (mathMatch) {
-          const omml = mml2omml(mathMatch[0]);
-          currentParagraphChildren.push(new ImportedXmlComponent(omml));
-        } else {
-          currentParagraphChildren.push(new TextRun({ text: `$${part}$`, ...options }));
-        }
-      } catch (e) {
+      // Math expression between $ ... $
+      const omml = latexToOmml(part);
+      if (omml) {
+        // oMath must be a direct child of <w:p>, not inside <w:r>
+        // So we flush current paragraph, emit a math-only paragraph, then continue
+        flushParagraph();
+        // Build a raw XML paragraph containing the oMath element
+        const mathParaXml = `<w:p xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math">${omml}</w:p>`;
+        paragraphs.push(new ImportedXmlComponent(mathParaXml));
+      } else {
         currentParagraphChildren.push(new TextRun({ text: `$${part}$`, ...options }));
       }
     }
   });
-  
-  if (currentParagraphChildren.length > 0) {
-    paragraphs.push(new Paragraph({ children: currentParagraphChildren, spacing: { after: 120 } }));
-  }
-  
+
+  flushParagraph();
+
   return paragraphs;
 };
 
