@@ -10,10 +10,24 @@ import {
   LayoutDashboard,
   LogOut,
   Search,
-  ChevronRight
+  ArrowRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getToken, getTeacher } from '../lib/auth';
+import logo from '../assets/logo.jpg';
+
+const containerVariants: any = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+  }
+};
+
+const itemVariants: any = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
+};
 
 export default function SuperAdmin() {
   const [activeTab, setActiveTab] = useState<'overview' | 'teachers' | 'tests' | 'results'>('overview');
@@ -60,12 +74,10 @@ export default function SuperAdmin() {
     fetchData();
   }, [navigate]);
 
-  // Reset search when changing tabs
   useEffect(() => {
     setSearchQuery('');
   }, [activeTab]);
 
-  // Derived filtered data
   const filteredTeachers = useMemo(() => {
     if (!searchQuery) return teachers;
     const q = searchQuery.toLowerCase();
@@ -86,362 +98,331 @@ export default function SuperAdmin() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex flex-col justify-center items-center font-sans">
-        <div className="w-5 h-5 border-2 border-zinc-200 border-t-zinc-900 rounded-full animate-spin mb-3"></div>
-        <p className="text-zinc-500 font-medium text-[11px] uppercase tracking-wider">Yuklanmoqda</p>
+      <div className="min-h-screen bg-[#fdfdfd] flex flex-col justify-center items-center font-sans">
+        <div className="w-5 h-5 border-2 border-black/10 border-t-black rounded-full animate-spin mb-3"></div>
+        <p className="text-gray-500 font-medium text-[11px] uppercase tracking-widest">Yuklanmoqda</p>
       </div>
     );
   }
 
   const EmptyState = ({ message }: { message: string }) => (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div className="w-10 h-10 border border-zinc-200 bg-zinc-50 rounded-md flex items-center justify-center mb-4">
-        <Search className="w-4 h-4 text-zinc-400" />
+    <div className="flex flex-col items-center justify-center py-24 px-4 text-center border-b border-black/10">
+      <div className="w-12 h-12 rounded-full border border-black/10 flex items-center justify-center mb-6">
+        <Search className="w-5 h-5 text-gray-400" strokeWidth={1.5} />
       </div>
-      <p className="text-zinc-500 text-sm font-medium">{message}</p>
+      <p className="text-gray-500 text-lg">{message}</p>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-white flex font-sans text-zinc-900 selection:bg-zinc-200 selection:text-black">
-      
-      {/* Sidebar - Desktop */}
-      <div className="w-64 border-r border-zinc-200 hidden md:flex flex-col sticky top-0 h-screen bg-white">
-        <div className="h-16 flex items-center gap-3 px-6 border-b border-zinc-200">
-          <div className="w-6 h-6 bg-zinc-900 rounded flex items-center justify-center text-white">
-            <ShieldAlert className="w-3.5 h-3.5" />
-          </div>
-          <span className="font-semibold text-sm tracking-tight">Super Admin</span>
-        </div>
+    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white">
+      <div className="max-w-7xl mx-auto px-6 py-24 md:py-32 flex flex-col gap-32">
         
-        <div className="flex-1 py-4 flex flex-col gap-1 px-4 overflow-y-auto">
-          {[
-            { id: 'overview', icon: LayoutDashboard, label: 'Umumiy Holat' },
-            { id: 'teachers', icon: Users, label: 'O\'qituvchilar' },
-            { id: 'tests', icon: FileText, label: 'Barcha Testlar' },
-            { id: 'results', icon: Award, label: 'Natijalar' }
-          ].map(tab => {
-            const isActive = activeTab === tab.id;
-            const Icon = tab.icon;
-            return (
-              <button 
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
-                  isActive ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50'
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-zinc-900' : 'text-zinc-400'}`} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="p-4 border-t border-zinc-200">
-          <button 
-            onClick={() => navigate('/')}
-            className="flex w-full items-center gap-3 px-3 py-2 text-xs font-medium text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 rounded-md transition-colors"
-          >
-            <LogOut className="w-4 h-4 text-zinc-400" />
-            Bosh sahifaga qaytish
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 bg-zinc-50/30">
-        
-        {/* Mobile Header & Nav */}
-        <div className="md:hidden bg-white border-b border-zinc-200 sticky top-0 z-20">
-          <div className="p-4 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-zinc-900" />
-              <h1 className="font-semibold text-zinc-900 text-sm tracking-tight">Super Admin</h1>
-            </div>
-            <button onClick={() => navigate('/')} className="text-zinc-400 hover:text-zinc-900 p-1">
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="flex overflow-x-auto px-4 pb-3 gap-2 no-scrollbar">
-            {[
-              { id: 'overview', label: 'Umumiy' },
-              { id: 'teachers', label: 'O\'qituvchilar' },
-              { id: 'tests', label: 'Testlar' },
-              { id: 'results', label: 'Natijalar' }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`px-3 py-1.5 rounded-md whitespace-nowrap text-xs font-medium transition-colors border ${
-                  activeTab === tab.id ? 'bg-zinc-900 text-white border-zinc-900' : 'bg-white text-zinc-600 border-zinc-200'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Scrollable Content Area */}
-        <div className="flex-1 p-4 md:p-8 w-full max-w-6xl mx-auto">
+        <section className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-24">
           
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -5 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-6"
-            >
-              
-              {/* OVERVIEW TAB */}
-              {activeTab === 'overview' && (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {[
-                      { label: "Jami O'qituvchilar", count: stats.teachers },
-                      { label: "Jami Testlar", count: stats.tests },
-                      { label: "Jami Natijalar", count: stats.results }
-                    ].map((stat, i) => (
-                      <div key={i} className="bg-white p-5 rounded-md border border-zinc-200 flex flex-col justify-between h-28 shadow-sm">
-                        <p className="text-zinc-500 font-medium text-xs">{stat.label}</p>
-                        <h3 className="text-3xl font-semibold tracking-tight">{stat.count}</h3>
-                      </div>
-                    ))}
-                  </div>
+          {/* LEFT SIDEBAR (STICKY) */}
+          <div className="md:col-span-4 md:sticky md:top-32 h-fit flex flex-col gap-16">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="flex flex-col gap-6">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-black/10">
+                  <img src={logo} alt="Logo" className="w-full h-full object-cover mix-blend-darken" />
+                </div>
+                <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500 flex items-center gap-2">
+                  <ShieldAlert className="w-3.5 h-3.5" /> Boshqaruv Paneli
+                </span>
+              </div>
+              <h1 className="text-3xl font-medium tracking-tight">Super Admin</h1>
+            </motion.div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Recent Tests */}
-                    <div className="bg-white rounded-md border border-zinc-200 shadow-sm overflow-hidden">
-                      <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between">
-                        <h3 className="font-semibold text-sm text-zinc-900">So'nggi Yaratilgan Testlar</h3>
-                        <button onClick={() => setActiveTab('tests')} className="text-xs text-zinc-500 hover:text-zinc-900 font-medium flex items-center">
-                          Barchasi <ChevronRight className="w-3 h-3 ml-1" />
-                        </button>
+            <nav className="flex flex-col gap-0 border-t border-black/10">
+              {[
+                { id: 'overview', icon: LayoutDashboard, label: 'Umumiy Holat' },
+                { id: 'teachers', icon: Users, label: 'O\'qituvchilar' },
+                { id: 'tests', icon: FileText, label: 'Barcha Testlar' },
+                { id: 'results', icon: Award, label: 'Natijalar' }
+              ].map(tab => {
+                const isActive = activeTab === tab.id;
+                const Icon = tab.icon;
+                return (
+                  <button 
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`flex items-center justify-between border-b border-black/10 py-6 text-left group transition-all duration-300 ${isActive ? 'text-black pl-4 border-black/30' : 'text-gray-400 hover:text-black hover:pl-2'}`}
+                  >
+                    <span className="flex items-center gap-4 text-sm font-semibold tracking-[0.1em] uppercase">
+                      <Icon className="w-4 h-4" strokeWidth={isActive ? 2 : 1.5} />
+                      {tab.label}
+                    </span>
+                    {isActive && <ArrowRight className="w-4 h-4" />}
+                  </button>
+                );
+              })}
+              <button 
+                onClick={() => navigate('/')}
+                className="flex items-center justify-between border-b border-black/10 py-6 text-left group transition-all duration-300 text-gray-400 hover:text-black hover:pl-2"
+              >
+                <span className="flex items-center gap-4 text-sm font-semibold tracking-[0.1em] uppercase">
+                  <LogOut className="w-4 h-4" strokeWidth={1.5} />
+                  Chiqish
+                </span>
+              </button>
+            </nav>
+          </div>
+
+          {/* RIGHT CONTENT */}
+          <div className="md:col-span-8 min-w-0">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="w-full flex flex-col gap-16"
+              >
+                
+                {/* OVERVIEW TAB */}
+                {activeTab === 'overview' && (
+                  <motion.div variants={containerVariants} initial="hidden" animate="show" className="flex flex-col gap-16">
+                    <div>
+                      <motion.h2 variants={itemVariants} className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500 mb-8 border-b border-black/10 pb-4">Statistika</motion.h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+                        {[
+                          { label: "O'qituvchilar", count: stats.teachers },
+                          { label: "Testlar", count: stats.tests },
+                          { label: "Natijalar", count: stats.results }
+                        ].map((stat, i) => (
+                          <motion.div variants={itemVariants} key={i} className="flex flex-col gap-2">
+                            <span className="text-4xl font-medium tracking-tight">{stat.count}</span>
+                            <span className="text-xs font-semibold tracking-[0.1em] uppercase text-gray-400">{stat.label}</span>
+                          </motion.div>
+                        ))}
                       </div>
-                      {tests.length === 0 ? <EmptyState message="Testlar mavjud emas" /> : (
-                        <div className="divide-y divide-zinc-50">
-                          {tests.slice(0, 5).map(t => (
-                            <div key={t._id} className="flex justify-between items-center p-4 hover:bg-zinc-50 transition-colors">
-                              <div className="min-w-0">
-                                <p className="font-medium text-sm text-zinc-900 truncate mb-1">{t.title}</p>
-                                <p className="text-[11px] text-zinc-500 truncate">{t.teacher?.name || 'Noma\'lum'}</p>
-                              </div>
-                              <div className="text-[11px] text-zinc-400 whitespace-nowrap ml-4 border border-zinc-200 px-1.5 py-0.5 rounded bg-zinc-50">
-                                {new Date(t.createdAt).toLocaleDateString()}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
 
-                    {/* Recent Teachers */}
-                    <div className="bg-white rounded-md border border-zinc-200 shadow-sm overflow-hidden">
-                      <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between">
-                        <h3 className="font-semibold text-sm text-zinc-900">Ro'yxatdan O'tgan Ustozlar</h3>
-                        <button onClick={() => setActiveTab('teachers')} className="text-xs text-zinc-500 hover:text-zinc-900 font-medium flex items-center">
-                          Barchasi <ChevronRight className="w-3 h-3 ml-1" />
-                        </button>
-                      </div>
-                      {teachers.length === 0 ? <EmptyState message="O'qituvchilar mavjud emas" /> : (
-                        <div className="divide-y divide-zinc-50">
-                          {teachers.slice(0, 5).map(t => (
-                            <div key={t._id} className="flex justify-between items-center p-4 hover:bg-zinc-50 transition-colors">
-                              <div className="flex items-center gap-3 min-w-0">
-                                <div className="min-w-0">
-                                  <p className="font-medium text-sm text-zinc-900 truncate mb-1">{t.name}</p>
-                                  <p className="text-[11px] text-zinc-500 truncate">{t.email}</p>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                      {/* Recent Tests */}
+                      <motion.div variants={itemVariants}>
+                        <div className="flex items-center justify-between border-b border-black/10 pb-4 mb-4">
+                          <h2 className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500">So'nggi Testlar</h2>
+                        </div>
+                        {tests.length === 0 ? <p className="text-gray-400 py-8">Testlar mavjud emas.</p> : (
+                          <div className="flex flex-col">
+                            {tests.slice(0, 5).map(t => (
+                              <div key={t._id} className="border-b border-black/10 py-6 group flex justify-between items-center">
+                                <div className="min-w-0 pr-4">
+                                  <h3 className="text-lg font-medium mb-1 truncate">{t.title}</h3>
+                                  <p className="text-sm text-gray-500 truncate">{t.teacher?.name || 'Noma\'lum'}</p>
+                                </div>
+                                <span className="text-xs tracking-[0.1em] text-gray-400 whitespace-nowrap">
+                                  {new Date(t.createdAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </motion.div>
+
+                      {/* Recent Teachers */}
+                      <motion.div variants={itemVariants}>
+                        <div className="flex items-center justify-between border-b border-black/10 pb-4 mb-4">
+                          <h2 className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500">So'nggi Ustozlar</h2>
+                        </div>
+                        {teachers.length === 0 ? <p className="text-gray-400 py-8">O'qituvchilar mavjud emas.</p> : (
+                          <div className="flex flex-col">
+                            {teachers.slice(0, 5).map(t => (
+                              <div key={t._id} className="border-b border-black/10 py-6 group flex justify-between items-center">
+                                <div className="min-w-0 pr-4">
+                                  <h3 className="text-lg font-medium mb-1 truncate">{t.name}</h3>
+                                  <p className="text-sm text-gray-500 truncate">{t.email}</p>
+                                </div>
+                                <div>
+                                  {t.role === 'admin' ? (
+                                    <span className="text-[10px] uppercase tracking-widest font-bold text-black">Admin</span>
+                                  ) : (
+                                    <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Ustoz</span>
+                                  )}
                                 </div>
                               </div>
-                              <div className="ml-4 shrink-0">
-                                {t.role === 'admin' ? (
-                                  <span className="px-1.5 py-0.5 bg-zinc-900 text-white text-[10px] uppercase font-bold rounded">Admin</span>
-                                ) : (
-                                  <span className="px-1.5 py-0.5 border border-zinc-200 text-zinc-500 text-[10px] uppercase font-bold rounded">Ustoz</span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                            ))}
+                          </div>
+                        )}
+                      </motion.div>
                     </div>
-                  </div>
-                </>
-              )}
+                  </motion.div>
+                )}
 
-              {/* TEACHERS TAB */}
-              {activeTab === 'teachers' && (
-                <div className="bg-white rounded-md border border-zinc-200 shadow-sm flex flex-col max-h-[calc(100vh-6rem)]">
-                  <div className="p-4 border-b border-zinc-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <h2 className="font-semibold text-sm">O'qituvchilar</h2>
-                    <div className="relative w-full sm:w-64">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
-                      <input 
-                        type="text" 
-                        placeholder="Qidirish..." 
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-8 pr-3 py-1.5 bg-white border border-zinc-200 rounded-md text-xs focus:outline-none focus:border-zinc-400 transition-colors"
-                      />
+                {/* TEACHERS TAB */}
+                {activeTab === 'teachers' && (
+                  <motion.div variants={containerVariants} initial="hidden" animate="show" className="flex flex-col w-full">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-black/10 pb-8 mb-8 gap-6">
+                      <motion.h2 variants={itemVariants} className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500">O'qituvchilar Boshqaruvi</motion.h2>
+                      <motion.div variants={itemVariants} className="relative w-full md:w-72">
+                        <input 
+                          type="text" 
+                          placeholder="Ism yoki email..." 
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full border-b border-black/20 pb-2 bg-transparent text-lg focus:outline-none focus:border-black transition-colors placeholder:text-gray-300"
+                        />
+                        <Search className="absolute right-0 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" strokeWidth={1.5} />
+                      </motion.div>
                     </div>
-                  </div>
-                  
-                  <div className="flex-1 overflow-auto">
+
                     {filteredTeachers.length === 0 ? (
-                      <EmptyState message="Hech narsa topilmadi" />
+                      <EmptyState message="Hech qanday o'qituvchi topilmadi." />
                     ) : (
-                      <table className="w-full text-left text-sm whitespace-nowrap">
-                        <thead className="bg-zinc-50/50 sticky top-0 z-10 border-b border-zinc-200">
-                          <tr>
-                            <th className="px-4 py-3 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Ism / Email</th>
-                            <th className="px-4 py-3 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Fan</th>
-                            <th className="px-4 py-3 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider text-center">Testlar</th>
-                            <th className="px-4 py-3 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider text-right">Rol</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-zinc-100">
-                          {filteredTeachers.map(t => (
-                            <tr key={t._id} className="hover:bg-zinc-50/50 transition-colors">
-                              <td className="px-4 py-3">
-                                <div className="font-medium text-zinc-900 text-xs">{t.name}</div>
-                                <div className="text-[11px] text-zinc-500 mt-0.5">{t.email}</div>
-                              </td>
-                              <td className="px-4 py-3 text-xs text-zinc-600">{t.subject || 'Noma\'lum'}</td>
-                              <td className="px-4 py-3 text-center text-xs font-medium">{t.testCount || 0}</td>
-                              <td className="px-4 py-3 text-right">
-                                {t.role === 'admin' ? (
-                                  <span className="px-1.5 py-0.5 bg-zinc-900 text-white text-[10px] uppercase font-bold rounded">Admin</span>
-                                ) : (
-                                  <span className="px-1.5 py-0.5 border border-zinc-200 text-zinc-500 text-[10px] uppercase font-bold rounded bg-zinc-50">Ustoz</span>
-                                )}
-                              </td>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left whitespace-nowrap border-collapse">
+                          <thead>
+                            <tr>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Ustoz</th>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Fan</th>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Testlar</th>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest text-right">Holat</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {filteredTeachers.map(t => (
+                              <tr key={t._id} className="group hover:bg-black/[0.02] transition-colors">
+                                <td className="py-6 border-b border-black/5">
+                                  <div className="text-lg font-medium">{t.name}</div>
+                                  <div className="text-sm text-gray-500 mt-1">{t.email}</div>
+                                </td>
+                                <td className="py-6 border-b border-black/5 pl-6 text-gray-600">{t.subject || '—'}</td>
+                                <td className="py-6 border-b border-black/5 pl-6 text-lg font-medium">{t.testCount || 0}</td>
+                                <td className="py-6 border-b border-black/5 text-right">
+                                  {t.role === 'admin' ? (
+                                    <span className="text-[10px] uppercase tracking-widest font-bold text-black">Admin</span>
+                                  ) : (
+                                    <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Ustoz</span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     )}
-                  </div>
-                </div>
-              )}
+                  </motion.div>
+                )}
 
-              {/* TESTS TAB */}
-              {activeTab === 'tests' && (
-                <div className="bg-white rounded-md border border-zinc-200 shadow-sm flex flex-col max-h-[calc(100vh-6rem)]">
-                  <div className="p-4 border-b border-zinc-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <h2 className="font-semibold text-sm">Barcha Testlar</h2>
-                    <div className="relative w-full sm:w-64">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
-                      <input 
-                        type="text" 
-                        placeholder="Test ID, nomi..." 
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-8 pr-3 py-1.5 bg-white border border-zinc-200 rounded-md text-xs focus:outline-none focus:border-zinc-400 transition-colors"
-                      />
+                {/* TESTS TAB */}
+                {activeTab === 'tests' && (
+                  <motion.div variants={containerVariants} initial="hidden" animate="show" className="flex flex-col w-full">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-black/10 pb-8 mb-8 gap-6">
+                      <motion.h2 variants={itemVariants} className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500">Barcha Testlar</motion.h2>
+                      <motion.div variants={itemVariants} className="relative w-full md:w-72">
+                        <input 
+                          type="text" 
+                          placeholder="Test nomi yoki ID..." 
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full border-b border-black/20 pb-2 bg-transparent text-lg focus:outline-none focus:border-black transition-colors placeholder:text-gray-300"
+                        />
+                        <Search className="absolute right-0 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" strokeWidth={1.5} />
+                      </motion.div>
                     </div>
-                  </div>
-                  
-                  <div className="flex-1 overflow-auto">
+
                     {filteredTests.length === 0 ? (
-                      <EmptyState message="Hech narsa topilmadi" />
+                      <EmptyState message="Hech qanday test topilmadi." />
                     ) : (
-                      <table className="w-full text-left text-sm whitespace-nowrap">
-                        <thead className="bg-zinc-50/50 sticky top-0 z-10 border-b border-zinc-200">
-                          <tr>
-                            <th className="px-4 py-3 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Test / ID</th>
-                            <th className="px-4 py-3 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">O'qituvchi</th>
-                            <th className="px-4 py-3 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider text-center">Savollar</th>
-                            <th className="px-4 py-3 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider text-right">Sana</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-zinc-100">
-                          {filteredTests.map(t => (
-                            <tr key={t._id} className="hover:bg-zinc-50/50 transition-colors">
-                              <td className="px-4 py-3">
-                                <div className="font-medium text-zinc-900 text-xs">{t.title}</div>
-                                <div className="text-[10px] font-mono text-zinc-400 mt-0.5">#{t.id}</div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="text-xs text-zinc-900">{t.teacher?.name || 'Noma\'lum'}</div>
-                                <div className="text-[11px] text-zinc-500 mt-0.5">{t.teacher?.subject || t.subject}</div>
-                              </td>
-                              <td className="px-4 py-3 text-center text-xs font-medium">{t.questions?.length || 0}</td>
-                              <td className="px-4 py-3 text-right text-zinc-500 text-[11px]">
-                                {new Date(t.createdAt).toLocaleDateString()}
-                              </td>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left whitespace-nowrap border-collapse">
+                          <thead>
+                            <tr>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Test</th>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">O'qituvchi</th>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Savollar</th>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest text-right">Sana</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {filteredTests.map(t => (
+                              <tr key={t._id} className="group hover:bg-black/[0.02] transition-colors">
+                                <td className="py-6 border-b border-black/5">
+                                  <div className="text-lg font-medium">{t.title}</div>
+                                  <div className="text-[11px] font-mono text-gray-400 mt-1">#{t.id}</div>
+                                </td>
+                                <td className="py-6 border-b border-black/5 pl-6">
+                                  <div className="text-base text-black">{t.teacher?.name || 'Noma\'lum'}</div>
+                                  <div className="text-xs text-gray-500 mt-1">{t.teacher?.subject || t.subject}</div>
+                                </td>
+                                <td className="py-6 border-b border-black/5 pl-6 text-lg font-medium">{t.questions?.length || 0}</td>
+                                <td className="py-6 border-b border-black/5 text-right text-gray-500 text-sm">
+                                  {new Date(t.createdAt).toLocaleDateString()}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     )}
-                  </div>
-                </div>
-              )}
+                  </motion.div>
+                )}
 
-              {/* RESULTS TAB */}
-              {activeTab === 'results' && (
-                <div className="bg-white rounded-md border border-zinc-200 shadow-sm flex flex-col max-h-[calc(100vh-6rem)]">
-                  <div className="p-4 border-b border-zinc-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <h2 className="font-semibold text-sm">Test Natijalari</h2>
-                    <div className="relative w-full sm:w-64">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
-                      <input 
-                        type="text" 
-                        placeholder="O'quvchi..." 
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-8 pr-3 py-1.5 bg-white border border-zinc-200 rounded-md text-xs focus:outline-none focus:border-zinc-400 transition-colors"
-                      />
+                {/* RESULTS TAB */}
+                {activeTab === 'results' && (
+                  <motion.div variants={containerVariants} initial="hidden" animate="show" className="flex flex-col w-full">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-black/10 pb-8 mb-8 gap-6">
+                      <motion.h2 variants={itemVariants} className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500">Test Natijalari</motion.h2>
+                      <motion.div variants={itemVariants} className="relative w-full md:w-72">
+                        <input 
+                          type="text" 
+                          placeholder="O'quvchi yoki test..." 
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full border-b border-black/20 pb-2 bg-transparent text-lg focus:outline-none focus:border-black transition-colors placeholder:text-gray-300"
+                        />
+                        <Search className="absolute right-0 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" strokeWidth={1.5} />
+                      </motion.div>
                     </div>
-                  </div>
-                  
-                  <div className="flex-1 overflow-auto">
-                    {filteredResults.length === 0 ? (
-                      <EmptyState message="Hech narsa topilmadi" />
-                    ) : (
-                      <table className="w-full text-left text-sm whitespace-nowrap">
-                        <thead className="bg-zinc-50/50 sticky top-0 z-10 border-b border-zinc-200">
-                          <tr>
-                            <th className="px-4 py-3 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">O'quvchi</th>
-                            <th className="px-4 py-3 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Test / ID</th>
-                            <th className="px-4 py-3 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Ustoz</th>
-                            <th className="px-4 py-3 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider text-right">Natija</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-zinc-100">
-                          {filteredResults.map((r, idx) => (
-                            <tr key={r._id || idx} className="hover:bg-zinc-50/50 transition-colors">
-                              <td className="px-4 py-3 font-medium text-xs text-zinc-900">{r.studentName}</td>
-                              <td className="px-4 py-3">
-                                <div className="text-xs text-zinc-900">{r.test?.title || 'Oflayn Test'}</div>
-                                <div className="text-[10px] font-mono text-zinc-400 mt-0.5">#{r.testId || r.id}</div>
-                              </td>
-                              <td className="px-4 py-3 text-xs text-zinc-600">{r.teacher?.name || '—'}</td>
-                              <td className="px-4 py-3 text-right">
-                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                                  r.totalScore >= 70 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 
-                                  r.totalScore >= 50 ? 'bg-amber-50 text-amber-700 border border-amber-200' : 
-                                  'bg-red-50 text-red-700 border border-red-200'
-                                }`}>
-                                  {r.totalScore}%
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                </div>
-              )}
 
-            </motion.div>
-          </AnimatePresence>
-          
-        </div>
+                    {filteredResults.length === 0 ? (
+                      <EmptyState message="Hech qanday natija topilmadi." />
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left whitespace-nowrap border-collapse">
+                          <thead>
+                            <tr>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">O'quvchi</th>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Test</th>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Ustoz</th>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest text-right">Natija</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredResults.map((r, idx) => (
+                              <tr key={r._id || idx} className="group hover:bg-black/[0.02] transition-colors">
+                                <td className="py-6 border-b border-black/5 text-lg font-medium text-black capitalize">{r.studentName}</td>
+                                <td className="py-6 border-b border-black/5 pl-6">
+                                  <div className="text-base text-black">{r.test?.title || 'Oflayn Test'}</div>
+                                  <div className="text-[11px] font-mono text-gray-400 mt-1">#{r.testId || r.id}</div>
+                                </td>
+                                <td className="py-6 border-b border-black/5 pl-6 text-base text-gray-500">{r.teacher?.name || '—'}</td>
+                                <td className="py-6 border-b border-black/5 text-right">
+                                  <span className={`text-2xl font-medium tracking-tight ${
+                                    r.totalScore >= 70 ? 'text-black' : 
+                                    r.totalScore >= 50 ? 'text-gray-500' : 
+                                    'text-red-400'
+                                  }`}>
+                                    {r.totalScore}<span className="text-sm font-normal text-gray-400 ml-1">%</span>
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+        </section>
       </div>
     </div>
   );
