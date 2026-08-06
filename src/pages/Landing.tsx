@@ -20,8 +20,39 @@ export default function Landing() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   return (
-    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white">
-      <div className="max-w-5xl mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32">
+    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
+      {/* Animated Mesh Gradient Background */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <motion.div 
+          animate={{ 
+            x: [0, 100, 0, -100, 0],
+            y: [0, -50, 100, -50, 0],
+            scale: [1, 1.1, 0.9, 1.2, 1]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-r from-gray-200/50 to-gray-100/50 blur-3xl mix-blend-multiply"
+        />
+        <motion.div 
+          animate={{ 
+            x: [0, -100, 0, 100, 0],
+            y: [0, 100, -50, 50, 0],
+            scale: [1, 1.2, 0.8, 1.1, 1]
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute top-[20%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-gradient-to-r from-slate-200/50 to-gray-200/50 blur-3xl mix-blend-multiply"
+        />
+        <motion.div 
+          animate={{ 
+            x: [0, 50, -50, 50, 0],
+            y: [0, -100, 50, 100, 0],
+            scale: [1, 0.9, 1.1, 0.9, 1]
+          }}
+          transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-[-10%] left-[20%] w-[55vw] h-[55vw] rounded-full bg-gradient-to-r from-neutral-200/50 to-stone-200/50 blur-3xl mix-blend-multiply"
+        />
+      </div>
+
+      <div className="max-w-5xl mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32 relative z-10">
         
         {/* HERO SECTION */}
         <section className="grid grid-cols-1 md:grid-cols-12 gap-12">
