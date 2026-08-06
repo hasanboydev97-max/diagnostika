@@ -199,11 +199,17 @@ export default function Summary() {
             <img src={logo} alt="Boborahim Mashrab" className="w-12 h-12 rounded-lg object-contain shadow-sm border border-slate-200" />
             <h1 className="font-bold text-xl text-neutral-main">Boborahim Mashrab</h1>
           </div>
-          <div className="flex items-center gap-4 text-sm font-medium text-neutral-secondary">
+          <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-neutral-secondary">
             <span>{studentData.studentName} ({studentData.grade || '5'}-sinf)</span>
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold mr-2">
               {studentData.studentName.charAt(0).toUpperCase()}
             </div>
+            <button
+              onClick={() => navigate('/')}
+              className="print-hide flex items-center gap-2 px-4 py-2 bg-neutral-main text-white rounded-md text-xs font-semibold uppercase tracking-wider hover:bg-neutral-900 transition-colors shadow-sm"
+            >
+              Chiqish
+            </button>
           </div>
         </header>
 
