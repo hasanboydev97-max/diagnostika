@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@sparticuz/chromium": "^149.0.0",
     "@tailwindcss/postcss": "^4.3.3",
     "autoprefixer": "^10.5.4",
     "bcryptjs": "^3.0.3",
@@ -38,6 +39,7 @@
     "multer": "^2.2.0",
     "postcss": "^8.5.25",
     "puppeteer": "^25.5.0",
+    "puppeteer-core": "^25.5.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-is": "^19.2.8",

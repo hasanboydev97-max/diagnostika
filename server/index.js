@@ -14,7 +14,29 @@ import katex from 'katex';
 import JSZip from 'jszip';
 import * as mml2ommlModule from 'mathml2omml';
 const { mml2omml } = mml2ommlModule;
-import puppeteer from 'puppeteer';
+
+// Puppeteer: local dev uses 'puppeteer', production/serverless uses puppeteer-core + @sparticuz/chromium
+let getBrowser;
+try {
+  const puppeteer = await import('puppeteer');
+  getBrowser = async () => puppeteer.default.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+  });
+} catch {
+  // fallback: puppeteer-core + @sparticuz/chromium (Vercel/serverless)
+  const [puppeteerCore, chromiumMod] = await Promise.all([
+    import('puppeteer-core'),
+    import('@sparticuz/chromium'),
+  ]);
+  const chromium = chromiumMod.default;
+  getBrowser = async () => puppeteerCore.default.launch({
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath(),
+    headless: chromium.headless,
+  });
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -410,20 +432,22 @@ function buildDocxXml(title, subject, questions) {
   bodyParts.push(`<w:p><w:r><w:t></w:t></w:r></w:p>`);
 
   // Questions
+  const optionLetters = ['A', 'B', 'C', 'D'];
   questions.forEach((q, index) => {
     const qText = `${index + 1}. ${q.questionText}`;
     bodyParts.push(...buildXmlParagraphs(qText, true));
-    bodyParts.push(...buildXmlParagraphs(`A) ${q.options[0]}`, false));
-    bodyParts.push(...buildXmlParagraphs(`B) ${q.options[1]}`, false));
-    bodyParts.push(...buildXmlParagraphs(`C) ${q.options[2]}`, false));
-    bodyParts.push(...buildXmlParagraphs(`D) ${q.options[3]}`, false));
+    (q.options || []).forEach((opt, oi) => {
+      bodyParts.push(...buildXmlParagraphs(`${optionLetters[oi]}) ${opt}`, false));
+    });
     bodyParts.push(`<w:p><w:r><w:t></w:t></w:r></w:p>`);
   });
 
-  // Answer key
+  // Answer key — find which letter matches correctOption
   bodyParts.push(`<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>Kalit javoblar</w:t></w:r></w:p>`);
   questions.forEach((q, index) => {
-    bodyParts.push(...buildXmlParagraphs(`${index + 1}. ${q.correctOption}`, true));
+    const correctIdx = (q.options || []).findIndex(o => o === q.correctOption);
+    const correctLetter = correctIdx >= 0 ? optionLetters[correctIdx] : q.correctOption;
+    bodyParts.push(...buildXmlParagraphs(`${index + 1}. ${correctLetter}`, true));
   });
 
   const sectPr = `<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="850" w:bottom="1134" w:left="1701" w:header="709" w:footer="709" w:gutter="0"/></w:sectPr>`;
@@ -533,13 +557,13 @@ function buildTestHtml(title, subject, questions) {
     }).join('');
   };
 
-  const optionLetters = ['A', 'B', 'C', 'D'];
+  const optionLetters2 = ['A', 'B', 'C', 'D'];
 
   const questionsHtml = questions.map((q, i) => {
-    const optionsHtml = q.options.map((opt, j) => `
+    const optionsHtml = (q.options || []).map((opt, j) => `
       <div class="option">
         <span class="option-circle"></span>
-        <span class="option-text"><strong>${optionLetters[j]})</strong> ${renderText(opt)}</span>
+        <span class="option-text"><strong>${optionLetters2[j]})</strong> ${renderText(opt)}</span>
       </div>
     `).join('');
 
@@ -551,9 +575,11 @@ function buildTestHtml(title, subject, questions) {
     `;
   }).join('');
 
-  const answersHtml = questions.map((q, i) =>
-    `<span class="answer-item">${i + 1}. <strong>${q.correctOption}</strong></span>`
-  ).join('');
+  const answersHtml = questions.map((q, i) => {
+    const correctIdx = (q.options || []).findIndex(o => o === q.correctOption);
+    const correctLetter = correctIdx >= 0 ? optionLetters2[correctIdx] : q.correctOption;
+    return `<span class="answer-item">${i + 1}. <strong>${correctLetter}</strong></span>`;
+  }).join('');
 
   // Read KaTeX CSS from node_modules to inline it
   let katexCss = '';
@@ -677,7 +703,7 @@ function buildTestHtml(title, subject, questions) {
 </html>`;
 }
 
-// GET PDF Export (server-side, Puppeteer)
+// GET PDF Export (server-side, Puppeteer / serverless Chromium)
 app.get('/api/online-tests/:id/export/pdf', async (req, res) => {
   let browser = null;
   try {
@@ -686,13 +712,8 @@ app.get('/api/online-tests/:id/export/pdf', async (req, res) => {
 
     const html = buildTestHtml(test.title, test.subject, test.questions);
 
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-    });
+    browser = await getBrowser();
     const page = await browser.newPage();
-
-    // Set the HTML content and wait for all network resources (KaTeX fonts)
     await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
 
     const pdfBuffer = await page.pdf({
