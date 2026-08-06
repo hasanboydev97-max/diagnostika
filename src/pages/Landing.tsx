@@ -35,8 +35,6 @@ export default function Landing() {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
-  const maskImage = useMotionTemplate`radial-gradient(circle 400px at ${springX}px ${springY}px, black 10%, transparent 100%)`;
-
   return (
     <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
       
@@ -45,25 +43,6 @@ export default function Landing() {
         className="fixed top-0 left-0 w-12 h-12 bg-[#111111] rounded-full pointer-events-none z-[100] hidden md:block"
         style={{ x: springX, y: springY }}
       />
-
-      {/* Interactive X-Ray Typography Background */}
-      <motion.div 
-        className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center overflow-hidden transition-opacity duration-300"
-        style={{
-          WebkitMaskImage: maskImage,
-          maskImage: maskImage
-        }}
-      >
-        <div className="flex flex-col items-center justify-center rotate-[-4deg] scale-[1.2] opacity-60">
-          <h1 className="text-[8vw] font-black text-black/5 select-none whitespace-nowrap tracking-tighter leading-tight uppercase">HB Diagnostika AI — HB Diagnostika AI</h1>
-          <h1 className="text-[8vw] font-black text-black/5 select-none whitespace-nowrap tracking-tighter leading-tight uppercase">HB Diagnostika AI — HB Diagnostika AI</h1>
-          <h1 className="text-[8vw] font-black text-black/5 select-none whitespace-nowrap tracking-tighter leading-tight uppercase">HB Diagnostika AI — HB Diagnostika AI</h1>
-          <h1 className="text-[8vw] font-black text-black/5 select-none whitespace-nowrap tracking-tighter leading-tight uppercase">HB Diagnostika AI — HB Diagnostika AI</h1>
-          <h1 className="text-[8vw] font-black text-black/5 select-none whitespace-nowrap tracking-tighter leading-tight uppercase">HB Diagnostika AI — HB Diagnostika AI</h1>
-          <h1 className="text-[8vw] font-black text-black/5 select-none whitespace-nowrap tracking-tighter leading-tight uppercase">HB Diagnostika AI — HB Diagnostika AI</h1>
-          <h1 className="text-[8vw] font-black text-black/5 select-none whitespace-nowrap tracking-tighter leading-tight uppercase">HB Diagnostika AI — HB Diagnostika AI</h1>
-        </div>
-      </motion.div>
 
       <div className="max-w-5xl mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32 relative z-10 pointer-events-none">
         
