@@ -1,10 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Plus } from 'lucide-react';
-import Particles, { ParticlesProvider } from "@tsparticles/react";
-import { loadSlim } from "@tsparticles/slim";
-import type { Engine } from "@tsparticles/engine";
+
 const containerVariants: any = {
   hidden: { opacity: 0 },
   show: {
@@ -21,87 +19,32 @@ const itemVariants: any = {
 export default function Landing() {
   const navigate = useNavigate();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
-  const particlesOptions = useMemo(
-    () => ({
-      background: {
-        color: {
-          value: "transparent",
-        },
-      },
-      fpsLimit: 120,
-      interactivity: {
-        events: {
-          onHover: {
-            enable: true,
-            mode: "grab",
-          },
-        },
-        modes: {
-          grab: {
-            distance: 200,
-            links: {
-              opacity: 0.8,
-            },
-          },
-        },
-      },
-      particles: {
-        color: {
-          value: "#000000",
-        },
-        links: {
-          color: "#000000",
-          distance: 180,
-          enable: true,
-          opacity: 0.35,
-          width: 1.5,
-        },
-        move: {
-          direction: "none" as const,
-          enable: true,
-          outModes: {
-            default: "bounce" as const,
-          },
-          random: false,
-          speed: 1.2,
-          straight: false,
-        },
-        number: {
-          density: {
-            enable: true,
-            area: 800,
-          },
-          value: 80,
-        },
-        opacity: {
-          value: 0.5,
-        },
-        shape: {
-          type: "circle",
-        },
-        size: {
-          value: { min: 2, max: 4 },
-        },
-      },
-      detectRetina: true,
-    }),
-    [],
-  );
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
 
   return (
-    <ParticlesProvider init={async (engine: Engine) => { await loadSlim(engine); }}>
-      <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
-        {/* Network Particle Background */}
-        <div className="absolute inset-0 z-0 pointer-events-auto">
-          <Particles
-            id="tsparticles"
-            options={particlesOptions}
-            className="w-full h-full"
-          />
-        </div>
+    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
+      {/* Interactive Dot Grid Background */}
+      <div 
+        className="absolute inset-0 z-0 pointer-events-none transition-opacity duration-300"
+        style={{
+          background: `
+            radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(0,0,0,0.06), transparent 40%),
+            radial-gradient(rgba(0,0,0,0.08) 1px, transparent 1px)
+          `,
+          backgroundSize: '100% 100%, 32px 32px',
+          backgroundPosition: '0 0, 0 0'
+        }}
+      />
 
-        <div className="max-w-5xl mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32 relative z-10 pointer-events-none">
+      <div className="max-w-5xl mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32 relative z-10 pointer-events-none">
         
         {/* HERO SECTION */}
         <section className="grid grid-cols-1 md:grid-cols-12 gap-12">
@@ -248,7 +191,6 @@ export default function Landing() {
           <p className="text-sm text-neutral-500 font-medium">© {new Date().getFullYear()} HB. Barcha huquqlar himoyalangan.</p>
         </footer>
       </div>
-      </div>
-    </ParticlesProvider>
+    </div>
   );
 }
