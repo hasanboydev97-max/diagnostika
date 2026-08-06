@@ -66,27 +66,24 @@ export default function Login() {
 
   if (loadingStep >= 0) {
     return (
-      <div className="min-h-screen bg-[#FAFAFA] flex flex-col items-center justify-center p-6 relative font-['Space_Grotesk'] overflow-hidden">
-        
-        {/* Subtle grid background for premium engineering feel */}
-        <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-60"></div>
+      <div className="min-h-screen bg-[#fdfdfd] flex flex-col items-center justify-center p-6 relative font-sans text-[#111111] overflow-hidden">
         
         <div className="z-10 w-full max-w-sm">
           <motion.div 
             initial={{ opacity: 0, y: 10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            className="bg-white border border-slate-200 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-6 md:p-8"
+            className="bg-white border border-black/10 rounded-none p-6 md:p-8"
           >
             <div className="flex flex-col items-center text-center mb-8">
               <div className="relative w-16 h-16 mb-6">
-                <div className="absolute inset-0 border-2 border-slate-100 rounded-full"></div>
-                <div className="absolute inset-0 border-2 border-slate-900 rounded-full border-t-transparent animate-spin" style={{ animationDuration: '1s' }}></div>
+                <div className="absolute inset-0 border border-black/10 rounded-full"></div>
+                <div className="absolute inset-0 border border-black rounded-full border-t-transparent animate-spin" style={{ animationDuration: '1s' }}></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Activity className="w-5 h-5 text-slate-900 animate-pulse" />
+                  <Activity className="w-5 h-5 text-black animate-pulse" strokeWidth={1.5} />
                 </div>
               </div>
               
-              <h3 className="text-lg font-bold text-slate-900 mb-2">Tahlil qilinmoqda</h3>
+              <h3 className="text-lg font-medium text-black mb-2">Tahlil qilinmoqda</h3>
               
               <div className="h-5 relative w-full flex justify-center">
                 <AnimatePresence mode="wait">
@@ -96,7 +93,7 @@ export default function Login() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
                     transition={{ duration: 0.2 }}
-                    className="text-xs font-medium text-slate-500 absolute"
+                    className="text-xs font-medium text-gray-500 absolute"
                   >
                     {loadingSteps[loadingStep]}
                   </motion.p>
@@ -104,9 +101,9 @@ export default function Login() {
               </div>
             </div>
             
-            <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+            <div className="w-full h-[2px] bg-black/10 overflow-hidden">
               <motion.div 
-                className="h-full bg-slate-900 rounded-full"
+                className="h-full bg-black"
                 initial={{ width: '0%' }}
                 animate={{ width: `${((loadingStep + 1) / loadingSteps.length) * 100}%` }}
                 transition={{ duration: 1.5, ease: "easeInOut" }}
@@ -120,44 +117,41 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] flex flex-col justify-center py-12 px-[15px] sm:px-6 lg:px-8 font-['Space_Grotesk'] selection:bg-slate-900 selection:text-white relative">
+    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] flex flex-col justify-center py-12 px-[15px] sm:px-6 lg:px-8 font-sans selection:bg-black selection:text-white relative">
       
-      {/* Subtle grid background for premium engineering feel */}
-      <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-60"></div>
-
       <div className="sm:mx-auto sm:w-full sm:max-w-md z-10 relative">
         <button 
           onClick={() => navigate('/')} 
-          className="absolute top-0 -left-12 hidden md:flex items-center justify-center p-2 text-slate-400 hover:text-slate-900 bg-white border border-slate-200 rounded-full shadow-sm hover:shadow-md transition-all hover:-translate-x-1"
+          className="absolute top-0 -left-12 hidden md:flex items-center justify-center p-2 text-gray-400 hover:text-black bg-transparent transition-all hover:-translate-x-1"
           title="Bosh sahifaga qaytish"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
         </button>
         
         <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl mx-auto mb-6 md:mb-8 border border-black/10 bg-white flex items-center justify-center font-bold text-2xl tracking-tighter text-black">
+          <div className="w-16 h-16 md:w-20 md:h-20 rounded-none mx-auto mb-6 md:mb-8 border border-black/10 bg-[#fdfdfd] flex items-center justify-center font-bold text-2xl tracking-tighter text-black">
             HB.
           </div>
         </div>
-        <h2 className="mt-2 text-center text-3xl font-bold tracking-tight text-slate-900">
+        <h2 className="mt-2 text-center text-3xl font-medium tracking-tight text-black">
           Maktab Diagnostikasi
         </h2>
-        <p className="mt-2 text-center text-sm text-slate-500">
+        <p className="mt-2 text-center text-sm text-gray-500">
           O'quvchi natijalarini ko'rish uchun tizimga kiring
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-[420px] z-10">
-        <div className="bg-white py-8 px-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl sm:px-10 border border-slate-100">
+        <div className="bg-[#fdfdfd] py-8 px-5 sm:px-10 border-t border-black/10 md:border md:border-black/10">
           <form className="space-y-6" onSubmit={handleLogin}>
             
             <div>
-              <label htmlFor="id" className="block text-sm font-medium text-slate-700">
+              <label htmlFor="id" className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
                 Login (ID)
               </label>
               <div className="mt-2 relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Search className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                  <Search className="h-4 w-4 text-gray-400" strokeWidth={1.5} aria-hidden="true" />
                 </div>
                 <input
                   id="id"
@@ -165,26 +159,26 @@ export default function Login() {
                   required
                   value={id}
                   onChange={(e) => setId(e.target.value)}
-                  className="block w-full rounded-lg border-0 py-3 pl-10 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-slate-900 sm:text-sm sm:leading-6 transition-shadow bg-slate-50 focus:bg-white"
-                  placeholder="6 xonali raqamni kiriting"
+                  className="block w-full rounded-none border border-black/10 py-3 pl-10 text-black placeholder-gray-400 focus:outline-none focus:border-black sm:text-sm sm:leading-6 transition-colors bg-transparent"
+                  placeholder="6 xonali raqam"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="pin" className="block text-sm font-medium text-slate-700">
+              <label htmlFor="pin" className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
                 Parol (PIN)
               </label>
               <div className="mt-2 relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Lock className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                  <Lock className="h-4 w-4 text-gray-400" strokeWidth={1.5} aria-hidden="true" />
                 </div>
                 <input
                   id="pin"
                   type="password"
                   value={pin}
                   onChange={(e) => setPin(e.target.value)}
-                  className="block w-full rounded-lg border-0 py-3 pl-10 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-slate-900 sm:text-sm sm:leading-6 transition-shadow bg-slate-50 focus:bg-white tracking-[0.2em]"
+                  className="block w-full rounded-none border border-black/10 py-3 pl-10 text-black placeholder-gray-400 focus:outline-none focus:border-black sm:text-sm sm:leading-6 transition-colors bg-transparent tracking-[0.2em]"
                   placeholder="••••"
                   maxLength={4}
                 />
@@ -192,10 +186,10 @@ export default function Login() {
             </div>
 
             {error && (
-              <div className="rounded-lg bg-red-50 p-3 border border-red-100 animate-in fade-in slide-in-from-top-2">
+              <div className="border border-red-200 bg-red-50/50 p-3 animate-in fade-in slide-in-from-top-2">
                 <div className="flex items-center">
                   <div className="ml-2">
-                    <h3 className="text-sm font-medium text-red-800">{error}</h3>
+                    <h3 className="text-sm font-medium text-red-600">{error}</h3>
                   </div>
                 </div>
               </div>
@@ -205,15 +199,15 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="group relative flex w-full justify-center items-center rounded-lg bg-slate-900 px-3 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+                className="group relative flex w-full justify-center items-center rounded-none bg-black px-3 py-3.5 text-sm font-semibold text-white hover:bg-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <div className="w-5 h-5 border-[1.5px] border-white/30 border-t-white rounded-full animate-spin"></div>
                 ) : (
                   <>
                     Davom etish
                     <span className="absolute right-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
                     </span>
                   </>
                 )}
@@ -224,9 +218,9 @@ export default function Login() {
           <div className="mt-8 md:hidden">
             <button 
               onClick={() => navigate('/')}
-              className="w-full flex items-center justify-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 py-3 rounded-lg transition-colors border border-slate-200"
+              className="w-full flex items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500 hover:text-black bg-transparent py-3 transition-colors border-t border-black/10"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
               Bosh sahifaga qaytish
             </button>
           </div>
@@ -234,7 +228,7 @@ export default function Login() {
       </div>
       
       <div className="mt-auto pb-6 text-center z-10">
-        <p className="text-xs text-slate-400 font-medium tracking-wide">&copy; {new Date().getFullYear()} Maktab Diagnostikasi. Barcha huquqlar himoyalangan.</p>
+        <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-gray-400">&copy; {new Date().getFullYear()} Maktab Diagnostikasi. Barcha huquqlar himoyalangan.</p>
       </div>
     </div>
   );

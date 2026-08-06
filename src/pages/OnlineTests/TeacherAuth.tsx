@@ -55,69 +55,75 @@ export default function TeacherAuth() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-[15px] sm:px-6 lg:px-8 font-sans relative">
+    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] flex flex-col justify-center py-12 px-[15px] sm:px-6 lg:px-8 font-sans relative">
       
-      <div className="sm:mx-auto sm:w-full sm:max-w-md relative">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <button 
           onClick={() => navigate('/')} 
-          className="absolute -top-4 -left-8 hidden md:flex items-center justify-center p-2 text-gray-400 hover:text-gray-900 bg-white border border-gray-200 rounded-full shadow-sm hover:shadow-md transition-all hover:-translate-x-1"
+          className="absolute top-0 -left-12 hidden md:flex items-center justify-center p-2 text-gray-400 hover:text-black bg-transparent transition-all hover:-translate-x-1"
           title="Bosh sahifaga qaytish"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
         </button>
 
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <div className="flex justify-center mb-6">
+          <div className="w-16 h-16 md:w-20 md:h-20 rounded-none mx-auto mb-6 md:mb-8 border border-black/10 bg-[#fdfdfd] flex items-center justify-center font-bold text-2xl tracking-tighter text-black">
+            HB.
+          </div>
+        </div>
+
+        <h2 className="mt-2 text-center text-3xl font-medium tracking-tight text-black">
           O'qituvchilar tizimi
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-2 text-center text-sm text-gray-500">
           {isLogin ? 'Hisobingizga kiring' : 'Yangi akkaunt yarating'}
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-5 shadow sm:rounded-lg sm:px-10 border border-gray-100">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md z-10">
+        <div className="bg-[#fdfdfd] py-8 px-5 sm:px-10 border-t border-black/10 md:border md:border-black/10">
           <form className="space-y-6" onSubmit={handleSubmit}>
             
             {!isLogin && (
               <div>
-                <label className="block text-sm font-medium text-gray-700">F.I.SH</label>
+                <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">F.I.SH</label>
                 <div className="mt-1">
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={e => setFormData({ ...formData, name: e.target.value })}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black sm:text-sm"
+                    className="block w-full rounded-none border border-black/10 py-3 px-3 text-black placeholder-gray-400 focus:outline-none focus:border-black sm:text-sm transition-colors bg-transparent"
                   />
                 </div>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Email</label>
               <div className="mt-1">
                 <input
                   type="email"
                   required
                   value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black sm:text-sm"
+                  className="block w-full rounded-none border border-black/10 py-3 px-3 text-black placeholder-gray-400 focus:outline-none focus:border-black sm:text-sm transition-colors bg-transparent"
                 />
               </div>
             </div>
 
             {!isLogin && (
               <div>
-                <label className="block text-sm font-medium text-gray-700">Mutaxassislik fani</label>
+                <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Mutaxassislik fani</label>
                 <div className="mt-1 relative">
                   <select
                     required
                     value={formData.subject}
                     onChange={e => setFormData({ ...formData, subject: e.target.value })}
-                    className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-black focus:border-black sm:text-sm rounded-md border"
+                    className="block w-full rounded-none border border-black/10 py-3 pl-3 pr-10 text-black focus:outline-none focus:border-black sm:text-sm transition-colors bg-transparent appearance-none"
                   >
                     {SUBJECTS.map(sub => (
-                      <option key={sub} value={sub}>{sub}</option>
+                      <option key={sub} value={sub} className="text-black">{sub}</option>
                     ))}
                   </select>
                 </div>
@@ -125,23 +131,23 @@ export default function TeacherAuth() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Parol</label>
+              <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Parol</label>
               <div className="mt-1">
                 <input
                   type="password"
                   required
                   value={formData.password}
                   onChange={e => setFormData({ ...formData, password: e.target.value })}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black sm:text-sm"
+                  className="block w-full rounded-none border border-black/10 py-3 px-3 text-black placeholder-gray-400 focus:outline-none focus:border-black sm:text-sm transition-colors bg-transparent tracking-[0.2em]"
                 />
               </div>
             </div>
 
-            <div>
+            <div className="pt-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50"
+                className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-none shadow-none text-sm font-semibold text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 transition-colors"
               >
                 {loading ? 'Kutilmoqda...' : (isLogin ? 'Kirish' : 'Ro\'yxatdan o\'tish')}
               </button>
@@ -151,10 +157,10 @@ export default function TeacherAuth() {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+                <div className="w-full border-t border-black/10" />
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
+              <div className="relative flex justify-center text-[11px] font-semibold uppercase tracking-wider">
+                <span className="px-3 bg-[#fdfdfd] text-gray-400">
                   {isLogin ? 'Akkauntingiz yo\'qmi?' : 'Akkauntingiz bormi?'}
                 </span>
               </div>
@@ -163,18 +169,18 @@ export default function TeacherAuth() {
             <div className="mt-6">
               <button
                 onClick={() => setIsLogin(!isLogin)}
-                className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+                className="w-full flex justify-center py-3.5 px-4 border border-black/10 rounded-none shadow-none text-sm font-semibold text-black bg-[#fdfdfd] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors"
               >
                 {isLogin ? 'Ro\'yxatdan o\'tish' : 'Tizimga kirish'}
               </button>
             </div>
           </div>
-          <div className="mt-6 md:hidden">
+          <div className="mt-8 md:hidden">
             <button
               onClick={() => navigate('/')}
-              className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors"
+              className="w-full flex items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500 hover:text-black bg-transparent py-3 transition-colors border-t border-black/10"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
               Bosh sahifaga qaytish
             </button>
           </div>
