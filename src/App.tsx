@@ -10,11 +10,13 @@ import TakeTest from './pages/OnlineTests/TakeTest';
 import TestResultView from './pages/OnlineTests/TestResultView';
 import TestDetails from './pages/OnlineTests/TestDetails';
 import TeacherAuth from './pages/OnlineTests/TeacherAuth';
+import CustomCursor from './components/CustomCursor';
 import { Toaster } from 'sonner';
 
 function App() {
   return (
     <BrowserRouter>
+      <CustomCursor />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
