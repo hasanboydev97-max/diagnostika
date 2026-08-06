@@ -4,6 +4,11 @@ function isTextWord(word: string): boolean {
   
   if (cleanWord.length < 2) return false; // Single letters are math (x, y, a)
   
+  // Explicitly ignore our code placeholders so they don't get wrapped in $
+  if (/___(CODE|PRE)_BLOCK_\d+___/.test(cleanWord)) {
+    return true;
+  }
+  
   // Checking for ANY backslash, digits, or math symbols explicitly
   for (let i = 0; i < cleanWord.length; i++) {
     const c = cleanWord[i];
