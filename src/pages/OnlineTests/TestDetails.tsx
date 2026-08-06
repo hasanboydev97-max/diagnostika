@@ -4,8 +4,6 @@ import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, 
 import { getAuthHeaders, getToken } from '../../lib/auth';
 import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
-import { jsPDF } from 'jspdf';
-import { toPng } from 'html-to-image';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -24,6 +22,7 @@ export default function TestDetails() {
   const [test, setTest] = useState<any>(null);
   const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   useEffect(() => {
     if (!getToken()) {
@@ -35,7 +34,6 @@ export default function TestDetails() {
 
   const fetchData = async () => {
     try {
-      // Fetch test details
       const testRes = await fetch(`${API_URL}/online-tests/${testId}`, {
         headers: getAuthHeaders()
       });
@@ -43,7 +41,6 @@ export default function TestDetails() {
       const testData = await testRes.json();
       setTest(testData);
 
-      // Fetch results for this test
       const resultsRes = await fetch(`${API_URL}/online-tests/${testId}/results`, {
         headers: getAuthHeaders()
       });
@@ -71,59 +68,30 @@ export default function TestDetails() {
   };
 
   const handleDownloadPDF = async () => {
-    if (!test) return;
-    
-    const printView = document.getElementById('print-view');
-    if (!printView) {
-      toast.error("PDF yuklash uchun xatolik yuz berdi");
-      return;
-    }
-    
-    const toastId = toast.loading('PDF fayl tayyorlanmoqda, iltimos kuting... (bu jarayon biroz vaqt olishi mumkin)');
-    
+    if (!test || isDownloadingPdf) return;
+    setIsDownloadingPdf(true);
+    const toastId = toast.loading('PDF tayyorlanmoqda...');
     try {
-      // Elementni ekranga chiqaramiz, lekin foydalanuvchiga ko'rinmaydigan qilib
-      printView.classList.remove('hidden');
-      printView.style.position = 'absolute';
-      printView.style.left = '-9999px';
-      printView.style.top = '0';
-      printView.style.width = '794px'; // A4 width in pixels at 96 DPI
-      printView.style.backgroundColor = '#ffffff';
-      
-      const dataUrl = await toPng(printView, { quality: 1.0, pixelRatio: 2 });
-      
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (printView.offsetHeight * pdfWidth) / printView.offsetWidth;
-      
-      // If height is larger than one page, split into multiple pages
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      let heightLeft = pdfHeight;
-      let position = 0;
-
-      pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - pdfHeight;
-        pdf.addPage();
-        pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pageHeight;
+      const response = await fetch(`${API_URL}/online-tests/${testId}/export/pdf`);
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Server xatosi');
       }
-      
-      pdf.save(`${test.title}.pdf`);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${test.title}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
       toast.success('PDF muvaffaqiyatli yuklandi!', { id: toastId });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error('PDF tayyorlashda xatolik yuz berdi', { id: toastId });
+      toast.error(`PDF tayyorlashda xatolik: ${error.message}`, { id: toastId });
     } finally {
-      // Qayta yashiramiz
-      printView.classList.add('hidden');
-      printView.style.position = '';
-      printView.style.left = '';
-      printView.style.top = '';
-      printView.style.width = '';
-      printView.style.backgroundColor = '';
+      setIsDownloadingPdf(false);
     }
   };
 
@@ -214,14 +182,19 @@ export default function TestDetails() {
                   <button
                     onClick={handleExportWord}
                     className="flex-1 flex items-center justify-center gap-2 px-2 py-2.5 bg-blue-50 border border-blue-200 text-blue-700 text-xs font-medium rounded-lg hover:bg-blue-100 transition-colors"
+                    title="Word faylga eksport — formulalar tahrirlash imkoni bilan"
                   >
-                    <FileText size={14} /> Word (.doc)
+                    <FileText size={14} /> Word (.docx)
                   </button>
                   <button
                     onClick={handleDownloadPDF}
-                    className="flex-1 flex items-center justify-center gap-2 px-2 py-2.5 bg-red-50 border border-red-200 text-red-700 text-xs font-medium rounded-lg hover:bg-red-100 transition-colors"
+                    disabled={isDownloadingPdf}
+                    className="flex-1 flex items-center justify-center gap-2 px-2 py-2.5 bg-red-50 border border-red-200 text-red-700 text-xs font-medium rounded-lg hover:bg-red-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <Download size={14} /> PDF Yuklash
+                    {isDownloadingPdf
+                      ? <><Loader2 size={14} className="animate-spin" /> Tayyorlanmoqda...</>
+                      : <><Download size={14} /> PDF Yuklash</>
+                    }
                   </button>
                 </div>
               </div>

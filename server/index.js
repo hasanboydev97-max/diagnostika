@@ -14,6 +14,7 @@ import katex from 'katex';
 import JSZip from 'jszip';
 import * as mml2ommlModule from 'mathml2omml';
 const { mml2omml } = mml2ommlModule;
+import puppeteer from 'puppeteer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -504,6 +505,213 @@ app.get('/api/online-tests/:id/export/docx', async (req, res) => {
     res.status(500).json({ error: 'Server error generating DOCX' });
   }
 });
+
+// Build HTML string for PDF render
+function buildTestHtml(title, subject, questions) {
+  // Render each piece of text with KaTeX inline
+  const renderText = (text) => {
+    if (!text) return '';
+    const formatted = autoFormatMath(String(text));
+    const parts = formatted.split('$');
+    return parts.map((part, i) => {
+      if (i % 2 === 0) {
+        // escape HTML in plain text
+        return part
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+      try {
+        return katex.renderToString(part.trim(), {
+          output: 'html',
+          displayMode: false,
+          throwOnError: false,
+        });
+      } catch {
+        return `$${part}$`;
+      }
+    }).join('');
+  };
+
+  const optionLetters = ['A', 'B', 'C', 'D'];
+
+  const questionsHtml = questions.map((q, i) => {
+    const optionsHtml = q.options.map((opt, j) => `
+      <div class="option">
+        <span class="option-circle"></span>
+        <span class="option-text"><strong>${optionLetters[j]})</strong> ${renderText(opt)}</span>
+      </div>
+    `).join('');
+
+    return `
+      <div class="question">
+        <p class="question-text"><strong>${i + 1}.</strong> ${renderText(q.questionText)}</p>
+        <div class="options">${optionsHtml}</div>
+      </div>
+    `;
+  }).join('');
+
+  const answersHtml = questions.map((q, i) =>
+    `<span class="answer-item">${i + 1}. <strong>${q.correctOption}</strong></span>`
+  ).join('');
+
+  // Read KaTeX CSS from node_modules to inline it
+  let katexCss = '';
+  try {
+    const katexCssPath = join(__dirname, '../node_modules/katex/dist/katex.min.css');
+    katexCss = fs.readFileSync(katexCssPath, 'utf8');
+    // Fix font paths — make them absolute or use CDN fonts
+    katexCss = katexCss.replace(/url\(fonts\//g, 'url(https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/');
+  } catch {
+    // fallback to CDN
+    katexCss = '@import url("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css");';
+  }
+
+  return `<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8"/>
+  <style>
+    ${katexCss}
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 13pt;
+      color: #000;
+      background: #fff;
+      padding: 20mm 25mm 20mm 30mm;
+      line-height: 1.6;
+    }
+
+    h1.test-title {
+      text-align: center;
+      font-size: 18pt;
+      font-weight: bold;
+      margin-bottom: 4pt;
+    }
+
+    p.test-subject {
+      text-align: center;
+      font-size: 12pt;
+      color: #444;
+      margin-bottom: 20pt;
+    }
+
+    .question {
+      margin-bottom: 14pt;
+      page-break-inside: avoid;
+    }
+
+    .question-text {
+      font-size: 13pt;
+      margin-bottom: 6pt;
+    }
+
+    .options {
+      padding-left: 16pt;
+    }
+
+    .option {
+      display: flex;
+      align-items: flex-start;
+      gap: 8pt;
+      margin-bottom: 4pt;
+    }
+
+    .option-circle {
+      display: inline-block;
+      width: 10pt;
+      height: 10pt;
+      border: 1.5pt solid #000;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 3pt;
+    }
+
+    .option-text {
+      font-size: 12pt;
+    }
+
+    .answers-section {
+      margin-top: 24pt;
+      border-top: 1.5pt solid #000;
+      padding-top: 12pt;
+      page-break-before: auto;
+    }
+
+    .answers-section h2 {
+      font-size: 14pt;
+      font-weight: bold;
+      margin-bottom: 8pt;
+    }
+
+    .answers-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8pt 20pt;
+    }
+
+    .answer-item {
+      font-size: 12pt;
+      min-width: 50pt;
+    }
+
+    /* KaTeX inline fixes */
+    .katex { font-size: 1em; }
+    .katex-display { display: inline; }
+  </style>
+</head>
+<body>
+  <h1 class="test-title">${escapeXml(title)}</h1>
+  <p class="test-subject">Fan: ${escapeXml(subject)}</p>
+
+  ${questionsHtml}
+
+  <div class="answers-section">
+    <h2>Kalit javoblar</h2>
+    <div class="answers-grid">${answersHtml}</div>
+  </div>
+</body>
+</html>`;
+}
+
+// GET PDF Export (server-side, Puppeteer)
+app.get('/api/online-tests/:id/export/pdf', async (req, res) => {
+  let browser = null;
+  try {
+    const test = await OnlineTest.findOne({ id: req.params.id });
+    if (!test) return res.status(404).json({ error: 'Test not found' });
+
+    const html = buildTestHtml(test.title, test.subject, test.questions);
+
+    browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    });
+    const page = await browser.newPage();
+
+    // Set the HTML content and wait for all network resources (KaTeX fonts)
+    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
+
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: { top: '20mm', right: '25mm', bottom: '20mm', left: '30mm' },
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(test.title)}.pdf"`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error("PDF Export Error:", error);
+    res.status(500).json({ error: 'Server error generating PDF: ' + error.message });
+  } finally {
+    if (browser) await browser.close();
+  }
+});
+
 
 app.post('/api/online-tests', authMiddleware, async (req, res) => {
   try {
