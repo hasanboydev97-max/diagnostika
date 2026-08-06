@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../lib/db';
 import { 
   Users, 
@@ -9,7 +10,9 @@ import {
   LayoutDashboard,
   LogOut,
   TrendingUp,
-  Activity
+  Activity,
+  Search,
+  Inbox
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getToken, getTeacher } from '../lib/auth';
@@ -21,6 +24,7 @@ export default function SuperAdmin() {
   const [teachers, setTeachers] = useState<any[]>([]);
   const [tests, setTests] = useState<any[]>([]);
   const [results, setResults] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   
   const navigate = useNavigate();
 
@@ -58,295 +62,392 @@ export default function SuperAdmin() {
     fetchData();
   }, [navigate]);
 
+  // Reset search when changing tabs
+  useEffect(() => {
+    setSearchQuery('');
+  }, [activeTab]);
+
+  // Derived filtered data
+  const filteredTeachers = useMemo(() => {
+    if (!searchQuery) return teachers;
+    const q = searchQuery.toLowerCase();
+    return teachers.filter(t => t.name?.toLowerCase().includes(q) || t.email?.toLowerCase().includes(q));
+  }, [teachers, searchQuery]);
+
+  const filteredTests = useMemo(() => {
+    if (!searchQuery) return tests;
+    const q = searchQuery.toLowerCase();
+    return tests.filter(t => t.title?.toLowerCase().includes(q) || t.teacher?.name?.toLowerCase().includes(q) || t.id?.toLowerCase().includes(q));
+  }, [tests, searchQuery]);
+
+  const filteredResults = useMemo(() => {
+    if (!searchQuery) return results;
+    const q = searchQuery.toLowerCase();
+    return results.filter(r => r.studentName?.toLowerCase().includes(q) || r.test?.title?.toLowerCase().includes(q) || r.testId?.toLowerCase().includes(q));
+  }, [results, searchQuery]);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center">
-        <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
-        <p className="mt-4 text-slate-500 font-medium">Ma'lumotlar yuklanmoqda...</p>
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center items-center font-['Space_Grotesk']">
+        <div className="w-10 h-10 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin mb-4"></div>
+        <p className="text-slate-500 font-medium text-sm">Tizimga ulanilmoqda...</p>
       </div>
     );
   }
 
+  const EmptyState = ({ message }: { message: string }) => (
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+      <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
+        <Inbox className="w-8 h-8 text-slate-300" />
+      </div>
+      <p className="text-slate-500 font-medium">{message}</p>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-slate-50 flex">
-      {/* Sidebar */}
-      <div className="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col">
-        <div className="p-6 border-b border-slate-100 flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-600/20">
-            <ShieldAlert className="w-5 h-5" />
+    <div className="min-h-screen bg-[#F8FAFC] flex font-['Space_Grotesk'] text-slate-900 selection:bg-slate-900 selection:text-white">
+      
+      {/* Sidebar - Desktop */}
+      <div className="w-64 bg-white border-r border-slate-100 hidden md:flex flex-col sticky top-0 h-screen">
+        <div className="p-6 flex items-center gap-3">
+          <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white">
+            <ShieldAlert className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="font-black text-slate-800 text-lg tracking-tight leading-tight">SuperAdmin</h1>
-            <p className="text-xs text-slate-500 font-medium">Boshqaruv paneli</p>
+            <h1 className="font-bold text-slate-900 text-sm tracking-wide">Maktab Diagnostikasi</h1>
+            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold mt-0.5">Admin Portal</p>
           </div>
         </div>
         
-        <div className="flex-1 py-6 flex flex-col gap-2 px-4">
-          <button 
-            onClick={() => setActiveTab('overview')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all ${activeTab === 'overview' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
-          >
-            <LayoutDashboard className="w-5 h-5" />
-            Umumiy Holat
-          </button>
-          <button 
-            onClick={() => setActiveTab('teachers')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all ${activeTab === 'teachers' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
-          >
-            <Users className="w-5 h-5" />
-            O'qituvchilar
-          </button>
-          <button 
-            onClick={() => setActiveTab('tests')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all ${activeTab === 'tests' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
-          >
-            <FileText className="w-5 h-5" />
-            Barcha Testlar
-          </button>
-          <button 
-            onClick={() => setActiveTab('results')}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all ${activeTab === 'results' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
-          >
-            <Award className="w-5 h-5" />
-            Natijalar
-          </button>
+        <div className="flex-1 py-4 flex flex-col gap-1 px-3">
+          {[
+            { id: 'overview', icon: LayoutDashboard, label: 'Umumiy Holat' },
+            { id: 'teachers', icon: Users, label: 'O\'qituvchilar' },
+            { id: 'tests', icon: FileText, label: 'Barcha Testlar' },
+            { id: 'results', icon: Award, label: 'Natijalar' }
+          ].map(tab => {
+            const isActive = activeTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button 
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  isActive ? 'bg-slate-50 text-slate-900' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50/50'
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? 'text-slate-900' : 'text-slate-400'}`} />
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
-        <div className="p-4 border-t border-slate-100">
+        <div className="p-4">
           <button 
             onClick={() => navigate('/online-tests')}
-            className="flex w-full items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+            className="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors group"
           >
-            <LogOut className="w-4 h-4" />
-            Chiqish
+            <LogOut className="w-4 h-4 text-slate-400 group-hover:text-slate-900" />
+            Portalni tark etish
           </button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col max-h-screen overflow-hidden">
-        {/* Mobile Header */}
-        <div className="md:hidden bg-white p-4 border-b border-slate-200 flex justify-between items-center sticky top-0 z-10">
-          <div className="flex items-center gap-2">
-            <ShieldAlert className="w-6 h-6 text-indigo-600" />
-            <h1 className="font-black text-slate-800 text-lg">SuperAdmin</h1>
-          </div>
-          <button onClick={() => navigate('/online-tests')} className="p-2 text-slate-500 bg-slate-100 rounded-lg">
-            <LogOut className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Mobile Nav */}
-        <div className="md:hidden flex overflow-x-auto p-4 gap-2 bg-slate-50 border-b border-slate-200 no-scrollbar">
-          {['overview', 'teachers', 'tests', 'results'].map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab as any)}
-              className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-bold transition-colors ${activeTab === tab ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-white text-slate-600 border border-slate-200'}`}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+      <div className="flex-1 flex flex-col min-w-0">
+        
+        {/* Mobile Header & Nav */}
+        <div className="md:hidden bg-white border-b border-slate-100 sticky top-0 z-20">
+          <div className="p-4 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5 text-slate-900" />
+              <h1 className="font-bold text-slate-900 text-sm tracking-wide">Admin Portal</h1>
+            </div>
+            <button onClick={() => navigate('/online-tests')} className="text-slate-400 hover:text-slate-900 p-1">
+              <LogOut className="w-5 h-5" />
             </button>
-          ))}
+          </div>
+          <div className="flex overflow-x-auto px-4 pb-4 gap-2 no-scrollbar">
+            {[
+              { id: 'overview', label: 'Umumiy' },
+              { id: 'teachers', label: 'O\'qituvchilar' },
+              { id: 'tests', label: 'Testlar' },
+              { id: 'results', label: 'Natijalar' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`px-4 py-1.5 rounded-full whitespace-nowrap text-xs font-semibold transition-all ${
+                  activeTab === tab.id ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-600 border border-slate-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8">
+        {/* Scrollable Content Area */}
+        <div className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
           
-          {/* OVERVIEW TAB */}
-          {activeTab === 'overview' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-black text-slate-800">Umumiy Statistika</h2>
-              </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-8"
+            >
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group">
-                  <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Users className="w-10 h-10 text-blue-500/20" />
-                  </div>
-                  <p className="text-slate-500 font-semibold mb-1 text-sm uppercase tracking-wider relative z-10">Jami O'qituvchilar</p>
-                  <h3 className="text-4xl font-black text-slate-800 relative z-10">{stats.teachers}</h3>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group">
-                  <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <FileText className="w-10 h-10 text-indigo-500/20" />
-                  </div>
-                  <p className="text-slate-500 font-semibold mb-1 text-sm uppercase tracking-wider relative z-10">Jami Testlar</p>
-                  <h3 className="text-4xl font-black text-slate-800 relative z-10">{stats.tests}</h3>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group">
-                  <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Award className="w-10 h-10 text-emerald-500/20" />
-                  </div>
-                  <p className="text-slate-500 font-semibold mb-1 text-sm uppercase tracking-wider relative z-10">Jami Natijalar</p>
-                  <h3 className="text-4xl font-black text-slate-800 relative z-10">{stats.results}</h3>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                  <div className="flex items-center gap-2 mb-6">
-                    <TrendingUp className="w-5 h-5 text-indigo-600" />
-                    <h3 className="font-bold text-slate-800 text-lg">So'nggi faollik (Testlar)</h3>
-                  </div>
-                  <div className="space-y-4">
-                    {tests.slice(0, 5).map(t => (
-                      <div key={t._id} className="flex items-center justify-between pb-4 border-b border-slate-100 last:border-0 last:pb-0">
-                        <div>
-                          <p className="font-bold text-slate-700">{t.title}</p>
-                          <p className="text-xs text-slate-500 mt-1">Avtor: {t.teacher?.name || 'Noma\'lum'}</p>
+              {/* OVERVIEW TAB */}
+              {activeTab === 'overview' && (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[
+                      { label: "Jami O'qituvchilar", count: stats.teachers, icon: Users },
+                      { label: "Jami Testlar", count: stats.tests, icon: FileText },
+                      { label: "Jami Natijalar", count: stats.results, icon: Award }
+                    ].map((stat, i) => (
+                      <div key={i} className="bg-white p-6 rounded-2xl border border-slate-200/60 shadow-[0_2px_10px_rgb(0,0,0,0.02)] flex flex-col justify-between h-32">
+                        <div className="flex justify-between items-start">
+                          <p className="text-slate-500 font-medium text-sm">{stat.label}</p>
+                          <stat.icon className="w-5 h-5 text-slate-300" />
                         </div>
-                        <span className="text-xs font-semibold px-2 py-1 bg-slate-100 rounded text-slate-600">
-                          {new Date(t.createdAt).toLocaleDateString()}
-                        </span>
+                        <h3 className="text-3xl font-bold tracking-tight">{stat.count}</h3>
                       </div>
                     ))}
                   </div>
-                </div>
 
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                  <div className="flex items-center gap-2 mb-6">
-                    <Activity className="w-5 h-5 text-emerald-600" />
-                    <h3 className="font-bold text-slate-800 text-lg">So'nggi O'qituvchilar</h3>
-                  </div>
-                  <div className="space-y-4">
-                    {teachers.slice(0, 5).map(t => (
-                      <div key={t._id} className="flex items-center justify-between pb-4 border-b border-slate-100 last:border-0 last:pb-0">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-400">
-                            {t.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="font-bold text-slate-700">{t.name}</p>
-                            <p className="text-xs text-slate-500 mt-0.5">{t.email}</p>
-                          </div>
-                        </div>
-                        <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded ${t.role === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}>
-                          {t.role}
-                        </span>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {/* Recent Tests */}
+                    <div className="bg-white rounded-2xl border border-slate-200/60 shadow-[0_2px_10px_rgb(0,0,0,0.02)] p-6">
+                      <div className="flex items-center gap-2 mb-6">
+                        <TrendingUp className="w-4 h-4 text-slate-400" />
+                        <h3 className="font-semibold text-sm">So'nggi Yaratilgan Testlar</h3>
                       </div>
-                    ))}
+                      {tests.length === 0 ? <EmptyState message="Testlar mavjud emas" /> : (
+                        <div className="space-y-4">
+                          {tests.slice(0, 5).map(t => (
+                            <div key={t._id} className="flex justify-between items-center group">
+                              <div className="min-w-0">
+                                <p className="font-medium text-sm truncate">{t.title}</p>
+                                <p className="text-xs text-slate-500 truncate mt-0.5">{t.teacher?.name || 'Noma\'lum avtor'}</p>
+                              </div>
+                              <div className="text-xs text-slate-400 whitespace-nowrap ml-4">
+                                {new Date(t.createdAt).toLocaleDateString()}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Recent Teachers */}
+                    <div className="bg-white rounded-2xl border border-slate-200/60 shadow-[0_2px_10px_rgb(0,0,0,0.02)] p-6">
+                      <div className="flex items-center gap-2 mb-6">
+                        <Activity className="w-4 h-4 text-slate-400" />
+                        <h3 className="font-semibold text-sm">Ro'yxatdan O'tgan Ustozlar</h3>
+                      </div>
+                      {teachers.length === 0 ? <EmptyState message="O'qituvchilar mavjud emas" /> : (
+                        <div className="space-y-4">
+                          {teachers.slice(0, 5).map(t => (
+                            <div key={t._id} className="flex justify-between items-center">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-8 h-8 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-xs font-semibold text-slate-500 shrink-0">
+                                  {t.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="font-medium text-sm truncate">{t.name}</p>
+                                  <p className="text-xs text-slate-500 truncate mt-0.5">{t.email}</p>
+                                </div>
+                              </div>
+                              <div className="ml-4 shrink-0">
+                                {t.role === 'admin' ? (
+                                  <span className="px-2 py-1 bg-slate-900 text-white text-[10px] uppercase font-bold rounded">Admin</span>
+                                ) : (
+                                  <span className="px-2 py-1 bg-slate-50 border border-slate-200 text-slate-500 text-[10px] uppercase font-bold rounded">Ustoz</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* TEACHERS TAB */}
+              {activeTab === 'teachers' && (
+                <div className="bg-white rounded-2xl border border-slate-200/60 shadow-[0_2px_10px_rgb(0,0,0,0.02)] flex flex-col h-[calc(100vh-8rem)]">
+                  <div className="p-4 md:p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <h2 className="font-semibold text-lg">O'qituvchilar</h2>
+                    <div className="relative w-full sm:w-64">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input 
+                        type="text" 
+                        placeholder="Qidirish..." 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300 transition-all"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 overflow-auto">
+                    {filteredTeachers.length === 0 ? (
+                      <EmptyState message="Hech narsa topilmadi" />
+                    ) : (
+                      <table className="w-full text-left text-sm whitespace-nowrap">
+                        <thead className="bg-slate-50/50 sticky top-0 z-10 backdrop-blur-md">
+                          <tr>
+                            <th className="px-6 py-3 font-medium text-slate-500 border-b border-slate-100">Foydalanuvchi</th>
+                            <th className="px-6 py-3 font-medium text-slate-500 border-b border-slate-100">Mutaxassisligi</th>
+                            <th className="px-6 py-3 font-medium text-slate-500 border-b border-slate-100 text-center">Testlar</th>
+                            <th className="px-6 py-3 font-medium text-slate-500 border-b border-slate-100 text-right">Rol</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                          {filteredTeachers.map(t => (
+                            <tr key={t._id} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-6 py-4">
+                                <div className="font-medium text-slate-900">{t.name}</div>
+                                <div className="text-xs text-slate-500 mt-0.5">{t.email}</div>
+                              </td>
+                              <td className="px-6 py-4 text-slate-600">{t.subject || 'Noma\'lum'}</td>
+                              <td className="px-6 py-4 text-center font-medium">{t.testCount || 0}</td>
+                              <td className="px-6 py-4 text-right">
+                                {t.role === 'admin' ? (
+                                  <span className="px-2 py-1 bg-slate-900 text-white text-[10px] uppercase font-bold rounded">Admin</span>
+                                ) : (
+                                  <span className="px-2 py-1 bg-slate-50 border border-slate-200 text-slate-500 text-[10px] uppercase font-bold rounded">Ustoz</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
+              )}
 
-          {/* TEACHERS TAB */}
-          {activeTab === 'teachers' && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-black text-slate-800">O'qituvchilar Ro'yxati</h2>
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
-                        <th className="p-4 font-bold">Ism / Email</th>
-                        <th className="p-4 font-bold">Fan</th>
-                        <th className="p-4 font-bold">Rol</th>
-                        <th className="p-4 font-bold text-center">Testlar soni</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {teachers.map(t => (
-                        <tr key={t._id} className="hover:bg-slate-50/50">
-                          <td className="p-4">
-                            <div className="font-bold text-slate-800">{t.name}</div>
-                            <div className="text-xs text-slate-500 mt-1">{t.email}</div>
-                          </td>
-                          <td className="p-4 font-semibold text-slate-700">{t.subject}</td>
-                          <td className="p-4">
-                            <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-full ${t.role === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'}`}>
-                              {t.role}
-                            </span>
-                          </td>
-                          <td className="p-4 text-center font-black text-slate-700">{t.testCount || 0}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {/* TESTS TAB */}
+              {activeTab === 'tests' && (
+                <div className="bg-white rounded-2xl border border-slate-200/60 shadow-[0_2px_10px_rgb(0,0,0,0.02)] flex flex-col h-[calc(100vh-8rem)]">
+                  <div className="p-4 md:p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <h2 className="font-semibold text-lg">Barcha Testlar</h2>
+                    <div className="relative w-full sm:w-64">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input 
+                        type="text" 
+                        placeholder="Test ID, nomi, avtor..." 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300 transition-all"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 overflow-auto">
+                    {filteredTests.length === 0 ? (
+                      <EmptyState message="Hech narsa topilmadi" />
+                    ) : (
+                      <table className="w-full text-left text-sm whitespace-nowrap">
+                        <thead className="bg-slate-50/50 sticky top-0 z-10 backdrop-blur-md">
+                          <tr>
+                            <th className="px-6 py-3 font-medium text-slate-500 border-b border-slate-100">Test</th>
+                            <th className="px-6 py-3 font-medium text-slate-500 border-b border-slate-100">O'qituvchi</th>
+                            <th className="px-6 py-3 font-medium text-slate-500 border-b border-slate-100 text-center">Savollar</th>
+                            <th className="px-6 py-3 font-medium text-slate-500 border-b border-slate-100 text-right">Yaratilgan</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                          {filteredTests.map(t => (
+                            <tr key={t._id} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-6 py-4">
+                                <div className="font-medium text-slate-900">{t.title}</div>
+                                <div className="text-xs font-mono text-slate-400 mt-0.5">#{t.id}</div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="text-slate-900">{t.teacher?.name || 'Noma\'lum'}</div>
+                                <div className="text-xs text-slate-500 mt-0.5">{t.teacher?.subject || t.subject}</div>
+                              </td>
+                              <td className="px-6 py-4 text-center font-medium">{t.questions?.length || 0}</td>
+                              <td className="px-6 py-4 text-right text-slate-500 text-xs">
+                                {new Date(t.createdAt).toLocaleDateString()}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </div>
-          )}
+              )}
 
-          {/* TESTS TAB */}
-          {activeTab === 'tests' && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-black text-slate-800">Barcha Onlayn Testlar</h2>
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
-                        <th className="p-4 font-bold">Test Nomi</th>
-                        <th className="p-4 font-bold">O'qituvchi</th>
-                        <th className="p-4 font-bold">Savollar</th>
-                        <th className="p-4 font-bold">Vaqti</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {tests.map(t => (
-                        <tr key={t._id} className="hover:bg-slate-50/50">
-                          <td className="p-4">
-                            <div className="font-bold text-slate-800">{t.title}</div>
-                            <div className="text-xs text-slate-500 mt-1 font-mono">{t.id}</div>
-                          </td>
-                          <td className="p-4">
-                            <div className="font-semibold text-slate-700">{t.teacher?.name || 'Noma\'lum'}</div>
-                            <div className="text-xs text-slate-500 mt-1">{t.teacher?.subject || t.subject}</div>
-                          </td>
-                          <td className="p-4 font-bold text-slate-700">{t.questions?.length || 0} ta</td>
-                          <td className="p-4 text-sm text-slate-600">{new Date(t.createdAt).toLocaleString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {/* RESULTS TAB */}
+              {activeTab === 'results' && (
+                <div className="bg-white rounded-2xl border border-slate-200/60 shadow-[0_2px_10px_rgb(0,0,0,0.02)] flex flex-col h-[calc(100vh-8rem)]">
+                  <div className="p-4 md:p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <h2 className="font-semibold text-lg">Test Natijalari</h2>
+                    <div className="relative w-full sm:w-64">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input 
+                        type="text" 
+                        placeholder="O'quvchi, Test nomi..." 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300 transition-all"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 overflow-auto">
+                    {filteredResults.length === 0 ? (
+                      <EmptyState message="Hech narsa topilmadi" />
+                    ) : (
+                      <table className="w-full text-left text-sm whitespace-nowrap">
+                        <thead className="bg-slate-50/50 sticky top-0 z-10 backdrop-blur-md">
+                          <tr>
+                            <th className="px-6 py-3 font-medium text-slate-500 border-b border-slate-100">O'quvchi</th>
+                            <th className="px-6 py-3 font-medium text-slate-500 border-b border-slate-100">Test</th>
+                            <th className="px-6 py-3 font-medium text-slate-500 border-b border-slate-100">O'qituvchi</th>
+                            <th className="px-6 py-3 font-medium text-slate-500 border-b border-slate-100 text-right">Ball</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                          {filteredResults.map((r, idx) => (
+                            <tr key={r._id || idx} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-6 py-4 font-medium text-slate-900">{r.studentName}</td>
+                              <td className="px-6 py-4">
+                                <div className="text-slate-900">{r.test?.title || 'Oflayn Test'}</div>
+                                <div className="text-xs font-mono text-slate-400 mt-0.5">#{r.testId || r.id}</div>
+                              </td>
+                              <td className="px-6 py-4 text-slate-600">{r.teacher?.name || '—'}</td>
+                              <td className="px-6 py-4 text-right">
+                                <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-bold ${
+                                  r.totalScore >= 70 ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 
+                                  r.totalScore >= 50 ? 'bg-amber-50 text-amber-700 border border-amber-100' : 
+                                  'bg-rose-50 text-rose-700 border border-rose-100'
+                                }`}>
+                                  {r.totalScore}%
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </div>
-          )}
+              )}
 
-          {/* RESULTS TAB */}
-          {activeTab === 'results' && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-black text-slate-800">Oxirgi Natijalar</h2>
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
-                        <th className="p-4 font-bold">O'quvchi</th>
-                        <th className="p-4 font-bold">Test (ID)</th>
-                        <th className="p-4 font-bold">O'qituvchi</th>
-                        <th className="p-4 font-bold text-center">Natija</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {results.map((r, idx) => (
-                        <tr key={r._id || idx} className="hover:bg-slate-50/50">
-                          <td className="p-4 font-bold text-slate-800">{r.studentName}</td>
-                          <td className="p-4">
-                            <div className="font-semibold text-slate-700">{r.test?.title || 'Oflayn Test'}</div>
-                            <div className="text-xs text-slate-500 mt-1 font-mono">{r.testId || r.id}</div>
-                          </td>
-                          <td className="p-4 font-medium text-slate-600">{r.teacher?.name || '—'}</td>
-                          <td className="p-4 text-center">
-                            <span className={`px-2.5 py-1 rounded-md text-xs font-black ${r.totalScore >= 50 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                              {r.totalScore}%
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
-
+            </motion.div>
+          </AnimatePresence>
+          
         </div>
       </div>
     </div>
