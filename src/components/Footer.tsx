@@ -1,5 +1,4 @@
 import { Download } from 'lucide-react';
-import logo from '../assets/logo.jpg';
 
 interface FooterProps {
   onPrint: () => void;
@@ -11,7 +10,9 @@ export default function Footer({ onPrint, isGeneratingPdf }: FooterProps) {
     <footer className="pt-8 pb-6 border-t border-slate-200">
       <div className="flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-3">
-          <img src={logo} alt="Boborahim Mashrab" className="w-10 h-10 rounded-md object-contain border border-slate-200" />
+          <div className="w-10 h-10 rounded-md border border-slate-200 flex items-center justify-center bg-white font-bold text-lg text-neutral-900 tracking-tighter">
+            HB.
+          </div>
           <div>
             <h3 className="font-bold text-neutral-main text-sm">Boborahim Mashrab xalqaro maktabi</h3>
             <p className="text-xs text-neutral-secondary mt-0.5">Diagnostika xulosasi &copy; {new Date().getFullYear()}</p>

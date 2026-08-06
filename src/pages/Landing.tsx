@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Plus } from 'lucide-react';
-import logo from '../assets/logo.jpg';
-
 const containerVariants: any = {
   hidden: { opacity: 0 },
   show: {
@@ -29,8 +27,8 @@ export default function Landing() {
         <section className="grid grid-cols-1 md:grid-cols-12 gap-12">
           <div className="md:col-span-4 md:sticky md:top-32 h-fit">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="flex items-center gap-3 mb-8 md:mb-0">
-              <div className="w-8 h-8 rounded-full overflow-hidden border border-black/10">
-                <img src={logo} alt="Logo" className="w-full h-full object-cover mix-blend-darken" />
+              <div className="w-8 h-8 rounded-full border border-black/10 flex items-center justify-center font-bold text-xs tracking-tighter bg-white text-black">
+                HB.
               </div>
               <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500">
                 Diagnostika

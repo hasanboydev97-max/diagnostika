@@ -11,9 +11,13 @@ import TestResultView from './pages/OnlineTests/TestResultView';
 import TestDetails from './pages/OnlineTests/TestDetails';
 import TeacherAuth from './pages/OnlineTests/TeacherAuth';
 import CustomCursor from './components/CustomCursor';
+import InitialLoader from './components/InitialLoader';
 import { Toaster } from 'sonner';
+import { useState } from 'react';
 
 function App() {
+  const [appReady, setAppReady] = useState(false);
+
   return (
     <BrowserRouter>
       <CustomCursor />
@@ -37,7 +41,8 @@ function App() {
         {/* Catch-all route to prevent blank screens */}
         <Route path="*" element={<Navigate to="/online-tests" replace />} />
       </Routes>
-      <Toaster position="top-right" richColors />
+      <InitialLoader onComplete={() => setAppReady(true)} />
+      {appReady && <Toaster position="top-right" richColors />}
     </BrowserRouter>
   );
 }

@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getToken, getTeacher } from '../lib/auth';
-import logo from '../assets/logo.jpg';
 
 const containerVariants: any = {
   hidden: { opacity: 0 },
@@ -124,8 +123,8 @@ export default function SuperAdmin() {
           <div className="md:col-span-4 md:sticky md:top-32 h-fit flex flex-col gap-12 md:gap-16">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="flex flex-col gap-6">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full overflow-hidden border border-black/10">
-                  <img src={logo} alt="Logo" className="w-full h-full object-cover mix-blend-darken" />
+                <div className="w-8 h-8 rounded-full border border-black/10 flex items-center justify-center font-bold text-xs tracking-tighter bg-white text-black">
+                  HB.
                 </div>
                 <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500 flex items-center gap-2">
                   <ShieldAlert className="w-3.5 h-3.5" /> Boshqaruv Paneli

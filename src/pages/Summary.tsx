@@ -7,7 +7,6 @@ import * as htmlToImage from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import WelcomeModal from '../components/WelcomeModal';
 import Footer from '../components/Footer';
-import logo from '../assets/logo.jpg';
 import ScoreBreakdownTable from '../components/ScoreBreakdownTable';
 import QuestionResultTable from '../components/QuestionResultTable';
 import DifficultyGrid from '../components/DifficultyGrid';
@@ -196,7 +195,9 @@ export default function Summary() {
         <div className="max-w-[1440px] mx-auto px-4 md:px-12 pt-4 md:pt-12 space-y-6 md:space-y-16">
           <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 sm:pb-8 border-b border-border gap-4">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="Boborahim Mashrab" className="w-12 h-12 rounded-lg object-contain shadow-sm border border-slate-200" />
+            <div className="w-12 h-12 rounded-lg border border-slate-200 flex items-center justify-center font-bold text-xl tracking-tighter bg-white text-black shadow-sm">
+              HB.
+            </div>
             <h1 className="font-bold text-xl text-neutral-main">Boborahim Mashrab</h1>
           </div>
           <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-neutral-secondary">

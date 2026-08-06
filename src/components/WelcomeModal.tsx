@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { ArrowRight, CheckCircle, XCircle } from 'lucide-react';
-import logo from '../assets/logo.jpg';
 
 interface WelcomeModalProps {
   score: number;
@@ -121,8 +120,8 @@ export default function WelcomeModal({
             {/* Logo Area */}
             <motion.div variants={itemVariants} className="relative mb-4 md:mb-8 group flex-shrink-0">
               <div className={`absolute inset-0 rounded-2xl blur-xl opacity-40 group-hover:opacity-70 transition-opacity duration-700 ${isPassed ? 'bg-blue-400' : 'bg-rose-500'}`}></div>
-              <div className="relative w-14 h-14 md:w-20 md:h-20 rounded-[1rem] md:rounded-2xl overflow-hidden shadow-[0_0_20px_rgba(255,255,255,0.15)] backdrop-blur-md transform -rotate-3 hover:rotate-0 transition-transform duration-500 border border-white/20">
-                <img src={logo} alt="School Logo" className="w-full h-full object-cover" />
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl md:rounded-[24px] shadow-lg mb-6 overflow-hidden border border-white/20 bg-white flex items-center justify-center font-bold text-2xl md:text-3xl text-neutral-900 tracking-tighter">
+                HB.
               </div>
             </motion.div>
 
