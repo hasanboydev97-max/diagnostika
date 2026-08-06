@@ -39,7 +39,27 @@ Vazifa:
 Iltimos, javobni faqat va faqat quyidagi JSON formatida qaytaring, boshqa hech qanday izoh qo'shmang. Tahlilda o'quvchining aniq qaysi mavzularda oqsagani va qaysi ko'nikmalari pastligini (yuqoridagi statistikaga asosan) alohida ta'kidlab o'ting:
 {
   "summary": "O'quvchining kuchli va zaif tomonlari (qaysi mavzular va ko'nikmalarda oqsagani), umumiy intellektual profili haqida 3-4 gapdan iborat chuqur tahlil (o'zbek tilida).",
-  "advice": "O'quvchi o'zini qanday rivojlantirishi kerakligi, xato qilgan mavzularini qanday to'g'rilashi haqida amaliy, motivatsion 3-4 gapdan iborat maslahat (o'zbek tilida)."
+  "advice": "O'quvchi o'zini qanday rivojlantirishi kerakligi, xato qilgan mavzularini qanday to'g'rilashi haqida amaliy, motivatsion 3-4 gapdan iborat maslahat (o'zbek tilida).",
+  "roadmap": [
+    {
+      "time": "1-bosqich (1-2 oy)",
+      "goal": "Eng zaif mavzularni yopish va asosiy tushunchalarni shakllantirish maqsadida aniq vazifa",
+      "exercises": ["Aniq 1-amaliyot (masalan: kunlik 5ta algebra mashqi)", "Aniq 2-amaliyot"],
+      "outcome": "Kutilayotgan natija (masalan: 65% barqarorlashtirish)"
+    },
+    {
+      "time": "2-bosqich (3-4 oy)",
+      "goal": "O'rta qiyinlikdagi mavzularni va mantiqiy fikrlashni mustahkamlash maqsadida vazifa",
+      "exercises": ["Amaliyot 1", "Amaliyot 2"],
+      "outcome": "Kutilayotgan natija (masalan: 75% ga yetkazish)"
+    },
+    {
+      "time": "3-bosqich (5-6 oy)",
+      "goal": "Qiyin va analitik, kreativ darajadagi ko'nikmalarni oshirish maqsadida yakuniy sayqal berish",
+      "exercises": ["Amaliyot 1", "Amaliyot 2"],
+      "outcome": "Kutilayotgan yakuniy natija (masalan: 90% ga erishish)"
+    }
+  ]
 }`;
 
   let lastError = "";
@@ -66,14 +86,16 @@ Iltimos, javobni faqat va faqat quyidagi JSON formatida qaytaring, boshqa hech q
         console.log(`Muvaffaqiyatli: ${modelName} modelidan javob olindi.`);
         return {
           summary: parsed.summary,
-          advice: parsed.advice
+          advice: parsed.advice,
+          roadmap: parsed.roadmap
         };
       } catch (parseError) {
         console.error(`JSON o'qishda xatolik (${modelName}):`, text);
         // Agar JSON formatida qaytarmagan bo'lsa ham oddiy matn sifatida saqlaymiz
         return {
           summary: text.substring(0, 300) + "...",
-          advice: "Natijalarni ustozingiz bilan tahlil qiling."
+          advice: "Natijalarni ustozingiz bilan tahlil qiling.",
+          roadmap: null
         };
       }
     } catch (error: any) {
@@ -87,7 +109,8 @@ Iltimos, javobni faqat va faqat quyidagi JSON formatida qaytaring, boshqa hech q
   console.error("Barcha Gemini modellari ishlamay qoldi yoki limit tugadi.");
   return {
     summary: `Texnik xatolik yuz berdi: ${lastError}`,
-    advice: "Bu odatda API kalit noto'g'riligi yoki internet muammosi tufayli yuz beradi."
+    advice: "Bu odatda API kalit noto'g'riligi yoki internet muammosi tufayli yuz beradi.",
+    roadmap: null
   };
 };
 

@@ -103,7 +103,8 @@ export default function Summary() {
       const updatedData = {
         ...studentData,
         aiSummaryText: aiResponse.summary,
-        aiAdviceText: aiResponse.advice
+        aiAdviceText: aiResponse.advice,
+        aiRoadmap: aiResponse.roadmap
       };
       
       // Since it's a re-save of an existing ID, db.saveResult might duplicate it if not handled properly?

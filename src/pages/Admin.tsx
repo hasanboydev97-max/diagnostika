@@ -105,6 +105,7 @@ export default function Admin() {
       totalScore,
       aiSummaryText: aiResponse.summary,
       aiAdviceText: aiResponse.advice,
+      aiRoadmap: aiResponse.roadmap,
       createdAt: new Date().toISOString(),
     });
 

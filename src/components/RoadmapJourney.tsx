@@ -2,7 +2,18 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bike, Flag, Target, ArrowRight, CheckCircle2, Map } from 'lucide-react';
 
-const roadmapData = [
+export interface RoadmapStep {
+  id?: number;
+  time: string;
+  goal: string;
+  exercises: string[];
+  outcome: string;
+  color?: string;
+  bgClass?: string;
+  icon?: any;
+}
+
+const defaultRoadmapData: RoadmapStep[] = [
   {
     id: 1,
     time: '1-bosqich (0-3 oy)',
@@ -35,8 +46,22 @@ const roadmapData = [
   }
 ];
 
-export default function RoadmapJourney() {
+export default function RoadmapJourney({ data }: { data?: RoadmapStep[] | null }) {
   const [activeStep, setActiveStep] = useState(1);
+
+  // AI dan kelgan ma'lumotlarni default ma'lumotlar ustiga yozish (ikonkalar va ranglarni saqlab qolish uchun)
+  const finalData = (data && data.length > 0) ? defaultRoadmapData.map((def, i) => {
+    if (data[i]) {
+      return {
+        ...def,
+        time: data[i].time || def.time,
+        goal: data[i].goal || def.goal,
+        exercises: data[i].exercises || def.exercises,
+        outcome: data[i].outcome || def.outcome
+      };
+    }
+    return def;
+  }) : defaultRoadmapData;
 
   return (
     <section className="space-y-6 relative max-w-4xl mx-auto pt-8">
@@ -60,14 +85,14 @@ export default function RoadmapJourney() {
         <motion.div 
           className="absolute left-6 md:left-1/2 top-0 w-[3px] bg-primary -translate-x-1/2 rounded-full"
           initial={{ height: 0 }}
-          animate={{ height: `${(activeStep / roadmapData.length) * 100}%` }}
+          animate={{ height: `${(activeStep / finalData.length) * 100}%` }}
           transition={{ duration: 0.8, ease: 'easeInOut' }}
         />
 
         <div className="space-y-8 md:space-y-12 relative z-10">
-          {roadmapData.map((step, index) => {
+          {finalData.map((step, index) => {
             const isActive = activeStep === step.id;
-            const isCompleted = activeStep > step.id;
+            const isCompleted = activeStep > (step.id || 0);
             const Icon = step.icon;
             
             // For desktop alternating
@@ -107,9 +132,9 @@ export default function RoadmapJourney() {
                       ? 'bg-primary border-white text-white' 
                       : 'bg-white border-slate-100 text-slate-400 hover:border-slate-300'
                   }`}
-                  onClick={() => setActiveStep(step.id)}
+                  onClick={() => setActiveStep(step.id || 1)}
                 >
-                  {isCompleted ? <CheckCircle2 size={20} /> : <Icon size={20} className={isActive ? 'animate-pulse' : ''} />}
+                  {isCompleted ? <CheckCircle2 size={20} /> : (Icon && <Icon size={20} className={isActive ? 'animate-pulse' : ''} />)}
                   {isActive && (
                     <div className="absolute inset-0 rounded-full bg-primary animate-ping opacity-20"></div>
                   )}
@@ -119,7 +144,7 @@ export default function RoadmapJourney() {
                 <div className={`w-full md:w-1/2 pl-16 md:pl-0 ${isLeft ? 'md:order-last md:pl-12' : 'md:pr-12'}`}>
                   <motion.div 
                     layout
-                    onClick={() => setActiveStep(step.id)}
+                    onClick={() => setActiveStep(step.id || 1)}
                     className={`cursor-pointer overflow-hidden rounded-2xl border transition-all duration-300 ${
                       isActive 
                         ? 'border-primary/20 bg-white shadow-xl shadow-primary/5 ring-1 ring-primary/10' 
