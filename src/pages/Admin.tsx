@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { db, type StudentResult } from '../lib/db';
 import { generateDiagnosticSummary } from '../lib/gemini';
 import { useNavigate } from 'react-router-dom';
@@ -188,9 +189,23 @@ export default function Admin() {
                         <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest text-right">Amallar</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <motion.tbody
+                      initial="hidden"
+                      animate="show"
+                      variants={{
+                        hidden: { opacity: 0 },
+                        show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+                      }}
+                    >
                       {allResults.map(r => (
-                        <tr key={r.id} className="group hover:bg-[#f8f8f8] transition-colors border-b border-black/10">
+                        <motion.tr 
+                          variants={{
+                            hidden: { opacity: 0, y: 10 },
+                            show: { opacity: 1, y: 0, transition: { duration: 0.3 } }
+                          }}
+                          key={r.id} 
+                          className="group hover:bg-[#f8f8f8] transition-colors border-b border-black/10"
+                        >
                           <td className="py-6 pl-4 md:pl-0 group-hover:pl-4 transition-all duration-300">
                             <div className="text-lg md:text-xl font-medium tracking-tight capitalize">{r.studentName}</div>
                           </td>
@@ -210,9 +225,9 @@ export default function Admin() {
                               Ko'rish
                             </button>
                           </td>
-                        </tr>
+                        </motion.tr>
                       ))}
-                    </tbody>
+                    </motion.tbody>
                   </table>
                 </div>
               </>

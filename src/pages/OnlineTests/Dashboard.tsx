@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, ChevronRight, FileText, Search, Trash2, LogOut, ShieldAlert } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { getAuthHeaders, getToken, logout, getTeacher } from '../../lib/auth';
 
@@ -164,11 +165,23 @@ export default function OnlineTestsDashboard() {
               )}
             </div>
           ) : (
-            <ul className="divide-y divide-zinc-100">
+            <motion.ul 
+              initial="hidden"
+              animate="show"
+              variants={{
+                hidden: { opacity: 0 },
+                show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+              }}
+              className="divide-y divide-zinc-100"
+            >
               {filteredTests.map((test) => (
-                <li
+                <motion.li
+                  variants={{
+                    hidden: { opacity: 0, y: 10 },
+                    show: { opacity: 1, y: 0, transition: { duration: 0.3 } }
+                  }}
                   key={test.id}
-                  className="group hover:bg-zinc-50 transition-colors flex items-center justify-between p-4 cursor-pointer"
+                  className="group hover:bg-zinc-50 transition-all flex items-center justify-between p-4 cursor-pointer hover:pl-6"
                   onClick={() => navigate(`/online-tests/details/${test.id}`)}
                 >
                   <div className="flex items-center gap-4">
@@ -196,9 +209,9 @@ export default function OnlineTestsDashboard() {
                       <ChevronRight size={16} />
                     </div>
                   </div>
-                </li>
+                </motion.li>
               ))}
-            </ul>
+            </motion.ul>
           )}
         </div>
       </main>

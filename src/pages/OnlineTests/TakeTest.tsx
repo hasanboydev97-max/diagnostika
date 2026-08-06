@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, ArrowLeft, AlertTriangle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 import FormattedText from '../../components/FormattedText';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -405,40 +406,50 @@ export default function TakeTest() {
 
         {/* Question Area */}
         <div className="flex-1 flex flex-col max-w-2xl order-1 lg:order-2 lg:pt-4">
-          <div className="mb-8">
-            <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">
-              {currentQIndex + 1}-Savol
-            </div>
-            <h3 className="text-lg font-medium text-zinc-900 leading-relaxed">
-              <FormattedText content={currentQ.questionText} />
-            </h3>
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div 
+              key={currentQIndex}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+            >
+              <div className="mb-8">
+                <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">
+                  {currentQIndex + 1}-Savol
+                </div>
+                <h3 className="text-lg font-medium text-zinc-900 leading-relaxed">
+                  <FormattedText content={currentQ.questionText} />
+                </h3>
+              </div>
 
-          <div className="space-y-2">
-            {currentQ.options.map((opt: string, i: number) => {
-              const isSelected = answers[currentQIndex] === opt;
-              return (
-                <button
-                  key={i}
-                  onClick={() => handleSelectOption(opt)}
-                  className={`w-full text-left px-4 py-3 rounded-md border text-sm transition-all flex items-center gap-3 group ${
-                    isSelected 
-                      ? 'border-zinc-900 bg-zinc-50/50' 
-                      : 'border-zinc-200 bg-white hover:border-zinc-400'
-                  }`}
-                >
-                  <div className={`w-4 h-4 shrink-0 rounded-full border flex items-center justify-center transition-colors ${
-                    isSelected ? 'border-zinc-900 bg-zinc-900 text-white' : 'border-zinc-300 group-hover:border-zinc-400'
-                  }`}>
-                    {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
-                  </div>
-                  <span className={`flex-1 ${isSelected ? 'font-medium text-zinc-900' : 'text-zinc-700'}`}>
-                    <FormattedText content={opt} />
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+              <div className="space-y-2">
+                {currentQ.options.map((opt: string, i: number) => {
+                  const isSelected = answers[currentQIndex] === opt;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => handleSelectOption(opt)}
+                      className={`w-full text-left px-4 py-3 rounded-md border text-sm transition-all flex items-center gap-3 group ${
+                        isSelected 
+                          ? 'border-zinc-900 bg-zinc-50/50' 
+                          : 'border-zinc-200 bg-white hover:border-zinc-400'
+                      }`}
+                    >
+                      <div className={`w-4 h-4 shrink-0 rounded-full border flex items-center justify-center transition-colors ${
+                        isSelected ? 'border-zinc-900 bg-zinc-900 text-white' : 'border-zinc-300 group-hover:border-zinc-400'
+                      }`}>
+                        {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
+                      </div>
+                      <span className={`flex-1 ${isSelected ? 'font-medium text-zinc-900' : 'text-zinc-700'}`}>
+                        <FormattedText content={opt} />
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </AnimatePresence>
 
           {/* Footer Navigation */}
           <div className="mt-12 flex items-center justify-between pt-4 border-t border-zinc-100">

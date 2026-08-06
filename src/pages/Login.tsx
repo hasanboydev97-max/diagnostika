@@ -117,9 +117,17 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] flex flex-col justify-center py-12 px-[15px] sm:px-6 lg:px-8 font-sans selection:bg-black selection:text-white relative">
+    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] flex flex-col justify-center py-12 px-[15px] sm:px-6 lg:px-8 font-sans selection:bg-black selection:text-white relative overflow-hidden">
       
-      <div className="sm:mx-auto sm:w-full sm:max-w-md z-10 relative">
+      {/* Subtle Dot Pattern Background */}
+      <div className="absolute inset-0 z-0 opacity-40 pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23000000' fill-opacity='0.08' fill-rule='evenodd'%3E%3Ccircle cx='2' cy='2' r='1'/%3E%3C/g%3E%3C/svg%3E")` }}></div>
+      
+      <motion.div 
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="sm:mx-auto sm:w-full sm:max-w-md z-10 relative"
+      >
         <button 
           onClick={() => navigate('/')} 
           className="absolute top-0 -left-12 hidden md:flex items-center justify-center p-2 text-gray-400 hover:text-black bg-transparent transition-all hover:-translate-x-1"
@@ -139,10 +147,15 @@ export default function Login() {
         <p className="mt-2 text-center text-sm text-gray-500">
           O'quvchi natijalarini ko'rish uchun tizimga kiring
         </p>
-      </div>
+      </motion.div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-[420px] z-10">
-        <div className="bg-[#fdfdfd] py-8 px-5 sm:px-10 border-t border-black/10 md:border md:border-black/10">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
+        className="mt-8 sm:mx-auto sm:w-full sm:max-w-[420px] z-10"
+      >
+        <div className="bg-[#fdfdfd] py-8 px-5 sm:px-10 border-t border-black/10 md:border md:border-black/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
           <form className="space-y-6" onSubmit={handleLogin}>
             
             <div>
@@ -225,7 +238,7 @@ export default function Login() {
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
       
       <div className="mt-auto pb-6 text-center z-10">
         <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-gray-400">&copy; {new Date().getFullYear()} Maktab Diagnostikasi. Barcha huquqlar himoyalangan.</p>
