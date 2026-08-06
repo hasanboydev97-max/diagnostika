@@ -120,7 +120,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-['Space_Grotesk'] selection:bg-slate-900 selection:text-white relative">
+    <div className="min-h-screen bg-[#FAFAFA] flex flex-col justify-center py-12 px-[15px] sm:px-6 lg:px-8 font-['Space_Grotesk'] selection:bg-slate-900 selection:text-white relative">
       
       {/* Subtle grid background for premium engineering feel */}
       <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-60"></div>
@@ -148,7 +148,7 @@ export default function Login() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-[420px] z-10">
-        <div className="bg-white py-8 px-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:rounded-2xl sm:px-10 border border-slate-100">
+        <div className="bg-white py-8 px-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl sm:px-10 border border-slate-100">
           <form className="space-y-6" onSubmit={handleLogin}>
             
             <div>
