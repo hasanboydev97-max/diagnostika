@@ -198,7 +198,7 @@ export default function Summary() {
             <div className="w-12 h-12 rounded-lg border border-slate-200 flex items-center justify-center font-bold text-xl tracking-tighter bg-white text-black shadow-sm">
               HB.
             </div>
-            <h1 className="font-bold text-xl text-neutral-main">Boborahim Mashrab</h1>
+            <h1 className="font-bold text-xl text-neutral-main">HB Diagnostikasi</h1>
           </div>
           <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-neutral-secondary">
             <span>{studentData.studentName} ({studentData.grade || '5'}-sinf)</span>

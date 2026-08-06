@@ -14,7 +14,7 @@ export default function Footer({ onPrint, isGeneratingPdf }: FooterProps) {
             HB.
           </div>
           <div>
-            <h3 className="font-bold text-neutral-main text-sm">Boborahim Mashrab xalqaro maktabi</h3>
+            <h3 className="font-bold text-neutral-main text-sm">HB Diagnostikasi</h3>
             <p className="text-xs text-neutral-secondary mt-0.5">Diagnostika xulosasi &copy; {new Date().getFullYear()}</p>
           </div>
         </div>
