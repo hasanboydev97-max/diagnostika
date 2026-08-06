@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useSpring, useMotionTemplate } from 'framer-motion';
 import { ArrowRight, Plus } from 'lucide-react';
 
 const containerVariants: any = {
@@ -11,9 +11,14 @@ const containerVariants: any = {
   }
 };
 
+const itemVariants: any = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
+};
+
 export default function Landing() {
   const navigate = useNavigate();
-  const [activeFaq, setActiveFaq] = (useState as any)<number | null>(null);
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
   
   // High-performance cursor tracking without re-renders
   const cursorX = useMotionValue(-100);
@@ -30,6 +35,8 @@ export default function Landing() {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
+  const maskImage = useMotionTemplate`radial-gradient(circle 400px at ${springX}px ${springY}px, black 10%, transparent 100%)`;
+
   return (
     <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
       
@@ -43,8 +50,8 @@ export default function Landing() {
       <motion.div 
         className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center overflow-hidden transition-opacity duration-300"
         style={{
-          WebkitMaskImage: `radial-gradient(circle 400px at ${springX}px ${springY}px, black 10%, transparent 100%)`,
-          maskImage: `radial-gradient(circle 400px at ${springX}px ${springY}px, black 10%, transparent 100%)`
+          WebkitMaskImage: maskImage,
+          maskImage: maskImage
         }}
       >
         <div className="flex flex-col items-center justify-center rotate-[-4deg] scale-[1.2] opacity-60">
@@ -56,7 +63,7 @@ export default function Landing() {
           <h1 className="text-[8vw] font-black text-black/5 select-none whitespace-nowrap tracking-tighter leading-tight uppercase">HB Diagnostika AI — HB Diagnostika AI</h1>
           <h1 className="text-[8vw] font-black text-black/5 select-none whitespace-nowrap tracking-tighter leading-tight uppercase">HB Diagnostika AI — HB Diagnostika AI</h1>
         </div>
-      </div>
+      </motion.div>
 
       <div className="max-w-5xl mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32 relative z-10 pointer-events-none">
         
