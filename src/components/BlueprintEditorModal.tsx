@@ -43,43 +43,43 @@ export default function BlueprintEditorModal({ grade, initialBlueprint, onSave, 
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4 md:p-6">
+      <div className="bg-[#fdfdfd] rounded-[24px] shadow-[0_16px_40px_rgb(0,0,0,0.12)] border border-black/10 w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-border bg-slate-50">
+        <div className="flex items-center justify-between p-6 md:p-8 border-b border-black/5 bg-transparent">
           <div>
-            <h2 className="text-xl font-bold text-neutral-main">{grade}-sinf uchun test qolipini tahrirlash</h2>
-            <p className="text-sm text-neutral-secondary">Ushbu sinf uchun 30 ta savol mavzusi va parametrlarini moslang.</p>
+            <h2 className="text-2xl md:text-3xl font-medium tracking-tight text-black">{grade}-sinf uchun test qolipi</h2>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mt-2">Mavzu va parametrlarni tahrirlash</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
-            <X className="w-5 h-5 text-slate-500" />
+          <button onClick={onClose} className="p-2 text-gray-400 hover:text-black hover:bg-black/5 rounded-full transition-colors">
+            <X className="w-5 h-5" strokeWidth={1.5} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
-          <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-transparent">
+          <div className="space-y-2">
             {blueprint.map((q, i) => (
-              <div key={q.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-start md:items-center">
-                <div className="font-bold text-slate-400 w-8">#{String(q.id).padStart(2, '0')}</div>
+              <div key={q.id} className="group flex flex-col md:flex-row gap-4 md:gap-6 items-start md:items-end p-4 rounded-2xl hover:bg-black/[0.02] border border-transparent hover:border-black/5 transition-colors">
+                <div className="font-medium text-gray-300 w-6 pb-2">#{String(q.id).padStart(2, '0')}</div>
                 
                 <div className="flex-1 w-full">
-                  <label className="text-xs font-semibold text-slate-500 mb-1 block">Mavzu / Savol matni</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1 block">Mavzu / Savol matni</label>
                   <input 
                     type="text" 
                     value={q.topic} 
                     onChange={e => handleChange(i, 'topic', e.target.value)}
-                    className="w-full border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:ring-1 focus:ring-primary"
+                    className="w-full border-b border-black/10 bg-transparent py-2 text-sm text-black focus:border-black outline-none transition-colors"
                   />
                 </div>
 
-                <div className="w-full md:w-32">
-                  <label className="text-xs font-semibold text-slate-500 mb-1 block">Kategoriya</label>
+                <div className="w-full md:w-40">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1 block">Kategoriya</label>
                   <select 
                     value={q.category} 
                     onChange={e => handleChange(i, 'category', e.target.value as SubjectCategory)}
-                    className="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+                    className="w-full border-b border-black/10 bg-transparent py-2 text-sm text-black focus:border-black outline-none transition-colors cursor-pointer"
                   >
                     <option value="math">Matematika</option>
                     <option value="logic">Mantiq</option>
@@ -89,12 +89,12 @@ export default function BlueprintEditorModal({ grade, initialBlueprint, onSave, 
                   </select>
                 </div>
 
-                <div className="w-full md:w-32">
-                  <label className="text-xs font-semibold text-slate-500 mb-1 block">Qiyinlik</label>
+                <div className="w-full md:w-28">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1 block">Qiyinlik</label>
                   <select 
                     value={q.difficulty} 
                     onChange={e => handleChange(i, 'difficulty', e.target.value as Difficulty)}
-                    className="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+                    className="w-full border-b border-black/10 bg-transparent py-2 text-sm text-black focus:border-black outline-none transition-colors cursor-pointer"
                   >
                     <option value="Oson">Oson</option>
                     <option value="O'rta">O'rta</option>
@@ -103,11 +103,11 @@ export default function BlueprintEditorModal({ grade, initialBlueprint, onSave, 
                 </div>
 
                 <div className="w-full md:w-32">
-                  <label className="text-xs font-semibold text-slate-500 mb-1 block">Ko'nikma</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1 block">Ko'nikma</label>
                   <select 
                     value={q.skill} 
                     onChange={e => handleChange(i, 'skill', e.target.value as CognitiveSkill)}
-                    className="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+                    className="w-full border-b border-black/10 bg-transparent py-2 text-sm text-black focus:border-black outline-none transition-colors cursor-pointer"
                   >
                     <option value="Tushunish">Tushunish</option>
                     <option value="Qo'llash">Qo'llash</option>
@@ -118,11 +118,11 @@ export default function BlueprintEditorModal({ grade, initialBlueprint, onSave, 
                 </div>
 
                 <div className="w-full md:w-32">
-                  <label className="text-xs font-semibold text-slate-500 mb-1 block">Fikrlash turi</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1 block">Fikrlash turi</label>
                   <select 
                     value={q.thinkingType} 
                     onChange={e => handleChange(i, 'thinkingType', e.target.value as ThinkingType)}
-                    className="w-full border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+                    className="w-full border-b border-black/10 bg-transparent py-2 text-sm text-black focus:border-black outline-none transition-colors cursor-pointer"
                   >
                     <option value="Analitik">Analitik</option>
                     <option value="Induktiv">Induktiv</option>
@@ -137,31 +137,33 @@ export default function BlueprintEditorModal({ grade, initialBlueprint, onSave, 
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-border bg-white flex flex-col md:flex-row justify-between gap-3 items-center">
-          <div className="flex gap-3">
+        <div className="p-6 md:p-8 border-t border-black/5 bg-[#fdfdfd] flex flex-col md:flex-row justify-between gap-6 items-center">
+          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
             <button 
               onClick={() => setBlueprint(GRADE_BLUEPRINTS[grade] || GRADE_BLUEPRINTS['5'])} 
-              className="px-4 py-2 flex items-center gap-2 text-sm text-neutral-secondary hover:bg-slate-100 rounded-lg transition-colors"
+              className="px-4 py-2 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 hover:text-black transition-colors"
             >
-              <RotateCcw className="w-4 h-4" /> Asl holatiga qaytarish
+              <RotateCcw className="w-4 h-4" /> Qayta tiklash
             </button>
             <button 
               onClick={handleGenerateAI}
               disabled={isGenerating}
-              className={`px-4 py-2 flex items-center gap-2 text-sm font-medium rounded-lg transition-colors border shadow-sm ${isGenerating ? 'bg-indigo-50 border-indigo-200 text-indigo-400 cursor-not-allowed' : 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100'}`}
+              className={`px-6 py-3 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] rounded-full transition-all border ${isGenerating ? 'bg-black/5 border-black/5 text-gray-400 cursor-not-allowed' : 'bg-transparent border-black/10 text-black hover:border-black'}`}
             >
               {isGenerating ? (
-                <div className="w-4 h-4 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin"></div>
+                <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
               ) : (
                 <Sparkles className="w-4 h-4" />
               )}
-              {isGenerating ? 'Yaratilmoqda...' : `Avtomatik yaratish (${grade}-sinf)`}
+              {isGenerating ? 'Yaratilmoqda...' : `AI orqali yaratish`}
             </button>
           </div>
           
-          <div className="flex gap-3 w-full md:w-auto">
-            <button onClick={onClose} className="flex-1 md:flex-none px-5 py-2 rounded-lg font-medium text-neutral-secondary hover:bg-slate-100">Bekor qilish</button>
-            <button onClick={handleSave} className="flex-1 md:flex-none px-5 py-2 bg-primary text-white rounded-lg font-medium hover:bg-blue-700 flex items-center justify-center gap-2 shadow-sm">
+          <div className="flex gap-4 w-full md:w-auto">
+            <button onClick={onClose} className="flex-1 md:flex-none px-6 py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 hover:text-black transition-colors">
+              Bekor qilish
+            </button>
+            <button onClick={handleSave} className="flex-1 md:flex-none px-8 py-3 bg-black text-white rounded-full text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-black/80 shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
               <Save className="w-4 h-4" /> Saqlash
             </button>
           </div>
