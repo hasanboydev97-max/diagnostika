@@ -53,21 +53,21 @@ Iltimos, javobni faqat va faqat quyidagi JSON formatida qaytaring, boshqa hech q
   "roadmap": [
     {
       "time": "1-bosqich (1-2 oy)",
-      "goal": "Eng zaif mavzularni yopish va asosiy tushunchalarni shakllantirish maqsadida aniq vazifa",
-      "exercises": ["Aniq 1-amaliyot (masalan: kunlik 5ta algebra mashqi)", "Aniq 2-amaliyot"],
-      "outcome": "Kutilayotgan natija (masalan: 65% barqarorlashtirish)"
+      "goal": "Qisqa va lo'nda sarlavha (maksimal 3-5 so'z, masalan: Bazaviy bo'shliqlarni yopish)",
+      "exercises": ["Aniq 1-amaliyot (masalan: kunlik 5ta algebra mashqi)", "Aniq 2-amaliyot (masalan: mantiqiy testlar)"],
+      "outcome": "Kutilayotgan natija (masalan: 70% barqaror natija)"
     },
     {
       "time": "2-bosqich (3-4 oy)",
-      "goal": "O'rta qiyinlikdagi mavzularni va mantiqiy fikrlashni mustahkamlash maqsadida vazifa",
+      "goal": "Qisqa sarlavha (masalan: Mantiq va tahlilni kuchaytirish)",
       "exercises": ["Amaliyot 1", "Amaliyot 2"],
-      "outcome": "Kutilayotgan natija (masalan: 75% ga yetkazish)"
+      "outcome": "Kutilayotgan natija (masalan: 85% ga yetkazish)"
     },
     {
       "time": "3-bosqich (5-6 oy)",
-      "goal": "Qiyin va analitik, kreativ darajadagi ko'nikmalarni oshirish maqsadida yakuniy sayqal berish",
+      "goal": "Qisqa sarlavha (masalan: Murakkab masalalar va olimpiada)",
       "exercises": ["Amaliyot 1", "Amaliyot 2"],
-      "outcome": "Kutilayotgan yakuniy natija (masalan: 90% ga erishish)"
+      "outcome": "Kutilayotgan yakuniy natija (masalan: 95% ga erishish)"
     }
   ]
 }`;
