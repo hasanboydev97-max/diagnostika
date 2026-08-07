@@ -39,6 +39,21 @@ export const db = {
     return existing[grade] || null;
   },
 
+  getAllCategories: async (): Promise<string[]> => {
+    const defaultCats = ["Matematika", "Mantiq", "Analitik", "Verbal", "Kreativlik"];
+    const all = new Set(defaultCats);
+    
+    const existing = await localforage.getItem<Record<string, QuestionBlueprint[]>>(LOCAL_BLUEPRINT_KEY);
+    if (existing) {
+      Object.values(existing).forEach(bp => {
+        bp.forEach(q => {
+          if (q.category) all.add(q.category);
+        });
+      });
+    }
+    return Array.from(all);
+  },
+
   // Results
   async saveResult(result: StudentResult): Promise<void> {
     try {

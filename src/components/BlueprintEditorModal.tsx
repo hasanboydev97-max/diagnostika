@@ -1,8 +1,89 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { QuestionBlueprint, CognitiveSkill, Difficulty, ThinkingType } from '../lib/blueprint';
 import { GRADE_BLUEPRINTS } from '../lib/gradeBlueprints';
-import { X, Save, RotateCcw, Sparkles } from 'lucide-react';
+import { X, Save, RotateCcw, Sparkles, ChevronDown } from 'lucide-react';
 import { generateGradeBlueprint } from '../lib/gemini';
+import { db } from '../lib/db';
+
+function CustomCombobox({ 
+  value, 
+  onChange, 
+  options, 
+  placeholder 
+}: { 
+  value: string; 
+  onChange: (val: string) => void; 
+  options: string[]; 
+  placeholder: string 
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [inputValue, setInputValue] = useState(value);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => setInputValue(value), [value]);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const filteredOptions = options.filter(o => o.toLowerCase().includes(inputValue.toLowerCase()));
+
+  return (
+    <div className="relative w-full" ref={containerRef}>
+      <div className="relative flex items-center">
+        <input 
+          type="text"
+          value={inputValue}
+          onChange={e => {
+             setInputValue(e.target.value);
+             onChange(e.target.value);
+             setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          placeholder={placeholder}
+          className="w-full border-b border-black/10 bg-transparent py-2 pr-8 text-sm text-black focus:border-black outline-none transition-colors"
+        />
+        <button 
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="absolute right-0 top-1/2 -translate-y-1/2 p-1 hover:bg-black/5 rounded-full transition-colors text-gray-400 focus:outline-none flex items-center justify-center bg-black/5"
+        >
+          <ChevronDown className={`w-3 h-3 text-black transition-transform ${isOpen ? 'rotate-180' : ''}`} strokeWidth={3} />
+        </button>
+      </div>
+      
+      {isOpen && (
+        <div className="absolute z-50 top-full left-0 w-full mt-1 max-h-48 overflow-y-auto bg-white border border-black/10 shadow-xl rounded-xl py-1">
+          {filteredOptions.length > 0 ? (
+            filteredOptions.map(opt => (
+              <div 
+                key={opt}
+                onClick={() => {
+                  setInputValue(opt);
+                  onChange(opt);
+                  setIsOpen(false);
+                }}
+                className="px-4 py-2 text-sm text-black hover:bg-black/5 cursor-pointer transition-colors"
+              >
+                {opt}
+              </div>
+            ))
+          ) : (
+            <div className="px-4 py-2 text-xs text-gray-400 italic bg-gray-50 border-t border-b border-black/5">
+              Yangi kategoriya qo'shiladi: <br/><strong className="text-black text-sm">{inputValue}</strong>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface Props {
   grade: string;
@@ -14,6 +95,11 @@ interface Props {
 export default function BlueprintEditorModal({ grade, initialBlueprint, onSave, onClose }: Props) {
   const [blueprint, setBlueprint] = useState<QuestionBlueprint[]>(initialBlueprint);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    db.getAllCategories().then(cats => setAvailableCategories(cats));
+  }, []);
 
   const handleChange = (index: number, field: keyof QuestionBlueprint, value: any) => {
     const newBp = [...blueprint];
@@ -76,21 +162,12 @@ export default function BlueprintEditorModal({ grade, initialBlueprint, onSave, 
 
                 <div className="w-full md:w-40">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1 block">Kategoriya</label>
-                  <input 
-                    type="text"
-                    list="default-categories"
+                  <CustomCombobox 
                     value={q.category} 
-                    onChange={e => handleChange(i, 'category', e.target.value)}
+                    onChange={val => handleChange(i, 'category', val)}
+                    options={availableCategories}
                     placeholder="Masalan: Fizika"
-                    className="w-full border-b border-black/10 bg-transparent py-2 text-sm text-black focus:border-black outline-none transition-colors"
                   />
-                  <datalist id="default-categories">
-                    <option value="Matematika" />
-                    <option value="Mantiq" />
-                    <option value="Analitik" />
-                    <option value="Verbal" />
-                    <option value="Kreativlik" />
-                  </datalist>
                 </div>
 
                 <div className="w-full md:w-28">
