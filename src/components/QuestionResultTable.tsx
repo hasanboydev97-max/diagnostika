@@ -1,6 +1,7 @@
 
 import { CheckCircle2, XCircle } from 'lucide-react';
 import type { QuestionBlueprint } from '../lib/blueprint';
+import FormattedText from './FormattedText';
 
 interface Props {
   results?: Record<number, boolean>;
@@ -37,7 +38,7 @@ export default function QuestionResultTable({ results = {}, blueprint }: Props) 
                 <tr key={q.id} className={`transition-colors ${q.correct ? 'hover:bg-slate-50' : 'bg-amber-50 hover:bg-amber-100/50 border-l-2 md:border-l-4 border-l-warning'}`}>
                   <td className="px-2 py-3 md:px-6 md:py-4 font-medium text-slate-400">{String(q.id).padStart(2, '0')}</td>
                   <td className="px-2 py-3 md:px-6 md:py-4 font-medium min-w-[120px]">
-                    <div className="line-clamp-2">{q.topic}</div>
+                    <div className="line-clamp-2"><FormattedText content={q.topic} /></div>
                     {/* Show skill on mobile inside topic column */}
                     <div className="text-[9px] text-slate-500 mt-1 sm:hidden">{q.skill}</div>
                   </td>

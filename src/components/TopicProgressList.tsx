@@ -1,5 +1,6 @@
 import { CheckCircle2, AlertTriangle, TrendingUp } from 'lucide-react';
 import type { QuestionBlueprint } from '../lib/blueprint';
+import FormattedText from './FormattedText';
 
 interface Props {
   results?: Record<number, boolean>;
@@ -134,7 +135,7 @@ export default function TopicProgressList({ results = {}, blueprint }: Props) {
                       key={topic.name} 
                       className={`group px-3 py-2 ${t.classes.chipBg} border ${t.classes.chipBorder} rounded-xl transition-all hover:shadow-sm cursor-default flex items-center gap-3`}
                     >
-                      <span className="text-xs md:text-sm font-semibold text-slate-700">{topic.name}</span>
+                      <span className="text-xs md:text-sm font-semibold text-slate-700"><FormattedText content={topic.name} /></span>
                       <span className={`text-[10px] md:text-xs font-black ${t.classes.scoreText} bg-white px-2 py-0.5 rounded-md shadow-sm border ${t.classes.chipBorder}`}>
                         {topic.score}%
                       </span>

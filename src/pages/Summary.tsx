@@ -424,7 +424,7 @@ export default function Summary() {
         </motion.div>
         
         <motion.div initial={isGeneratingPdf ? "visible" : "hidden"} whileInView="visible" viewport={{ once: true, margin: "-50px" }} variants={sectionVariants}>
-          <RoadmapJourney />
+          <RoadmapJourney data={studentData.aiRoadmap} score={totalScore} />
         </motion.div>
         </div>
         
