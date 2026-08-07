@@ -1,15 +1,13 @@
 interface Props {
-  scores: {
-    math: number;
-    logic: number;
-    analytical: number;
-    verbal: number;
-    creativity: number;
-  };
+  scores: Record<string, number>;
   totalScore: number;
 }
 
 export default function ScoreBreakdownTable({ scores, totalScore }: Props) {
+  const categories = Object.keys(scores || {});
+  const numCategories = categories.length || 1;
+  const weightPercent = (100 / numCategories).toFixed(1);
+
   return (
     <section className="space-y-6">
       <div className="flex items-center gap-2 text-primary text-sm font-bold tracking-wider">
@@ -30,36 +28,18 @@ export default function ScoreBreakdownTable({ scores, totalScore }: Props) {
               </tr>
             </thead>
             <tbody className="divide-y divide-border text-neutral-main text-xs md:text-sm">
-              <tr className="hover:bg-slate-50 transition-colors">
-                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">Matematika</td>
-                <td className="px-3 py-3 md:px-6 md:py-4">{scores.math}/100</td>
-                <td className="px-3 py-3 md:px-6 md:py-4 text-slate-500">× 20%</td>
-                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">= {(scores.math * 0.2).toFixed(1)}</td>
-              </tr>
-              <tr className="hover:bg-slate-50 transition-colors">
-                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">Mantiq</td>
-                <td className="px-3 py-3 md:px-6 md:py-4">{scores.logic}/100</td>
-                <td className="px-3 py-3 md:px-6 md:py-4 text-slate-500">× 20%</td>
-                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">= {(scores.logic * 0.2).toFixed(1)}</td>
-              </tr>
-              <tr className="hover:bg-slate-50 transition-colors">
-                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">Analitik fikrlash</td>
-                <td className="px-3 py-3 md:px-6 md:py-4">{scores.analytical}/100</td>
-                <td className="px-3 py-3 md:px-6 md:py-4 text-slate-500">× 20%</td>
-                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">= {(scores.analytical * 0.2).toFixed(1)}</td>
-              </tr>
-              <tr className="hover:bg-slate-50 transition-colors">
-                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">Og'zaki nutq</td>
-                <td className="px-3 py-3 md:px-6 md:py-4">{scores.verbal}/100</td>
-                <td className="px-3 py-3 md:px-6 md:py-4 text-slate-500">× 20%</td>
-                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">= {(scores.verbal * 0.2).toFixed(1)}</td>
-              </tr>
-              <tr className="hover:bg-slate-50 transition-colors">
-                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">Kreativlik</td>
-                <td className="px-3 py-3 md:px-6 md:py-4">{scores.creativity}/100</td>
-                <td className="px-3 py-3 md:px-6 md:py-4 text-slate-500">× 20%</td>
-                <td className="px-3 py-3 md:px-6 md:py-4 font-medium">= {(scores.creativity * 0.2).toFixed(1)}</td>
-              </tr>
+              {categories.map((category) => {
+                const rawScore = scores[category];
+                const impact = (rawScore / numCategories).toFixed(1);
+                return (
+                  <tr key={category} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-3 py-3 md:px-6 md:py-4 font-medium">{category}</td>
+                    <td className="px-3 py-3 md:px-6 md:py-4">{rawScore}/100</td>
+                    <td className="px-3 py-3 md:px-6 md:py-4 text-slate-500">× {weightPercent}%</td>
+                    <td className="px-3 py-3 md:px-6 md:py-4 font-medium">= {impact}</td>
+                  </tr>
+                );
+              })}
               <tr className="bg-slate-50 font-bold border-t-2 border-border">
                 <td className="px-3 py-3 md:px-6 md:py-4">Umumiy o'rtacha ball</td>
                 <td className="px-3 py-3 md:px-6 md:py-4"></td>
@@ -71,7 +51,7 @@ export default function ScoreBreakdownTable({ scores, totalScore }: Props) {
         </div>
       </div>
       <div className="text-sm text-neutral-secondary bg-slate-50 p-4 rounded-xl border border-border">
-        <strong>Formula:</strong> Har bir fanning bahosi barcha fanlar yig'indisining 20% qismini tashkil qiladi.
+        <strong>Formula:</strong> Har bir fanning bahosi barcha fanlar yig'indisining {weightPercent}% qismini tashkil qiladi.
       </div>
     </section>
   );

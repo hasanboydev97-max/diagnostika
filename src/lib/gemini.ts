@@ -19,16 +19,14 @@ export const generateDiagnosticSummary = async (studentName: string, grade: stri
   const failedSkills = [...new Set(failedQuestions.map(q => q.skill))].join(', ');
   const failedDifficulties = [...new Set(failedQuestions.map(q => q.difficulty))].join(', ');
 
+  const scoresText = Object.entries(scores).map(([cat, score]) => `- ${cat}: ${score}%`).join('\n');
+
   const prompt = `Siz malakali o'qituvchi va psixologsiz. Quyidagi o'quvchining maktab kirish imtihonidagi test natijalarini tahlil qiling va 2 qismdan iborat xulosa yozing.
 O'quvchi ismi: ${studentName}
 O'quvchi sinfi: ${grade}-sinf
 
 Umumiy natijalar:
-- Matematika: ${scores.math}%
-- Mantiq: ${scores.logic}%
-- Analitik fikrlash: ${scores.analytical}%
-- Og'zaki nutq (Verbal): ${scores.verbal}%
-- Kreativlik: ${scores.creativity}%
+${scoresText}
 
 O'quvchi xato qilgan spesifik joylar:
 - Xato qilingan mavzular: ${failedTopics || 'Deyarli yo\'q, juda yaxshi'}

@@ -1,24 +1,40 @@
 import type { QuestionBlueprint } from '../lib/blueprint';
 import { motion } from 'framer-motion';
+
 interface Props {
   results?: Record<number, boolean>;
   blueprint: QuestionBlueprint[];
 }
 
-const categories = [
-  { key: 'math',       label: 'Matematika',       color: '#059669' },
-  { key: 'logic',      label: 'Mantiq',            color: '#0284c7' },
-  { key: 'analytical', label: 'Analitik fikrlash', color: '#d97706' },
-  { key: 'verbal',     label: "Og'zaki nutq",      color: '#7c3aed' },
-  { key: 'creativity', label: 'Kreativlik',        color: '#e11d48' },
+const PALETTE = [
+  '#059669', // Emerald
+  '#0284c7', // Sky
+  '#d97706', // Amber
+  '#7c3aed', // Violet
+  '#e11d48', // Rose
+  '#0891b2', // Cyan
+  '#4f46e5', // Indigo
+  '#ea580c', // Orange
 ];
 
 export default function SubjectDonutCard({ results = {}, blueprint }: Props) {
-  const cards = categories.map(cat => {
-    const qs = blueprint.filter(q => q.category === cat.key);
+  // Extract dynamic categories and calculate scores
+  const uniqueCategories = Array.from(new Set(blueprint.map(q => q.category)));
+  
+  const ObjectCards = uniqueCategories.map((cat, index) => {
+    const qs = blueprint.filter(q => q.category === cat);
     const correct = qs.filter(q => results[q.id]).length;
     const value = qs.length > 0 ? Math.round((correct / qs.length) * 100) : 0;
-    return { ...cat, value, correct, total: qs.length };
+    const color = PALETTE[index % PALETTE.length];
+    
+    return { 
+      key: cat, 
+      label: cat, 
+      color, 
+      value, 
+      correct, 
+      total: qs.length 
+    };
   });
 
   return (
@@ -36,9 +52,9 @@ export default function SubjectDonutCard({ results = {}, blueprint }: Props) {
           hidden: { opacity: 0 },
           show: { opacity: 1, transition: { staggerChildren: 0.1 } }
         }}
-        className="grid grid-cols-2 md:grid-cols-5 gap-4"
+        className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"
       >
-        {cards.map((card) => {
+        {ObjectCards.map((card) => {
           const r = 36;
           const circ = 2 * Math.PI * r;
           const offset = circ - (card.value / 100) * circ;

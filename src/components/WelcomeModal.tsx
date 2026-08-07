@@ -159,14 +159,10 @@ export default function WelcomeModal({
                     </div>
 
                     <div className="grid grid-cols-3 gap-2 md:gap-4 w-full relative z-10">
-                      {[
-                        { label: 'Matematika', val: scores?.math || 0 },
-                        { label: 'Mantiq', val: scores?.logic || 0 },
-                        { label: 'Analitik', val: scores?.analytical || 0 }
-                      ].map((s, idx) => (
+                      {Object.entries(scores || {}).slice(0, 3).map(([label, val], idx) => (
                         <div key={idx} className="flex flex-col items-center justify-center p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/5 border border-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] hover:bg-white/10 transition-colors">
-                          <span className="text-2xl md:text-3xl font-bold text-white mb-1 leading-none">{s.val}</span>
-                          <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center leading-tight mt-1">{s.label}</span>
+                          <span className="text-2xl md:text-3xl font-bold text-white mb-1 leading-none">{val as number}</span>
+                          <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center leading-tight mt-1 truncate w-full px-1">{label}</span>
                         </div>
                       ))}
                     </div>

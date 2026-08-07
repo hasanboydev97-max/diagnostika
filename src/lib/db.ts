@@ -12,13 +12,7 @@ export interface StudentResult {
   studentName: string;
   grade: string;
   blueprintSnapshot: QuestionBlueprint[];
-  scores: {
-    math: number;
-    logic: number;
-    analytical: number;
-    verbal: number;
-    creativity: number;
-  };
+  scores: Record<string, number>;
   totalScore: number;
   questionResults: Record<number, boolean>;
   aiSummaryText?: string;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { QuestionBlueprint, SubjectCategory, CognitiveSkill, Difficulty, ThinkingType } from '../lib/blueprint';
+import type { QuestionBlueprint, CognitiveSkill, Difficulty, ThinkingType } from '../lib/blueprint';
 import { GRADE_BLUEPRINTS } from '../lib/gradeBlueprints';
 import { X, Save, RotateCcw, Sparkles } from 'lucide-react';
 import { generateGradeBlueprint } from '../lib/gemini';
@@ -76,17 +76,21 @@ export default function BlueprintEditorModal({ grade, initialBlueprint, onSave, 
 
                 <div className="w-full md:w-40">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1 block">Kategoriya</label>
-                  <select 
+                  <input 
+                    type="text"
+                    list="default-categories"
                     value={q.category} 
-                    onChange={e => handleChange(i, 'category', e.target.value as SubjectCategory)}
-                    className="w-full border-b border-black/10 bg-transparent py-2 text-sm text-black focus:border-black outline-none transition-colors cursor-pointer"
-                  >
-                    <option value="math">Matematika</option>
-                    <option value="logic">Mantiq</option>
-                    <option value="analytical">Analitik</option>
-                    <option value="verbal">Verbal</option>
-                    <option value="creativity">Kreativlik</option>
-                  </select>
+                    onChange={e => handleChange(i, 'category', e.target.value)}
+                    placeholder="Masalan: Fizika"
+                    className="w-full border-b border-black/10 bg-transparent py-2 text-sm text-black focus:border-black outline-none transition-colors"
+                  />
+                  <datalist id="default-categories">
+                    <option value="Matematika" />
+                    <option value="Mantiq" />
+                    <option value="Analitik" />
+                    <option value="Verbal" />
+                    <option value="Kreativlik" />
+                  </datalist>
                 </div>
 
                 <div className="w-full md:w-28">

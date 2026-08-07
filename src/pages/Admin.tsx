@@ -64,19 +64,18 @@ export default function Admin() {
   };
 
   const calculateScores = () => {
-    const calc = (category: string) => {
+    const scores: Record<string, number> = {};
+    const categories = Array.from(new Set(currentBlueprint.map(q => q.category)));
+    categories.forEach(category => {
       const qs = currentBlueprint.filter(q => q.category === category);
-      if (qs.length === 0) return 0;
-      const correct = qs.filter(q => questionResults[q.id]).length;
-      return Math.round((correct / qs.length) * 100);
-    };
-    return {
-      math: calc('math'),
-      logic: calc('logic'),
-      analytical: calc('analytical'),
-      verbal: calc('verbal'),
-      creativity: calc('creativity')
-    };
+      if (qs.length === 0) {
+        scores[category] = 0;
+      } else {
+        const correct = qs.filter(q => questionResults[q.id]).length;
+        scores[category] = Math.round((correct / qs.length) * 100);
+      }
+    });
+    return scores;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,7 +86,9 @@ export default function Admin() {
     
     // Calculate individual category scores
     const calculatedScores = calculateScores();
-    const totalScore = Math.round((calculatedScores.math + calculatedScores.logic + calculatedScores.analytical + calculatedScores.verbal + calculatedScores.creativity) / 5);
+    const categoriesCount = Object.keys(calculatedScores).length || 1;
+    const totalScoreSum = Object.values(calculatedScores).reduce((a, b) => a + b, 0);
+    const totalScore = Math.round(totalScoreSum / categoriesCount);
     
     // Call Gemini API
     const aiResponse = await generateDiagnosticSummary(studentName, grade, calculatedScores, questionResults, currentBlueprint);
