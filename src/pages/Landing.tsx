@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Plus, User, GraduationCap, Settings } from 'lucide-react';
-import MeshGradient from '../components/ui/MeshGradient';
+import { ArrowRight, Plus, User, GraduationCap, Settings, Palette, Check, X } from 'lucide-react';
+import MeshGradient, { palettes } from '../components/ui/MeshGradient';
 
 const containerVariants: any = {
   hidden: { opacity: 0 },
@@ -21,9 +21,23 @@ export default function Landing() {
   const navigate = useNavigate();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isMinimal, setIsMinimal] = useState(() => {
+    return localStorage.getItem('bg-minimal') === 'true';
+  });
+  const [paletteIndex, setPaletteIndex] = useState(() => {
+    const saved = localStorage.getItem('bg-palette');
+    return saved ? parseInt(saved, 10) : new Date().getDay();
+  });
+
+  useEffect(() => {
+    localStorage.setItem('bg-minimal', isMinimal.toString());
+    localStorage.setItem('bg-palette', paletteIndex.toString());
+  }, [isMinimal, paletteIndex]);
+
   return (
     <div className="min-h-screen text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
-      <MeshGradient />
+      <MeshGradient isMinimal={isMinimal} paletteIndex={paletteIndex} />
 
 
       <div className="max-w-5xl mx-auto px-6 pt-16 pb-8 md:pt-32 md:pb-12 flex flex-col gap-16 md:gap-32 relative z-10 pointer-events-none">
@@ -197,6 +211,85 @@ export default function Landing() {
           <p className="text-sm text-neutral-500 font-medium">© {new Date().getFullYear()} HB. Barcha huquqlar himoyalangan.</p>
         </footer>
       </div>
+
+      {/* THEME SETTINGS BUTTON & POPOVER */}
+      <div className="fixed bottom-6 right-6 z-50 pointer-events-auto flex flex-col items-end">
+        <AnimatePresence>
+          {isSettingsOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="mb-4 bg-white/90 backdrop-blur-xl border border-black/10 rounded-2xl shadow-2xl w-72 overflow-hidden"
+            >
+              <div className="p-4 border-b border-black/5 flex items-center justify-between">
+                <span className="font-medium text-sm">Theme Settings</span>
+                <button onClick={() => setIsSettingsOpen(false)} className="text-gray-400 hover:text-black transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="p-4 space-y-6">
+                
+                {/* Type Selection */}
+                <div className="space-y-3">
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Style</span>
+                  <div className="flex bg-gray-100 p-1 rounded-lg">
+                    <button
+                      onClick={() => setIsMinimal(false)}
+                      className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${!isMinimal ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-black'}`}
+                    >
+                      Mesh Gradient
+                    </button>
+                    <button
+                      onClick={() => setIsMinimal(true)}
+                      className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${isMinimal ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-black'}`}
+                    >
+                      Minimal (Pure)
+                    </button>
+                  </div>
+                </div>
+
+                {/* Color Selection */}
+                <AnimatePresence>
+                  {!isMinimal && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="space-y-3 overflow-hidden"
+                    >
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Colors</span>
+                      <div className="grid grid-cols-4 gap-2">
+                        {palettes.map((p, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => setPaletteIndex(idx)}
+                            className={`w-full aspect-square rounded-full flex items-center justify-center transition-all ${paletteIndex === idx ? 'ring-2 ring-black ring-offset-2' : 'hover:scale-110'}`}
+                            style={{ background: `linear-gradient(135deg, ${p.colors[0]}, ${p.colors[1]})` }}
+                            title={p.name}
+                          >
+                            {paletteIndex === idx && <Check className="w-4 h-4 text-white drop-shadow-md" />}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <button
+          onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+          className="w-12 h-12 bg-white text-black border border-black/10 rounded-full shadow-lg flex items-center justify-center hover:scale-105 hover:shadow-xl transition-all"
+        >
+          <Palette className="w-5 h-5" />
+        </button>
+      </div>
+
     </div>
   );
 }
