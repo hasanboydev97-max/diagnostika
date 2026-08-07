@@ -42,26 +42,26 @@ export default function MeshGradient({
 
       {/* 1. Blob 1 */}
       <div 
-        className="absolute w-[400px] md:w-[700px] h-[400px] md:h-[700px] mix-blend-multiply filter blur-[90px] md:blur-[120px] opacity-70 animate-blob1 transition-colors duration-1000 ease-in-out"
-        style={{ top: '-10%', left: '-10%', backgroundColor: colors[0] }}
+        className="absolute w-[400px] md:w-[700px] h-[400px] md:h-[700px] mix-blend-multiply opacity-70 animate-blob1 transition-colors duration-1000 ease-in-out"
+        style={{ top: '-10%', left: '-10%', background: `radial-gradient(circle, ${colors[0]} 0%, transparent 60%)` }}
       ></div>
       
       {/* 2. Blob 2 */}
       <div 
-        className="absolute w-[450px] md:w-[750px] h-[450px] md:h-[750px] mix-blend-multiply filter blur-[90px] md:blur-[120px] opacity-70 animate-blob2 transition-colors duration-1000 ease-in-out" 
-        style={{ top: '-5%', right: '-10%', backgroundColor: colors[1] }}
+        className="absolute w-[450px] md:w-[750px] h-[450px] md:h-[750px] mix-blend-multiply opacity-70 animate-blob2 transition-colors duration-1000 ease-in-out" 
+        style={{ top: '-5%', right: '-10%', background: `radial-gradient(circle, ${colors[1]} 0%, transparent 60%)` }}
       ></div>
 
       {/* 3. Blob 3 */}
       <div 
-        className="absolute w-[350px] md:w-[600px] h-[350px] md:h-[600px] mix-blend-multiply filter blur-[90px] md:blur-[120px] opacity-70 animate-blob3 transition-colors duration-1000 ease-in-out" 
-        style={{ bottom: '-20%', left: '20%', backgroundColor: colors[2] }}
+        className="absolute w-[350px] md:w-[600px] h-[350px] md:h-[600px] mix-blend-multiply opacity-70 animate-blob3 transition-colors duration-1000 ease-in-out" 
+        style={{ bottom: '-20%', left: '20%', background: `radial-gradient(circle, ${colors[2]} 0%, transparent 60%)` }}
       ></div>
       
       {/* 4. Blob 4 */}
       <div 
-        className="absolute w-[300px] md:w-[500px] h-[300px] md:h-[500px] mix-blend-multiply filter blur-[90px] md:blur-[120px] opacity-60 animate-blob1 transition-colors duration-1000 ease-in-out" 
-        style={{ bottom: '-10%', right: '10%', animationDelay: '5s', backgroundColor: colors[3] }}
+        className="absolute w-[300px] md:w-[500px] h-[300px] md:h-[500px] mix-blend-multiply opacity-60 animate-blob1 transition-colors duration-1000 ease-in-out" 
+        style={{ bottom: '-10%', right: '10%', animationDelay: '5s', background: `radial-gradient(circle, ${colors[3]} 0%, transparent 60%)` }}
       ></div>
       
     </div>

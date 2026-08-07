@@ -95,19 +95,24 @@ export default function WelcomeModal({
           animate="visible"
           exit="exit"
           variants={containerVariants}
-          className="fixed inset-0 z-50 overflow-y-auto overflow-x-hidden bg-slate-950/90 backdrop-blur-3xl"
+          // Optimized: Removed backdrop-blur-3xl which causes massive GPU lag on mousemove
+          className="fixed inset-0 z-50 overflow-y-auto overflow-x-hidden bg-slate-950/98"
         >
-          {/* Animated Premium Aurora Background Blobs */}
+          {/* Animated Premium Aurora Background Blobs - OPTIMIZED */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <motion.div 
               animate={{ rotate: 360, scale: [1, 1.2, 1] }} 
               transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-              className={`absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full blur-[120px] opacity-30 mix-blend-screen ${isPassed ? 'bg-blue-600' : 'bg-rose-900'}`}
+              // Optimized: Replaced CSS blur-[120px] with a native radial-gradient
+              className="absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full mix-blend-screen opacity-50"
+              style={{ background: `radial-gradient(circle, ${isPassed ? '#2563eb' : '#881337'} 0%, transparent 60%)` }}
             />
             <motion.div 
               animate={{ rotate: -360, scale: [1, 1.3, 1] }} 
               transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-              className={`absolute -bottom-[20%] -right-[10%] w-[60vw] h-[60vw] rounded-full blur-[100px] opacity-20 mix-blend-screen ${isPassed ? 'bg-indigo-500' : 'bg-red-800'}`}
+              // Optimized: Replaced CSS blur-[100px] with a native radial-gradient
+              className="absolute -bottom-[20%] -right-[10%] w-[60vw] h-[60vw] rounded-full mix-blend-screen opacity-40"
+              style={{ background: `radial-gradient(circle, ${isPassed ? '#6366f1' : '#991b1b'} 0%, transparent 60%)` }}
             />
             {/* Noise Texture Overlay */}
             <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
