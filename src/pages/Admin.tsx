@@ -7,6 +7,7 @@ import type { QuestionBlueprint } from '../lib/blueprint';
 import { GRADE_BLUEPRINTS } from '../lib/gradeBlueprints';
 import { Check, Settings2, Users, PlusCircle, ChevronDown } from 'lucide-react';
 import BlueprintEditorModal from '../components/BlueprintEditorModal';
+import MeshGradient from '../components/ui/MeshGradient';
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<'new' | 'dashboard'>('new');
@@ -116,9 +117,12 @@ export default function Admin() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white pb-32">
-      <div className="max-w-[1600px] mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 md:mb-8 gap-8 border-b border-black/10 pb-8">
+    <div className="min-h-screen relative font-sans text-[#111111] selection:bg-black selection:text-white pb-32 overflow-x-hidden">
+      <MeshGradient />
+      
+      <div className="max-w-[1600px] mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32 relative z-10">
+        <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-12 rounded-3xl">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 md:mb-8 gap-8 border-b border-black/10 pb-8">
           <div>
             <h1 className="text-4xl md:text-5xl font-medium tracking-tight">Admin Panel</h1>
             <p className="text-sm text-gray-500 mt-2">O'quvchi natijalarini boshqarish va diagnostika yaratish.</p>
@@ -159,7 +163,7 @@ export default function Admin() {
                           {r.totalScore}%
                         </span>
                       </div>
-                      <div className="flex justify-between items-center bg-[#f8f8f8] p-4">
+                      <div className="flex justify-between items-center bg-white/50 backdrop-blur-sm p-4 rounded-xl border border-white/50">
                         <div>
                           <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">ID / LOGIN</div>
                           <div className="font-mono text-sm tracking-wider text-black">{r.id}</div>
@@ -204,7 +208,7 @@ export default function Admin() {
                             show: { opacity: 1, y: 0, transition: { duration: 0.3 } }
                           }}
                           key={r.id} 
-                          className="group hover:bg-[#f8f8f8] transition-colors border-b border-black/10"
+                          className="group hover:bg-white/50 transition-colors border-b border-black/10"
                         >
                           <td className="py-6 pl-4 md:pl-0 group-hover:pl-4 transition-all duration-300">
                             <div className="text-lg md:text-xl font-medium tracking-tight capitalize">{r.studentName}</div>
@@ -246,11 +250,11 @@ export default function Admin() {
               </div>
               
               <div className="flex flex-col sm:flex-row justify-center gap-6">
-                <div className="p-6 md:p-8 border border-black/10 flex-1 max-w-[280px] mx-auto sm:mx-0 w-full bg-[#f8f8f8]">
+                <div className="p-6 md:p-8 border border-white/50 bg-white/50 backdrop-blur-md rounded-2xl flex-1 max-w-[280px] mx-auto sm:mx-0 w-full shadow-sm">
                   <div className="text-[10px] font-bold text-gray-500 mb-3 uppercase tracking-[0.3em]">Login (ID)</div>
                   <div className="text-4xl md:text-5xl font-medium tracking-widest text-black select-all">{generatedCredentials.id}</div>
                 </div>
-                <div className="p-6 md:p-8 border border-black/10 flex-1 max-w-[280px] mx-auto sm:mx-0 w-full bg-[#f8f8f8]">
+                <div className="p-6 md:p-8 border border-white/50 bg-white/50 backdrop-blur-md rounded-2xl flex-1 max-w-[280px] mx-auto sm:mx-0 w-full shadow-sm">
                   <div className="text-[10px] font-bold text-gray-500 mb-3 uppercase tracking-[0.3em]">Parol (PIN)</div>
                   <div className="text-4xl md:text-5xl font-medium tracking-widest text-black select-all">{generatedCredentials.pin}</div>
                 </div>
@@ -432,6 +436,7 @@ export default function Admin() {
             </form>
           )
         )}
+        </div>
       </div>
 
       {isEditorOpen && (

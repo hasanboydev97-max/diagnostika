@@ -4,6 +4,7 @@ import { Loader2, ArrowLeft, AlertTriangle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import FormattedText from '../../components/FormattedText';
+import MeshGradient from '../../components/ui/MeshGradient';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -230,23 +231,25 @@ export default function TakeTest() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex flex-col justify-center items-center font-sans">
-        <div className="w-5 h-5 border-2 border-zinc-200 border-t-zinc-900 rounded-full animate-spin mb-3"></div>
-        <p className="text-zinc-500 font-medium text-[11px] uppercase tracking-wider">Yuklanmoqda</p>
+      <div className="min-h-screen relative bg-[#fdfdfd] flex flex-col justify-center items-center font-sans overflow-hidden">
+        <MeshGradient />
+        <div className="w-5 h-5 border-2 border-white/50 border-t-black rounded-full animate-spin mb-3 relative z-10"></div>
+        <p className="text-gray-500 font-medium text-[11px] uppercase tracking-wider relative z-10">Yuklanmoqda</p>
       </div>
     );
   }
 
   if (timeStatus === 'early') {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-6 text-zinc-900 selection:bg-zinc-200 selection:text-black">
-        <div className="border border-zinc-200 p-8 rounded-md max-w-sm w-full text-center">
-          <Clock className="mx-auto text-zinc-400 mb-4" size={32} />
-          <h1 className="text-lg font-semibold text-zinc-900 mb-2">Test hali ochilmagan</h1>
-          <p className="text-zinc-500 text-sm mb-6">
+      <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex items-center justify-center p-6 text-[#111111] selection:bg-black selection:text-white">
+        <MeshGradient />
+        <div className="border border-white/50 bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 rounded-2xl max-w-sm w-full text-center relative z-10">
+          <Clock className="mx-auto text-gray-400 mb-4" size={32} />
+          <h1 className="text-lg font-semibold text-black mb-2">Test hali ochilmagan</h1>
+          <p className="text-gray-500 text-sm mb-6">
             Ushbu test <strong>{new Date(test.startTime).toLocaleString('uz-UZ')}</strong> sanasida ochiladi.
           </p>
-          <button onClick={() => navigate('/online-tests')} className="text-xs font-medium text-zinc-900 hover:underline">
+          <button onClick={() => navigate('/online-tests')} className="text-xs font-medium text-black hover:underline">
             Ortga qaytish
           </button>
         </div>
@@ -256,14 +259,15 @@ export default function TakeTest() {
 
   if (timeStatus === 'closed') {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-6 text-zinc-900 selection:bg-zinc-200 selection:text-black">
-        <div className="border border-zinc-200 p-8 rounded-md max-w-sm w-full text-center">
-          <AlertTriangle className="mx-auto text-zinc-400 mb-4" size={32} />
-          <h1 className="text-lg font-semibold text-zinc-900 mb-2">Test yopilgan</h1>
-          <p className="text-zinc-500 text-sm mb-6">
+      <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex items-center justify-center p-6 text-[#111111] selection:bg-black selection:text-white">
+        <MeshGradient />
+        <div className="border border-white/50 bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 rounded-2xl max-w-sm w-full text-center relative z-10">
+          <AlertTriangle className="mx-auto text-gray-400 mb-4" size={32} />
+          <h1 className="text-lg font-semibold text-black mb-2">Test yopilgan</h1>
+          <p className="text-gray-500 text-sm mb-6">
             Ushbu test qabul qilishni to'xtatgan.
           </p>
-          <button onClick={() => navigate('/online-tests')} className="text-xs font-medium text-zinc-900 hover:underline">
+          <button onClick={() => navigate('/online-tests')} className="text-xs font-medium text-black hover:underline">
             Ortga qaytish
           </button>
         </div>
@@ -273,35 +277,36 @@ export default function TakeTest() {
 
   if (!started) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-6 font-sans text-zinc-900 selection:bg-zinc-200 selection:text-black">
-        <div className="border border-zinc-200 p-8 rounded-md max-w-sm w-full bg-white shadow-sm">
+      <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex items-center justify-center p-6 font-sans text-[#111111] selection:bg-black selection:text-white">
+        <MeshGradient />
+        <div className="border border-white/50 bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 rounded-3xl max-w-sm w-full relative z-10">
           <button 
             onClick={() => navigate('/online-tests')}
-            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-900 transition-colors mb-6 font-medium"
+            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-black transition-colors mb-6 font-medium"
           >
             <ArrowLeft size={14} /> Ortga
           </button>
           
-          <h1 className="text-xl font-semibold text-zinc-900 mb-1 leading-tight">{test.title}</h1>
-          <div className="flex items-center gap-2 text-xs text-zinc-500 mb-6">
-            <span className="font-medium px-1.5 py-0.5 bg-zinc-100 border border-zinc-200 rounded">{test.subject}</span>
+          <h1 className="text-xl font-semibold text-black mb-1 leading-tight">{test.title}</h1>
+          <div className="flex items-center gap-2 text-xs text-gray-500 mb-6">
+            <span className="font-medium px-1.5 py-0.5 bg-white/50 border border-white/50 rounded">{test.subject}</span>
             <span>•</span>
             <span>{test.questions.length} savol</span>
           </div>
           
-          <div className="bg-zinc-50 border border-zinc-200 p-3 rounded-md mb-6 text-xs text-zinc-700 leading-relaxed">
-            <strong className="text-zinc-900">Qat'iy ogohlantirish:</strong> Testni boshlagach, boshqa oynaga o'tish (tab almashtirish) qat'iyan man etiladi.
+          <div className="bg-white/50 backdrop-blur-md border border-white/50 p-3 rounded-xl mb-6 text-xs text-gray-700 leading-relaxed shadow-sm">
+            <strong className="text-black">Qat'iy ogohlantirish:</strong> Testni boshlagach, boshqa oynaga o'tish (tab almashtirish) qat'iyan man etiladi.
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">To'liq ismingizni kiriting</label>
+              <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">To'liq ismingizni kiriting</label>
               <input 
                 type="text" 
                 value={studentName}
                 onChange={e => setStudentName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleStart()}
-                className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-md text-sm placeholder-zinc-400 focus:outline-none focus:border-zinc-900 transition-colors"
+                className="w-full px-4 py-3 bg-white/60 backdrop-blur-md border border-white/50 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:border-white focus:bg-white/80 transition-all shadow-sm"
                 placeholder="Masalan: Aliyev Vali"
                 autoFocus
               />
@@ -309,7 +314,7 @@ export default function TakeTest() {
             
             <button 
               onClick={handleStart}
-              className="w-full py-2.5 bg-zinc-900 text-white rounded-md text-sm font-medium hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-900 shadow-sm"
+              className="w-full py-3.5 bg-black text-white rounded-xl text-sm font-semibold hover:bg-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black shadow-sm"
             >
               Testni Boshlash
             </button>
@@ -330,22 +335,24 @@ export default function TakeTest() {
 
   return (
     <div 
-      className="min-h-screen bg-white text-zinc-900 font-sans flex flex-col select-none selection:bg-zinc-200 selection:text-black"
+      className="min-h-screen relative overflow-hidden bg-[#fdfdfd] text-[#111111] font-sans flex flex-col select-none selection:bg-black selection:text-white pb-32"
       onCopy={(e) => e.preventDefault()}
       onCut={(e) => e.preventDefault()}
       onPaste={(e) => e.preventDefault()}
       onContextMenu={(e) => e.preventDefault()}
     >
+      <MeshGradient />
+      
       {/* Progress Bar */}
-      <div className="h-[2px] w-full bg-zinc-100">
+      <div className="h-[3px] w-full bg-white/30 backdrop-blur-sm relative z-20">
         <div 
-          className="h-full bg-zinc-900 transition-all duration-300 ease-out"
+          className="h-full bg-black transition-all duration-300 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
 
       {/* Header */}
-      <header className="border-b border-zinc-200 px-6 h-14 flex items-center justify-between sticky top-0 bg-white z-10">
+      <header className="border-b border-white/50 px-6 h-16 flex items-center justify-between sticky top-0 bg-white/60 backdrop-blur-xl z-20 shadow-sm">
         <div className="flex flex-col">
           <h2 className="text-xs font-semibold text-zinc-900 leading-tight">{test.title}</h2>
           <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">{studentName}</p>

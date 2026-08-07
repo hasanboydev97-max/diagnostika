@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getToken, getTeacher } from '../lib/auth';
+import MeshGradient from '../components/ui/MeshGradient';
 
 const containerVariants: any = {
   hidden: { opacity: 0 },
@@ -114,9 +115,12 @@ export default function SuperAdmin() {
   );
 
   return (
-    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white pb-32">
-      <div className="max-w-[1600px] mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32">
-        
+    <div className="min-h-screen relative font-sans text-[#111111] selection:bg-black selection:text-white pb-32 overflow-x-hidden">
+      <MeshGradient />
+      
+      <div className="max-w-[1600px] mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32 relative z-10">
+        <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-12 rounded-3xl">
+          
         <section className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-24">
           
           {/* LEFT SIDEBAR (STICKY) */}
@@ -422,8 +426,9 @@ export default function SuperAdmin() {
               </motion.div>
             </AnimatePresence>
           </div>
-
+          {/* END MAIN CONTENT */}
         </section>
+        </div>
       </div>
     </div>
   );

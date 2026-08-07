@@ -16,6 +16,7 @@ import SkillsRadarChart from '../components/SkillsRadarChart';
 import ThinkingTypeGraph from '../components/ThinkingTypeGraph';
 import RoadmapJourney from '../components/RoadmapJourney';
 import { QUESTIONS_BLUEPRINT } from '../lib/blueprint';
+import MeshGradient from '../components/ui/MeshGradient';
 
 export default function Summary() {
   const { resultId } = useParams();
@@ -178,7 +179,9 @@ export default function Summary() {
   const maxRange = Math.min(100, totalScore + 3);
 
   return (
-    <div className="min-h-screen bg-background-main pb-4">
+    <div className="min-h-screen relative font-sans text-[#111111] overflow-x-hidden bg-[#fdfdfd]">
+      <MeshGradient />
+      
       {/* Welcome Overlay */}
       {showWelcome && (
         <WelcomeModal 
@@ -191,10 +194,11 @@ export default function Summary() {
         />
       )}
 
-      <div ref={printRef} className="print-container bg-background-main">
+      <div ref={printRef} className="print-container relative z-10 pb-24">
         {/* Main Content */}
         <div className="max-w-[1440px] mx-auto px-4 md:px-12 pt-4 md:pt-12 space-y-6 md:space-y-16">
-          <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 sm:pb-8 border-b border-border gap-4">
+          <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-12 rounded-[2rem]">
+          <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 sm:pb-8 border-b border-black/10 gap-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-lg border border-slate-200 flex items-center justify-center font-bold text-xl tracking-tighter bg-white text-black shadow-sm">
               HB.
@@ -247,7 +251,7 @@ export default function Summary() {
           <h2 className="text-lg md:text-2xl font-bold text-neutral-main font-display mb-1 md:mb-2">Umumiy daraja</h2>
           <p className="text-xs md:text-base text-neutral-secondary mb-4 md:mb-8">Umumiy ball qaysi toifada — va e'tiborsizlik qayergacha yetadi.</p>
           
-          <div className="bg-white rounded-2xl shadow-sm border border-border p-4 md:p-10">
+          <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-sm border border-white/50 p-4 md:p-10">
             {/* Mobile: big score top, then 2-col grid below */}
             <div className="md:hidden flex flex-col items-center text-center pb-4 mb-4 border-b border-slate-100">
               <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Umumiy natija</div>
@@ -402,6 +406,7 @@ export default function Summary() {
         <motion.div initial={isGeneratingPdf ? "visible" : "hidden"} whileInView="visible" viewport={{ once: true, margin: "-50px" }} variants={sectionVariants}>
           <RoadmapJourney />
         </motion.div>
+        </div>
         
         <Footer onPrint={handleDownloadPdf} isGeneratingPdf={isGeneratingPdf} />
       </div>

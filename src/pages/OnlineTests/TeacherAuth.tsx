@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { setToken, setTeacher } from '../../lib/auth';
 import { ArrowLeft } from 'lucide-react';
+import MeshGradient from '../../components/ui/MeshGradient';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -55,8 +56,8 @@ export default function TeacherAuth() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] flex flex-col justify-center py-12 px-[15px] sm:px-6 lg:px-8 font-sans relative">
-      
+    <div className="min-h-screen relative font-sans text-[#111111] overflow-hidden flex flex-col justify-center py-12 px-[15px] sm:px-6 lg:px-8 bg-[#fdfdfd]">
+      <MeshGradient />
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <button 
           onClick={() => navigate('/')} 
@@ -67,7 +68,7 @@ export default function TeacherAuth() {
         </button>
 
         <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 md:w-20 md:h-20 rounded-none mx-auto mb-6 md:mb-8 border border-black/10 bg-[#fdfdfd] flex items-center justify-center font-bold text-2xl tracking-tighter text-black">
+          <div className="w-16 h-16 md:w-20 md:h-20 rounded-none mx-auto mb-6 md:mb-8 border border-white/50 bg-white/60 backdrop-blur-md shadow-sm flex items-center justify-center font-bold text-2xl tracking-tighter text-black">
             HB.
           </div>
         </div>
@@ -81,7 +82,7 @@ export default function TeacherAuth() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md z-10">
-        <div className="bg-[#fdfdfd] py-8 px-5 sm:px-10 border-t border-black/10 md:border md:border-black/10">
+        <div className="bg-white/60 backdrop-blur-xl py-8 px-5 sm:px-10 border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:rounded-3xl">
           <form className="space-y-6" onSubmit={handleSubmit}>
             
             {!isLogin && (
@@ -160,7 +161,7 @@ export default function TeacherAuth() {
                 <div className="w-full border-t border-black/10" />
               </div>
               <div className="relative flex justify-center text-[11px] font-semibold uppercase tracking-wider">
-                <span className="px-3 bg-[#fdfdfd] text-gray-400">
+                <span className="px-3 bg-white/0 backdrop-blur-sm text-gray-500">
                   {isLogin ? 'Akkauntingiz yo\'qmi?' : 'Akkauntingiz bormi?'}
                 </span>
               </div>
@@ -169,7 +170,7 @@ export default function TeacherAuth() {
             <div className="mt-6">
               <button
                 onClick={() => setIsLogin(!isLogin)}
-                className="w-full flex justify-center py-3.5 px-4 border border-black/10 rounded-none shadow-none text-sm font-semibold text-black bg-[#fdfdfd] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors"
+                className="w-full flex justify-center py-3.5 px-4 border border-white/50 rounded-none shadow-sm text-sm font-semibold text-black bg-white/70 hover:bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors"
               >
                 {isLogin ? 'Ro\'yxatdan o\'tish' : 'Tizimga kirish'}
               </button>

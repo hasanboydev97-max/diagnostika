@@ -4,6 +4,7 @@ import { Plus, ChevronRight, FileText, Search, Trash2, LogOut, ShieldAlert } fro
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { getAuthHeaders, getToken, logout, getTeacher } from '../../lib/auth';
+import MeshGradient from '../../components/ui/MeshGradient';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -75,9 +76,11 @@ export default function OnlineTestsDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-white text-zinc-900 font-sans selection:bg-zinc-200 selection:text-black">
+    <div className="min-h-screen relative font-sans text-[#111111] overflow-x-hidden bg-[#fdfdfd]">
+      <MeshGradient />
+      
       {/* Top Navbar / Header Area */}
-      <header className="border-b border-zinc-200 bg-white sticky top-0 z-10">
+      <header className="border-b border-white/50 bg-white/60 backdrop-blur-xl sticky top-0 z-20 shadow-sm">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-zinc-900 text-white rounded flex items-center justify-center font-bold text-sm">
@@ -117,7 +120,7 @@ export default function OnlineTestsDashboard() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <main className="max-w-5xl mx-auto px-6 py-8 relative z-10">
         
         {/* Search Bar */}
         <div className="mb-6 relative">
@@ -129,12 +132,12 @@ export default function OnlineTestsDashboard() {
             placeholder="Test qidirish..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="block w-full pl-9 pr-4 py-2 bg-white border border-zinc-200 rounded-md text-sm font-medium text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:ring-0 transition-colors"
+            className="block w-full pl-9 pr-4 py-3 bg-white/60 backdrop-blur-md border border-white/50 rounded-xl shadow-sm text-sm font-medium text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-white focus:bg-white/80 transition-all"
           />
         </div>
 
         {/* List Section */}
-        <div className="border border-zinc-200 rounded-md overflow-hidden bg-white">
+        <div className="border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl overflow-hidden bg-white/60 backdrop-blur-xl">
           {loading ? (
             <div className="divide-y divide-zinc-100">
               {[1, 2, 3].map((i) => (

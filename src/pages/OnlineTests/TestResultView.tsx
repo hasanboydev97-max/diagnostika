@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, ArrowLeft, BrainCircuit, CheckCircle2, XCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import FormattedText from '../../components/FormattedText';
+import MeshGradient from '../../components/ui/MeshGradient';
 import {
   BarChart,
   Bar,
@@ -59,17 +60,21 @@ export default function TestResultView() {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <Loader2 className="animate-spin text-gray-400" size={32} />
+    <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex items-center justify-center">
+      <MeshGradient />
+      <Loader2 className="animate-spin text-gray-400 relative z-10" size={32} />
     </div>
   );
 
   if (!result || !test) return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center text-gray-900">
-      <h2 className="text-xl font-medium mb-4">Result not found</h2>
-      <button onClick={() => navigate('/online-tests')} className="text-sm font-medium hover:underline">
-        Return to Dashboard
-      </button>
+    <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex flex-col items-center justify-center text-[#111111]">
+      <MeshGradient />
+      <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 rounded-2xl relative z-10 text-center">
+        <h2 className="text-xl font-medium mb-4 text-black">Result not found</h2>
+        <button onClick={() => navigate('/online-tests')} className="text-sm font-medium hover:underline text-gray-500 hover:text-black">
+          Return to Dashboard
+        </button>
+      </div>
     </div>
   );
 
@@ -103,7 +108,7 @@ export default function TestResultView() {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-100 text-sm">
+        <div className="bg-white/90 backdrop-blur p-3 rounded-lg shadow-lg border border-white/50 text-sm">
           <p className="font-semibold text-gray-900 mb-1">{label}</p>
           <p className="text-gray-600">O'zlashtirish: <span className="font-bold text-black">{payload[0].value}%</span></p>
         </div>
@@ -113,8 +118,9 @@ export default function TestResultView() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans pb-20">
-      <div className="max-w-7xl mx-auto px-6 py-12">
+    <div className="min-h-screen relative overflow-x-hidden font-sans pb-20 bg-[#fdfdfd] text-[#111111]">
+      <MeshGradient />
+      <div className="max-w-7xl mx-auto px-6 py-12 relative z-10">
         <button 
           onClick={() => navigate('/online-tests')} 
           className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-10"
@@ -125,8 +131,8 @@ export default function TestResultView() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           
           {/* Main Info Card */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 shadow-sm p-8 flex flex-col h-full">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 border-b border-gray-100 pb-8 mb-8">
+          <div className="lg:col-span-2 bg-white/60 backdrop-blur-xl rounded-[2rem] border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 flex flex-col h-full">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 border-b border-black/10 pb-8 mb-8">
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-500 mb-1">{test.title}</p>
                 <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-gray-900 mb-2">
@@ -134,9 +140,9 @@ export default function TestResultView() {
                 </h1>
               </div>
               
-              <div className="flex items-center gap-4 bg-gray-50 px-6 py-4 rounded-xl border border-gray-100">
+              <div className="flex items-center gap-4 bg-white/50 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/50 shadow-sm">
                 <div className="text-center">
-                  <span className="block text-3xl font-bold text-gray-900">{percentage}%</span>
+                  <span className="block text-3xl font-bold text-black">{percentage}%</span>
                   <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Score</span>
                 </div>
                 <div className="w-px h-10 bg-gray-200 mx-2"></div>

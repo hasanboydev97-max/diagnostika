@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, FileText, Download } from 'lucide-react';
 import { getAuthHeaders, getToken } from '../../lib/auth';
+import MeshGradient from '../../components/ui/MeshGradient';
 import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
 
@@ -98,20 +99,24 @@ export default function TestDetails() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex flex-col justify-center items-center font-sans">
-        <div className="w-5 h-5 border-2 border-zinc-200 border-t-zinc-900 rounded-full animate-spin mb-3"></div>
-        <p className="text-zinc-500 font-medium text-[11px] uppercase tracking-wider">Yuklanmoqda</p>
+      <div className="min-h-screen relative bg-[#fdfdfd] flex flex-col justify-center items-center font-sans overflow-hidden">
+        <MeshGradient />
+        <div className="w-5 h-5 border-2 border-white/50 border-t-black rounded-full animate-spin mb-3 relative z-10"></div>
+        <p className="text-gray-500 font-medium text-[11px] uppercase tracking-wider relative z-10">Yuklanmoqda</p>
       </div>
     );
   }
 
   if (!test) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center font-sans text-zinc-900">
-        <h2 className="text-lg font-medium mb-4">Test topilmadi</h2>
-        <button onClick={() => navigate('/online-tests')} className="text-xs font-semibold uppercase tracking-wider text-zinc-500 hover:text-zinc-900 transition-colors">
-          Dashboard'ga qaytish
-        </button>
+      <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex flex-col items-center justify-center font-sans text-[#111111]">
+        <MeshGradient />
+        <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 rounded-2xl relative z-10 text-center">
+          <h2 className="text-lg font-medium mb-4">Test topilmadi</h2>
+          <button onClick={() => navigate('/online-tests')} className="text-xs font-semibold uppercase tracking-wider text-gray-500 hover:text-black transition-colors">
+            Dashboard'ga qaytish
+          </button>
+        </div>
       </div>
     );
   }
@@ -121,10 +126,11 @@ export default function TestDetails() {
   const averagePercentage = results.length > 0 ? Math.round(totalPercentage / results.length) : 0;
 
   return (
-    <div className="min-h-screen bg-white text-zinc-900 font-sans pb-24 selection:bg-zinc-200 selection:text-black">
+    <div className="min-h-screen relative font-sans text-[#111111] overflow-x-hidden bg-[#fdfdfd] pb-24 selection:bg-black selection:text-white">
+      <MeshGradient />
       
       {/* Header */}
-      <header className="border-b border-zinc-200 bg-white sticky top-0 z-20">
+      <header className="border-b border-white/50 bg-white/60 backdrop-blur-xl sticky top-0 z-30 shadow-sm">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <button 
             onClick={() => navigate('/online-tests')}
@@ -138,7 +144,7 @@ export default function TestDetails() {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-6 py-8 relative z-20">
 
         {/* Print-only View (Hidden on screen) */}
         <div id="print-view" className="hidden print:block mb-8 bg-white p-8">
@@ -165,7 +171,7 @@ export default function TestDetails() {
           
           {/* Sidebar Info */}
           <div className="lg:col-span-4 flex flex-col gap-5">
-            <div className="bg-white p-5 rounded-md border border-zinc-200">
+            <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 rounded-2xl">
               <span className="inline-block px-2 py-0.5 bg-zinc-100 text-zinc-600 text-[10px] font-bold uppercase tracking-wider rounded-sm mb-3">
                 {test.subject}
               </span>

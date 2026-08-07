@@ -26,7 +26,7 @@ export default function MeshGradient() {
   }, []);
 
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 flex items-center justify-center bg-[#fdfdfd]">
+    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 flex items-center justify-center bg-[#fdfdfd]">
       
       {/* NOISE OVERLAY */}
       <div 

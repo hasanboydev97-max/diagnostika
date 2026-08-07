@@ -4,6 +4,7 @@ import { ArrowLeft, Sparkles, Plus, Trash2, Loader2, Save, Settings2, FileText }
 import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
 import { getAuthHeaders, getToken, getTeacher } from '../../lib/auth';
+import MeshGradient from '../../components/ui/MeshGradient';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -124,10 +125,11 @@ export default function CreateTest() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-zinc-900 font-sans pb-24 selection:bg-zinc-200 selection:text-black">
+    <div className="min-h-screen relative font-sans text-[#111111] overflow-x-hidden bg-[#fdfdfd] pb-24">
+      <MeshGradient />
       
       {/* Header */}
-      <header className="border-b border-zinc-200 bg-white sticky top-0 z-20">
+      <header className="border-b border-white/50 bg-white/60 backdrop-blur-xl sticky top-0 z-30 shadow-sm">
         <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
           <button 
             onClick={() => navigate('/online-tests')}
@@ -148,13 +150,13 @@ export default function CreateTest() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-8">
+      <main className="max-w-4xl mx-auto px-6 py-8 relative z-20">
         
         {/* Settings Section */}
-        <section className="mb-10">
-          <div className="flex items-center gap-2 mb-4 border-b border-zinc-200 pb-2">
-            <Settings2 size={16} className="text-zinc-400" />
-            <h2 className="text-sm font-semibold">Test Sozlamalari</h2>
+        <section className="mb-10 bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-6 md:p-8">
+          <div className="flex items-center gap-2 mb-6 border-b border-white/50 pb-4">
+            <Settings2 size={18} className="text-zinc-600" />
+            <h2 className="text-base font-semibold">Test Sozlamalari</h2>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
@@ -164,7 +166,7 @@ export default function CreateTest() {
                 type="text" 
                 value={title}
                 onChange={e => setTitle(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-md text-sm placeholder-zinc-400 focus:outline-none focus:border-zinc-400 transition-colors"
+                className="w-full px-4 py-3 bg-white/60 backdrop-blur-md border border-white/50 rounded-xl text-sm placeholder-zinc-400 focus:outline-none focus:border-white focus:bg-white/80 transition-all shadow-sm"
                 placeholder="Masalan: Tarixdan choraklik imtihon"
               />
             </div>
@@ -174,7 +176,7 @@ export default function CreateTest() {
                 type="text" 
                 value={subject}
                 disabled
-                className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-md text-sm text-zinc-500 cursor-not-allowed"
+                className="w-full px-4 py-3 bg-zinc-50/50 backdrop-blur-md border border-white/50 rounded-xl text-sm text-zinc-500 cursor-not-allowed shadow-sm"
               />
             </div>
             <div>
@@ -184,7 +186,7 @@ export default function CreateTest() {
                 min="1"
                 value={durationMinutes}
                 onChange={e => setDurationMinutes(e.target.value)}
-                className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-md text-sm placeholder-zinc-400 focus:outline-none focus:border-zinc-400 transition-colors"
+                className="w-full px-4 py-3 bg-white/60 backdrop-blur-md border border-white/50 rounded-xl text-sm placeholder-zinc-400 focus:outline-none focus:border-white focus:bg-white/80 transition-all shadow-sm"
                 placeholder="Bo'sh qolsa cheklanmagan"
               />
             </div>
