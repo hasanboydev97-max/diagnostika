@@ -333,7 +333,7 @@ export default function Summary() {
                 <span>100</span>
               </div>
               
-              <div className="h-6 w-full premium-gradient rounded-full relative shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]"></div>
+              <div className="h-6 w-full bg-gradient-to-r from-red-500 via-yellow-400 to-green-500 rounded-full relative shadow-[inset_0_2px_4px_rgba(0,0,0,0.15)]"></div>
               
               <div className="flex justify-between text-[10px] sm:text-xs font-bold mt-4 px-1 sm:px-2 tracking-widest uppercase">
                 <span className="text-danger w-[35%] text-left md:text-center">Sayoz</span>
@@ -346,10 +346,10 @@ export default function Summary() {
               </div>
               
               {/* Marker at totalScore */}
-              <div className="absolute top-12 -ml-[12px] w-6 h-6 bg-white rounded-full border-[3px] border-primary premium-marker z-10 transition-premium flex items-center justify-center" style={{ left: `${totalScore}%` }}>
-                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+              <div className="absolute top-12 -ml-[12px] w-6 h-6 bg-white rounded-full shadow-md z-10 transition-premium flex items-center justify-center" style={{ left: `${totalScore}%` }}>
+                <div className="w-2 h-2 bg-neutral-900 rounded-full"></div>
               </div>
-              <div className="absolute top-1 -translate-x-1/2 bg-neutral-main text-white font-display font-bold text-xs px-3 py-1.5 rounded shadow-xl border border-slate-700" style={{ left: `${totalScore}%` }}>{totalScore}</div>
+              <div className="absolute top-1 -translate-x-1/2 bg-neutral-main text-white font-display font-bold text-xs px-3 py-1.5 rounded shadow-xl" style={{ left: `${totalScore}%` }}>{totalScore}</div>
             </div>
           </div>
         </section>
@@ -378,14 +378,14 @@ export default function Summary() {
               </button>
             )}
           </div>
-          <div className="bg-primary/5 p-4 md:p-8 rounded-2xl md:rounded-3xl border border-primary/20 shadow-sm relative overflow-hidden">
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl"></div>
+          <div className="bg-slate-50 p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-[0_2px_20px_rgb(0,0,0,0.02)] relative overflow-hidden">
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-black/5 rounded-full blur-3xl"></div>
             <div className="relative z-10">
               <h3 className="font-bold text-base md:text-lg text-neutral-900 mb-2 md:mb-3">Tahlil</h3>
               <p className="text-neutral-700 leading-relaxed text-sm md:text-lg mb-4 md:mb-8">{studentData.aiSummaryText}</p>
               
-              <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl border border-primary/10 shadow-sm">
-                <h3 className="font-bold text-base md:text-lg text-primary mb-2 flex items-center gap-2">
+              <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                <h3 className="font-bold text-base md:text-lg text-neutral-900 mb-2 flex items-center gap-2">
                   <span className="text-lg md:text-xl">💡</span> Amaliy Tavsiyalar
                 </h3>
                 <p className="text-neutral-700 leading-relaxed italic text-sm md:text-base">{studentData.aiAdviceText}</p>

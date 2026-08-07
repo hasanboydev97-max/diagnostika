@@ -127,16 +127,16 @@ export default function RoadmapJourney({ data }: { data?: RoadmapStep[] | null }
 
                 {/* Center Node */}
                 <div 
-                  className={`absolute left-6 md:static md:left-auto -translate-x-1/2 md:translate-x-0 w-12 h-12 rounded-full border-4 flex items-center justify-center cursor-pointer transition-colors duration-500 shrink-0 shadow-sm z-20 ${
+                  className={`absolute left-6 md:static md:left-auto -translate-x-1/2 md:translate-x-0 w-12 h-12 rounded-full border-[3px] flex items-center justify-center cursor-pointer transition-all duration-500 shrink-0 z-20 ${
                     isActive || isCompleted 
-                      ? 'bg-primary border-white text-white' 
-                      : 'bg-white border-slate-100 text-slate-400 hover:border-slate-300'
+                      ? 'bg-neutral-900 border-white text-white shadow-md' 
+                      : 'bg-white border-slate-200 text-slate-400 hover:border-slate-300 hover:shadow-sm'
                   }`}
                   onClick={() => setActiveStep(step.id || 1)}
                 >
                   {isCompleted ? <CheckCircle2 size={20} /> : (Icon && <Icon size={20} className={isActive ? 'animate-pulse' : ''} />)}
                   {isActive && (
-                    <div className="absolute inset-0 rounded-full bg-primary animate-ping opacity-20"></div>
+                    <div className="absolute inset-0 rounded-full bg-neutral-900 animate-ping opacity-20"></div>
                   )}
                 </div>
 
@@ -145,10 +145,10 @@ export default function RoadmapJourney({ data }: { data?: RoadmapStep[] | null }
                   <motion.div 
                     layout
                     onClick={() => setActiveStep(step.id || 1)}
-                    className={`cursor-pointer overflow-hidden rounded-2xl border transition-all duration-300 ${
+                    className={`cursor-pointer overflow-hidden rounded-2xl transition-all duration-300 ${
                       isActive 
-                        ? 'border-primary/20 bg-white shadow-xl shadow-primary/5 ring-1 ring-primary/10' 
-                        : 'border-slate-200 bg-white/50 hover:bg-white hover:border-slate-300'
+                        ? 'bg-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-slate-100 scale-[1.02]' 
+                        : 'bg-slate-50 border border-slate-100/50 hover:bg-white hover:shadow-[0_4px_20px_rgb(0,0,0,0.03)]'
                     }`}
                   >
                     <div className="p-5 md:p-6">
