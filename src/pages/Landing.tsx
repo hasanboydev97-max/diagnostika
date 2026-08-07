@@ -182,21 +182,21 @@ export default function Landing() {
                 >
                   <button 
                     onClick={() => setActiveFaq(isActive ? null : idx)}
-                    className="w-full px-6 md:px-8 py-6 md:py-8 flex items-center justify-between text-left focus:outline-none pointer-events-auto"
+                    className="w-full px-5 md:px-6 py-5 md:py-5 flex items-center justify-between text-left focus:outline-none pointer-events-auto"
                   >
-                    <span className={`text-lg md:text-xl font-medium pr-8 transition-colors duration-300 ${isActive ? 'text-black' : 'text-black/80 group-hover:text-black'}`}>
+                    <span className={`text-base md:text-lg font-medium pr-8 transition-colors duration-300 ${isActive ? 'text-black' : 'text-black/80 group-hover:text-black'}`}>
                       {item.q}
                     </span>
                     <motion.div
                       animate={{ rotate: isActive ? 45 : 0 }}
                       transition={{ duration: 0.3 }}
-                      className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                      className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
                         isActive 
                           ? 'bg-black text-white shadow-md' 
                           : 'bg-black/5 text-black/50 group-hover:bg-black/10 group-hover:text-black'
                       }`}
                     >
-                      <Plus className="w-5 h-5" strokeWidth={1.5} />
+                      <Plus className="w-4 h-4" strokeWidth={1.5} />
                     </motion.div>
                   </button>
                   <AnimatePresence>
@@ -207,7 +207,7 @@ export default function Landing() {
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.4, ease: "easeInOut" }}
                       >
-                        <p className="px-6 md:px-8 pb-6 md:pb-8 text-black/60 leading-relaxed text-base md:text-lg">
+                        <p className="px-5 md:px-6 pb-5 md:pb-6 text-black/60 leading-relaxed text-sm md:text-base">
                           {item.a}
                         </p>
                       </motion.div>
@@ -238,78 +238,97 @@ export default function Landing() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="mb-4 bg-white/90 backdrop-blur-xl border border-black/10 rounded-2xl shadow-2xl w-72 overflow-hidden"
             >
-              <div className="p-4 border-b border-black/5 flex items-center justify-between">
-                <span className="font-medium text-sm">{t('landing.settings_title')}</span>
-                <button onClick={() => setIsSettingsOpen(false)} className="text-gray-400 hover:text-black transition-colors">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="p-4 space-y-6">
-                
-                {/* Language Selection */}
-                <div className="space-y-3">
-                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{t('landing.settings_language')}</span>
-                  <div className="flex bg-gray-100 p-1 rounded-lg">
-                    {['uz', 'ru', 'en'].map(lang => (
+              <div 
+                className="mb-4 bg-white/95 backdrop-blur-2xl border border-black/[0.08] rounded-[24px] shadow-[0_16px_40px_rgb(0,0,0,0.12)] w-[300px] overflow-hidden"
+              >
+                <div className="p-5 border-b border-black/5 flex items-center justify-between">
+                  <span className="font-semibold text-sm tracking-tight">{t('landing.settings_title')}</span>
+                  <button onClick={() => setIsSettingsOpen(false)} className="text-black/40 hover:text-black hover:bg-black/5 p-1.5 rounded-full transition-colors">
+                    <X className="w-4 h-4" strokeWidth={2} />
+                  </button>
+                </div>
+                <div className="p-6 space-y-8">
+                  
+                  {/* Language Selection */}
+                  <div className="space-y-3">
+                    <span className="block text-[10px] font-bold text-black/40 uppercase tracking-[0.3em]">{t('landing.settings_language')}</span>
+                    <div className="flex bg-black/[0.04] p-1 rounded-[14px]">
+                      {['uz', 'ru', 'en'].map(lang => (
+                        <button
+                          key={lang}
+                          onClick={() => i18n.changeLanguage(lang)}
+                          className={`flex-1 py-2 text-xs font-semibold rounded-[10px] transition-all duration-300 uppercase ${
+                            i18n.language === lang || (!i18n.language && lang==='uz') 
+                              ? 'bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] text-black scale-[1.02]' 
+                              : 'text-black/50 hover:text-black hover:bg-black/[0.02]'
+                          }`}
+                        >
+                          {lang}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Type Selection */}
+                  <div className="space-y-3">
+                    <span className="block text-[10px] font-bold text-black/40 uppercase tracking-[0.3em]">{t('landing.settings_style')}</span>
+                    <div className="flex bg-black/[0.04] p-1 rounded-[14px]">
                       <button
-                        key={lang}
-                        onClick={() => i18n.changeLanguage(lang)}
-                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all uppercase ${i18n.language === lang || (!i18n.language && lang==='uz') ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-black'}`}
+                        onClick={() => setIsMinimal(false)}
+                        className={`flex-1 py-2 px-2 text-xs font-semibold rounded-[10px] transition-all duration-300 ${
+                          !isMinimal 
+                            ? 'bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] text-black scale-[1.02]' 
+                            : 'text-black/50 hover:text-black hover:bg-black/[0.02]'
+                        }`}
                       >
-                        {lang}
+                        {t('landing.settings_mesh')}
                       </button>
-                    ))}
+                      <button
+                        onClick={() => setIsMinimal(true)}
+                        className={`flex-1 py-2 px-2 text-xs font-semibold rounded-[10px] transition-all duration-300 ${
+                          isMinimal 
+                            ? 'bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] text-black scale-[1.02]' 
+                            : 'text-black/50 hover:text-black hover:bg-black/[0.02]'
+                        }`}
+                      >
+                        {t('landing.settings_minimal')}
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                {/* Type Selection */}
-                <div className="space-y-3">
-                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{t('landing.settings_style')}</span>
-                  <div className="flex bg-gray-100 p-1 rounded-lg">
-                    <button
-                      onClick={() => setIsMinimal(false)}
-                      className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${!isMinimal ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-black'}`}
-                    >
-                      {t('landing.settings_mesh')}
-                    </button>
-                    <button
-                      onClick={() => setIsMinimal(true)}
-                      className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${isMinimal ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-black'}`}
-                    >
-                      {t('landing.settings_minimal')}
-                    </button>
-                  </div>
+                  {/* Color Selection */}
+                  <AnimatePresence>
+                    {!isMinimal && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0, filter: 'blur(4px)' }}
+                        animate={{ opacity: 1, height: 'auto', filter: 'blur(0px)' }}
+                        exit={{ opacity: 0, height: 0, filter: 'blur(4px)' }}
+                        transition={{ duration: 0.3 }}
+                        className="space-y-4 overflow-hidden"
+                      >
+                        <span className="block text-[10px] font-bold text-black/40 uppercase tracking-[0.3em]">{t('landing.settings_colors')}</span>
+                        <div className="flex flex-wrap gap-3">
+                          {palettes.map((p, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => setPaletteIndex(idx)}
+                              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-400 ${
+                                paletteIndex === idx 
+                                  ? 'ring-[3px] ring-black/90 ring-offset-2 scale-110 shadow-lg' 
+                                  : 'hover:scale-105 hover:shadow-md border border-black/5 opacity-80 hover:opacity-100'
+                              }`}
+                              style={{ background: `linear-gradient(135deg, ${p.colors[0]}, ${p.colors[1]})` }}
+                              title={p.name}
+                            >
+                              {paletteIndex === idx && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-
-                {/* Color Selection */}
-                <AnimatePresence>
-                  {!isMinimal && (
-                    <motion.div 
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="space-y-3 overflow-hidden"
-                    >
-                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{t('landing.settings_colors')}</span>
-                      <div className="flex flex-wrap gap-3 justify-center">
-                        {palettes.map((p, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => setPaletteIndex(idx)}
-                            className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center transition-all ${paletteIndex === idx ? 'ring-2 ring-black ring-offset-2 scale-110' : 'hover:scale-110'}`}
-                            style={{ background: `linear-gradient(135deg, ${p.colors[0]}, ${p.colors[1]})` }}
-                            title={p.name}
-                          >
-                            {paletteIndex === idx && <Check className="w-4 h-4 text-white drop-shadow-md" />}
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                
               </div>
             </motion.div>
           )}
