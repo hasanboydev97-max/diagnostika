@@ -7,8 +7,8 @@ export default function CustomCursor() {
   const [isHovering, setIsHovering] = useState(false);
   const location = useLocation();
 
-  const isTakeTest = location.pathname.includes('/take-test');
-  const cursorSize = isTakeTest ? 24 : 64; // 6px vs 16px (w-6 vs w-16)
+  const isTakeTest = location.pathname.includes('/take');
+  const cursorSize = isTakeTest ? 24 : 64; // 24px vs 64px (w-6 vs w-16)
   const cursorOffset = cursorSize / 2;
 
   useEffect(() => {

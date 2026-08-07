@@ -68,7 +68,7 @@ export default function TeacherAuth() {
         </button>
 
         <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 md:w-20 md:h-20 rounded-none mx-auto mb-6 md:mb-8 border border-white/50 bg-white/60 backdrop-blur-md shadow-sm flex items-center justify-center font-bold text-2xl tracking-tighter text-black">
+          <div className="w-16 h-16 md:w-20 md:h-20 bg-white mx-auto mb-6 md:mb-8 flex items-center justify-center font-bold text-2xl tracking-tighter text-black shadow-sm">
             HB.
           </div>
         </div>
@@ -82,7 +82,7 @@ export default function TeacherAuth() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md z-10">
-        <div className="bg-white/60 backdrop-blur-xl py-8 px-5 sm:px-10 border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:rounded-3xl">
+        <div className="bg-white/60 backdrop-blur-xl py-8 px-5 sm:px-10 border-t border-white/50 md:border md:border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative z-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
             
             {!isLogin && (
@@ -94,7 +94,7 @@ export default function TeacherAuth() {
                     required
                     value={formData.name}
                     onChange={e => setFormData({ ...formData, name: e.target.value })}
-                    className="block w-full rounded-none border border-black/10 py-3 px-3 text-black placeholder-gray-400 focus:outline-none focus:border-black sm:text-sm transition-colors bg-transparent"
+                    className="block w-full rounded-none border-none py-3.5 px-4 text-black placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black sm:text-sm transition-colors bg-[#eef5ff]"
                   />
                 </div>
               </div>
@@ -108,7 +108,7 @@ export default function TeacherAuth() {
                   required
                   value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
-                  className="block w-full rounded-none border border-black/10 py-3 px-3 text-black placeholder-gray-400 focus:outline-none focus:border-black sm:text-sm transition-colors bg-transparent"
+                  className="block w-full rounded-none border-none py-3.5 px-4 text-black placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black sm:text-sm transition-colors bg-[#eef5ff]"
                 />
               </div>
             </div>
@@ -121,7 +121,7 @@ export default function TeacherAuth() {
                     required
                     value={formData.subject}
                     onChange={e => setFormData({ ...formData, subject: e.target.value })}
-                    className="block w-full rounded-none border border-black/10 py-3 pl-3 pr-10 text-black focus:outline-none focus:border-black sm:text-sm transition-colors bg-transparent appearance-none"
+                    className="block w-full rounded-none border-none py-3.5 pl-4 pr-10 text-black focus:outline-none focus:ring-1 focus:ring-black sm:text-sm transition-colors bg-[#eef5ff] appearance-none"
                   >
                     {SUBJECTS.map(sub => (
                       <option key={sub} value={sub} className="text-black">{sub}</option>
@@ -139,7 +139,7 @@ export default function TeacherAuth() {
                   required
                   value={formData.password}
                   onChange={e => setFormData({ ...formData, password: e.target.value })}
-                  className="block w-full rounded-none border border-black/10 py-3 px-3 text-black placeholder-gray-400 focus:outline-none focus:border-black sm:text-sm transition-colors bg-transparent tracking-[0.2em]"
+                  className="block w-full rounded-none border-none py-3.5 px-4 text-black placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black sm:text-sm transition-colors bg-[#eef5ff] tracking-[0.2em]"
                 />
               </div>
             </div>
@@ -148,7 +148,7 @@ export default function TeacherAuth() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-none shadow-none text-sm font-semibold text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 transition-colors"
+                className="w-full flex justify-center py-4 px-4 border border-transparent rounded-none shadow-none text-sm font-semibold text-white bg-[#111111] hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 transition-colors"
               >
                 {loading ? 'Kutilmoqda...' : (isLogin ? 'Kirish' : 'Ro\'yxatdan o\'tish')}
               </button>
@@ -170,7 +170,7 @@ export default function TeacherAuth() {
             <div className="mt-6">
               <button
                 onClick={() => setIsLogin(!isLogin)}
-                className="w-full flex justify-center py-3.5 px-4 border border-white/50 rounded-none shadow-sm text-sm font-semibold text-black bg-white/70 hover:bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors"
+                className="w-full flex justify-center py-4 px-4 border-none shadow-sm text-sm font-semibold text-black bg-[#fdfdfd] hover:bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors"
               >
                 {isLogin ? 'Ro\'yxatdan o\'tish' : 'Tizimga kirish'}
               </button>
