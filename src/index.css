@@ -13,8 +13,8 @@
   
   --color-border: #E5E5E5;
   
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-display: 'Inter', system-ui, sans-serif;
+  --font-sans: 'Space Grotesk', system-ui, sans-serif;
+  --font-display: 'Clash Display', sans-serif;
 }
 
 @layer base {

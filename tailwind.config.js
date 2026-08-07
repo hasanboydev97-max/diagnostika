@@ -34,8 +34,8 @@ export default {
         border: '#E5E5E5',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Inter', 'system-ui', 'sans-serif'], // Using Inter for a clean, tech look
+        sans: ['Space Grotesk', 'system-ui', 'sans-serif'],
+        display: ['Clash Display', 'sans-serif'], 
       },
       boxShadow: {
         'premium': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
