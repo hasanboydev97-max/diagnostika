@@ -305,31 +305,31 @@ export default function TakeTest() {
           transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
         />
 
-        <div className="bg-[#fdfdfd] shadow-2xl rounded-[2.5rem] p-10 md:p-14 max-w-md w-full relative z-10">
+        <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-10 md:p-12 rounded-[2rem] max-w-lg w-full relative z-10">
           <button 
             onClick={() => navigate('/online-tests')}
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
-            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 hover:text-black transition-colors mb-12"
+            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 hover:text-black transition-colors mb-10"
           >
             <ArrowLeft size={14} /> Ortga
           </button>
           
           <h1 className="text-3xl font-medium text-black mb-4 tracking-tight leading-tight">{test.title}</h1>
-          <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-10">
-            <span>{test.subject}</span>
+          <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-600 mb-8">
+            <span className="px-2 py-1 bg-white/50 border border-white/50 rounded-md">{test.subject}</span>
             <span className="text-black/20">•</span>
             <span>{test.questions.length} savol</span>
           </div>
           
-          <div className="border border-black/10 p-5 mb-10 text-xs text-gray-500 leading-relaxed">
+          <div className="bg-white/40 border border-white/50 rounded-xl p-5 mb-8 text-xs text-gray-600 leading-relaxed shadow-sm">
             <strong className="text-black block mb-2 text-[10px] uppercase tracking-[0.2em]">Qat'iy ogohlantirish</strong> 
             Testni boshlagach, boshqa oynaga o'tish (tab almashtirish) qat'iyan man etiladi.
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-6">
             <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4">To'liq ismingizni kiriting</label>
+              <label className="block text-[10px] font-bold text-gray-600 uppercase tracking-[0.2em] mb-3">To'liq ismingizni kiriting</label>
               <input 
                 type="text" 
                 value={studentName}
@@ -337,7 +337,7 @@ export default function TakeTest() {
                 onKeyDown={e => e.key === 'Enter' && handleStart()}
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={() => setIsHovering(false)}
-                className="w-full pb-3 bg-transparent border-b border-black/10 text-lg placeholder-gray-300 focus:outline-none focus:border-black transition-colors"
+                className="w-full px-5 py-4 bg-white/50 border border-white/50 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:bg-white/80 focus:border-black/20 transition-colors shadow-sm"
                 placeholder="Masalan: Aliyev Vali"
                 autoFocus
               />
@@ -347,7 +347,7 @@ export default function TakeTest() {
               onClick={handleStart}
               onMouseEnter={() => setIsHovering(true)}
               onMouseLeave={() => setIsHovering(false)}
-              className="w-full py-5 bg-black text-white text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-gray-900 transition-colors focus:outline-none"
+              className="w-full py-4 bg-black text-white rounded-xl text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-gray-900 shadow-md transition-colors focus:outline-none"
             >
               Testni Boshlash
             </button>
@@ -378,10 +378,10 @@ export default function TakeTest() {
 
       {/* Custom Cursor */}
       <motion.div
-        className="hidden md:block fixed top-0 left-0 w-16 h-16 rounded-full bg-white mix-blend-difference pointer-events-none z-[9999]"
+        className="hidden md:block fixed top-0 left-0 w-6 h-6 rounded-full bg-white mix-blend-difference pointer-events-none z-[9999]"
         animate={{
-          x: mousePosition.x - 32,
-          y: mousePosition.y - 32,
+          x: mousePosition.x - 12,
+          y: mousePosition.y - 12,
           scale: isHovering ? 1.5 : 1
         }}
         transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
