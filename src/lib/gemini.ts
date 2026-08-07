@@ -13,10 +13,20 @@ export const generateDiagnosticSummary = async (studentName: string, grade: stri
   // Sizning API kalitingiz eksklyuziv tarzda mutlaqo yangi avlod (Gemini 3.x) modellariga ulangan ekan!
   const fallbackModels = ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-flash-latest"];
 
-  // Qaysi mavzular va ko'nikmalarda qanday xato qilinganini tahlil qilish
+  // Kognitiv ko'nikmalar tahlili
+  const skillsMap: Record<string, { total: number; correct: number }> = {};
+  blueprint.forEach(q => {
+    if (!skillsMap[q.skill]) skillsMap[q.skill] = { total: 0, correct: 0 };
+    skillsMap[q.skill].total++;
+    if (questionResults[q.id]) skillsMap[q.skill].correct++;
+  });
+  
+  const skillScoresText = Object.entries(skillsMap)
+    .map(([skill, stat]) => `- ${skill}: ${Math.round((stat.correct / stat.total) * 100)}%`)
+    .join('\n');
+
   const failedQuestions = blueprint.filter(q => !questionResults[q.id]);
   const failedTopics = failedQuestions.map(q => q.topic).join(', ');
-  const failedSkills = [...new Set(failedQuestions.map(q => q.skill))].join(', ');
   const failedDifficulties = [...new Set(failedQuestions.map(q => q.difficulty))].join(', ');
 
   const scoresText = Object.entries(scores).map(([cat, score]) => `- ${cat}: ${score}%`).join('\n');
@@ -25,16 +35,18 @@ export const generateDiagnosticSummary = async (studentName: string, grade: stri
 O'quvchi ismi: ${studentName}
 O'quvchi sinfi: ${grade}-sinf
 
-Umumiy natijalar:
+Umumiy natijalar (Fanlar bo'yicha):
 ${scoresText}
 
+Kognitiv ko'nikmalar tahlili (Qaysi fikrlash turi qanday rivojlangan):
+${skillScoresText}
+
 O'quvchi xato qilgan spesifik joylar:
-- Xato qilingan mavzular: ${failedTopics || 'Deyarli yo\'q, juda yaxshi'}
-- Qiynalgan ko'nikmalari: ${failedSkills || 'Barcha ko\'nikmalar shakllangan'}
+- Xato qilingan aniq mavzular: ${failedTopics || 'Deyarli yo\'q, juda yaxshi'}
 - Qaysi qiyinlikdagi savollarda ko'p xato qildi: ${failedDifficulties || 'Hech qaysi'}
 
 Vazifa:
-Iltimos, javobni faqat va faqat quyidagi JSON formatida qaytaring, boshqa hech qanday izoh qo'shmang. Tahlilda o'quvchining aniq qaysi mavzularda oqsagani va qaysi ko'nikmalari pastligini (yuqoridagi statistikaga asosan) alohida ta'kidlab o'ting:
+Iltimos, javobni faqat va faqat quyidagi JSON formatida qaytaring, boshqa hech qanday izoh qo'shmang. Tahlilda o'quvchining KOGNITIV KO'NIKMALARIGA (masalan, "Yodlash zo'r, lekin tahlil qilish yo'q" yoki "Sintezlash ko'nikmasi ustida ishlash kerak") alohida chuqur urg'u bering:
 {
   "summary": "O'quvchining kuchli va zaif tomonlari (qaysi mavzular va ko'nikmalarda oqsagani), umumiy intellektual profili haqida 3-4 gapdan iborat chuqur tahlil (o'zbek tilida).",
   "advice": "O'quvchi o'zini qanday rivojlantirishi kerakligi, xato qilgan mavzularini qanday to'g'rilashi haqida amaliy, motivatsion 3-4 gapdan iborat maslahat (o'zbek tilida).",

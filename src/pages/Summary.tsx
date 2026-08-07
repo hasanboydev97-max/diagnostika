@@ -22,6 +22,7 @@ export default function Summary() {
   const { resultId } = useParams();
   const navigate = useNavigate();
   const [studentData, setStudentData] = useState<StudentResult | null>(null);
+  const [cohortAverage, setCohortAverage] = useState<number | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isRegeneratingAi, setIsRegeneratingAi] = useState(false);
@@ -108,9 +109,6 @@ export default function Summary() {
         aiRoadmap: aiResponse.roadmap
       };
       
-      // Since it's a re-save of an existing ID, db.saveResult might duplicate it if not handled properly?
-      // Wait, db.saveResult currently unshifts. Let's fix that in db.ts actually.
-      // We will just do db.saveResult and it will prepend, but let's assume db.saveResult handles update if id matches.
       await db.saveResult(updatedData);
       setStudentData(updatedData);
       alert("Xulosa qayta generatsiya qilindi!");
@@ -126,6 +124,16 @@ export default function Summary() {
       db.getResult(resultId).then(data => {
         if (data) {
           setStudentData(data);
+          // Calculate cohort average
+          db.getAllResults().then(all => {
+             const sameGrade = all.filter(r => r.grade === data.grade);
+             if (sameGrade.length > 1) { // we need at least 1 other to compare
+                const total = sameGrade.reduce((acc, curr) => acc + curr.totalScore, 0);
+                setCohortAverage(Math.round(total / sameGrade.length));
+             } else {
+                setCohortAverage(null);
+             }
+          });
         } else {
           alert("Bunday natija topilmadi!");
           navigate('/login');
@@ -269,8 +277,8 @@ export default function Summary() {
                 <div className="text-2xl font-black text-neutral-main">{minRange}–{maxRange}</div>
               </div>
               <div className="p-3 rounded-xl bg-slate-50">
-                <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Tuzatilgan</div>
-                <div className="text-2xl font-black text-neutral-main">~{totalScore}</div>
+                <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Sinf o'rtachasi</div>
+                <div className="text-2xl font-black text-neutral-main">{cohortAverage !== null ? `${cohortAverage}` : 'N/A'}</div>
               </div>
             </div>
 
@@ -295,9 +303,17 @@ export default function Summary() {
               </div>
               
               <div className="pt-6 md:pt-0 flex flex-col items-center justify-center">
-                <div className="text-xs font-bold text-neutral-secondary mb-3 uppercase tracking-widest">Tuzatilgan ball</div>
-                <div className="text-4xl md:text-5xl font-bold text-neutral-main mb-2">~{totalScore}</div>
-                <div className="text-sm text-neutral-secondary">Xato yo'q - haqiqiy daraja to'liq</div>
+                <div className="text-xs font-bold text-neutral-secondary mb-3 uppercase tracking-widest">Sinf o'rtachasi</div>
+                <div className="text-4xl md:text-5xl font-bold text-neutral-main mb-2">
+                  {cohortAverage !== null ? cohortAverage : '---'}
+                </div>
+                <div className="text-sm text-neutral-secondary">
+                  {cohortAverage !== null 
+                    ? (totalScore > cohortAverage 
+                        ? `O'rtachadan ${totalScore - cohortAverage} ball baland` 
+                        : (totalScore < cohortAverage ? `O'rtachadan ${cohortAverage - totalScore} ball past` : "O'rtacha darajada")) 
+                    : "Ma'lumot yetarli emas"}
+                </div>
               </div>
             </div>
             

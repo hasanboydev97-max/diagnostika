@@ -18,11 +18,49 @@ export default function Admin() {
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [currentBlueprint, setCurrentBlueprint] = useState<QuestionBlueprint[]>(GRADE_BLUEPRINTS['5']);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [fastMode, setFastMode] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
   const [questionResults, setQuestionResults] = useState<Record<number, boolean>>(() => {
     const initial: Record<number, boolean> = {};
     GRADE_BLUEPRINTS['5'].forEach(q => initial[q.id] = false);
     return initial;
   });
+
+  // Fast entry keyboard listener
+  useEffect(() => {
+    if (!fastMode || activeTab !== 'new') return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing in input
+      if (document.activeElement?.tagName === 'INPUT') return;
+      
+      if (e.key === '1' || e.key === '0') {
+        e.preventDefault();
+        const currentQ = currentBlueprint[currentIndex];
+        if (!currentQ) return;
+        
+        const isCorrect = e.key === '1';
+        setQuestionResults(prev => ({
+          ...prev,
+          [currentQ.id]: isCorrect
+        }));
+        
+        if (currentIndex < currentBlueprint.length - 1) {
+          setCurrentIndex(prev => prev + 1);
+        }
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setCurrentIndex(prev => Math.max(0, prev - 1));
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        setCurrentIndex(prev => Math.min(currentBlueprint.length - 1, prev + 1));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [fastMode, currentIndex, currentBlueprint, activeTab]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [generatedCredentials, setGeneratedCredentials] = useState<{id: string, pin: string} | null>(null);
@@ -63,6 +101,12 @@ export default function Admin() {
     }));
   };
 
+  const getWeight = (difficulty: string) => {
+    if (difficulty === 'Qiyin') return 3;
+    if (difficulty === "O'rta") return 2;
+    return 1;
+  };
+
   const calculateScores = () => {
     const scores: Record<string, number> = {};
     const categories = Array.from(new Set(currentBlueprint.map(q => q.category)));
@@ -71,8 +115,12 @@ export default function Admin() {
       if (qs.length === 0) {
         scores[category] = 0;
       } else {
-        const correct = qs.filter(q => questionResults[q.id]).length;
-        scores[category] = Math.round((correct / qs.length) * 100);
+        const totalWeight = qs.reduce((acc, q) => acc + getWeight(q.difficulty), 0);
+        const earnedWeight = qs.reduce((acc, q) => {
+          if (questionResults[q.id]) return acc + getWeight(q.difficulty);
+          return acc;
+        }, 0);
+        scores[category] = Math.round((earnedWeight / totalWeight) * 100);
       }
     });
     return scores;
@@ -362,8 +410,15 @@ export default function Admin() {
                       </button>
                       <button 
                         type="button"
+                        onClick={() => setFastMode(!fastMode)}
+                        className={`w-full text-left py-3 border-b border-black/10 text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-between mt-4 ${fastMode ? 'text-black border-black' : 'text-gray-400 hover:text-black hover:pl-2 hover:border-black'}`}
+                      >
+                        <span>Tezkor kiritish {fastMode && '(ON)'}</span>
+                      </button>
+                      <button 
+                        type="button"
                         onClick={() => setIsEditorOpen(true)}
-                        className="w-full text-left py-3 border-b border-black/10 text-xs font-bold uppercase tracking-[0.2em] hover:pl-2 hover:border-black transition-all text-gray-400 hover:text-black flex items-center justify-between mt-8"
+                        className="w-full text-left py-3 border-b border-black/10 text-xs font-bold uppercase tracking-[0.2em] hover:pl-2 hover:border-black transition-all text-gray-400 hover:text-black flex items-center justify-between mt-4"
                       >
                         <span>Shablonni o'zgartirish</span>
                         <Settings2 className="w-4 h-4" />
@@ -373,7 +428,40 @@ export default function Admin() {
                 </div>
                 
                 <div className="md:col-span-8 space-y-16">
-                  {Array.from(new Set(currentBlueprint.map(q => q.category))).map(category => {
+                  {fastMode && (
+                    <div className="bg-black text-white p-6 md:p-8 rounded-2xl mb-8 shadow-2xl">
+                      <div className="flex justify-between items-start mb-6">
+                        <div>
+                          <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 mb-2">Tezkor Kiritish Rejimi</h3>
+                          <p className="text-lg md:text-xl font-medium tracking-tight">To'g'ri bo'lsa <kbd className="bg-white/20 px-2 py-1 rounded mx-1 font-mono">1</kbd>, noto'g'ri bo'lsa <kbd className="bg-white/20 px-2 py-1 rounded mx-1 font-mono">0</kbd> bosing.</p>
+                        </div>
+                        <div className="text-3xl md:text-4xl font-black tracking-tighter text-white/50">{currentIndex + 1}<span className="text-xl">/{currentBlueprint.length}</span></div>
+                      </div>
+                      
+                      <div className="flex flex-col gap-3">
+                        {currentBlueprint.map((q, idx) => (
+                          <div 
+                            key={q.id}
+                            onClick={() => setCurrentIndex(idx)}
+                            className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition-all duration-300 ${idx === currentIndex ? 'border-white bg-white/10 scale-[1.02] shadow-lg ring-1 ring-white/50' : 'border-white/10 opacity-50 hover:opacity-100 hover:bg-white/5'}`}
+                          >
+                            <div className="flex items-center gap-4">
+                              <span className="font-mono text-[10px] text-gray-400 font-bold w-6">#{String(idx + 1).padStart(2, '0')}</span>
+                              <div className="flex flex-col">
+                                <span className="font-medium text-sm md:text-base">{q.topic}</span>
+                                <span className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mt-1">{q.category} &bull; {q.difficulty}</span>
+                              </div>
+                            </div>
+                            <div className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${questionResults[q.id] ? 'bg-white text-black' : 'border border-white/20 text-transparent'}`}>
+                              <Check className="w-4 h-4" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {!fastMode && Array.from(new Set(currentBlueprint.map(q => q.category))).map(category => {
                     const categoryQuestions = currentBlueprint.filter(q => q.category === category);
                     
                     return (
