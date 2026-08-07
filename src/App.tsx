@@ -16,7 +16,6 @@ const TakeTest = lazy(() => import('./pages/OnlineTests/TakeTest'));
 const TestResultView = lazy(() => import('./pages/OnlineTests/TestResultView'));
 const TestDetails = lazy(() => import('./pages/OnlineTests/TestDetails'));
 const TeacherAuth = lazy(() => import('./pages/OnlineTests/TeacherAuth'));
-const DiagnosticTakeTest = lazy(() => import('./pages/DiagnosticTakeTest'));
 
 const RouteLoader = () => (
   <div className="min-h-screen bg-[#fdfdfd] flex items-center justify-center">
@@ -37,9 +36,6 @@ function App() {
           <Route path="/summary/:resultId" element={<Summary />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/superadmin" element={<SuperAdmin />} />
-          
-          {/* Diagnostic Test (AI generated, local) */}
-          <Route path="/diagnostic-test/:testId" element={<DiagnosticTakeTest />} />
           
           {/* Teacher Auth */}
           <Route path="/teacher/login" element={<TeacherAuth />} />

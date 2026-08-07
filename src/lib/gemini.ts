@@ -256,3 +256,101 @@ Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
 
   return null;
 };
+
+export interface GenerateCustomTestParams {
+  subject: string;
+  grade: string;
+  questionCount: number;
+  difficulty: string; // 'Oson' | 'O\'rta' | 'Qiyin' | 'Aralash'
+  topic?: string;
+}
+
+export interface CustomGeneratedQuestion {
+  id: number;
+  questionText: string;
+  options: string[];
+  correctOption: string;
+  explanation?: string;
+  category: string;
+  difficulty: string;
+  skill: string;
+}
+
+export const generateCustomTestQuestions = async (params: GenerateCustomTestParams): Promise<CustomGeneratedQuestion[] | null> => {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+  if (!apiKey) throw new Error("API kalit topilmadi.");
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const fallbackModels = ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-flash-latest"];
+
+  const { subject, grade, questionCount, difficulty, topic } = params;
+
+  const difficultyInstruction = difficulty === 'Aralash' 
+    ? "Savollar qiyinlik darajasi bo'yicha aralash bo'lsin (ba'zilari Oson, ba'zilari O'rta, ba'zilari Qiyin)."
+    : `Barcha savollar qiyinlik darajasi bitta: "${difficulty}" bo'lsin.`;
+
+  const topicInstruction = topic && topic.trim() 
+    ? `Asosiy mavzu yo'nalishi: "${topic}".` 
+    : `Mavzular ${grade}-sinf ${subject} darsligidagi muhim mavzulardan tanlansin.`;
+
+  const prompt = `Siz tajribali ${grade}-sinf o'qituvchisiz. Quyidagi parametrlar bo'yicha jami ${questionCount} ta sifatli test savoli tuzing:
+
+- Fan: ${subject}
+- Sinf: ${grade}-sinf
+- Savollar soni: ${questionCount} ta
+- Qiyinlik darajasi sharti: ${difficultyInstruction}
+- ${topicInstruction}
+
+Har bir savolda:
+- Savol matni (aniq, tushunarli, ${grade}-sinf standartlariga mos)
+- 4 ta javob varianti (A, B, C, D)
+- To'g'ri javob ko'rsatkichi (faqat "A", "B", "C" yoki "D")
+- Kategoriya (fan nomi)
+- Qiyinchilik: "Oson", "O'rta" yoki "Qiyin"
+- Kognitiv ko'nikma: "Tushunish", "Qo'llash", "Tahlil qilish", "Baholash" yoki "Sintezlash"
+- Qisqa tushuntirish
+
+Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh qo'shmang:
+[
+  {
+    "id": 1,
+    "questionText": "Savol matni...",
+    "options": ["A variant", "B variant", "C variant", "D variant"],
+    "correctOption": "A",
+    "category": "${subject}",
+    "difficulty": "${difficulty === 'Aralash' ? 'O\'rta' : difficulty}",
+    "skill": "Tushunish",
+    "explanation": "Tushuntirish..."
+  }
+]`;
+
+  for (const modelName of fallbackModels) {
+    try {
+      console.log(`Custom AI test savollari yaratilmoqda: ${modelName}...`);
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(prompt);
+      const text = (await result.response).text();
+      
+      let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      cleanText = cleanText.replace(/(?<!\\)\\([^"\\/bfnrt])/g, "\\\\$1");
+      cleanText = cleanText.replace(/(?<!\\)\\b(egin|eta|ullet|ar|mod|oldsymbol|f)/g, "\\\\b$1");
+      cleanText = cleanText.replace(/(?<!\\)\\f(rac|orall)/g, "\\\\f$1");
+      cleanText = cleanText.replace(/(?<!\\)\\r(ight|ho|angle|m)/g, "\\\\r$1");
+      cleanText = cleanText.replace(/(?<!\\)\\t(an|ext|imes|o|riangle|heta|ilde)/g, "\\\\t$1");
+      cleanText = cleanText.replace(/(?<!\\)\\n(u|abla|eq|eg|exists)/g, "\\\\n$1");
+      const parsed = JSON.parse(cleanText) as CustomGeneratedQuestion[];
+      
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((item, index) => ({
+          ...item,
+          id: index + 1
+        })).slice(0, questionCount);
+      }
+    } catch (error) {
+      console.warn(`Custom test model xatoligi (${modelName}):`, error);
+    }
+  }
+
+  return null;
+};
+

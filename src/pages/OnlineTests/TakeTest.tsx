@@ -6,6 +6,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import FormattedText from '../../components/FormattedText';
 import MeshGradient from '../../components/ui/MeshGradient';
 
+import { db } from '../../lib/db';
+import { generateDiagnosticSummary } from '../../lib/gemini';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function TakeTest() {
@@ -72,6 +75,21 @@ export default function TakeTest() {
 
   const fetchTest = async () => {
     try {
+      if (testId) {
+        // Try local diagnostic test first
+        const localTest = await db.getDiagnosticTest(testId);
+        if (localTest) {
+          setTest({
+            ...localTest,
+            isDiagnostic: true,
+            title: `${localTest.grade}-sinf Diagnostika Testi`,
+            subject: 'Diagnostika'
+          });
+          setLoading(false);
+          return;
+        }
+      }
+      
       const res = await fetch(`${API_URL}/online-tests/${testId}`);
       if (!res.ok) throw new Error('Test not found');
       const data = await res.json();
@@ -79,7 +97,7 @@ export default function TakeTest() {
       checkTimeLimit(data);
     } catch (error) {
       console.error(error);
-      toast.error('Test not found');
+      toast.error('Test topilmadi');
       navigate('/online-tests');
     } finally {
       setLoading(false);
@@ -194,6 +212,85 @@ export default function TakeTest() {
     setSubmitting(true);
     submitRef.current = true;
     const toastId = toast.loading('Javoblaringiz tekshirilmoqda...');
+
+    // If test is marked diagnostic, generate AI Diagnostic Summary and go to /summary/:id
+    if (test.isDiagnostic || test.type === 'diagnostic') {
+      try {
+        const questionResults: Record<number, boolean> = {};
+        const blueprint = test.blueprint || test.questions.map((q: any, idx: number) => ({
+          id: idx + 1,
+          topic: q.questionText.substring(0, 50),
+          category: q.category || test.subject || 'Matematika',
+          skill: q.skill || 'Tushunish',
+          thinkingType: 'Analitik',
+          difficulty: q.difficulty || 'O\'rta',
+          timeEstimate: '1min'
+        }));
+
+        test.questions.forEach((q: any, i: number) => {
+          const bpId = q.blueprintId || q.id || i + 1;
+          questionResults[bpId] = (answers[i] === q.correctOption);
+        });
+
+        // Compute category scores
+        const categories = [...new Set(blueprint.map((q: any) => q.category))] as string[];
+        const scores: Record<string, number> = {};
+        categories.forEach(cat => {
+          const catQuestions = blueprint.filter((q: any) => q.category === cat);
+          let earned = 0, maxPossible = 0;
+          catQuestions.forEach((q: any) => {
+            const w = q.difficulty === 'Qiyin' ? 3 : (q.difficulty === 'O\'rta' ? 2 : 1);
+            maxPossible += w;
+            if (questionResults[q.id]) earned += w;
+          });
+          scores[cat] = maxPossible > 0 ? Math.round((earned / maxPossible) * 100) : 0;
+        });
+
+        const totalScore = Math.round(Object.values(scores).reduce((a, b) => a + b, 0) / (Object.values(scores).length || 1));
+
+        toast.loading('AI Diagnostik xulosa yaratilmoqda...', { id: toastId });
+
+        const summaryResponse = await generateDiagnosticSummary(
+          studentName,
+          test.grade || '5',
+          scores,
+          questionResults,
+          blueprint
+        );
+
+        const resultId = Math.floor(100000 + Math.random() * 900000).toString();
+        const pin = Math.floor(1000 + Math.random() * 9000).toString();
+
+        await db.saveResult({
+          id: resultId,
+          pin,
+          studentName,
+          grade: test.grade || '5',
+          blueprintSnapshot: blueprint,
+          scores,
+          totalScore,
+          questionResults,
+          aiSummaryText: summaryResponse.summary,
+          aiAdviceText: summaryResponse.advice,
+          aiRoadmap: summaryResponse.roadmap || undefined,
+          createdAt: new Date().toISOString()
+        });
+
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(err => console.log(err));
+        }
+        localStorage.removeItem(SAVE_KEY);
+        toast.success('Diagnostik natijangiz tayyor!', { id: toastId });
+        navigate(`/summary/${resultId}`);
+        return;
+      } catch (err: any) {
+        console.error(err);
+        toast.error('Diagnostika yaratishda xatolik: ' + err.message, { id: toastId });
+        setSubmitting(false);
+        submitRef.current = false;
+        return;
+      }
+    }
     
     let score = 0;
     test.questions.forEach((q: any, i: number) => {

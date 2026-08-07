@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { db, type StudentResult } from '../lib/db';
-import { generateDiagnosticSummary, generateDiagnosticTest } from '../lib/gemini';
+import { generateDiagnosticSummary } from '../lib/gemini';
 import { useNavigate } from 'react-router-dom';
 import type { QuestionBlueprint } from '../lib/blueprint';
 import { GRADE_BLUEPRINTS } from '../lib/gradeBlueprints';
-import { Check, Settings2, Users, PlusCircle, ChevronDown, Sparkles, Copy, ExternalLink } from 'lucide-react';
+import { Check, Settings2, Users, PlusCircle, ChevronDown, Sparkles } from 'lucide-react';
 import BlueprintEditorModal from '../components/BlueprintEditorModal';
+import AiTestCreatorModal from '../components/AiTestCreatorModal';
 import MeshGradient from '../components/ui/MeshGradient';
-import { toast } from 'sonner';
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<'new' | 'dashboard'>('new');
@@ -19,6 +19,7 @@ export default function Admin() {
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [currentBlueprint, setCurrentBlueprint] = useState<QuestionBlueprint[]>(GRADE_BLUEPRINTS['5']);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [fastMode, setFastMode] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   
@@ -64,8 +65,6 @@ export default function Admin() {
   }, [fastMode, currentIndex, currentBlueprint, activeTab]);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [isGeneratingTest, setIsGeneratingTest] = useState(false);
-  const [generatedTestId, setGeneratedTestId] = useState<string | null>(null);
   const [generatedCredentials, setGeneratedCredentials] = useState<{id: string, pin: string} | null>(null);
   const navigate = useNavigate();
 
@@ -429,68 +428,12 @@ export default function Admin() {
                       
                       <button 
                         type="button"
-                        disabled={isGeneratingTest}
-                        onClick={async () => {
-                          setIsGeneratingTest(true);
-                          const toastId = toast.loading('AI test savollarini yaratmoqda... (30-60 soniya)');
-                          try {
-                            const questions = await generateDiagnosticTest(currentBlueprint, grade);
-                            if (!questions || questions.length === 0) {
-                              toast.error('AI test yaratishda xatolik. Qayta urinib ko\'ring.', { id: toastId });
-                              return;
-                            }
-                            const testId = Math.floor(100000 + Math.random() * 900000).toString();
-                            await db.saveDiagnosticTest({
-                              id: testId,
-                              grade,
-                              blueprint: currentBlueprint,
-                              questions,
-                              createdAt: new Date().toISOString(),
-                              status: 'active'
-                            });
-                            setGeneratedTestId(testId);
-                            toast.success(`Test muvaffaqiyatli yaratildi! Kod: ${testId}`, { id: toastId });
-                          } catch (err) {
-                            console.error(err);
-                            toast.error('Xatolik: ' + err, { id: toastId });
-                          } finally {
-                            setIsGeneratingTest(false);
-                          }
-                        }}
-                        className={`w-full text-left py-4 mt-4 rounded-xl px-4 text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-between gap-2 ${isGeneratingTest ? 'bg-black/50 text-white cursor-wait' : 'bg-black text-white hover:bg-black/80'}`}
+                        onClick={() => setIsAiModalOpen(true)}
+                        className="w-full text-left py-4 mt-4 rounded-xl px-4 text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-between gap-2 bg-black text-white hover:bg-neutral-800 shadow-md group"
                       >
-                        <span>{isGeneratingTest ? 'AI yaratmoqda...' : 'AI Test Yaratish'}</span>
-                        {isGeneratingTest 
-                          ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                          : <Sparkles className="w-4 h-4" />
-                        }
+                        <span>AI Test Yaratish (Moslashuvchan)</span>
+                        <Sparkles className="w-4 h-4 text-amber-300 group-hover:rotate-12 transition-transform" />
                       </button>
-                      
-                      {generatedTestId && (
-                        <div className="mt-4 p-4 bg-slate-50 rounded-xl space-y-3">
-                          <div className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Yaratilgan test kodi</div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-2xl font-bold tracking-widest select-all">{generatedTestId}</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                navigator.clipboard.writeText(generatedTestId);
-                                toast.success('Kod nusxalandi!');
-                              }}
-                              className="p-1.5 hover:bg-black/5 rounded-lg transition-colors"
-                            >
-                              <Copy className="w-4 h-4 text-gray-400" />
-                            </button>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/diagnostic-test/${generatedTestId}`)}
-                            className="w-full flex items-center justify-center gap-2 py-2.5 bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-black/80 transition-colors"
-                          >
-                            Testni ochish <ExternalLink className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -602,6 +545,14 @@ export default function Admin() {
           initialBlueprint={currentBlueprint} 
           onSave={handleSaveBlueprint} 
           onClose={() => setIsEditorOpen(false)} 
+        />
+      )}
+
+      {isAiModalOpen && (
+        <AiTestCreatorModal
+          initialGrade={grade}
+          blueprint={currentBlueprint}
+          onClose={() => setIsAiModalOpen(false)}
         />
       )}
     </div>
