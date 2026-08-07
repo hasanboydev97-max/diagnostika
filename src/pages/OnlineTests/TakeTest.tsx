@@ -376,10 +376,10 @@ export default function TakeTest() {
 
       {/* Custom Cursor */}
       <motion.div
-        className="hidden md:block fixed top-0 left-0 w-16 h-16 rounded-full bg-white mix-blend-difference pointer-events-none z-[9999]"
+        className="hidden md:block fixed top-0 left-0 w-12 h-12 rounded-full bg-white mix-blend-difference pointer-events-none z-[9999]"
         animate={{
-          x: mousePosition.x - 32,
-          y: mousePosition.y - 32,
+          x: mousePosition.x - 24,
+          y: mousePosition.y - 24,
           scale: isHovering ? 1.5 : 1
         }}
         transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
@@ -415,17 +415,17 @@ export default function TakeTest() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 py-8 md:py-12 flex flex-col lg:flex-row gap-6 md:gap-10 relative z-10">
+      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 md:py-10 flex flex-col lg:flex-row gap-6 md:gap-8 relative z-10">
         
         {/* Question Palette Sidebar */}
-        <div className="lg:w-80 shrink-0 order-2 lg:order-1">
-          <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-8 rounded-[2rem] lg:sticky lg:top-28">
-            <div className="flex items-center justify-between mb-8 border-b border-black/5 pb-4">
+        <div className="lg:w-72 shrink-0 order-2 lg:order-1">
+          <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 rounded-3xl lg:sticky lg:top-28">
+            <div className="flex items-center justify-between mb-6 border-b border-black/5 pb-4">
               <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em]">Savollar</h3>
               <span className="text-[10px] font-bold text-black uppercase tracking-[0.2em] bg-white/50 border border-white/50 px-2 py-1 rounded-md">{Object.keys(answers).length} / {test.questions.length}</span>
             </div>
             
-            <div className="grid grid-cols-5 gap-2 md:gap-3">
+            <div className="grid grid-cols-5 gap-2">
               {test.questions.map((_: any, idx: number) => {
                 const isAnswered = answers[idx] !== undefined;
                 const isCurrent = idx === currentQIndex;
@@ -457,7 +457,7 @@ export default function TakeTest() {
 
         {/* Question Area */}
         <div className="flex-1 flex flex-col min-w-0 order-1 lg:order-2">
-          <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-10 lg:p-12 rounded-[2rem] flex flex-col min-h-[600px]">
+          <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-8 lg:p-10 rounded-3xl flex flex-col min-h-[500px]">
             <AnimatePresence mode="wait">
               <motion.div 
                 key={currentQIndex}
@@ -467,12 +467,12 @@ export default function TakeTest() {
                 transition={{ duration: 0.5, ease: "easeOut" }}
                 className="flex-1"
               >
-                <div className="mb-12">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/50 border border-white/50 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em] mb-6 shadow-sm">
+                <div className="mb-8">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/50 border border-white/50 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em] mb-4 shadow-sm">
                     <span className="w-1.5 h-1.5 rounded-full bg-black/40"></span>
                     {currentQIndex + 1}-Savol
                   </div>
-                  <h3 className="text-2xl md:text-3xl lg:text-4xl font-medium text-black leading-tight tracking-tight">
+                  <h3 className="text-xl md:text-2xl lg:text-3xl font-medium text-black leading-tight tracking-tight">
                     <FormattedText content={currentQ.questionText} />
                   </h3>
                 </div>
@@ -486,7 +486,7 @@ export default function TakeTest() {
                         onClick={() => handleSelectOption(opt)}
                         onMouseEnter={() => setIsHovering(true)}
                         onMouseLeave={() => setIsHovering(false)}
-                        className={`w-full text-left px-6 py-5 rounded-2xl border transition-all duration-300 flex items-center gap-5 group shadow-sm ${
+                        className={`w-full text-left px-5 py-4 rounded-xl border transition-all duration-300 flex items-center gap-4 group shadow-sm ${
                           isSelected 
                             ? 'border-black bg-white/90 ring-1 ring-black shadow-md scale-[1.01]' 
                             : 'border-white/50 bg-white/40 hover:bg-white/80 hover:border-black/20 hover:shadow-md'
@@ -497,7 +497,7 @@ export default function TakeTest() {
                         }`}>
                           {isSelected && <div className="w-2.5 h-2.5 bg-white rounded-full"></div>}
                         </div>
-                        <span className={`flex-1 text-base md:text-lg leading-relaxed transition-colors ${isSelected ? 'font-medium text-black' : 'text-gray-600 group-hover:text-black'}`}>
+                        <span className={`flex-1 text-sm md:text-base leading-relaxed transition-colors ${isSelected ? 'font-medium text-black' : 'text-gray-600 group-hover:text-black'}`}>
                           <FormattedText content={opt} />
                         </span>
                       </button>
