@@ -25,6 +25,8 @@ const LOCAL_DB_KEY = 'maktab_student_results';
 const LOCAL_BLUEPRINT_KEY = 'maktab_blueprints_v2';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+const LOCAL_CUSTOM_CATEGORIES_KEY = 'maktab_custom_categories';
+
 export const db = {
   // Blueprints (Keep blueprints local for now as they are static settings)
   saveBlueprint: async (grade: string, blueprint: QuestionBlueprint[]) => {
@@ -39,9 +41,23 @@ export const db = {
     return existing[grade] || null;
   },
 
+  addCustomCategory: async (category: string) => {
+    if (!category.trim()) return;
+    const existing = await localforage.getItem<string[]>(LOCAL_CUSTOM_CATEGORIES_KEY) || [];
+    if (!existing.includes(category)) {
+      existing.push(category);
+      await localforage.setItem(LOCAL_CUSTOM_CATEGORIES_KEY, existing);
+    }
+  },
+
   getAllCategories: async (): Promise<string[]> => {
     const defaultCats = ["Matematika", "Mantiq", "Analitik", "Verbal", "Kreativlik"];
     const all = new Set(defaultCats);
+    
+    const custom = await localforage.getItem<string[]>(LOCAL_CUSTOM_CATEGORIES_KEY);
+    if (custom) {
+      custom.forEach(c => all.add(c));
+    }
     
     const existing = await localforage.getItem<Record<string, QuestionBlueprint[]>>(LOCAL_BLUEPRINT_KEY);
     if (existing) {

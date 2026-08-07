@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { QuestionBlueprint, CognitiveSkill, Difficulty, ThinkingType } from '../lib/blueprint';
 import { GRADE_BLUEPRINTS } from '../lib/gradeBlueprints';
-import { X, Save, RotateCcw, Sparkles, ChevronDown } from 'lucide-react';
+import { X, Save, RotateCcw, Sparkles, ChevronDown, Plus } from 'lucide-react';
 import { generateGradeBlueprint } from '../lib/gemini';
 import { db } from '../lib/db';
 
@@ -9,12 +9,14 @@ function CustomCombobox({
   value, 
   onChange, 
   options, 
-  placeholder 
+  placeholder,
+  onAddCategory
 }: { 
   value: string; 
   onChange: (val: string) => void; 
   options: string[]; 
-  placeholder: string 
+  placeholder: string;
+  onAddCategory?: (val: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(value);
@@ -33,6 +35,8 @@ function CustomCombobox({
   }, []);
 
   const filteredOptions = options.filter(o => o.toLowerCase().includes(inputValue.toLowerCase()));
+  const exactMatch = options.some(o => o.toLowerCase() === inputValue.trim().toLowerCase());
+  const showAdd = inputValue.trim().length > 0 && !exactMatch;
 
   return (
     <div className="relative w-full" ref={containerRef}>
@@ -59,9 +63,9 @@ function CustomCombobox({
       </div>
       
       {isOpen && (
-        <div className="absolute z-50 top-full left-0 w-full mt-1 max-h-48 overflow-y-auto bg-white border border-black/10 shadow-xl rounded-xl py-1">
-          {filteredOptions.length > 0 ? (
-            filteredOptions.map(opt => (
+        <div className="absolute z-50 top-full left-0 w-full mt-1 max-h-64 flex flex-col bg-white border border-black/10 shadow-2xl rounded-xl overflow-hidden">
+          <div className="overflow-y-auto max-h-48 py-1">
+            {filteredOptions.map(opt => (
               <div 
                 key={opt}
                 onClick={() => {
@@ -73,10 +77,28 @@ function CustomCombobox({
               >
                 {opt}
               </div>
-            ))
-          ) : (
-            <div className="px-4 py-2 text-xs text-gray-400 italic bg-gray-50 border-t border-b border-black/5">
-              Yangi kategoriya qo'shiladi: <br/><strong className="text-black text-sm">{inputValue}</strong>
+            ))}
+            {filteredOptions.length === 0 && !showAdd && (
+              <div className="px-4 py-3 text-sm text-gray-400 italic text-center">Topilmadi</div>
+            )}
+          </div>
+          
+          {showAdd && (
+            <div className="p-2 bg-slate-50 border-t border-black/5">
+              <button
+                type="button"
+                onClick={() => {
+                  if (onAddCategory) onAddCategory(inputValue.trim());
+                  onChange(inputValue.trim());
+                  setIsOpen(false);
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 text-sm text-black bg-white border border-black/10 rounded-lg hover:border-black/30 hover:shadow-sm transition-all group"
+              >
+                <span>Yangi qo'shish: <strong className="font-semibold">{inputValue.trim()}</strong></span>
+                <div className="w-6 h-6 rounded-full bg-neutral-900 group-hover:bg-black flex items-center justify-center transition-colors">
+                  <Plus className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                </div>
+              </button>
             </div>
           )}
         </div>
@@ -105,6 +127,12 @@ export default function BlueprintEditorModal({ grade, initialBlueprint, onSave, 
     const newBp = [...blueprint];
     newBp[index] = { ...newBp[index], [field]: value };
     setBlueprint(newBp);
+  };
+
+  const handleAddCategory = async (newCategory: string) => {
+    await db.addCustomCategory(newCategory);
+    const updatedCats = await db.getAllCategories();
+    setAvailableCategories(updatedCats);
   };
 
   const handleSave = () => {
@@ -167,6 +195,7 @@ export default function BlueprintEditorModal({ grade, initialBlueprint, onSave, 
                     onChange={val => handleChange(i, 'category', val)}
                     options={availableCategories}
                     placeholder="Masalan: Fizika"
+                    onAddCategory={handleAddCategory}
                   />
                 </div>
 
