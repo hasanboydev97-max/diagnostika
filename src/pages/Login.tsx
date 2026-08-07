@@ -77,9 +77,9 @@ export default function Login() {
             <div className="flex flex-col items-center text-center mb-8">
               <div className="relative w-16 h-16 mb-6">
                 <div className="absolute inset-0 border border-black/10 rounded-full"></div>
-                <div className="absolute inset-0 border border-black rounded-full border-t-transparent animate-spin" style={{ animationDuration: '1s' }}></div>
+                <div className="absolute inset-0 border-2 border-accent rounded-full border-t-transparent animate-spin" style={{ animationDuration: '1s' }}></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Activity className="w-5 h-5 text-black animate-pulse" strokeWidth={1.5} />
+                  <Activity className="w-5 h-5 text-accent animate-pulse" strokeWidth={1.5} />
                 </div>
               </div>
               
@@ -101,9 +101,9 @@ export default function Login() {
               </div>
             </div>
             
-            <div className="w-full h-[2px] bg-black/10 overflow-hidden">
+            <div className="w-full h-[2px] bg-neutral-200 overflow-hidden">
               <motion.div 
-                className="h-full bg-black"
+                className="h-full bg-accent"
                 initial={{ width: '0%' }}
                 animate={{ width: `${((loadingStep + 1) / loadingSteps.length) * 100}%` }}
                 transition={{ duration: 1.5, ease: "easeInOut" }}
@@ -172,7 +172,7 @@ export default function Login() {
                   required
                   value={id}
                   onChange={(e) => setId(e.target.value)}
-                  className="block w-full rounded-none border border-black/10 py-3 pl-10 text-black placeholder-gray-400 focus:outline-none focus:border-black sm:text-sm sm:leading-6 transition-colors bg-transparent"
+                  className="block w-full rounded-none border border-neutral-200 py-3 pl-10 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent sm:text-sm sm:leading-6 transition-all duration-300 bg-transparent"
                   placeholder="6 xonali raqam"
                 />
               </div>
@@ -191,7 +191,7 @@ export default function Login() {
                   type="password"
                   value={pin}
                   onChange={(e) => setPin(e.target.value)}
-                  className="block w-full rounded-none border border-black/10 py-3 pl-10 text-black placeholder-gray-400 focus:outline-none focus:border-black sm:text-sm sm:leading-6 transition-colors bg-transparent tracking-[0.2em]"
+                  className="block w-full rounded-none border border-neutral-200 py-3 pl-10 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent sm:text-sm sm:leading-6 transition-all duration-300 bg-transparent tracking-[0.2em]"
                   placeholder="••••"
                   maxLength={4}
                 />
@@ -212,7 +212,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="group relative flex w-full justify-center items-center rounded-none bg-black px-3 py-3.5 text-sm font-semibold text-white hover:bg-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="group relative flex w-full justify-center items-center rounded-none bg-accent px-3 py-3.5 text-sm font-semibold text-white hover:bg-accent-hover hover:shadow-accent-glow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50 disabled:cursor-not-allowed transition-premium"
               >
                 {isLoading ? (
                   <div className="w-5 h-5 border-[1.5px] border-white/30 border-t-white rounded-full animate-spin"></div>

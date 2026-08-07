@@ -7,23 +7,44 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#2563EB',
-        success: '#16A34A',
-        warning: '#F59E0B',
-        danger: '#DC2626',
-        neutral: {
-          main: '#1E293B',
-          secondary: '#64748B',
+        accent: {
+          DEFAULT: '#0055FF',
+          hover: '#0044CC',
+          light: '#E5EEFF',
         },
+        neutral: {
+          900: '#111111',
+          800: '#222222',
+          700: '#333333',
+          600: '#555555',
+          500: '#777777',
+          400: '#999999',
+          300: '#BBBBBB',
+          200: '#DDDDDD',
+          100: '#F5F5F5',
+          50: '#FDFDFD',
+        },
+        success: '#000000', // Monochrome defaults unless accent is needed
+        warning: '#000000',
+        danger: '#000000',
         background: {
-          main: '#F8FAFC',
+          main: '#FDFDFD',
           card: '#FFFFFF',
         },
-        border: '#E2E8F0',
+        border: '#E5E5E5',
       },
       fontFamily: {
-        sans: ['Inter', 'Manrope', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Inter', 'system-ui', 'sans-serif'], // Using Inter for a clean, tech look
       },
+      boxShadow: {
+        'premium': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+        'premium-hover': '0 8px 30px -4px rgba(0, 0, 0, 0.1)',
+        'accent-glow': '0 0 20px rgba(0, 85, 255, 0.3)',
+      },
+      transitionTimingFunction: {
+        'premium': 'cubic-bezier(0.87, 0, 0.13, 1)',
+      }
     },
   },
   plugins: [],
