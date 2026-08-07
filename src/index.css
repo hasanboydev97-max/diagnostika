@@ -2,8 +2,8 @@
 @import "katex/dist/katex.min.css";
 
 @theme {
-  --color-accent: #0055FF;
-  --color-accent-hover: #0044CC;
+  --color-accent: #111111;
+  --color-accent-hover: #000000;
   
   --color-neutral-main: #111111;
   --color-neutral-secondary: #777777;
@@ -50,7 +50,7 @@
 
 /* Accent gradient for special highlights */
 .premium-gradient {
-  background: linear-gradient(135deg, #0055FF 0%, #002266 100%);
+  background: linear-gradient(135deg, #222222 0%, #000000 100%);
 }
 
 /* Smooth shadow for cards */

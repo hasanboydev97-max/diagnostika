@@ -41,8 +41,8 @@ export default function Landing() {
           <div className="md:col-span-8">
             <motion.div variants={containerVariants} initial="hidden" animate="show">
               <motion.h1 variants={itemVariants} className="text-4xl md:text-6xl font-medium tracking-tight mb-8 leading-[1.1] relative">
-                <Sparkles className="absolute -top-6 -left-6 text-accent/20 w-12 h-12" />
-                Ta'limni aniq o'lchash va tahlil qilish uchun <span className="text-transparent bg-clip-text bg-gradient-to-r from-neutral-900 to-accent">yagona markaz.</span>
+                <Sparkles className="absolute -top-6 -left-6 text-black/10 w-12 h-12" />
+                Ta'limni aniq o'lchash va tahlil qilish uchun <span className="italic text-black/70">yagona markaz.</span>
               </motion.h1>
               <motion.p variants={itemVariants} className="text-lg md:text-xl text-gray-500 leading-relaxed max-w-2xl mb-12">
                 O'quvchilar va o'qituvchilar uchun mo'ljallangan zamonaviy test platformasi. Natijalarni sun'iy intellekt orqali chuqur o'rganing.
@@ -71,17 +71,17 @@ export default function Landing() {
               <div className="absolute inset-0 bg-neutral-100 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.87,0,0.13,1)] z-0 rounded-xl" />
               
               <div className="relative z-10 flex flex-col md:flex-row gap-6 md:items-center">
-                <div className="w-12 h-12 rounded-full bg-white border border-neutral-200 flex items-center justify-center shrink-0 group-hover:border-accent/30 group-hover:shadow-accent-glow transition-all duration-500">
-                  <User className="w-6 h-6 text-neutral-500 group-hover:text-accent transition-colors duration-500" strokeWidth={1.5} />
+                <div className="w-12 h-12 rounded-full bg-white border border-neutral-200 flex items-center justify-center shrink-0 group-hover:border-black/30 group-hover:shadow-[0_0_15px_rgba(0,0,0,0.05)] transition-all duration-500">
+                  <User className="w-6 h-6 text-neutral-500 group-hover:text-black transition-colors duration-500" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300 group-hover:text-accent">O'quvchi Portali</h3>
-                  <p className="text-neutral-500 leading-relaxed max-w-md transition-all duration-300 delay-75">
+                  <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300 group-hover:translate-x-1">O'quvchi Portali</h3>
+                  <p className="text-neutral-500 leading-relaxed max-w-md transition-all duration-300 delay-75 group-hover:translate-x-1">
                     Shaxsiy test natijalarini ko'rish va reytingni tahlil qilish.
                   </p>
                 </div>
               </div>
-              <ArrowRight className="relative z-10 w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 group-hover:text-accent transition-all duration-500" strokeWidth={1.5} />
+              <ArrowRight className="relative z-10 w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 group-hover:text-black transition-all duration-500" strokeWidth={1.5} />
             </motion.div>
 
             {/* O'qituvchi Portali */}
@@ -93,17 +93,17 @@ export default function Landing() {
               <div className="absolute inset-0 bg-neutral-100 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.87,0,0.13,1)] z-0 rounded-xl" />
 
               <div className="relative z-10 flex flex-col md:flex-row gap-6 md:items-center">
-                <div className="w-12 h-12 rounded-full bg-white border border-neutral-200 flex items-center justify-center shrink-0 group-hover:border-accent/30 group-hover:shadow-accent-glow transition-all duration-500">
-                  <GraduationCap className="w-6 h-6 text-neutral-500 group-hover:text-accent transition-colors duration-500" strokeWidth={1.5} />
+                <div className="w-12 h-12 rounded-full bg-white border border-neutral-200 flex items-center justify-center shrink-0 group-hover:border-black/30 group-hover:shadow-[0_0_15px_rgba(0,0,0,0.05)] transition-all duration-500">
+                  <GraduationCap className="w-6 h-6 text-neutral-500 group-hover:text-black transition-colors duration-500" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300 group-hover:text-accent">O'qituvchi Portali</h3>
-                  <p className="text-neutral-500 leading-relaxed max-w-md transition-all duration-300 delay-75">
+                  <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300 group-hover:translate-x-1">O'qituvchi Portali</h3>
+                  <p className="text-neutral-500 leading-relaxed max-w-md transition-all duration-300 delay-75 group-hover:translate-x-1">
                     Testlarni AI yordamida yaratish va guruhlarni boshqarish.
                   </p>
                 </div>
               </div>
-              <ArrowRight className="relative z-10 w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 group-hover:text-accent transition-all duration-500" strokeWidth={1.5} />
+              <ArrowRight className="relative z-10 w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 group-hover:text-black transition-all duration-500" strokeWidth={1.5} />
             </motion.div>
 
             {/* Super Admin */}
@@ -115,17 +115,17 @@ export default function Landing() {
               <div className="absolute inset-0 bg-neutral-100 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.87,0,0.13,1)] z-0 rounded-xl" />
 
               <div className="relative z-10 flex flex-col md:flex-row gap-6 md:items-center">
-                <div className="w-12 h-12 rounded-full bg-white border border-neutral-200 flex items-center justify-center shrink-0 group-hover:border-accent/30 group-hover:shadow-accent-glow transition-all duration-500">
-                  <Settings className="w-6 h-6 text-neutral-500 group-hover:text-accent transition-colors duration-500" strokeWidth={1.5} />
+                <div className="w-12 h-12 rounded-full bg-white border border-neutral-200 flex items-center justify-center shrink-0 group-hover:border-black/30 group-hover:shadow-[0_0_15px_rgba(0,0,0,0.05)] transition-all duration-500">
+                  <Settings className="w-6 h-6 text-neutral-500 group-hover:text-black transition-colors duration-500" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300 group-hover:text-accent">Boshqaruv Paneli</h3>
-                  <p className="text-neutral-500 leading-relaxed max-w-md transition-all duration-300 delay-75">
+                  <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300 group-hover:translate-x-1">Boshqaruv Paneli</h3>
+                  <p className="text-neutral-500 leading-relaxed max-w-md transition-all duration-300 delay-75 group-hover:translate-x-1">
                     Tizimni to'liq monitoring qilish, statistikani kuzatish.
                   </p>
                 </div>
               </div>
-              <ArrowRight className="relative z-10 w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 group-hover:text-accent transition-all duration-500" strokeWidth={1.5} />
+              <ArrowRight className="relative z-10 w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 group-hover:text-black transition-all duration-500" strokeWidth={1.5} />
             </motion.div>
           </div>
         </section>

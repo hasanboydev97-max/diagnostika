@@ -8,9 +8,9 @@ export default {
     extend: {
       colors: {
         accent: {
-          DEFAULT: '#0055FF',
-          hover: '#0044CC',
-          light: '#E5EEFF',
+          DEFAULT: '#111111',
+          hover: '#000000',
+          light: '#F5F5F5',
         },
         neutral: {
           900: '#111111',
@@ -40,7 +40,7 @@ export default {
       boxShadow: {
         'premium': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
         'premium-hover': '0 8px 30px -4px rgba(0, 0, 0, 0.1)',
-        'accent-glow': '0 0 20px rgba(0, 85, 255, 0.3)',
+        'accent-glow': '0 0 15px rgba(0, 0, 0, 0.1)',
       },
       transitionTimingFunction: {
         'premium': 'cubic-bezier(0.87, 0, 0.13, 1)',
