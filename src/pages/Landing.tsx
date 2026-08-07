@@ -258,7 +258,7 @@ export default function Landing() {
                         <button
                           key={lang}
                           onClick={() => i18n.changeLanguage(lang)}
-                          className={`flex-1 py-2 text-xs font-semibold rounded-[10px] transition-all duration-300 uppercase ${
+                          className={`flex-1 py-2 text-[11px] tracking-wide font-semibold rounded-[10px] transition-all duration-300 uppercase ${
                             i18n.language === lang || (!i18n.language && lang==='uz') 
                               ? 'bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] text-black scale-[1.02]' 
                               : 'text-black/50 hover:text-black hover:bg-black/[0.02]'
@@ -276,7 +276,7 @@ export default function Landing() {
                     <div className="flex bg-black/[0.04] p-1 rounded-[14px]">
                       <button
                         onClick={() => setIsMinimal(false)}
-                        className={`flex-1 py-2 px-2 text-xs font-semibold rounded-[10px] transition-all duration-300 ${
+                        className={`flex-1 py-2 px-1 text-[11px] leading-tight font-semibold rounded-[10px] transition-all duration-300 ${
                           !isMinimal 
                             ? 'bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] text-black scale-[1.02]' 
                             : 'text-black/50 hover:text-black hover:bg-black/[0.02]'
@@ -286,7 +286,7 @@ export default function Landing() {
                       </button>
                       <button
                         onClick={() => setIsMinimal(true)}
-                        className={`flex-1 py-2 px-2 text-xs font-semibold rounded-[10px] transition-all duration-300 ${
+                        className={`flex-1 py-2 px-1 text-[11px] leading-tight font-semibold rounded-[10px] transition-all duration-300 ${
                           isMinimal 
                             ? 'bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] text-black scale-[1.02]' 
                             : 'text-black/50 hover:text-black hover:bg-black/[0.02]'
@@ -305,7 +305,7 @@ export default function Landing() {
                         animate={{ opacity: 1, height: 'auto', filter: 'blur(0px)' }}
                         exit={{ opacity: 0, height: 0, filter: 'blur(4px)' }}
                         transition={{ duration: 0.3 }}
-                        className="space-y-4 overflow-hidden"
+                        className="space-y-4 overflow-hidden pt-1 pb-3 -mx-2 px-2"
                       >
                         <span className="block text-[10px] font-bold text-black/40 uppercase tracking-[0.3em]">{t('landing.settings_colors')}</span>
                         <div className="flex flex-wrap gap-3">
@@ -313,15 +313,15 @@ export default function Landing() {
                             <button
                               key={idx}
                               onClick={() => setPaletteIndex(idx)}
-                              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-400 ${
+                              className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-400 ${
                                 paletteIndex === idx 
-                                  ? 'ring-[3px] ring-black/90 ring-offset-2 scale-110 shadow-lg' 
-                                  : 'hover:scale-105 hover:shadow-md border border-black/5 opacity-80 hover:opacity-100'
+                                  ? 'ring-[2px] ring-black/20 ring-offset-[3px] scale-110 shadow-sm' 
+                                  : 'hover:scale-105 border border-black/5 opacity-80 hover:opacity-100'
                               }`}
                               style={{ background: `linear-gradient(135deg, ${p.colors[0]}, ${p.colors[1]})` }}
                               title={p.name}
                             >
-                              {paletteIndex === idx && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
+                              {paletteIndex === idx && <Check className="w-4 h-4 text-white drop-shadow-sm" strokeWidth={2.5} />}
                             </button>
                           ))}
                         </div>
