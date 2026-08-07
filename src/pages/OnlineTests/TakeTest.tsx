@@ -376,25 +376,25 @@ export default function TakeTest() {
       <main className="flex-1 max-w-5xl w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-6 md:gap-10">
         
         {/* Question Palette Sidebar */}
-        <div className="lg:w-64 shrink-0 order-2 lg:order-1">
-          <div className="bg-white border border-zinc-200 rounded-md p-4 lg:sticky lg:top-24">
-            <div className="flex items-center justify-between mb-3 border-b border-zinc-100 pb-2">
-              <h3 className="text-xs font-semibold text-zinc-900 uppercase tracking-wider">Savollar</h3>
-              <span className="text-[10px] font-bold text-zinc-500">{Object.keys(answers).length} / {test.questions.length}</span>
+        <div className="lg:w-72 shrink-0 order-2 lg:order-1">
+          <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl p-6 lg:sticky lg:top-28">
+            <div className="flex items-center justify-between mb-5 border-b border-black/10 pb-3">
+              <h3 className="text-xs font-bold text-black uppercase tracking-wider">Savollar</h3>
+              <span className="text-[10px] font-bold text-gray-500 px-2 py-1 bg-white/50 rounded-md border border-white/50">{Object.keys(answers).length} / {test.questions.length}</span>
             </div>
             
-            <div className="grid grid-cols-5 gap-1 md:gap-1.5">
+            <div className="grid grid-cols-5 gap-2 md:gap-2">
               {test.questions.map((_: any, idx: number) => {
                 const isAnswered = answers[idx] !== undefined;
                 const isCurrent = idx === currentQIndex;
                 
-                let btnClass = "w-full aspect-square rounded text-[10px] md:text-[11px] font-semibold transition-all flex items-center justify-center border ";
+                let btnClass = "w-full aspect-square rounded-xl text-[11px] md:text-xs font-bold transition-all duration-300 flex items-center justify-center border shadow-sm ";
                 if (isCurrent) {
-                  btnClass += "border-zinc-900 bg-zinc-900 text-white";
+                  btnClass += "border-black bg-black text-white shadow-md scale-105";
                 } else if (isAnswered) {
-                  btnClass += "border-zinc-900 bg-zinc-50 text-zinc-900";
+                  btnClass += "border-black/20 bg-white/80 text-black hover:bg-white hover:border-black/40 hover:shadow-md";
                 } else {
-                  btnClass += "border-zinc-200 bg-white text-zinc-400 hover:border-zinc-400";
+                  btnClass += "border-white/50 bg-white/40 text-gray-500 hover:border-black/20 hover:bg-white hover:text-black";
                 }
                 
                 return (
@@ -412,43 +412,46 @@ export default function TakeTest() {
         </div>
 
         {/* Question Area */}
-        <div className="flex-1 flex flex-col max-w-2xl order-1 lg:order-2 lg:pt-4">
+        <div className="flex-1 flex flex-col max-w-3xl order-1 lg:order-2">
+          <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl p-6 md:p-10 flex flex-col min-h-[500px]">
           <AnimatePresence mode="wait">
             <motion.div 
               key={currentQIndex}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
+              initial={{ opacity: 0, y: 10, filter: 'blur(5px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -10, filter: 'blur(5px)' }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="flex-1"
             >
-              <div className="mb-8">
-                <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">
+              <div className="mb-10">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/50 border border-white/50 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4 shadow-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-black/40"></span>
                   {currentQIndex + 1}-Savol
                 </div>
-                <h3 className="text-lg font-medium text-zinc-900 leading-relaxed">
+                <h3 className="text-xl md:text-2xl font-semibold text-black leading-relaxed">
                   <FormattedText content={currentQ.questionText} />
                 </h3>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {currentQ.options.map((opt: string, i: number) => {
                   const isSelected = answers[currentQIndex] === opt;
                   return (
                     <button
                       key={i}
                       onClick={() => handleSelectOption(opt)}
-                      className={`w-full text-left px-4 py-3 rounded-md border text-sm transition-all flex items-center gap-3 group ${
+                      className={`w-full text-left px-5 py-4 rounded-2xl border text-sm transition-all duration-300 flex items-center gap-4 group ${
                         isSelected 
-                          ? 'border-zinc-900 bg-zinc-50/50' 
-                          : 'border-zinc-200 bg-white hover:border-zinc-400'
+                          ? 'border-black bg-white/90 shadow-md ring-1 ring-black' 
+                          : 'border-white/50 bg-white/40 hover:bg-white/80 hover:border-black/20 hover:shadow-md shadow-sm'
                       }`}
                     >
-                      <div className={`w-4 h-4 shrink-0 rounded-full border flex items-center justify-center transition-colors ${
-                        isSelected ? 'border-zinc-900 bg-zinc-900 text-white' : 'border-zinc-300 group-hover:border-zinc-400'
+                      <div className={`w-5 h-5 shrink-0 rounded-full border flex items-center justify-center transition-colors ${
+                        isSelected ? 'border-black bg-black text-white' : 'border-black/20 bg-white/50 group-hover:border-black/40'
                       }`}>
-                        {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
+                        {isSelected && <div className="w-2 h-2 bg-white rounded-full"></div>}
                       </div>
-                      <span className={`flex-1 ${isSelected ? 'font-medium text-zinc-900' : 'text-zinc-700'}`}>
+                      <span className={`flex-1 leading-relaxed ${isSelected ? 'font-semibold text-black' : 'text-gray-700 group-hover:text-black'}`}>
                         <FormattedText content={opt} />
                       </span>
                     </button>
@@ -459,11 +462,11 @@ export default function TakeTest() {
           </AnimatePresence>
 
           {/* Footer Navigation */}
-          <div className="mt-12 flex items-center justify-between pt-4 border-t border-zinc-100">
+          <div className="mt-12 flex items-center justify-between pt-6 border-t border-black/10">
             <button
               onClick={() => setCurrentQIndex(prev => Math.max(0, prev - 1))}
               disabled={currentQIndex === 0}
-              className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 disabled:opacity-30 hover:text-zinc-900 transition-colors"
+              className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-gray-500 disabled:opacity-30 hover:text-black hover:bg-white/50 rounded-xl transition-all"
             >
               Oldingi
             </button>
@@ -471,7 +474,7 @@ export default function TakeTest() {
             {currentQIndex < test.questions.length - 1 ? (
               <button
                 onClick={() => setCurrentQIndex(prev => prev + 1)}
-                className="px-5 py-2 bg-zinc-100 border border-zinc-200 text-zinc-900 rounded-md text-xs font-semibold uppercase tracking-wider hover:bg-zinc-200 transition-colors"
+                className="px-6 py-3 bg-white/80 border border-white/50 shadow-sm text-black rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-white transition-all hover:shadow-md hover:border-black/20"
               >
                 Keyingi
               </button>
@@ -479,12 +482,13 @@ export default function TakeTest() {
               <button
                 onClick={() => handleSubmit(false)}
                 disabled={submitting}
-                className="inline-flex items-center gap-2 px-5 py-2 bg-zinc-900 text-white rounded-md text-xs font-semibold uppercase tracking-wider hover:bg-zinc-800 transition-colors disabled:opacity-70"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-black text-white shadow-md rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-gray-900 transition-all hover:shadow-lg disabled:opacity-70"
               >
-                {submitting ? <Loader2 size={14} className="animate-spin" /> : null}
+                {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
                 {submitting ? 'Yuborilmoqda...' : 'Yakunlash'}
               </button>
             )}
+          </div>
           </div>
         </div>
       </main>
