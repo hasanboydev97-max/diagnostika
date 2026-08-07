@@ -4,7 +4,6 @@ import { Loader2, ArrowLeft, AlertTriangle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import FormattedText from '../../components/FormattedText';
-import MeshGradient from '../../components/ui/MeshGradient';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -21,6 +20,18 @@ export default function TakeTest() {
   const [loading, setLoading] = useState(true);
   const [timeStatus, setTimeStatus] = useState<'open' | 'early' | 'closed'>('open');
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+
+  // Custom cursor state
+  const [mousePosition, setMousePosition] = useState({ x: -100, y: -100 });
+  const [isHovering, setIsHovering] = useState(false);
+
+  useEffect(() => {
+    const updateMousePosition = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', updateMousePosition);
+    return () => window.removeEventListener('mousemove', updateMousePosition);
+  }, []);
 
   const violations = useRef(0);
   const submitRef = useRef(false);
@@ -231,25 +242,23 @@ export default function TakeTest() {
 
   if (loading) {
     return (
-      <div className="min-h-screen relative bg-[#fdfdfd] flex flex-col justify-center items-center font-sans overflow-hidden">
-        <MeshGradient />
-        <div className="w-5 h-5 border-2 border-white/50 border-t-black rounded-full animate-spin mb-3 relative z-10"></div>
-        <p className="text-gray-500 font-medium text-[11px] uppercase tracking-wider relative z-10">Yuklanmoqda</p>
+      <div className="min-h-screen bg-[#fdfdfd] flex flex-col justify-center items-center font-sans">
+        <div className="w-6 h-6 border-2 border-black/10 border-t-black rounded-full animate-spin mb-4"></div>
+        <p className="text-black font-semibold text-[10px] uppercase tracking-[0.3em]">Yuklanmoqda</p>
       </div>
     );
   }
 
   if (timeStatus === 'early') {
     return (
-      <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex items-center justify-center p-6 text-[#111111] selection:bg-black selection:text-white">
-        <MeshGradient />
-        <div className="border border-white/50 bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 rounded-2xl max-w-sm w-full text-center relative z-10">
-          <Clock className="mx-auto text-gray-400 mb-4" size={32} />
-          <h1 className="text-lg font-semibold text-black mb-2">Test hali ochilmagan</h1>
-          <p className="text-gray-500 text-sm mb-6">
+      <div className="min-h-screen bg-[#fdfdfd] flex items-center justify-center p-6 text-[#111111] selection:bg-black selection:text-white">
+        <div className="max-w-sm w-full text-center">
+          <Clock className="mx-auto text-black mb-6" size={40} strokeWidth={1.5} />
+          <h1 className="text-xl font-medium text-black mb-2 tracking-tight">Test hali ochilmagan</h1>
+          <p className="text-gray-500 text-sm mb-8 leading-relaxed">
             Ushbu test <strong>{new Date(test.startTime).toLocaleString('uz-UZ')}</strong> sanasida ochiladi.
           </p>
-          <button onClick={() => navigate('/online-tests')} className="text-xs font-medium text-black hover:underline">
+          <button onClick={() => navigate('/online-tests')} className="text-[10px] font-bold uppercase tracking-[0.2em] text-black border-b border-black pb-1 hover:text-gray-500 hover:border-gray-500 transition-colors">
             Ortga qaytish
           </button>
         </div>
@@ -259,15 +268,14 @@ export default function TakeTest() {
 
   if (timeStatus === 'closed') {
     return (
-      <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex items-center justify-center p-6 text-[#111111] selection:bg-black selection:text-white">
-        <MeshGradient />
-        <div className="border border-white/50 bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 rounded-2xl max-w-sm w-full text-center relative z-10">
-          <AlertTriangle className="mx-auto text-gray-400 mb-4" size={32} />
-          <h1 className="text-lg font-semibold text-black mb-2">Test yopilgan</h1>
-          <p className="text-gray-500 text-sm mb-6">
+      <div className="min-h-screen bg-[#fdfdfd] flex items-center justify-center p-6 text-[#111111] selection:bg-black selection:text-white">
+        <div className="max-w-sm w-full text-center">
+          <AlertTriangle className="mx-auto text-black mb-6" size={40} strokeWidth={1.5} />
+          <h1 className="text-xl font-medium text-black mb-2 tracking-tight">Test yopilgan</h1>
+          <p className="text-gray-500 text-sm mb-8 leading-relaxed">
             Ushbu test qabul qilishni to'xtatgan.
           </p>
-          <button onClick={() => navigate('/online-tests')} className="text-xs font-medium text-black hover:underline">
+          <button onClick={() => navigate('/online-tests')} className="text-[10px] font-bold uppercase tracking-[0.2em] text-black border-b border-black pb-1 hover:text-gray-500 hover:border-gray-500 transition-colors">
             Ortga qaytish
           </button>
         </div>
@@ -277,36 +285,52 @@ export default function TakeTest() {
 
   if (!started) {
     return (
-      <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex items-center justify-center p-6 font-sans text-[#111111] selection:bg-black selection:text-white">
-        <MeshGradient />
-        <div className="border border-white/50 bg-white/60 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 rounded-3xl max-w-sm w-full relative z-10">
+      <div className="min-h-screen bg-[#fdfdfd] flex items-center justify-center p-6 font-sans text-[#111111] selection:bg-black selection:text-white relative cursor-none">
+        
+        {/* Custom Cursor */}
+        <motion.div
+          className="hidden md:block fixed top-0 left-0 w-16 h-16 rounded-full bg-white mix-blend-difference pointer-events-none z-[9999]"
+          animate={{
+            x: mousePosition.x - 32,
+            y: mousePosition.y - 32,
+            scale: isHovering ? 1.5 : 1
+          }}
+          transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
+        />
+
+        <div className="max-w-md w-full relative z-10">
           <button 
             onClick={() => navigate('/online-tests')}
-            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-black transition-colors mb-6 font-medium"
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 hover:text-black transition-colors mb-12"
           >
             <ArrowLeft size={14} /> Ortga
           </button>
           
-          <h1 className="text-xl font-semibold text-black mb-1 leading-tight">{test.title}</h1>
-          <div className="flex items-center gap-2 text-xs text-gray-500 mb-6">
-            <span className="font-medium px-1.5 py-0.5 bg-white/50 border border-white/50 rounded">{test.subject}</span>
-            <span>•</span>
+          <h1 className="text-3xl font-medium text-black mb-4 tracking-tight leading-tight">{test.title}</h1>
+          <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 mb-10">
+            <span>{test.subject}</span>
+            <span className="text-black/20">•</span>
             <span>{test.questions.length} savol</span>
           </div>
           
-          <div className="bg-white/50 backdrop-blur-md border border-white/50 p-3 rounded-xl mb-6 text-xs text-gray-700 leading-relaxed shadow-sm">
-            <strong className="text-black">Qat'iy ogohlantirish:</strong> Testni boshlagach, boshqa oynaga o'tish (tab almashtirish) qat'iyan man etiladi.
+          <div className="border border-black/10 p-5 mb-10 text-xs text-gray-500 leading-relaxed">
+            <strong className="text-black block mb-2 text-[10px] uppercase tracking-[0.2em]">Qat'iy ogohlantirish</strong> 
+            Testni boshlagach, boshqa oynaga o'tish (tab almashtirish) qat'iyan man etiladi.
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-8">
             <div>
-              <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">To'liq ismingizni kiriting</label>
+              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-4">To'liq ismingizni kiriting</label>
               <input 
                 type="text" 
                 value={studentName}
                 onChange={e => setStudentName(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleStart()}
-                className="w-full px-4 py-3 bg-white/60 backdrop-blur-md border border-white/50 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:border-white focus:bg-white/80 transition-all shadow-sm"
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}
+                className="w-full pb-3 bg-transparent border-b border-black/10 text-lg placeholder-gray-300 focus:outline-none focus:border-black transition-colors"
                 placeholder="Masalan: Aliyev Vali"
                 autoFocus
               />
@@ -314,7 +338,9 @@ export default function TakeTest() {
             
             <button 
               onClick={handleStart}
-              className="w-full py-3.5 bg-black text-white rounded-xl text-sm font-semibold hover:bg-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black shadow-sm"
+              onMouseEnter={() => setIsHovering(true)}
+              onMouseLeave={() => setIsHovering(false)}
+              className="w-full py-5 bg-black text-white text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-gray-900 transition-colors focus:outline-none"
             >
               Testni Boshlash
             </button>
@@ -335,16 +361,25 @@ export default function TakeTest() {
 
   return (
     <div 
-      className="min-h-screen relative overflow-hidden bg-[#fdfdfd] text-[#111111] font-sans flex flex-col select-none selection:bg-black selection:text-white pb-32"
+      className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans flex flex-col select-none selection:bg-black selection:text-white cursor-none"
       onCopy={(e) => e.preventDefault()}
       onCut={(e) => e.preventDefault()}
       onPaste={(e) => e.preventDefault()}
       onContextMenu={(e) => e.preventDefault()}
     >
-      <MeshGradient />
-      
+      {/* Custom Cursor */}
+      <motion.div
+        className="hidden md:block fixed top-0 left-0 w-16 h-16 rounded-full bg-white mix-blend-difference pointer-events-none z-[9999]"
+        animate={{
+          x: mousePosition.x - 32,
+          y: mousePosition.y - 32,
+          scale: isHovering ? 1.5 : 1
+        }}
+        transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
+      />
+
       {/* Progress Bar */}
-      <div className="h-[3px] w-full bg-white/30 backdrop-blur-sm relative z-20">
+      <div className="h-[2px] w-full bg-black/5 relative z-20">
         <div 
           className="h-full bg-black transition-all duration-300 ease-out"
           style={{ width: `${progress}%` }}
@@ -352,20 +387,20 @@ export default function TakeTest() {
       </div>
 
       {/* Header */}
-      <header className="border-b border-white/50 px-6 h-16 flex items-center justify-between sticky top-0 bg-white/60 backdrop-blur-xl z-20 shadow-sm">
+      <header className="border-b border-black/10 px-8 h-20 flex items-center justify-between sticky top-0 bg-[#fdfdfd]/80 backdrop-blur-md z-20">
         <div className="flex flex-col">
-          <h2 className="text-xs font-semibold text-zinc-900 leading-tight">{test.title}</h2>
-          <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wide">{studentName}</p>
+          <h2 className="text-sm font-medium text-black tracking-tight">{test.title}</h2>
+          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">{studentName}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-1.5 px-2 py-1 bg-zinc-50 text-zinc-600 rounded-md border border-zinc-200 text-[10px] font-bold uppercase tracking-wider">
-            <AlertTriangle size={10} /> Oynani tark etmang
+        <div className="flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-2 text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">
+            <AlertTriangle size={12} strokeWidth={2} /> Oynani tark etmang
           </div>
           {timeLeft !== null && (
-            <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-bold font-mono tracking-wider border ${
-              timeLeft <= 60 ? 'bg-red-50 text-red-600 border-red-200 animate-pulse' : 'bg-zinc-50 text-zinc-900 border-zinc-200'
+            <div className={`flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] ${
+              timeLeft <= 60 ? 'text-red-500 animate-pulse' : 'text-black'
             }`}>
-              <Clock size={12} />
+              <Clock size={14} strokeWidth={2} />
               {formatTime(timeLeft)}
             </div>
           )}
@@ -373,34 +408,36 @@ export default function TakeTest() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-5xl w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-6 md:gap-10">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-12 md:py-24 grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-24">
         
         {/* Question Palette Sidebar */}
-        <div className="lg:w-72 shrink-0 order-2 lg:order-1">
-          <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl p-6 lg:sticky lg:top-28">
-            <div className="flex items-center justify-between mb-5 border-b border-black/10 pb-3">
-              <h3 className="text-xs font-bold text-black uppercase tracking-wider">Savollar</h3>
-              <span className="text-[10px] font-bold text-gray-500 px-2 py-1 bg-white/50 rounded-md border border-white/50">{Object.keys(answers).length} / {test.questions.length}</span>
+        <div className="md:col-span-4 lg:col-span-3 order-2 md:order-1">
+          <div className="md:sticky md:top-32">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em]">Savollar</h3>
+              <span className="text-[10px] font-bold text-black uppercase tracking-[0.2em]">{Object.keys(answers).length} / {test.questions.length}</span>
             </div>
             
-            <div className="grid grid-cols-5 gap-2 md:gap-2">
+            <div className="grid grid-cols-5 gap-3">
               {test.questions.map((_: any, idx: number) => {
                 const isAnswered = answers[idx] !== undefined;
                 const isCurrent = idx === currentQIndex;
                 
-                let btnClass = "w-full aspect-square rounded-xl text-[11px] md:text-xs font-bold transition-all duration-300 flex items-center justify-center border shadow-sm ";
+                let btnClass = "w-full aspect-square text-[10px] font-bold transition-all duration-300 flex items-center justify-center border ";
                 if (isCurrent) {
-                  btnClass += "border-black bg-black text-white shadow-md scale-105";
+                  btnClass += "border-black bg-black text-white";
                 } else if (isAnswered) {
-                  btnClass += "border-black/20 bg-white/80 text-black hover:bg-white hover:border-black/40 hover:shadow-md";
+                  btnClass += "border-black/20 bg-transparent text-black hover:border-black";
                 } else {
-                  btnClass += "border-white/50 bg-white/40 text-gray-500 hover:border-black/20 hover:bg-white hover:text-black";
+                  btnClass += "border-black/5 bg-transparent text-gray-400 hover:border-black/30 hover:text-black";
                 }
                 
                 return (
                   <button
                     key={idx}
                     onClick={() => setCurrentQIndex(idx)}
+                    onMouseEnter={() => setIsHovering(true)}
+                    onMouseLeave={() => setIsHovering(false)}
                     className={btnClass}
                   >
                     {idx + 1}
@@ -412,46 +449,39 @@ export default function TakeTest() {
         </div>
 
         {/* Question Area */}
-        <div className="flex-1 flex flex-col max-w-3xl order-1 lg:order-2">
-          <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl p-6 md:p-10 flex flex-col min-h-[500px]">
+        <div className="md:col-span-8 lg:col-span-9 order-1 md:order-2">
           <AnimatePresence mode="wait">
             <motion.div 
               key={currentQIndex}
-              initial={{ opacity: 0, y: 10, filter: 'blur(5px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, y: -10, filter: 'blur(5px)' }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-              className="flex-1"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             >
-              <div className="mb-10">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/50 border border-white/50 rounded-lg text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-4 shadow-sm">
-                  <span className="w-1.5 h-1.5 rounded-full bg-black/40"></span>
+              <div className="mb-16">
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-6">
                   {currentQIndex + 1}-Savol
                 </div>
-                <h3 className="text-xl md:text-2xl font-semibold text-black leading-relaxed">
+                <h3 className="text-3xl md:text-4xl lg:text-5xl font-medium text-black leading-tight tracking-tight">
                   <FormattedText content={currentQ.questionText} />
                 </h3>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-0 border-t border-black/10">
                 {currentQ.options.map((opt: string, i: number) => {
                   const isSelected = answers[currentQIndex] === opt;
                   return (
                     <button
                       key={i}
                       onClick={() => handleSelectOption(opt)}
-                      className={`w-full text-left px-5 py-4 rounded-2xl border text-sm transition-all duration-300 flex items-center gap-4 group ${
-                        isSelected 
-                          ? 'border-black bg-white/90 shadow-md ring-1 ring-black' 
-                          : 'border-white/50 bg-white/40 hover:bg-white/80 hover:border-black/20 hover:shadow-md shadow-sm'
-                      }`}
+                      onMouseEnter={() => setIsHovering(true)}
+                      onMouseLeave={() => setIsHovering(false)}
+                      className="w-full text-left py-6 border-b border-black/10 transition-all duration-300 flex items-start md:items-center gap-6 group hover:pl-6"
                     >
-                      <div className={`w-5 h-5 shrink-0 rounded-full border flex items-center justify-center transition-colors ${
-                        isSelected ? 'border-black bg-black text-white' : 'border-black/20 bg-white/50 group-hover:border-black/40'
-                      }`}>
-                        {isSelected && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                      <div className="w-6 h-6 mt-1 md:mt-0 shrink-0 border flex items-center justify-center transition-colors border-black/20 group-hover:border-black">
+                        {isSelected && <div className="w-3 h-3 bg-black"></div>}
                       </div>
-                      <span className={`flex-1 leading-relaxed ${isSelected ? 'font-semibold text-black' : 'text-gray-700 group-hover:text-black'}`}>
+                      <span className={`flex-1 text-lg md:text-xl leading-relaxed transition-colors ${isSelected ? 'font-medium text-black' : 'text-gray-500 group-hover:text-black'}`}>
                         <FormattedText content={opt} />
                       </span>
                     </button>
@@ -462,11 +492,13 @@ export default function TakeTest() {
           </AnimatePresence>
 
           {/* Footer Navigation */}
-          <div className="mt-12 flex items-center justify-between pt-6 border-t border-black/10">
+          <div className="mt-20 flex items-center justify-between">
             <button
               onClick={() => setCurrentQIndex(prev => Math.max(0, prev - 1))}
               disabled={currentQIndex === 0}
-              className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-gray-500 disabled:opacity-30 hover:text-black hover:bg-white/50 rounded-xl transition-all"
+              onMouseEnter={() => setIsHovering(true)}
+              onMouseLeave={() => setIsHovering(false)}
+              className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 disabled:opacity-30 hover:text-black transition-colors"
             >
               Oldingi
             </button>
@@ -474,7 +506,9 @@ export default function TakeTest() {
             {currentQIndex < test.questions.length - 1 ? (
               <button
                 onClick={() => setCurrentQIndex(prev => prev + 1)}
-                className="px-6 py-3 bg-white/80 border border-white/50 shadow-sm text-black rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-white transition-all hover:shadow-md hover:border-black/20"
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}
+                className="text-[10px] font-bold uppercase tracking-[0.2em] text-black border-b border-black pb-1 hover:text-gray-500 hover:border-gray-500 transition-all"
               >
                 Keyingi
               </button>
@@ -482,13 +516,14 @@ export default function TakeTest() {
               <button
                 onClick={() => handleSubmit(false)}
                 disabled={submitting}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-black text-white shadow-md rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-gray-900 transition-all hover:shadow-lg disabled:opacity-70"
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}
+                className="inline-flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-black border-b border-black pb-1 hover:text-gray-500 hover:border-gray-500 transition-all disabled:opacity-30"
               >
-                {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
+                {submitting ? <Loader2 size={12} className="animate-spin" /> : null}
                 {submitting ? 'Yuborilmoqda...' : 'Yakunlash'}
               </button>
             )}
-          </div>
           </div>
         </div>
       </main>
