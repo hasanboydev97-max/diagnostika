@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Plus, User, GraduationCap, Settings, Sparkles } from 'lucide-react';
+import { ArrowRight, Plus, User, GraduationCap, Settings } from 'lucide-react';
 import MeshGradient from '../components/ui/MeshGradient';
 
 const containerVariants: any = {

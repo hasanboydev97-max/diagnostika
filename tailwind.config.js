@@ -47,19 +47,46 @@ export default {
       },
       keyframes: {
         blob1: {
-          "0%, 100%": { transform: "translate(0px, 0px) scale(1)" },
-          "33%": { transform: "translate(150px, -200px) scale(1.3)" },
-          "66%": { transform: "translate(-100px, 150px) scale(0.8)" }
+          "0%, 100%": { 
+            transform: "translate(0px, 0px) rotate(0deg) scale(1)",
+            borderRadius: "40% 60% 70% 30% / 40% 50% 60% 50%"
+          },
+          "33%": { 
+            transform: "translate(150px, -200px) rotate(90deg) scale(1.3)",
+            borderRadius: "60% 40% 30% 70% / 50% 60% 40% 50%"
+          },
+          "66%": { 
+            transform: "translate(-100px, 150px) rotate(180deg) scale(0.8)",
+            borderRadius: "50% 50% 70% 30% / 40% 40% 60% 60%"
+          }
         },
         blob2: {
-          "0%, 100%": { transform: "translate(0px, 0px) scale(1)" },
-          "33%": { transform: "translate(-200px, 150px) scale(1.2)" },
-          "66%": { transform: "translate(150px, -150px) scale(0.9)" }
+          "0%, 100%": { 
+            transform: "translate(0px, 0px) rotate(0deg) scale(1)",
+            borderRadius: "50% 50% 50% 50% / 50% 50% 50% 50%"
+          },
+          "33%": { 
+            transform: "translate(-200px, 150px) rotate(-90deg) scale(1.4)",
+            borderRadius: "40% 60% 30% 70% / 60% 30% 70% 40%"
+          },
+          "66%": { 
+            transform: "translate(150px, -150px) rotate(-180deg) scale(0.9)",
+            borderRadius: "70% 30% 50% 50% / 30% 70% 50% 50%"
+          }
         },
         blob3: {
-          "0%, 100%": { transform: "translate(0px, 0px) scale(1)" },
-          "33%": { transform: "translate(200px, 100px) scale(1.4)" },
-          "66%": { transform: "translate(-150px, -100px) scale(0.7)" }
+          "0%, 100%": { 
+            transform: "translate(0px, 0px) rotate(0deg) scale(1)",
+            borderRadius: "40% 60% 70% 30% / 40% 50% 60% 50%"
+          },
+          "33%": { 
+            transform: "translate(200px, 100px) rotate(120deg) scale(1.6)",
+            borderRadius: "30% 70% 70% 30% / 30% 30% 70% 70%"
+          },
+          "66%": { 
+            transform: "translate(-150px, -100px) rotate(240deg) scale(0.7)",
+            borderRadius: "60% 40% 30% 70% / 60% 60% 40% 40%"
+          }
         }
       },
       animation: {
