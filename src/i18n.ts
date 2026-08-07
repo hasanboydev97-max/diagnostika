@@ -21,4 +21,11 @@ i18n
     },
   });
 
+i18n.on('languageChanged', (lng) => {
+  document.documentElement.lang = lng;
+});
+
+// Set initial lang
+document.documentElement.lang = i18n.language || 'uz';
+
 export default i18n;
