@@ -204,8 +204,8 @@ export default function Summary() {
 
       <div ref={printRef} className="print-container relative z-10 pb-20 md:pb-24">
         {/* Main Content */}
-        <div className="max-w-[1440px] mx-auto px-3 sm:px-6 md:px-12 pt-3 sm:pt-6 md:pt-12 space-y-6 md:space-y-16">
-          <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8 md:p-12 rounded-2xl md:rounded-[2rem] flex flex-col space-y-10 md:space-y-20">
+        <div className="max-w-[1440px] mx-auto px-[15px] sm:px-6 md:px-12 pt-3 sm:pt-6 md:pt-12 space-y-6 md:space-y-16">
+          <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-[15px] sm:p-8 md:p-12 rounded-2xl md:rounded-[2rem] flex flex-col space-y-10 md:space-y-20">
           <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-black/5 pb-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl border border-slate-200 flex items-center justify-center font-bold text-lg md:text-xl tracking-tighter bg-white text-black shadow-sm">

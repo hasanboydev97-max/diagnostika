@@ -171,8 +171,8 @@ export default function Admin() {
     <div className="min-h-screen relative font-sans text-[#111111] selection:bg-black selection:text-white pb-20 overflow-x-hidden">
       <MeshGradient />
       
-      <div className="max-w-[1600px] mx-auto px-6 py-10 md:py-16 flex flex-col gap-12 md:gap-20 relative z-10">
-        <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-12 rounded-3xl">
+      <div className="max-w-[1600px] mx-auto px-[15px] sm:px-6 py-4 md:py-16 flex flex-col gap-6 md:gap-20 relative z-10">
+        <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-[15px] sm:p-8 md:p-12 rounded-2xl md:rounded-3xl">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 md:mb-8 gap-8 border-b border-black/10 pb-8">
           <div>
             <h1 className="text-4xl md:text-5xl font-medium tracking-tight">Admin Panel</h1>

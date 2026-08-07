@@ -191,28 +191,28 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose }:
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 md:p-6">
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-4 md:p-6">
         <motion.div 
           initial={{ opacity: 0, scale: 0.96, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 10 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="bg-[#fdfdfd] border border-black/10 w-full max-w-3xl overflow-hidden flex flex-col max-h-[92vh] shadow-[0_30px_70px_rgba(0,0,0,0.12)] selection:bg-black selection:text-white"
+          className="bg-[#fdfdfd] border border-black/10 w-full max-w-3xl rounded-xl md:rounded-2xl overflow-hidden flex flex-col max-h-[95vh] shadow-[0_30px_70px_rgba(0,0,0,0.12)] selection:bg-black selection:text-white"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 md:p-8 border-b border-black/10 bg-white">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 border border-black/10 bg-black text-white flex items-center justify-center">
+          <div className="flex items-center justify-between p-[15px] sm:p-6 md:p-8 border-b border-black/10 bg-white">
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="w-8 h-8 md:w-10 md:h-10 border border-black/10 bg-black text-white flex items-center justify-center rounded-lg">
                 <Sparkles className="w-4 h-4" />
               </div>
               <div>
-                <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-gray-400 block mb-0.5">AI KONSTRUKTOR</span>
-                <h2 className="text-xl md:text-2xl font-medium tracking-tight text-[#111111]">AI Test Yaratish</h2>
+                <span className="text-[9px] md:text-[10px] font-bold tracking-[0.2em] md:tracking-[0.3em] uppercase text-gray-400 block mb-0.5">AI KONSTRUKTOR</span>
+                <h2 className="text-lg md:text-2xl font-medium tracking-tight text-[#111111]">AI Test Yaratish</h2>
               </div>
             </div>
             <button 
               onClick={onClose} 
-              className="p-2 text-gray-400 hover:text-black transition-colors border border-transparent hover:border-black/10"
+              className="p-1.5 md:p-2 text-gray-400 hover:text-black transition-colors border border-transparent hover:border-black/10 rounded-lg"
             >
               <X className="w-5 h-5" strokeWidth={1.5} />
             </button>
@@ -220,34 +220,36 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose }:
 
           {/* Mode Tabs */}
           {!createdTestId && (
-            <div className="px-6 md:px-8 bg-white border-b border-black/10 flex gap-6">
+            <div className="px-[15px] sm:px-6 md:px-8 bg-white border-b border-black/10 flex gap-4 md:gap-6 overflow-x-auto whitespace-nowrap scrollbar-none">
               <button
                 type="button"
                 onClick={() => setActiveMode('matrix')}
-                className={`py-4 text-[10px] font-bold uppercase tracking-[0.25em] transition-all border-b-2 flex items-center gap-2 ${
+                className={`py-3 md:py-4 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] transition-all border-b-2 flex items-center gap-2 ${
                   activeMode === 'matrix'
                     ? 'border-black text-[#111111]'
                     : 'border-transparent text-gray-400 hover:text-black'
                 }`}
               >
-                <SlidersHorizontal className="w-3.5 h-3.5" /> Chuqur Sozlama (Multi-Fan & Qiyinlik Matritsasi)
+                <SlidersHorizontal className="w-3.5 h-3.5 shrink-0" />
+                <span className="sm:hidden">Chuqur Sozlama</span>
+                <span className="hidden sm:inline">Chuqur Sozlama (Multi-Fan & Qiyinlik Matritsasi)</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveMode('simple')}
-                className={`py-4 text-[10px] font-bold uppercase tracking-[0.25em] transition-all border-b-2 flex items-center gap-2 ${
+                className={`py-3 md:py-4 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] transition-all border-b-2 flex items-center gap-2 ${
                   activeMode === 'simple'
                     ? 'border-black text-[#111111]'
                     : 'border-transparent text-gray-400 hover:text-black'
                 }`}
               >
-                <Zap className="w-3.5 h-3.5" /> Tezkor Rejim
+                <Zap className="w-3.5 h-3.5 shrink-0" /> Tezkor Rejim
               </button>
             </div>
           )}
 
           {/* Content */}
-          <div className="p-6 md:p-8 overflow-y-auto space-y-8 flex-1">
+          <div className="p-[15px] sm:p-6 md:p-8 overflow-y-auto space-y-6 md:space-y-8 flex-1">
             {createdTestId ? (
               <div className="text-center py-10 space-y-8">
                 <div className="w-16 h-16 border border-black/10 bg-black text-white flex items-center justify-center mx-auto shadow-md">
@@ -600,19 +602,19 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose }:
 
           {/* Footer */}
           {!createdTestId && (
-            <div className="p-6 border-t border-black/10 bg-white flex justify-between items-center">
-              <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">
+            <div className="p-[15px] sm:p-6 border-t border-black/10 bg-white flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+              <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] text-center sm:text-left">
                 {activeMode === 'matrix' ? (
                   <span>Jami: <strong className="text-black font-mono">{totalSubjectQuestions} ta</strong> savol</span>
                 ) : (
                   <span>Jami: <strong className="text-black font-mono">{simpleQuestionCount} ta</strong> savol</span>
                 )}
               </div>
-              <div className="flex gap-4">
+              <div className="flex gap-2 sm:gap-4">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 hover:text-black transition-colors"
+                  className="flex-1 sm:flex-none px-4 py-3 sm:px-6 sm:py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 hover:text-black transition-colors border border-black/10 sm:border-transparent rounded-lg"
                 >
                   Bekor qilish
                 </button>
@@ -620,11 +622,11 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose }:
                   type="button"
                   disabled={isGenerating}
                   onClick={handleGenerate}
-                  className={`px-8 py-4 bg-black text-white text-[10px] font-bold uppercase tracking-[0.3em] border border-black transition-all flex items-center gap-3 ${
+                  className={`flex-1 sm:flex-none px-5 py-3.5 sm:px-8 sm:py-4 bg-black text-white text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em] border border-black transition-all flex items-center justify-center gap-2 sm:gap-3 rounded-lg ${
                     isGenerating ? 'bg-black/50 cursor-wait' : 'hover:bg-black/80'
                   }`}
                 >
-                  {isGenerating && <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>}
+                  {isGenerating && <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>}
                   {isGenerating ? 'Yaratilmoqda...' : 'AI Testni Yaratish'}
                 </button>
               </div>
