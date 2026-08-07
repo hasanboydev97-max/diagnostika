@@ -160,47 +160,62 @@ export default function Landing() {
               {t('landing.faq')}
             </motion.h2>
           </div>
-          <div className="md:col-span-8 flex flex-col">
+          <div className="md:col-span-8 flex flex-col gap-3">
             {[
               { q: t('landing.faq_q1'), a: t('landing.faq_a1') },
               { q: t('landing.faq_q2'), a: t('landing.faq_a2') },
               { q: t('landing.faq_q3'), a: t('landing.faq_a3') }
-            ].map((item, idx) => (
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: idx * 0.1 }}
-                key={idx} 
-                className="border-b border-black/10"
-              >
-                <button 
-                  onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
-                  className="w-full py-8 flex items-center justify-between text-left focus:outline-none group pointer-events-auto"
+            ].map((item, idx) => {
+              const isActive = activeFaq === idx;
+              return (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }} 
+                  whileInView={{ opacity: 1, y: 0 }} 
+                  viewport={{ once: true }} 
+                  transition={{ duration: 0.8, delay: idx * 0.1 }}
+                  key={idx} 
+                  className={`relative group rounded-2xl overflow-hidden transition-all duration-500 border ${
+                    isActive 
+                      ? 'bg-black/[0.04] border-transparent shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] scale-[1.01]' 
+                      : 'bg-transparent border-black/5 hover:border-black/10 hover:bg-black/[0.02] hover:scale-[1.005]'
+                  }`}
                 >
-                  <span className="text-xl font-medium pr-8">{item.q}</span>
-                  <motion.div
-                    animate={{ rotate: activeFaq === idx ? 45 : 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="shrink-0"
+                  <button 
+                    onClick={() => setActiveFaq(isActive ? null : idx)}
+                    className="w-full px-6 md:px-8 py-6 md:py-8 flex items-center justify-between text-left focus:outline-none pointer-events-auto"
                   >
-                    <Plus className="w-5 h-5 text-gray-400 group-hover:text-black transition-colors" strokeWidth={1.5} />
-                  </motion.div>
-                </button>
-                <AnimatePresence>
-                  {activeFaq === idx && (
+                    <span className={`text-lg md:text-xl font-medium pr-8 transition-colors duration-300 ${isActive ? 'text-black' : 'text-black/80 group-hover:text-black'}`}>
+                      {item.q}
+                    </span>
                     <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.4, ease: "easeInOut" }}
-                      className="overflow-hidden"
+                      animate={{ rotate: isActive ? 45 : 0 }}
+                      transition={{ duration: 0.3 }}
+                      className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                        isActive 
+                          ? 'bg-black text-white shadow-md' 
+                          : 'bg-black/5 text-black/50 group-hover:bg-black/10 group-hover:text-black'
+                      }`}
                     >
-                      <p className="pb-8 text-gray-500 leading-relaxed">
-                        {item.a}
-                      </p>
+                      <Plus className="w-5 h-5" strokeWidth={1.5} />
                     </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            ))}
+                  </button>
+                  <AnimatePresence>
+                    {isActive && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.4, ease: "easeInOut" }}
+                      >
+                        <p className="px-6 md:px-8 pb-6 md:pb-8 text-black/60 leading-relaxed text-base md:text-lg">
+                          {item.a}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              );
+            })}
           </div>
         </section>
 
