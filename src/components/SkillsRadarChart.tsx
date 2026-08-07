@@ -100,22 +100,22 @@ export default function SkillsRadarChart({ results = {}, blueprint }: Props) {
           </div>
         </div>
 
-        {/* Right: Radar chart — desktop visual bonus */}
-        <div className="hidden md:flex bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex-col">
+        {/* Right: Radar chart — responsive visual bonus */}
+        <div className="flex bg-white rounded-2xl border border-slate-100 shadow-sm p-4 md:p-5 flex-col">
           <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Fikrlash xaritasi</div>
-          <div className="flex-1 min-h-[260px]">
+          <div className="w-full h-[220px] sm:h-[260px] md:h-full min-h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="65%" data={data}>
                 <PolarGrid stroke="#cbd5e1" strokeWidth={1} />
                 <PolarAngleAxis 
                   dataKey="subject" 
-                  tick={{ fill: '#64748b', fontSize: 12, fontWeight: 700 }} 
+                  tick={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }} 
                 />
                 <PolarRadiusAxis 
                   angle={90} 
                   domain={[0, 100]} 
                   tickCount={6} 
-                  tick={{ fill: '#94a3b8', fontSize: 10 }} 
+                  tick={{ fill: '#94a3b8', fontSize: 9 }} 
                   axisLine={false} 
                 />
                 <Tooltip content={<CustomTooltip />} cursor={false} />
@@ -126,8 +126,8 @@ export default function SkillsRadarChart({ results = {}, blueprint }: Props) {
                   strokeWidth={2} 
                   fill="#1e3a8a" 
                   fillOpacity={0.4} 
-                  dot={{ r: 4, fill: '#ffffff', strokeWidth: 2, stroke: '#1e3a8a' }}
-                  activeDot={{ r: 6, fill: '#1e3a8a', strokeWidth: 0 }}
+                  dot={{ r: 3, fill: '#ffffff', strokeWidth: 2, stroke: '#1e3a8a' }}
+                  activeDot={{ r: 5, fill: '#1e3a8a', strokeWidth: 0 }}
                 />
               </RadarChart>
             </ResponsiveContainer>

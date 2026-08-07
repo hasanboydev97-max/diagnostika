@@ -202,20 +202,23 @@ export default function Summary() {
         />
       )}
 
-      <div ref={printRef} className="print-container relative z-10 pb-24">
+      <div ref={printRef} className="print-container relative z-10 pb-20 md:pb-24">
         {/* Main Content */}
-        <div className="max-w-[1440px] mx-auto px-4 md:px-12 pt-4 md:pt-12 space-y-6 md:space-y-16">
-          <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-12 rounded-[2rem] flex flex-col space-y-16 md:space-y-24">
-          <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="max-w-[1440px] mx-auto px-3 sm:px-6 md:px-12 pt-3 sm:pt-6 md:pt-12 space-y-6 md:space-y-16">
+          <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 sm:p-8 md:p-12 rounded-2xl md:rounded-[2rem] flex flex-col space-y-10 md:space-y-20">
+          <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-black/5 pb-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-lg border border-slate-200 flex items-center justify-center font-bold text-xl tracking-tighter bg-white text-black shadow-sm">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl border border-slate-200 flex items-center justify-center font-bold text-lg md:text-xl tracking-tighter bg-white text-black shadow-sm">
               HB.
             </div>
-            <h1 className="font-bold text-xl text-neutral-main">HB Diagnostikasi</h1>
+            <div>
+              <h1 className="font-bold text-lg md:text-xl text-neutral-main">HB Diagnostikasi</h1>
+              <p className="text-[10px] text-gray-500 sm:hidden">{studentData.studentName} • {studentData.grade || '5'}-sinf</p>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-neutral-secondary">
-            <span>{studentData.studentName} ({studentData.grade || '5'}-sinf)</span>
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold mr-2">
+          <div className="flex flex-wrap items-center justify-between sm:justify-end w-full sm:w-auto gap-3 text-xs md:text-sm font-medium text-neutral-secondary">
+            <span className="hidden sm:inline">{studentData.studentName} ({studentData.grade || '5'}-sinf)</span>
+            <div className="hidden sm:flex w-8 h-8 rounded-full bg-primary/10 items-center justify-center text-primary font-bold">
               {studentData.studentName.charAt(0).toUpperCase()}
             </div>
             <button
@@ -224,7 +227,7 @@ export default function Summary() {
                 window.scrollTo(0, 0);
                 navigate('/');
               }}
-              className="print-hide flex items-center gap-2 px-4 py-2 bg-neutral-main text-white rounded-md text-xs font-semibold uppercase tracking-wider hover:bg-neutral-900 transition-colors shadow-sm"
+              className="print-hide flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-neutral-main text-white rounded-lg text-[10px] md:text-xs font-semibold uppercase tracking-wider hover:bg-neutral-900 transition-colors shadow-sm"
             >
               Chiqish
             </button>
@@ -238,12 +241,12 @@ export default function Summary() {
           variants={sectionVariants}
         >
           {/* 01. Bir qarashda */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2 text-primary text-sm font-bold tracking-wider">
+        <section className="space-y-3">
+          <div className="flex items-center gap-2 text-primary text-xs md:text-sm font-bold tracking-wider">
             <span>01</span>
           </div>
           <h2 className="text-lg md:text-2xl font-bold text-neutral-main">Bir qarashda</h2>
-          <p className="text-xs md:text-lg text-neutral-secondary leading-relaxed max-w-4xl">
+          <p className="text-xs md:text-base text-neutral-secondary leading-relaxed max-w-4xl">
             O'quvchi <strong className="text-neutral-main font-semibold">{studentData.studentName}</strong> kirish imtihonida umumiy <strong className="text-neutral-main font-semibold">{totalScore}/100</strong> ball oldi — <strong className="text-neutral-main font-semibold">{isPass ? 'yaxshi (dasturni ishonchli o\'zlashtiradi)' : 'qoniqarsiz (qo\'shimcha tayyorgarlik talab etiladi)'}</strong>. 
           </p>
         </section>
@@ -256,33 +259,33 @@ export default function Summary() {
           variants={sectionVariants}
         >
         {/* 02. Umumiy daraja */}
-        <section className="space-y-8">
-          <div className="flex items-center gap-2 text-primary text-sm font-bold tracking-wider">
+        <section className="space-y-6">
+          <div className="flex items-center gap-2 text-primary text-xs md:text-sm font-bold tracking-wider">
             <span>02</span>
           </div>
-          <h2 className="text-lg md:text-2xl font-bold text-neutral-main font-display mb-1 md:mb-2">Umumiy daraja</h2>
-          <p className="text-xs md:text-base text-neutral-secondary mb-4 md:mb-8">Umumiy ball qaysi toifada — va e'tiborsizlik qayergacha yetadi.</p>
+          <h2 className="text-lg md:text-2xl font-bold text-neutral-main font-display mb-1">Umumiy daraja</h2>
+          <p className="text-xs md:text-base text-neutral-secondary mb-4 md:mb-6">Umumiy ball qaysi toifada va daraja oralig'i bo'yicha tahlil.</p>
           
-          <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-sm border border-white/50 p-4 md:p-10">
+          <div className="bg-white/70 backdrop-blur-md rounded-2xl shadow-sm border border-white/50 p-4 sm:p-6 md:p-10">
             {/* Mobile: big score top, then 2-col grid below */}
             <div className="md:hidden flex flex-col items-center text-center pb-4 mb-4 border-b border-slate-100">
-              <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Umumiy natija</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Umumiy natija</div>
               <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-6xl font-black text-primary">{totalScore}</span>
-                <span className="text-2xl text-slate-400 font-medium">/100</span>
+                <span className="text-5xl font-black text-primary">{totalScore}</span>
+                <span className="text-xl text-slate-400 font-medium">/100</span>
               </div>
-              <div className={`text-white text-[10px] px-4 py-1.5 rounded-full font-black tracking-widest uppercase ${isPass ? 'bg-success' : 'bg-danger'}`}>
-                {isPass ? "O'tdi" : 'Yiqildi'}
+              <div className={`text-white text-[10px] px-3.5 py-1 rounded-full font-black tracking-widest uppercase ${isPass ? 'bg-success' : 'bg-danger'}`}>
+                {isPass ? "O'TDI" : 'YIQILDI'}
               </div>
             </div>
-            <div className="md:hidden grid grid-cols-2 gap-3 text-center">
-              <div className="p-3 rounded-xl bg-slate-50">
+            <div className="md:hidden grid grid-cols-2 gap-2.5 text-center">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                 <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Diapazon</div>
-                <div className="text-2xl font-black text-neutral-main">{minRange}–{maxRange}</div>
+                <div className="text-xl font-black text-neutral-main">{minRange}–{maxRange}</div>
               </div>
-              <div className="p-3 rounded-xl bg-slate-50">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                 <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Sinf o'rtachasi</div>
-                <div className="text-2xl font-black text-neutral-main">{cohortAverage !== null ? `${cohortAverage}` : 'N/A'}</div>
+                <div className="text-xl font-black text-neutral-main">{cohortAverage !== null ? `${cohortAverage}` : 'N/A'}</div>
               </div>
             </div>
 
@@ -322,9 +325,8 @@ export default function Summary() {
             </div>
             
             {/* Gradient Bar connecting visually */}
-            {/* Gradient Bar connecting visually */}
-            <div className="mt-20 pt-8 relative">
-              <div className="flex justify-between text-xs font-bold text-neutral-secondary mb-3 px-1">
+            <div className="mt-8 md:mt-16 pt-6 relative">
+              <div className="flex justify-between text-[10px] md:text-xs font-bold text-neutral-secondary mb-2 px-1">
                 <span>0</span>
                 <span>35</span>
                 <span>50</span>
@@ -333,23 +335,21 @@ export default function Summary() {
                 <span>100</span>
               </div>
               
-              <div className="h-6 w-full bg-gradient-to-r from-red-500 via-yellow-400 to-green-500 rounded-full relative shadow-[inset_0_2px_4px_rgba(0,0,0,0.15)]"></div>
+              <div className="h-5 md:h-6 w-full bg-gradient-to-r from-red-500 via-yellow-400 to-green-500 rounded-full relative shadow-[inset_0_2px_4px_rgba(0,0,0,0.15)]"></div>
               
-              <div className="flex justify-between text-[10px] sm:text-xs font-bold mt-4 px-1 sm:px-2 tracking-widest uppercase">
+              <div className="flex justify-between text-[9px] sm:text-xs font-bold mt-3 px-1 tracking-widest uppercase">
                 <span className="text-danger w-[35%] text-left md:text-center">Sayoz</span>
                 <span className="text-warning w-[15%] text-left md:text-center">Zaif</span>
-                <span className="text-yellow-600 w-[17%] text-left md:text-center hidden sm:inline-block">O'rtacha</span>
-                <span className="text-yellow-600 w-[17%] text-left md:text-center sm:hidden">O'rta</span>
+                <span className="text-yellow-600 w-[17%] text-left md:text-center">O'rta</span>
                 <span className="text-primary w-[17%] text-left md:text-center">Yaxshi</span>
-                <span className="text-success w-[16%] text-right md:text-center hidden sm:inline-block">Juda yuqori</span>
-                <span className="text-success w-[16%] text-right md:text-center sm:hidden">Yuqori</span>
+                <span className="text-success w-[16%] text-right md:text-center">Yuqori</span>
               </div>
               
               {/* Marker at totalScore */}
-              <div className="absolute top-12 -ml-[12px] w-6 h-6 bg-white rounded-full shadow-md z-10 transition-premium flex items-center justify-center" style={{ left: `${totalScore}%` }}>
+              <div className="absolute top-10 md:top-12 -ml-[10px] md:-ml-[12px] w-5 h-5 md:w-6 md:h-6 bg-white rounded-full shadow-md z-10 transition-all flex items-center justify-center" style={{ left: `${Math.max(3, Math.min(97, totalScore))}%` }}>
                 <div className="w-2 h-2 bg-neutral-900 rounded-full"></div>
               </div>
-              <div className="absolute top-1 -translate-x-1/2 bg-neutral-main text-white font-display font-bold text-xs px-3 py-1.5 rounded shadow-xl" style={{ left: `${totalScore}%` }}>{totalScore}</div>
+              <div className="absolute top-0 -translate-x-1/2 bg-neutral-main text-white font-bold text-[10px] md:text-xs px-2.5 py-1 rounded shadow-lg" style={{ left: `${Math.max(5, Math.min(95, totalScore))}%` }}>{totalScore}</div>
             </div>
           </div>
         </section>
