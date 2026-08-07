@@ -46,23 +46,26 @@ export default {
         'premium': 'cubic-bezier(0.87, 0, 0.13, 1)',
       },
       keyframes: {
-        blob: {
-          "0%": {
-            transform: "translate(0px, 0px) scale(1)",
-          },
-          "33%": {
-            transform: "translate(80px, -100px) scale(1.15)",
-          },
-          "66%": {
-            transform: "translate(-60px, 80px) scale(0.85)",
-          },
-          "100%": {
-            transform: "translate(0px, 0px) scale(1)",
-          }
+        blob1: {
+          "0%, 100%": { transform: "translate(0px, 0px) scale(1)" },
+          "33%": { transform: "translate(150px, -200px) scale(1.3)" },
+          "66%": { transform: "translate(-100px, 150px) scale(0.8)" }
+        },
+        blob2: {
+          "0%, 100%": { transform: "translate(0px, 0px) scale(1)" },
+          "33%": { transform: "translate(-200px, 150px) scale(1.2)" },
+          "66%": { transform: "translate(150px, -150px) scale(0.9)" }
+        },
+        blob3: {
+          "0%, 100%": { transform: "translate(0px, 0px) scale(1)" },
+          "33%": { transform: "translate(200px, 100px) scale(1.4)" },
+          "66%": { transform: "translate(-150px, -100px) scale(0.7)" }
         }
       },
       animation: {
-        blob: "blob 15s ease-in-out infinite",
+        blob1: "blob1 25s ease-in-out infinite",
+        blob2: "blob2 30s ease-in-out infinite",
+        blob3: "blob3 20s ease-in-out infinite",
       }
     },
   },

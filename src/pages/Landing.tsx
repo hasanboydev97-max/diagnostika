@@ -43,7 +43,9 @@ export default function Landing() {
           <div className="md:col-span-8">
             <motion.div variants={containerVariants} initial="hidden" animate="show">
               <motion.h1 variants={itemVariants} className="text-4xl md:text-6xl font-medium tracking-tight mb-8 leading-[1.1] relative">
-                <Sparkles className="absolute -top-6 -left-6 text-black/10 w-12 h-12" />
+                <span className="block mb-6 text-xs font-semibold tracking-[0.2em] uppercase text-gray-400 bg-white border border-gray-200 rounded-full px-4 py-1.5 w-fit shadow-sm">
+                  Yangi Avlod Platformasi
+                </span>
                 Ta'limni aniq o'lchash va tahlil qilish uchun <span className="italic text-black/70">yagona markaz.</span>
               </motion.h1>
               <motion.p variants={itemVariants} className="text-lg md:text-xl text-gray-500 leading-relaxed max-w-2xl mb-12">
