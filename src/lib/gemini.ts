@@ -354,3 +354,99 @@ Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh qo'shmang:
   return null;
 };
 
+export interface MatrixSubjectItem {
+  subject: string;
+  count: number;
+}
+
+export interface MatrixDifficultyBreakdown {
+  oson: number;
+  orta: number;
+  qiyin: number;
+}
+
+export interface GenerateMatrixTestParams {
+  grade: string;
+  subjects: MatrixSubjectItem[];
+  difficulty: MatrixDifficultyBreakdown;
+  topic?: string;
+}
+
+export const generateMatrixTestQuestions = async (params: GenerateMatrixTestParams): Promise<CustomGeneratedQuestion[] | null> => {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+  if (!apiKey) throw new Error("API kalit topilmadi.");
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const fallbackModels = ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-flash-latest"];
+
+  const { grade, subjects, difficulty, topic } = params;
+
+  const totalQuestions = subjects.reduce((sum, item) => sum + item.count, 0);
+  const subjectsPrompt = subjects.map(s => `- ${s.subject}: ${s.count} ta savol`).join('\n');
+
+  const topicInstruction = topic && topic.trim() 
+    ? `Asosiy mavzu yo'nalishi: "${topic}".` 
+    : `Mavzular ${grade}-sinf darsligidagi mos mavzulardan bo'lsin.`;
+
+  const prompt = `Siz malakali ta'lim ekspertisiz. ${grade}-sinf o'quvchilari uchun aniq berilgan taqsimot bo'yicha jami ${totalQuestions} ta diagnostika test savoli tuzing.
+
+Fanlar va savollar soni taqsimoti:
+${subjectsPrompt}
+
+Qiyinlik darajalari bo'yicha taqsimot:
+- Oson savollar: ${difficulty.oson} ta
+- O'rta savollar: ${difficulty.orta} ta
+- Qiyin savollar: ${difficulty.qiyin} ta
+
+${topicInstruction}
+
+MUHIM SHARTLAR:
+1. Har bir savol tegishli faniga ("category") va ko'rsatilgan qiyinlik darajasiga ("difficulty") aniq mos kelsin.
+2. Savollar O'zbek tilida bo'lsin.
+3. Har bir savolda 4 ta variant (A, B, C, D) va 1 ta to'g'ri javob ("correctOption") bo'lsin.
+
+Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
+[
+  {
+    "id": 1,
+    "questionText": "Savol matni...",
+    "options": ["A variant", "B variant", "C variant", "D variant"],
+    "correctOption": "A",
+    "category": "Matematika",
+    "difficulty": "Oson",
+    "skill": "Tushunish",
+    "explanation": "Tushuntirish..."
+  }
+]`;
+
+  for (const modelName of fallbackModels) {
+    try {
+      console.log(`Matrix AI test savollari yaratilmoqda: ${modelName}...`);
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(prompt);
+      const text = (await result.response).text();
+      
+      let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      cleanText = cleanText.replace(/(?<!\\)\\([^"\\/bfnrt])/g, "\\\\$1");
+      cleanText = cleanText.replace(/(?<!\\)\\b(egin|eta|ullet|ar|mod|oldsymbol|f)/g, "\\\\b$1");
+      cleanText = cleanText.replace(/(?<!\\)\\f(rac|orall)/g, "\\\\f$1");
+      cleanText = cleanText.replace(/(?<!\\)\\r(ight|ho|angle|m)/g, "\\\\r$1");
+      cleanText = cleanText.replace(/(?<!\\)\\t(an|ext|imes|o|riangle|heta|ilde)/g, "\\\\t$1");
+      cleanText = cleanText.replace(/(?<!\\)\\n(u|abla|eq|eg|exists)/g, "\\\\n$1");
+      const parsed = JSON.parse(cleanText) as CustomGeneratedQuestion[];
+      
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((item, index) => ({
+          ...item,
+          id: index + 1
+        })).slice(0, totalQuestions);
+      }
+    } catch (error) {
+      console.warn(`Matrix test model xatoligi (${modelName}):`, error);
+    }
+  }
+
+  return null;
+};
+
+
