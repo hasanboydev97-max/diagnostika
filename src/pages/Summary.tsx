@@ -205,8 +205,8 @@ export default function Summary() {
       <div ref={printRef} className="print-container relative z-10 pb-24">
         {/* Main Content */}
         <div className="max-w-[1440px] mx-auto px-4 md:px-12 pt-4 md:pt-12 space-y-6 md:space-y-16">
-          <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-12 rounded-[2rem]">
-          <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 sm:pb-8 border-b border-black/10 gap-4">
+          <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-12 rounded-[2rem] flex flex-col space-y-16 md:space-y-24">
+          <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-lg border border-slate-200 flex items-center justify-center font-bold text-xl tracking-tighter bg-white text-black shadow-sm">
               HB.
@@ -219,7 +219,11 @@ export default function Summary() {
               {studentData.studentName.charAt(0).toUpperCase()}
             </div>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => {
+                document.body.style.overflow = 'unset';
+                window.scrollTo(0, 0);
+                navigate('/');
+              }}
               className="print-hide flex items-center gap-2 px-4 py-2 bg-neutral-main text-white rounded-md text-xs font-semibold uppercase tracking-wider hover:bg-neutral-900 transition-colors shadow-sm"
             >
               Chiqish
