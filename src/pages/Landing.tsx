@@ -26,7 +26,7 @@ export default function Landing() {
       <MeshGradient />
 
 
-      <div className="max-w-5xl mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32 relative z-10 pointer-events-none">
+      <div className="max-w-5xl mx-auto px-6 pt-16 pb-8 md:pt-32 md:pb-12 flex flex-col gap-16 md:gap-32 relative z-10 pointer-events-none">
         
         {/* HERO SECTION */}
         <section className="grid grid-cols-1 md:grid-cols-12 gap-12">

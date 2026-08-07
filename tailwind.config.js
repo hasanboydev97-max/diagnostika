@@ -51,10 +51,10 @@ export default {
             transform: "translate(0px, 0px) scale(1)",
           },
           "33%": {
-            transform: "translate(30px, -50px) scale(1.1)",
+            transform: "translate(80px, -100px) scale(1.15)",
           },
           "66%": {
-            transform: "translate(-20px, 20px) scale(0.9)",
+            transform: "translate(-60px, 80px) scale(0.85)",
           },
           "100%": {
             transform: "translate(0px, 0px) scale(1)",
@@ -62,7 +62,7 @@ export default {
         }
       },
       animation: {
-        blob: "blob 7s infinite",
+        blob: "blob 15s ease-in-out infinite",
       }
     },
   },
