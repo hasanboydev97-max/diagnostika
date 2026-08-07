@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Plus, User, GraduationCap, Settings, Palette, Check, X } from 'lucide-react';
@@ -19,6 +20,7 @@ const itemVariants: any = {
 
 export default function Landing() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -58,12 +60,12 @@ export default function Landing() {
             <motion.div variants={containerVariants} initial="hidden" animate="show">
               <motion.h1 variants={itemVariants} className="text-4xl md:text-6xl font-medium tracking-tight mb-8 leading-[1.1] relative">
                 <span className="block mb-6 text-xs font-semibold tracking-[0.2em] uppercase text-gray-400 bg-white border border-gray-200 rounded-full px-4 py-1.5 w-fit shadow-sm">
-                  Yangi Avlod Platformasi
+                  {t('landing.badge')}
                 </span>
-                Ta'limni aniq o'lchash va tahlil qilish uchun <span className="italic text-black/70">yagona markaz.</span>
+                {t('landing.title_1')} <span className="italic text-black/70">{t('landing.title_2')}</span>
               </motion.h1>
               <motion.p variants={itemVariants} className="text-lg md:text-xl text-gray-500 leading-relaxed max-w-2xl mb-12">
-                O'quvchilar va o'qituvchilar uchun mo'ljallangan zamonaviy test platformasi. Natijalarni sun'iy intellekt orqali chuqur o'rganing.
+                {t('landing.subtitle')}
               </motion.p>
             </motion.div>
           </div>
@@ -76,7 +78,7 @@ export default function Landing() {
               initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
               className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500"
             >
-              Portals
+              {t('landing.portals')}
             </motion.h2>
           </div>
              <div className="md:col-span-8 flex flex-col">
@@ -93,9 +95,9 @@ export default function Landing() {
                   <User className="w-6 h-6 text-neutral-500 group-hover:text-black transition-colors duration-500" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300 group-hover:translate-x-1">O'quvchi Portali</h3>
+                  <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300 group-hover:translate-x-1">{t('landing.student_portal')}</h3>
                   <p className="text-neutral-500 leading-relaxed max-w-md transition-all duration-300 delay-75 group-hover:translate-x-1">
-                    Shaxsiy test natijalarini ko'rish va reytingni tahlil qilish.
+                    {t('landing.student_desc')}
                   </p>
                 </div>
               </div>
@@ -115,9 +117,9 @@ export default function Landing() {
                   <GraduationCap className="w-6 h-6 text-neutral-500 group-hover:text-black transition-colors duration-500" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300 group-hover:translate-x-1">O'qituvchi Portali</h3>
+                  <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300 group-hover:translate-x-1">{t('landing.teacher_portal')}</h3>
                   <p className="text-neutral-500 leading-relaxed max-w-md transition-all duration-300 delay-75 group-hover:translate-x-1">
-                    Testlarni AI yordamida yaratish va guruhlarni boshqarish.
+                    {t('landing.teacher_desc')}
                   </p>
                 </div>
               </div>
@@ -137,9 +139,9 @@ export default function Landing() {
                   <Settings className="w-6 h-6 text-neutral-500 group-hover:text-black transition-colors duration-500" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300 group-hover:translate-x-1">Boshqaruv Paneli</h3>
+                  <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300 group-hover:translate-x-1">{t('landing.admin_portal')}</h3>
                   <p className="text-neutral-500 leading-relaxed max-w-md transition-all duration-300 delay-75 group-hover:translate-x-1">
-                    Tizimni to'liq monitoring qilish, statistikani kuzatish.
+                    {t('landing.admin_desc')}
                   </p>
                 </div>
               </div>
@@ -155,14 +157,14 @@ export default function Landing() {
               initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
               className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500"
             >
-              F.A.Q
+              {t('landing.faq')}
             </motion.h2>
           </div>
           <div className="md:col-span-8 flex flex-col">
             {[
-              { q: "Platformadan foydalanish qanday amalga oshiriladi?", a: "Tizim 3 ta asosiy portalga bo'lingan. O'quvchi, O'qituvchi va Admin. Har bir portalga tegishli login parollar orqali kiriladi." },
-              { q: "AI orqali test yaratish qanday ishlaydi?", a: "O'qituvchilar test yaratish bo'limida Gemini AI yordamida avtomatik tarzda savollar yaratishi mumkin. Faqatgina fanni va savollar sonini kiritish kifoya." },
-              { q: "O'quvchi natijalari qachon e'lon qilinadi?", a: "O'quvchi testni yakunlashi bilan avtomatik ravishda tekshiriladi va natijalar xulosasi darhol ekranga chiqadi." }
+              { q: t('landing.faq_q1'), a: t('landing.faq_a1') },
+              { q: t('landing.faq_q2'), a: t('landing.faq_a2') },
+              { q: t('landing.faq_q3'), a: t('landing.faq_a3') }
             ].map((item, idx) => (
               <motion.div 
                 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: idx * 0.1 }}
@@ -208,7 +210,7 @@ export default function Landing() {
             <span className="font-display font-semibold text-lg">HB.</span>
             <span className="text-sm font-medium tracking-[0.2em] text-[#111111]">DIAGNOSTIKA</span>
           </div>
-          <p className="text-sm text-neutral-500 font-medium">© {new Date().getFullYear()} HB. Barcha huquqlar himoyalangan.</p>
+          <p className="text-sm text-neutral-500 font-medium">© {new Date().getFullYear()} HB. {t('landing.footer_rights')}</p>
         </footer>
       </div>
 
@@ -224,28 +226,44 @@ export default function Landing() {
               className="mb-4 bg-white/90 backdrop-blur-xl border border-black/10 rounded-2xl shadow-2xl w-72 overflow-hidden"
             >
               <div className="p-4 border-b border-black/5 flex items-center justify-between">
-                <span className="font-medium text-sm">Theme Settings</span>
+                <span className="font-medium text-sm">{t('landing.settings_title')}</span>
                 <button onClick={() => setIsSettingsOpen(false)} className="text-gray-400 hover:text-black transition-colors">
                   <X className="w-4 h-4" />
                 </button>
               </div>
               <div className="p-4 space-y-6">
                 
+                {/* Language Selection */}
+                <div className="space-y-3">
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{t('landing.settings_language')}</span>
+                  <div className="flex bg-gray-100 p-1 rounded-lg">
+                    {['uz', 'ru', 'en'].map(lang => (
+                      <button
+                        key={lang}
+                        onClick={() => i18n.changeLanguage(lang)}
+                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all uppercase ${i18n.language === lang || (!i18n.language && lang==='uz') ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-black'}`}
+                      >
+                        {lang}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Type Selection */}
                 <div className="space-y-3">
-                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Style</span>
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{t('landing.settings_style')}</span>
                   <div className="flex bg-gray-100 p-1 rounded-lg">
                     <button
                       onClick={() => setIsMinimal(false)}
                       className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${!isMinimal ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-black'}`}
                     >
-                      Mesh Gradient
+                      {t('landing.settings_mesh')}
                     </button>
                     <button
                       onClick={() => setIsMinimal(true)}
                       className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${isMinimal ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:text-black'}`}
                     >
-                      Minimal (Pure)
+                      {t('landing.settings_minimal')}
                     </button>
                   </div>
                 </div>
@@ -259,13 +277,13 @@ export default function Landing() {
                       exit={{ opacity: 0, height: 0 }}
                       className="space-y-3 overflow-hidden"
                     >
-                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Colors</span>
-                      <div className="grid grid-cols-4 gap-2">
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{t('landing.settings_colors')}</span>
+                      <div className="flex flex-wrap gap-3 justify-center">
                         {palettes.map((p, idx) => (
                           <button
                             key={idx}
                             onClick={() => setPaletteIndex(idx)}
-                            className={`w-full aspect-square rounded-full flex items-center justify-center transition-all ${paletteIndex === idx ? 'ring-2 ring-black ring-offset-2' : 'hover:scale-110'}`}
+                            className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center transition-all ${paletteIndex === idx ? 'ring-2 ring-black ring-offset-2 scale-110' : 'hover:scale-110'}`}
                             style={{ background: `linear-gradient(135deg, ${p.colors[0]}, ${p.colors[1]})` }}
                             title={p.name}
                           >

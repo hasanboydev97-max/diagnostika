@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Search, Lock, ArrowRight, Activity, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,6 +7,7 @@ import { db } from '../lib/db';
 import MeshGradient from '../components/ui/MeshGradient';
 
 export default function Login() {
+  const { t } = useTranslation();
   const [id, setId] = useState('');
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
@@ -14,9 +16,9 @@ export default function Login() {
   const navigate = useNavigate();
 
   const loadingSteps = [
-    "Shaxsiy ma'lumotlar ulanmoqda...",
-    "Kognitiv javoblar tahlili...",
-    "Neyrotarmoq AI xulosasi yozilmoqda..."
+    t('login.load_step1'),
+    t('login.load_step2'),
+    t('login.load_step3')
   ];
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -27,13 +29,13 @@ export default function Login() {
       if (pin === '7777') {
         navigate('/admin');
       } else {
-        setError("Admin paroli xato. Ruxsat etilmadi.");
+        setError(t('login.err_admin_pass'));
       }
       return;
     }
     
     if (!pin) {
-      setError("Parolni (PIN) kiriting");
+      setError(t('login.err_no_pin'));
       return;
     }
     
@@ -44,7 +46,7 @@ export default function Login() {
       
       if (result) {
         if (result.pin && result.pin !== pin) {
-          setError("Kiritilgan Parol (PIN) xato.");
+          setError(t('login.err_wrong_pin'));
           setIsLoading(false);
         } else {
           // Intrigue Loading Sequence
@@ -56,11 +58,11 @@ export default function Login() {
           }, 4500);
         }
       } else {
-        setError("Bunday Login (ID) ga ega natija topilmadi.");
+        setError(t('login.err_not_found'));
         setIsLoading(false);
       }
     } catch (err) {
-      setError("Tizimda xatolik yuz berdi. Iltimos qayta urinib ko'ring.");
+      setError(t('login.err_system'));
       setIsLoading(false);
     }
   };
@@ -84,7 +86,7 @@ export default function Login() {
                 </div>
               </div>
               
-              <h3 className="text-lg font-medium text-black mb-2">Tahlil qilinmoqda</h3>
+              <h3 className="text-lg font-medium text-black mb-2">{t('login.analyzing')}</h3>
               
               <div className="h-5 relative w-full flex justify-center">
                 <AnimatePresence mode="wait">
@@ -133,7 +135,7 @@ export default function Login() {
         <button 
           onClick={() => navigate('/')} 
           className="absolute top-0 -left-12 hidden md:flex items-center justify-center p-2 text-gray-400 hover:text-black bg-transparent transition-all hover:-translate-x-1"
-          title="Bosh sahifaga qaytish"
+          title={t('login.back_home')}
         >
           <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
         </button>
@@ -144,10 +146,10 @@ export default function Login() {
           </div>
         </div>
         <h2 className="mt-2 text-center text-3xl font-medium tracking-tight text-black">
-          Maktab Diagnostikasi
+          {t('login.title')}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-500">
-          O'quvchi natijalarini ko'rish uchun tizimga kiring
+          {t('login.subtitle')}
         </p>
       </motion.div>
 
@@ -162,7 +164,7 @@ export default function Login() {
             
             <div>
               <label htmlFor="id" className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                Login (ID)
+                {t('login.label_id')}
               </label>
               <div className="mt-2 relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -175,14 +177,14 @@ export default function Login() {
                   value={id}
                   onChange={(e) => setId(e.target.value)}
                   className="block w-full rounded-none border border-neutral-200 py-3 pl-10 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent sm:text-sm sm:leading-6 transition-all duration-300 bg-transparent"
-                  placeholder="6 xonali raqam"
+                  placeholder={t('login.placeholder_id')}
                 />
               </div>
             </div>
 
             <div>
               <label htmlFor="pin" className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                Parol (PIN)
+                {t('login.label_pin')}
               </label>
               <div className="mt-2 relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -220,7 +222,7 @@ export default function Login() {
                   <div className="w-5 h-5 border-[1.5px] border-white/30 border-t-white rounded-full animate-spin"></div>
                 ) : (
                   <>
-                    Davom etish
+                    {t('login.continue')}
                     <span className="absolute right-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
                       <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
                     </span>
@@ -236,14 +238,14 @@ export default function Login() {
               className="w-full flex items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500 hover:text-black bg-transparent py-3 transition-colors border-t border-black/10"
             >
               <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-              Bosh sahifaga qaytish
+              {t('login.back_home')}
             </button>
           </div>
         </div>
       </motion.div>
       
       <div className="mt-auto pb-6 text-center z-10">
-        <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-gray-400">&copy; {new Date().getFullYear()} Maktab Diagnostikasi. Barcha huquqlar himoyalangan.</p>
+        <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-gray-400">&copy; {new Date().getFullYear()} {t('login.footer')}</p>
       </div>
     </div>
   );
