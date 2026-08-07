@@ -221,8 +221,14 @@ export default function TakeTest() {
       });
       
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || 'Server xatosi');
+        let errMsg = 'Server xatosi';
+        try {
+          const errData = await res.json();
+          errMsg = errData.error || errMsg;
+        } catch(e) {
+          errMsg = `Server xatosi (${res.status})`;
+        }
+        throw new Error(errMsg);
       }
 
       if (document.fullscreenElement) {
@@ -238,6 +244,7 @@ export default function TakeTest() {
       console.error(error);
       toast.error(error.message || 'Xatolik yuz berdi. Iltimos qayta urinib ko\'ring.', { id: toastId });
       setSubmitting(false);
+      submitRef.current = false;
     }
   };
 
