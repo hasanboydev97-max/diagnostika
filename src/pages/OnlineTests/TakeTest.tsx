@@ -4,6 +4,7 @@ import { Loader2, ArrowLeft, AlertTriangle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import FormattedText from '../../components/FormattedText';
+import MeshGradient from '../../components/ui/MeshGradient';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -242,17 +243,21 @@ export default function TakeTest() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fdfdfd] flex flex-col justify-center items-center font-sans">
-        <div className="w-6 h-6 border-2 border-black/10 border-t-black rounded-full animate-spin mb-4"></div>
-        <p className="text-black font-semibold text-[10px] uppercase tracking-[0.3em]">Yuklanmoqda</p>
+      <div className="min-h-screen relative overflow-hidden flex flex-col justify-center items-center font-sans cursor-none">
+        <MeshGradient />
+        <div className="bg-[#fdfdfd] shadow-2xl p-12 rounded-[2rem] flex flex-col items-center relative z-10">
+          <div className="w-6 h-6 border-2 border-black/10 border-t-black rounded-full animate-spin mb-4"></div>
+          <p className="text-black font-semibold text-[10px] uppercase tracking-[0.3em]">Yuklanmoqda</p>
+        </div>
       </div>
     );
   }
 
   if (timeStatus === 'early') {
     return (
-      <div className="min-h-screen bg-[#fdfdfd] flex items-center justify-center p-6 text-[#111111] selection:bg-black selection:text-white">
-        <div className="max-w-sm w-full text-center">
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-6 text-[#111111] selection:bg-black selection:text-white cursor-none">
+        <MeshGradient />
+        <div className="bg-[#fdfdfd] shadow-2xl rounded-[2.5rem] p-12 max-w-sm w-full text-center relative z-10">
           <Clock className="mx-auto text-black mb-6" size={40} strokeWidth={1.5} />
           <h1 className="text-xl font-medium text-black mb-2 tracking-tight">Test hali ochilmagan</h1>
           <p className="text-gray-500 text-sm mb-8 leading-relaxed">
@@ -268,8 +273,9 @@ export default function TakeTest() {
 
   if (timeStatus === 'closed') {
     return (
-      <div className="min-h-screen bg-[#fdfdfd] flex items-center justify-center p-6 text-[#111111] selection:bg-black selection:text-white">
-        <div className="max-w-sm w-full text-center">
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-6 text-[#111111] selection:bg-black selection:text-white cursor-none">
+        <MeshGradient />
+        <div className="bg-[#fdfdfd] shadow-2xl rounded-[2.5rem] p-12 max-w-sm w-full text-center relative z-10">
           <AlertTriangle className="mx-auto text-black mb-6" size={40} strokeWidth={1.5} />
           <h1 className="text-xl font-medium text-black mb-2 tracking-tight">Test yopilgan</h1>
           <p className="text-gray-500 text-sm mb-8 leading-relaxed">
@@ -285,7 +291,8 @@ export default function TakeTest() {
 
   if (!started) {
     return (
-      <div className="min-h-screen bg-[#fdfdfd] flex items-center justify-center p-6 font-sans text-[#111111] selection:bg-black selection:text-white relative cursor-none">
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-6 font-sans text-[#111111] selection:bg-black selection:text-white cursor-none">
+        <MeshGradient />
         
         {/* Custom Cursor */}
         <motion.div
@@ -298,7 +305,7 @@ export default function TakeTest() {
           transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
         />
 
-        <div className="max-w-md w-full relative z-10">
+        <div className="bg-[#fdfdfd] shadow-2xl rounded-[2.5rem] p-10 md:p-14 max-w-md w-full relative z-10">
           <button 
             onClick={() => navigate('/online-tests')}
             onMouseEnter={() => setIsHovering(true)}
@@ -361,12 +368,14 @@ export default function TakeTest() {
 
   return (
     <div 
-      className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans flex flex-col select-none selection:bg-black selection:text-white cursor-none"
+      className="min-h-screen relative overflow-hidden flex flex-col font-sans select-none cursor-none bg-transparent"
       onCopy={(e) => e.preventDefault()}
       onCut={(e) => e.preventDefault()}
       onPaste={(e) => e.preventDefault()}
       onContextMenu={(e) => e.preventDefault()}
     >
+      <MeshGradient />
+
       {/* Custom Cursor */}
       <motion.div
         className="hidden md:block fixed top-0 left-0 w-16 h-16 rounded-full bg-white mix-blend-difference pointer-events-none z-[9999]"
@@ -379,21 +388,21 @@ export default function TakeTest() {
       />
 
       {/* Progress Bar */}
-      <div className="h-[2px] w-full bg-black/5 relative z-20">
+      <div className="h-[3px] w-full bg-white/20 relative z-20">
         <div 
           className="h-full bg-black transition-all duration-300 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
 
-      {/* Header */}
-      <header className="border-b border-black/10 px-8 h-20 flex items-center justify-between sticky top-0 bg-[#fdfdfd]/80 backdrop-blur-md z-20">
+      {/* Header (Glass over gradient) */}
+      <header className="border-b border-black/5 px-8 h-20 flex items-center justify-between sticky top-0 bg-white/40 backdrop-blur-xl z-20">
         <div className="flex flex-col">
           <h2 className="text-sm font-medium text-black tracking-tight">{test.title}</h2>
-          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">{studentName}</p>
+          <p className="text-[9px] font-bold text-gray-600 uppercase tracking-[0.2em] mt-1">{studentName}</p>
         </div>
         <div className="flex items-center gap-6">
-          <div className="hidden md:flex items-center gap-2 text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">
+          <div className="hidden md:flex items-center gap-2 text-[9px] font-bold text-gray-600 uppercase tracking-[0.2em]">
             <AlertTriangle size={12} strokeWidth={2} /> Oynani tark etmang
           </div>
           {timeLeft !== null && (
@@ -407,123 +416,126 @@ export default function TakeTest() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-12 md:py-24 grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-24">
-        
-        {/* Question Palette Sidebar */}
-        <div className="md:col-span-4 lg:col-span-3 order-2 md:order-1">
-          <div className="md:sticky md:top-32">
-            <div className="flex items-center justify-between mb-8">
-              <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em]">Savollar</h3>
-              <span className="text-[10px] font-bold text-black uppercase tracking-[0.2em]">{Object.keys(answers).length} / {test.questions.length}</span>
-            </div>
-            
-            <div className="grid grid-cols-5 gap-3">
-              {test.questions.map((_: any, idx: number) => {
-                const isAnswered = answers[idx] !== undefined;
-                const isCurrent = idx === currentQIndex;
-                
-                let btnClass = "w-full aspect-square text-[10px] font-bold transition-all duration-300 flex items-center justify-center border ";
-                if (isCurrent) {
-                  btnClass += "border-black bg-black text-white";
-                } else if (isAnswered) {
-                  btnClass += "border-black/20 bg-transparent text-black hover:border-black";
-                } else {
-                  btnClass += "border-black/5 bg-transparent text-gray-400 hover:border-black/30 hover:text-black";
-                }
-                
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentQIndex(idx)}
-                    onMouseEnter={() => setIsHovering(true)}
-                    onMouseLeave={() => setIsHovering(false)}
-                    className={btnClass}
-                  >
-                    {idx + 1}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Question Area */}
-        <div className="md:col-span-8 lg:col-span-9 order-1 md:order-2">
-          <AnimatePresence mode="wait">
-            <motion.div 
-              key={currentQIndex}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <div className="mb-16">
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-6">
-                  {currentQIndex + 1}-Savol
-                </div>
-                <h3 className="text-3xl md:text-4xl lg:text-5xl font-medium text-black leading-tight tracking-tight">
-                  <FormattedText content={currentQ.questionText} />
-                </h3>
+      {/* Main Content inside a clean white massive card */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12 relative z-10">
+        <div className="bg-[#fdfdfd] text-[#111111] shadow-[0_20px_50px_rgb(0,0,0,0.05)] rounded-[2.5rem] p-8 md:p-12 lg:p-16 flex flex-col lg:flex-row gap-12 lg:gap-24 w-full h-full min-h-[700px] selection:bg-black selection:text-white">
+          
+          {/* Question Palette Sidebar */}
+          <div className="lg:w-72 shrink-0 order-2 lg:order-1">
+            <div className="lg:sticky lg:top-8">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em]">Savollar</h3>
+                <span className="text-[10px] font-bold text-black uppercase tracking-[0.2em]">{Object.keys(answers).length} / {test.questions.length}</span>
               </div>
-
-              <div className="space-y-0 border-t border-black/10">
-                {currentQ.options.map((opt: string, i: number) => {
-                  const isSelected = answers[currentQIndex] === opt;
+              
+              <div className="grid grid-cols-5 gap-3">
+                {test.questions.map((_: any, idx: number) => {
+                  const isAnswered = answers[idx] !== undefined;
+                  const isCurrent = idx === currentQIndex;
+                  
+                  let btnClass = "w-full aspect-square text-[10px] font-bold transition-all duration-300 flex items-center justify-center border ";
+                  if (isCurrent) {
+                    btnClass += "border-black bg-black text-white scale-110";
+                  } else if (isAnswered) {
+                    btnClass += "border-black/20 bg-transparent text-black hover:border-black";
+                  } else {
+                    btnClass += "border-black/5 bg-transparent text-gray-400 hover:border-black/30 hover:text-black";
+                  }
+                  
                   return (
                     <button
-                      key={i}
-                      onClick={() => handleSelectOption(opt)}
+                      key={idx}
+                      onClick={() => setCurrentQIndex(idx)}
                       onMouseEnter={() => setIsHovering(true)}
                       onMouseLeave={() => setIsHovering(false)}
-                      className="w-full text-left py-6 border-b border-black/10 transition-all duration-300 flex items-start md:items-center gap-6 group hover:pl-6"
+                      className={btnClass}
                     >
-                      <div className="w-6 h-6 mt-1 md:mt-0 shrink-0 border flex items-center justify-center transition-colors border-black/20 group-hover:border-black">
-                        {isSelected && <div className="w-3 h-3 bg-black"></div>}
-                      </div>
-                      <span className={`flex-1 text-lg md:text-xl leading-relaxed transition-colors ${isSelected ? 'font-medium text-black' : 'text-gray-500 group-hover:text-black'}`}>
-                        <FormattedText content={opt} />
-                      </span>
+                      {idx + 1}
                     </button>
                   );
                 })}
               </div>
-            </motion.div>
-          </AnimatePresence>
+            </div>
+          </div>
 
-          {/* Footer Navigation */}
-          <div className="mt-20 flex items-center justify-between">
-            <button
-              onClick={() => setCurrentQIndex(prev => Math.max(0, prev - 1))}
-              disabled={currentQIndex === 0}
-              onMouseEnter={() => setIsHovering(true)}
-              onMouseLeave={() => setIsHovering(false)}
-              className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 disabled:opacity-30 hover:text-black transition-colors"
-            >
-              Oldingi
-            </button>
-            
-            {currentQIndex < test.questions.length - 1 ? (
+        {/* Question Area */}
+          <div className="flex-1 flex flex-col min-w-0 order-1 lg:order-2">
+            <AnimatePresence mode="wait">
+              <motion.div 
+                key={currentQIndex}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                className="flex-1"
+              >
+                <div className="mb-12">
+                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-4">
+                    {currentQIndex + 1}-Savol
+                  </div>
+                  <h3 className="text-2xl md:text-3xl lg:text-[32px] font-medium text-black leading-snug tracking-tight">
+                    <FormattedText content={currentQ.questionText} />
+                  </h3>
+                </div>
+
+                <div className="space-y-0 border-t border-black/10">
+                  {currentQ.options.map((opt: string, i: number) => {
+                    const isSelected = answers[currentQIndex] === opt;
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => handleSelectOption(opt)}
+                        onMouseEnter={() => setIsHovering(true)}
+                        onMouseLeave={() => setIsHovering(false)}
+                        className="w-full text-left py-4 md:py-5 border-b border-black/10 transition-colors duration-300 flex items-start md:items-center gap-5 group"
+                      >
+                        <div className="w-5 h-5 mt-0.5 md:mt-0 shrink-0 rounded-full border flex items-center justify-center transition-colors border-black/20 group-hover:border-black">
+                          {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-black"></div>}
+                        </div>
+                        <span className={`flex-1 text-base md:text-lg leading-relaxed transition-colors ${isSelected ? 'font-medium text-black' : 'text-gray-500 group-hover:text-black'}`}>
+                          <FormattedText content={opt} />
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Footer Navigation */}
+            <div className="mt-20 flex items-center justify-between">
               <button
-                onClick={() => setCurrentQIndex(prev => prev + 1)}
+                onClick={() => setCurrentQIndex(prev => Math.max(0, prev - 1))}
+                disabled={currentQIndex === 0}
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={() => setIsHovering(false)}
-                className="text-[10px] font-bold uppercase tracking-[0.2em] text-black border-b border-black pb-1 hover:text-gray-500 hover:border-gray-500 transition-all"
+                className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 disabled:opacity-30 hover:text-black transition-colors"
               >
-                Keyingi
+                Oldingi
               </button>
-            ) : (
-              <button
-                onClick={() => handleSubmit(false)}
-                disabled={submitting}
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}
-                className="inline-flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-black border-b border-black pb-1 hover:text-gray-500 hover:border-gray-500 transition-all disabled:opacity-30"
-              >
-                {submitting ? <Loader2 size={12} className="animate-spin" /> : null}
-                {submitting ? 'Yuborilmoqda...' : 'Yakunlash'}
-              </button>
-            )}
+              
+              {currentQIndex < test.questions.length - 1 ? (
+                <button
+                  onClick={() => setCurrentQIndex(prev => prev + 1)}
+                  onMouseEnter={() => setIsHovering(true)}
+                  onMouseLeave={() => setIsHovering(false)}
+                  className="text-[10px] font-bold uppercase tracking-[0.2em] text-black border-b border-black pb-1 hover:text-gray-500 hover:border-gray-500 transition-all"
+                >
+                  Keyingi
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleSubmit(false)}
+                  disabled={submitting}
+                  onMouseEnter={() => setIsHovering(true)}
+                  onMouseLeave={() => setIsHovering(false)}
+                  className="inline-flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-black border-b border-black pb-1 hover:text-gray-500 hover:border-gray-500 transition-all disabled:opacity-30"
+                >
+                  {submitting ? <Loader2 size={12} className="animate-spin" /> : null}
+                  {submitting ? 'Yuborilmoqda...' : 'Yakunlash'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </main>
