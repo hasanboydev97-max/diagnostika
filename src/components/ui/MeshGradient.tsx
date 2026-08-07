@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+// No React imports needed
 
 export const palettes = [
   { name: 'Peach', colors: ['#ff9a9e', '#fecfef', '#f6d365', '#fda085'] },
