@@ -175,3 +175,84 @@ Javobni FAQAT VA FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh y
 
   return null;
 };
+
+export interface GeneratedQuestion {
+  blueprintId: number;
+  questionText: string;
+  options: string[];
+  correctOption: string;
+  explanation?: string;
+}
+
+export const generateDiagnosticTest = async (blueprint: QuestionBlueprint[], grade: string): Promise<GeneratedQuestion[] | null> => {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+  if (!apiKey) throw new Error("API kalit topilmadi.");
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const fallbackModels = ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-flash-latest"];
+
+  // Blueprint'dan savollar haqida ma'lumot tayyorlash
+  const questionsInfo = blueprint.map(q => 
+    `ID:${q.id}, Mavzu:"${q.topic}", Fan:"${q.category}", Qiyinlik:"${q.difficulty}", Ko'nikma:"${q.skill}"`
+  ).join('\n');
+
+  const prompt = `Siz tajribali ${grade}-sinf o'qituvchisisiz. Quyidagi diagnostika test shabloni asosida har bir savol uchun haqiqiy test savoli yarating.
+
+Har bir savolda:
+- Savol matni (aniq, tushunarli, ${grade}-sinf darajasida)
+- 4 ta javob varianti (A, B, C, D)
+- To'g'ri javob belgisi (faqat "A", "B", "C" yoki "D")
+- Qisqa tushuntirish
+
+Savollar shabloni:
+${questionsInfo}
+
+MUHIM QOIDALAR:
+1. Savollar O'ZBEK tilida bo'lsin
+2. Har bir savol o'zining mavzusiga va qiyinlik darajasiga mos bo'lsin
+3. Variantlar ichida faqat BITTA to'g'ri javob bo'lsin
+4. Noto'g'ri variantlar ham mantiqan ishonchli bo'lsin (tasodifiy emas)
+5. "Oson" savollar oddiy, "O'rta" chuqurroq, "Qiyin" murakkab bo'lsin
+
+Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
+[
+  {
+    "blueprintId": 1,
+    "questionText": "Savol matni...",
+    "options": ["A variant", "B variant", "C variant", "D variant"],
+    "correctOption": "A",
+    "explanation": "Tushuntirish..."
+  },
+  ...
+]`;
+
+  for (const modelName of fallbackModels) {
+    try {
+      console.log(`Diagnostik test yaratilmoqda: ${modelName}...`);
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(prompt);
+      const text = (await result.response).text();
+      
+      let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      cleanText = cleanText.replace(/(?<!\\)\\([^"\\/bfnrt])/g, "\\\\$1");
+      cleanText = cleanText.replace(/(?<!\\)\\b(egin|eta|ullet|ar|mod|oldsymbol|f)/g, "\\\\b$1");
+      cleanText = cleanText.replace(/(?<!\\)\\f(rac|orall)/g, "\\\\f$1");
+      cleanText = cleanText.replace(/(?<!\\)\\r(ight|ho|angle|m)/g, "\\\\r$1");
+      cleanText = cleanText.replace(/(?<!\\)\\t(an|ext|imes|o|riangle|heta|ilde)/g, "\\\\t$1");
+      cleanText = cleanText.replace(/(?<!\\)\\n(u|abla|eq|eg|exists)/g, "\\\\n$1");
+      const parsed = JSON.parse(cleanText) as GeneratedQuestion[];
+      
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // BlueprintId larni to'g'rilash
+        return parsed.map((item, index) => ({
+          ...item,
+          blueprintId: blueprint[index]?.id || index + 1
+        }));
+      }
+    } catch (error) {
+      console.warn(`Diagnostik test model xatoligi (${modelName}):`, error);
+    }
+  }
+
+  return null;
+};

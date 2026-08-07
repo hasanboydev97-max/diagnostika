@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { db, type StudentResult } from '../lib/db';
-import { generateDiagnosticSummary } from '../lib/gemini';
+import { generateDiagnosticSummary, generateDiagnosticTest } from '../lib/gemini';
 import { useNavigate } from 'react-router-dom';
 import type { QuestionBlueprint } from '../lib/blueprint';
 import { GRADE_BLUEPRINTS } from '../lib/gradeBlueprints';
-import { Check, Settings2, Users, PlusCircle, ChevronDown } from 'lucide-react';
+import { Check, Settings2, Users, PlusCircle, ChevronDown, Sparkles, Copy, ExternalLink } from 'lucide-react';
 import BlueprintEditorModal from '../components/BlueprintEditorModal';
 import MeshGradient from '../components/ui/MeshGradient';
+import { toast } from 'sonner';
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<'new' | 'dashboard'>('new');
@@ -63,6 +64,8 @@ export default function Admin() {
   }, [fastMode, currentIndex, currentBlueprint, activeTab]);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingTest, setIsGeneratingTest] = useState(false);
+  const [generatedTestId, setGeneratedTestId] = useState<string | null>(null);
   const [generatedCredentials, setGeneratedCredentials] = useState<{id: string, pin: string} | null>(null);
   const navigate = useNavigate();
 
@@ -423,6 +426,71 @@ export default function Admin() {
                         <span>Shablonni o'zgartirish</span>
                         <Settings2 className="w-4 h-4" />
                       </button>
+                      
+                      <button 
+                        type="button"
+                        disabled={isGeneratingTest}
+                        onClick={async () => {
+                          setIsGeneratingTest(true);
+                          const toastId = toast.loading('AI test savollarini yaratmoqda... (30-60 soniya)');
+                          try {
+                            const questions = await generateDiagnosticTest(currentBlueprint, grade);
+                            if (!questions || questions.length === 0) {
+                              toast.error('AI test yaratishda xatolik. Qayta urinib ko\'ring.', { id: toastId });
+                              return;
+                            }
+                            const testId = Math.floor(100000 + Math.random() * 900000).toString();
+                            await db.saveDiagnosticTest({
+                              id: testId,
+                              grade,
+                              blueprint: currentBlueprint,
+                              questions,
+                              createdAt: new Date().toISOString(),
+                              status: 'active'
+                            });
+                            setGeneratedTestId(testId);
+                            toast.success(`Test muvaffaqiyatli yaratildi! Kod: ${testId}`, { id: toastId });
+                          } catch (err) {
+                            console.error(err);
+                            toast.error('Xatolik: ' + err, { id: toastId });
+                          } finally {
+                            setIsGeneratingTest(false);
+                          }
+                        }}
+                        className={`w-full text-left py-4 mt-4 rounded-xl px-4 text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-between gap-2 ${isGeneratingTest ? 'bg-black/50 text-white cursor-wait' : 'bg-black text-white hover:bg-black/80'}`}
+                      >
+                        <span>{isGeneratingTest ? 'AI yaratmoqda...' : 'AI Test Yaratish'}</span>
+                        {isGeneratingTest 
+                          ? <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                          : <Sparkles className="w-4 h-4" />
+                        }
+                      </button>
+                      
+                      {generatedTestId && (
+                        <div className="mt-4 p-4 bg-slate-50 rounded-xl space-y-3">
+                          <div className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Yaratilgan test kodi</div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl font-bold tracking-widest select-all">{generatedTestId}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(generatedTestId);
+                                toast.success('Kod nusxalandi!');
+                              }}
+                              className="p-1.5 hover:bg-black/5 rounded-lg transition-colors"
+                            >
+                              <Copy className="w-4 h-4 text-gray-400" />
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/diagnostic-test/${generatedTestId}`)}
+                            className="w-full flex items-center justify-center gap-2 py-2.5 bg-black text-white text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-black/80 transition-colors"
+                          >
+                            Testni ochish <ExternalLink className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

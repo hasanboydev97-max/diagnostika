@@ -1,4 +1,5 @@
 import type { QuestionBlueprint } from './blueprint';
+import type { GeneratedQuestion } from './gemini';
 import localforage from 'localforage';
 
 localforage.config({
@@ -21,8 +22,18 @@ export interface StudentResult {
   createdAt: string;
 }
 
+export interface DiagnosticTest {
+  id: string;
+  grade: string;
+  blueprint: QuestionBlueprint[];
+  questions: GeneratedQuestion[];
+  createdAt: string;
+  status: 'active' | 'archived';
+}
+
 const LOCAL_DB_KEY = 'maktab_student_results';
 const LOCAL_BLUEPRINT_KEY = 'maktab_blueprints_v2';
+const LOCAL_DIAGNOSTIC_TESTS_KEY = 'maktab_diagnostic_tests';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const LOCAL_CUSTOM_CATEGORIES_KEY = 'maktab_custom_categories';
@@ -189,5 +200,26 @@ export const db = {
     });
     if (!res.ok) throw new Error(await res.text());
     return res.json();
+  },
+
+  // --- Diagnostic Tests (Local) ---
+  async saveDiagnosticTest(test: DiagnosticTest): Promise<void> {
+    const current = await localforage.getItem<DiagnosticTest[]>(LOCAL_DIAGNOSTIC_TESTS_KEY) || [];
+    const existingIndex = current.findIndex(t => t.id === test.id);
+    if (existingIndex >= 0) {
+      current[existingIndex] = test;
+    } else {
+      current.unshift(test);
+    }
+    await localforage.setItem(LOCAL_DIAGNOSTIC_TESTS_KEY, current);
+  },
+
+  async getDiagnosticTest(id: string): Promise<DiagnosticTest | undefined> {
+    const current = await localforage.getItem<DiagnosticTest[]>(LOCAL_DIAGNOSTIC_TESTS_KEY) || [];
+    return current.find(t => t.id === id);
+  },
+
+  async getAllDiagnosticTests(): Promise<DiagnosticTest[]> {
+    return await localforage.getItem<DiagnosticTest[]>(LOCAL_DIAGNOSTIC_TESTS_KEY) || [];
   }
 };
