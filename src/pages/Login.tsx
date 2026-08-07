@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Lock, ArrowRight, Activity, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../lib/db';
+import MeshGradient from '../components/ui/MeshGradient';
 
 export default function Login() {
   const [id, setId] = useState('');
@@ -117,10 +118,11 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] flex flex-col justify-center py-12 px-[15px] sm:px-6 lg:px-8 font-sans selection:bg-black selection:text-white relative overflow-hidden">
+    <div className="min-h-screen text-[#111111] flex flex-col justify-center py-12 px-[15px] sm:px-6 lg:px-8 font-sans selection:bg-black selection:text-white relative overflow-hidden">
       
+      <MeshGradient />
       {/* Subtle Dot Pattern Background */}
-      <div className="absolute inset-0 z-0 opacity-40 pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23000000' fill-opacity='0.08' fill-rule='evenodd'%3E%3Ccircle cx='2' cy='2' r='1'/%3E%3C/g%3E%3C/svg%3E")` }}></div>
+      <div className="absolute inset-0 z-0 opacity-40 pointer-events-none mix-blend-overlay" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23000000' fill-opacity='0.08' fill-rule='evenodd'%3E%3Ccircle cx='2' cy='2' r='1'/%3E%3C/g%3E%3C/svg%3E")` }}></div>
       
       <motion.div 
         initial={{ opacity: 0, y: 15 }}
@@ -155,8 +157,8 @@ export default function Login() {
         transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
         className="mt-8 sm:mx-auto sm:w-full sm:max-w-[420px] z-10"
       >
-        <div className="bg-[#fdfdfd] py-8 px-5 sm:px-10 border-t border-black/10 md:border md:border-black/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-          <form className="space-y-6" onSubmit={handleLogin}>
+        <div className="bg-white/60 backdrop-blur-xl py-8 px-5 sm:px-10 border-t border-white/50 md:border md:border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative z-10">
+          <form className="space-y-6 relative z-20" onSubmit={handleLogin}>
             
             <div>
               <label htmlFor="id" className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">

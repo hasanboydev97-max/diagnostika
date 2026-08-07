@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Plus, User, GraduationCap, Settings, Sparkles } from 'lucide-react';
+import MeshGradient from '../components/ui/MeshGradient';
 
 const containerVariants: any = {
   hidden: { opacity: 0 },
@@ -21,7 +22,8 @@ export default function Landing() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   return (
-    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
+    <div className="min-h-screen text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
+      <MeshGradient />
 
 
       <div className="max-w-5xl mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32 relative z-10 pointer-events-none">
