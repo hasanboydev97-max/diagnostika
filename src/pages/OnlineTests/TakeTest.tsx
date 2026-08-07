@@ -198,6 +198,26 @@ export default function TakeTest() {
     setAnswers(prev => ({ ...prev, [currentQIndex]: option }));
   };
 
+  const isAnswerCorrect = (userAns: string | undefined, correctOpt: string | undefined, options: string[] = []): boolean => {
+    if (!userAns || !correctOpt) return false;
+    const u = String(userAns).trim().toLowerCase();
+    const c = String(correctOpt).trim().toLowerCase();
+
+    // 1. Direct text match
+    if (u === c) return true;
+
+    // 2. Letter mapping: A -> options[0], B -> options[1], C -> options[2], D -> options[3]
+    const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
+    if (letterMap[c] !== undefined && options[letterMap[c]]) {
+      if (String(options[letterMap[c]]).trim().toLowerCase() === u) return true;
+    }
+    if (letterMap[u] !== undefined && options[letterMap[u]]) {
+      if (String(options[letterMap[u]]).trim().toLowerCase() === c) return true;
+    }
+
+    return false;
+  };
+
   const handleSubmit = async (isForced: boolean = false) => {
     if (submitRef.current) return;
     
@@ -217,19 +237,27 @@ export default function TakeTest() {
     if (test.isDiagnostic || test.type === 'diagnostic') {
       try {
         const questionResults: Record<number, boolean> = {};
-        const blueprint = test.blueprint || test.questions.map((q: any, idx: number) => ({
-          id: idx + 1,
-          topic: q.questionText.substring(0, 50),
-          category: q.category || test.subject || 'Matematika',
-          skill: q.skill || 'Tushunish',
-          thinkingType: 'Analitik',
-          difficulty: q.difficulty || 'O\'rta',
-          timeEstimate: '1min'
-        }));
+
+        // Always construct blueprint directly from actual test questions
+        const blueprint = test.questions.map((q: any, idx: number) => {
+          const rawTopic = q.questionText 
+            ? q.questionText.replace(/<[^>]*>/g, '').trim()
+            : (q.topic || `Savol #${idx + 1}`);
+          
+          return {
+            id: q.blueprintId || q.id || idx + 1,
+            topic: rawTopic.length > 75 ? rawTopic.substring(0, 75) + '...' : rawTopic,
+            category: q.category || test.subject || 'Matematika',
+            skill: q.skill || 'Tushunish',
+            thinkingType: q.thinkingType || 'Analitik',
+            difficulty: q.difficulty || 'O\'rta',
+            timeEstimate: '1min'
+          };
+        });
 
         test.questions.forEach((q: any, i: number) => {
-          const bpId = q.blueprintId || q.id || i + 1;
-          questionResults[bpId] = (answers[i] === q.correctOption);
+          const bpId = blueprint[i].id;
+          questionResults[bpId] = isAnswerCorrect(answers[i], q.correctOption, q.options || []);
         });
 
         // Compute category scores
@@ -294,7 +322,7 @@ export default function TakeTest() {
     
     let score = 0;
     test.questions.forEach((q: any, i: number) => {
-      if (answers[i] === q.correctOption) {
+      if (isAnswerCorrect(answers[i], q.correctOption, q.options || [])) {
         score++;
       }
     });

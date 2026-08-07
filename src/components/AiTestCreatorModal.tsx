@@ -154,10 +154,26 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose }:
       }
 
       const testId = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      const generatedBlueprint = questions.map((q, idx) => {
+        const rawTopic = q.questionText
+          ? q.questionText.replace(/<[^>]*>/g, '').trim()
+          : (q.topic || `Savol #${idx + 1}`);
+        return {
+          id: q.blueprintId || q.id || idx + 1,
+          topic: rawTopic.length > 75 ? rawTopic.substring(0, 75) + '...' : rawTopic,
+          category: q.category || 'Matematika',
+          skill: q.skill || 'Tushunish',
+          thinkingType: q.thinkingType || 'Analitik',
+          difficulty: q.difficulty || 'O\'rta',
+          timeEstimate: '1min'
+        };
+      });
+
       await db.saveDiagnosticTest({
         id: testId,
         grade,
-        blueprint,
+        blueprint: generatedBlueprint,
         questions,
         createdAt: new Date().toISOString(),
         status: 'active'
