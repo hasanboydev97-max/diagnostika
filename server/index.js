@@ -490,43 +490,47 @@ function cleanMathForText(text) {
   if (!text) return '';
   let str = String(text);
 
-  // Use ASCII-safe representations — PDFKit's built-in Helvetica font
-  // does NOT support most Unicode math symbols (√, ², ∞, α, etc.)
-  // They get corrupted to random characters like '"'. Use plain ASCII instead.
+  // Convert LaTeX math to readable Unicode symbols for display in PDF
+  // (requires a Unicode-capable font — we use DejaVu Sans on the server)
   str = str
-    // Handle nested sqrt first (e.g. \sqrt{7-4\sqrt{3}})
-    .replace(/\\sqrt\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g, 'sqrt($1)')
-    .replace(/\\sqrt/g, 'sqrt')
+    // Handle nested sqrt: \sqrt{...\sqrt{...}...}
+    .replace(/\\sqrt\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g, '\u221a($1)')
+    .replace(/\\sqrt/g, '\u221a')
     .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
-    .replace(/\\times/g, '*')
-    .replace(/\\div/g, '/')
-    .replace(/\\pm/g, '+-')
-    .replace(/\\leq/g, '<=')
-    .replace(/\\geq/g, '>=')
-    .replace(/\\neq/g, '!=')
-    .replace(/\\approx/g, '~')
-    .replace(/\\infty/g, 'inf')
-    .replace(/\\cdot/g, '*')
-    .replace(/\\alpha/g, 'alpha')
-    .replace(/\\beta/g, 'beta')
-    .replace(/\\gamma/g, 'gamma')
-    .replace(/\\pi/g, 'pi')
-    .replace(/\\theta/g, 'theta')
+    .replace(/\\times/g, '\u00d7')
+    .replace(/\\div/g, '\u00f7')
+    .replace(/\\pm/g, '\u00b1')
+    .replace(/\\leq/g, '\u2264')
+    .replace(/\\geq/g, '\u2265')
+    .replace(/\\neq/g, '\u2260')
+    .replace(/\\approx/g, '\u2248')
+    .replace(/\\infty/g, '\u221e')
+    .replace(/\\cdot/g, '\u00b7')
+    .replace(/\\circ/g, '\u00b0')
+    .replace(/\\alpha/g, '\u03b1')
+    .replace(/\\beta/g, '\u03b2')
+    .replace(/\\gamma/g, '\u03b3')
+    .replace(/\\delta/g, '\u03b4')
+    .replace(/\\pi/g, '\u03c0')
+    .replace(/\\theta/g, '\u03b8')
     .replace(/\\sin/g, 'sin')
     .replace(/\\cos/g, 'cos')
     .replace(/\\tan/g, 'tan')
     .replace(/\\log/g, 'log')
     .replace(/\\ln/g, 'ln')
-    .replace(/\\sum/g, 'sum')
-    .replace(/\\int/g, 'int')
-    .replace(/\^2/g, '^2')
-    .replace(/\^3/g, '^3')
+    .replace(/\\sum/g, '\u03a3')
+    .replace(/\\int/g, '\u222b')
+    .replace(/\^\{([^}]+)\}/g, '\u207f')
+    .replace(/\^2/g, '\u00b2')
+    .replace(/\^3/g, '\u00b3')
+    .replace(/\^\{2\}/g, '\u00b2')
+    .replace(/\^\{3\}/g, '\u00b3')
     .replace(/\^{([^}]+)}/g, '^($1)')
     .replace(/_{([^}]+)}/g, '_($1)')
-    .replace(/<[^>]*>/g, '') // strip HTML tags
-    .replace(/\$/g, '') // strip LaTeX dollar signs
-    .replace(/\\/g, '') // strip remaining backslashes
-    .replace(/\{|\}/g, ''); // strip remaining braces
+    .replace(/<[^>]*>/g, '')
+    .replace(/\$/g, '')
+    .replace(/\\/g, '')
+    .replace(/\{|\}/g, '');
 
   return str.trim();
 }
@@ -770,12 +774,40 @@ app.get('/api/online-tests/:id/export/pdf', async (req, res) => {
     const chunks = [];
     doc.on('data', chunk => chunks.push(chunk));
 
+    // Try to load a Unicode-capable font (DejaVu Sans supports √ ² α π etc.)
+    // Available on Render.com (Ubuntu) and most Linux servers
+    const UNICODE_FONT_PATHS = [
+      '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+      '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+      '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+      '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+      '/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf',
+      '/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf',
+    ];
+
+    let regularFont = 'Helvetica';
+    let boldFont = 'Helvetica-Bold';
+
+    try {
+      if (fs.existsSync(UNICODE_FONT_PATHS[0])) {
+        doc.registerFont('UniRegular', UNICODE_FONT_PATHS[0]);
+        regularFont = 'UniRegular';
+      }
+      if (fs.existsSync(UNICODE_FONT_PATHS[1])) {
+        doc.registerFont('UniBold', UNICODE_FONT_PATHS[1]);
+        boldFont = 'UniBold';
+      } else if (fs.existsSync(UNICODE_FONT_PATHS[2])) {
+        doc.registerFont('UniRegular', UNICODE_FONT_PATHS[2]);
+        regularFont = 'UniRegular';
+      }
+    } catch { /* fallback to Helvetica */ }
+
     const optionLetters = ['A', 'B', 'C', 'D'];
 
     // Title
-    doc.font('Helvetica-Bold').fontSize(18)
+    doc.font(boldFont).fontSize(18)
       .text(sanitizePdfText(test.title || 'Test'), { align: 'center' });
-    doc.font('Helvetica').fontSize(12)
+    doc.font(regularFont).fontSize(12)
       .text(`Fan: ${sanitizePdfText(test.subject || '')}`, { align: 'center' });
     doc.moveDown(1);
 
@@ -789,20 +821,20 @@ app.get('/api/online-tests/:id/export/pdf', async (req, res) => {
       // Check if near bottom — manual page break
       if (doc.y > 720) doc.addPage();
 
-      doc.font('Helvetica-Bold').fontSize(11).text(qText, { lineGap: 2 });
+      doc.font(boldFont).fontSize(11).text(qText, { lineGap: 2 });
 
       // Options
       (q.options || []).forEach((opt, oi) => {
         const letterLabel = optionLetters[oi] || `${oi + 1}`;
         const optText = `   ${letterLabel}) ${sanitizePdfText(opt || '')}`;
-        doc.font('Helvetica').fontSize(11).text(optText, { lineGap: 1 });
+        doc.font(regularFont).fontSize(11).text(optText, { lineGap: 1 });
       });
     });
 
     // Answer key section
     doc.moveDown(1.5);
     if (doc.y > 700) doc.addPage();
-    doc.font('Helvetica-Bold').fontSize(13).text('Kalit javoblar:', { underline: false });
+    doc.font(boldFont).fontSize(13).text('Kalit javoblar:', { underline: false });
     doc.moveDown(0.3);
 
     // Grid layout for answers
@@ -815,7 +847,7 @@ app.get('/api/online-tests/:id/export/pdf', async (req, res) => {
 
     for (let row = 0; row < Math.ceil(answers.length / answersPerRow); row++) {
       const rowItems = answers.slice(row * answersPerRow, (row + 1) * answersPerRow);
-      doc.font('Helvetica').fontSize(11).text(rowItems.join('    '), { lineGap: 3 });
+      doc.font(regularFont).fontSize(11).text(rowItems.join('    '), { lineGap: 3 });
     }
 
     doc.end();
