@@ -141,7 +141,7 @@ export default function Login() {
         </button>
         
         <div className="flex justify-center mb-6">
-          <img src="/logo.png" alt="HB Logo" className="w-16 h-16 md:w-20 md:h-20 object-contain mx-auto mb-6 md:mb-8 rounded-2xl border border-black/10 p-2 shadow-sm bg-white" />
+          <img src="/logo.png" alt="HB Ta'lim Diagnostikasi" className="h-14 md:h-18 w-auto object-contain mx-auto mb-6 md:mb-8" />
         </div>
         <h2 className="mt-2 text-center text-3xl font-medium tracking-tight text-black">
           {t('login.title')}

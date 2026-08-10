@@ -51,9 +51,7 @@ export default function PwaInstallPrompt() {
           className="fixed bottom-6 right-6 left-6 md:left-auto md:max-w-sm z-[999] bg-white/95 text-neutral-900 backdrop-blur-2xl border border-black/10 p-3.5 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.12)] flex items-center justify-between gap-3 group"
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-black/5 p-1 flex-shrink-0 flex items-center justify-center shadow-inner">
-              <img src="/logo.png" alt="HB Logo" className="w-full h-full object-contain" />
-            </div>
+            <img src="/logo.png" alt="HB Logo" className="h-9 md:h-11 w-auto object-contain flex-shrink-0" />
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 font-bold text-xs md:text-sm tracking-tight text-neutral-900">
                 <span className="truncate">HB Diagnostikasi</span>
