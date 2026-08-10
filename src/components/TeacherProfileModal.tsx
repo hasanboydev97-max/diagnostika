@@ -1,23 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  User, 
-  Lock, 
-  Shield, 
-  Crown, 
-  Camera, 
-  Building, 
-  Phone, 
-  Mail, 
-  BookOpen, 
   X, 
+  ArrowUpRight, 
   Loader2, 
-  CheckCircle2, 
-  Sparkles, 
+  Camera, 
   Upload, 
-  Zap,
-  KeyRound,
-  Check
+  Zap, 
+  Crown
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAuthHeaders, setTeacher } from '../lib/auth';
@@ -67,7 +57,7 @@ export default function TeacherProfileModal({
 
   if (!isOpen) return null;
 
-  // Handle Avatar Image File Select
+  // Handle Avatar Image Select
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -99,7 +89,7 @@ export default function TeacherProfileModal({
     reader.readAsDataURL(file);
   };
 
-  // Handle Profile Update
+  // Handle Profile Save
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -177,394 +167,405 @@ export default function TeacherProfileModal({
   const aiProgressPercent = Math.min(100, Math.round((todayAiCount / maxAiNum) * 100));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md font-sans">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 15 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        className="bg-white/90 backdrop-blur-2xl border border-white/60 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-3xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]"
-      >
-        {/* Modal Header Banner */}
-        <div className="relative bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-850 p-6 text-white flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-4">
-            {/* Avatar Circle with Upload Trigger */}
-            <div className="relative group shrink-0">
-              <div className="w-16 h-16 rounded-2xl bg-zinc-800 border-2 border-white/20 overflow-hidden flex items-center justify-center text-xl font-bold shadow-inner">
-                {avatar ? (
-                  <img src={avatar} alt={name} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-zinc-300">{name?.charAt(0)?.toUpperCase() || 'O'}</span>
-                )}
-              </div>
-              <label className="absolute -bottom-1 -right-1 p-1.5 bg-white text-zinc-900 rounded-full shadow-md cursor-pointer hover:bg-zinc-100 transition-colors">
-                <Camera size={14} />
-                <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
-              </label>
-            </div>
-
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-md font-sans text-[#111111]">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.96, y: 10 }}
+          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          className="bg-[#fdfdfd] border border-black/10 shadow-[0_25px_70px_rgba(0,0,0,0.1)] rounded-3xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]"
+        >
+          {/* Modal Header */}
+          <div className="p-6 border-b border-black/10 flex items-center justify-between shrink-0 bg-white/50">
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold tracking-tight">{name || 'O\'qituvchi'}</h2>
-                {teacher?.plan === 'premium' ? (
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-500/30 text-amber-300 border border-amber-500/40 uppercase tracking-widest flex items-center gap-1">
-                    <Crown size={10} /> Premium
-                  </span>
-                ) : teacher?.plan === 'standard' ? (
-                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-white/20 text-white uppercase tracking-widest flex items-center gap-1">
-                    <Zap size={10} /> Standard
-                  </span>
-                ) : (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-zinc-300 border border-white/20 uppercase tracking-widest">
-                    Free
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-zinc-400 font-medium mt-0.5">{teacher?.email}</p>
+              <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-gray-400 block mb-1">
+                PROFILE & SETTINGS
+              </span>
+              <h2 className="text-xl font-medium tracking-tight text-[#111111]">O'qituvchi Kabineti</h2>
             </div>
+            <button
+              onClick={onClose}
+              className="w-9 h-9 rounded-full border border-black/10 flex items-center justify-center text-gray-500 hover:text-black hover:border-black transition-colors"
+            >
+              <X size={16} />
+            </button>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-2 text-zinc-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Modal Navigation Tabs */}
-        <div className="flex items-center gap-1 px-6 border-b border-zinc-200/80 bg-zinc-50/50 shrink-0 overflow-x-auto">
-          <button
-            onClick={() => setActiveTab('profile')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${
-              activeTab === 'profile'
-                ? 'border-zinc-900 text-zinc-900 bg-white shadow-xs'
-                : 'border-transparent text-zinc-500 hover:text-zinc-800'
-            }`}
-          >
-            <User size={14} /> Shaxsiy Profil
-          </button>
-
-          <button
-            onClick={() => setActiveTab('subscription')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${
-              activeTab === 'subscription'
-                ? 'border-zinc-900 text-zinc-900 bg-white shadow-xs'
-                : 'border-transparent text-zinc-500 hover:text-zinc-800'
-            }`}
-          >
-            <Crown size={14} /> Obuna & Limitlar
-          </button>
-
-          <button
-            onClick={() => setActiveTab('security')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${
-              activeTab === 'security'
-                ? 'border-zinc-900 text-zinc-900 bg-white shadow-xs'
-                : 'border-transparent text-zinc-500 hover:text-zinc-800'
-            }`}
-          >
-            <Lock size={14} /> Xavfsizlik & Parol
-          </button>
-
-          <button
-            onClick={() => setActiveTab('branding')}
-            className={`flex items-center gap-2 px-4 py-3 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${
-              activeTab === 'branding'
-                ? 'border-zinc-900 text-zinc-900 bg-white shadow-xs'
-                : 'border-transparent text-zinc-500 hover:text-zinc-800'
-            }`}
-          >
-            <Building size={14} /> Branding & Maktab
-          </button>
-        </div>
-
-        {/* Modal Tab Content Area */}
-        <div className="p-6 overflow-y-auto flex-1 text-zinc-900">
-          
-          {/* TAB 1: PROFILE INFO */}
-          {activeTab === 'profile' && (
-            <form onSubmit={handleSaveProfile} className="space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                    F.I.SH (Ism va Familiya)
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-2.5 text-zinc-400" size={16} />
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                      placeholder="Masalan: Hasanboy Nurmuhammadov"
-                      className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 transition-all font-medium"
-                    />
+          {/* Body: Asymmetric Grid Layout (4 cols sidebar, 8 cols content) */}
+          <div className="grid grid-cols-1 md:grid-cols-12 flex-1 overflow-hidden">
+            
+            {/* LEFT COLUMN: NAVIGATION & AVATAR (4 cols) */}
+            <div className="md:col-span-4 border-r border-black/10 p-6 flex flex-col justify-between bg-gray-50/50 overflow-y-auto">
+              <div>
+                {/* Minimalist Avatar Box */}
+                <div className="mb-6 flex flex-col items-center text-center">
+                  <div className="relative mb-3 group">
+                    <div className="w-20 h-20 rounded-full border-2 border-black/10 bg-[#111111] text-white overflow-hidden flex items-center justify-center font-bold text-2xl shadow-sm">
+                      {avatar ? (
+                        <img src={avatar} alt={name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{name?.charAt(0)?.toUpperCase() || 'O'}</span>
+                      )}
+                    </div>
+                    <label className="absolute bottom-0 right-0 w-7 h-7 bg-[#111111] text-white rounded-full flex items-center justify-center cursor-pointer shadow-md hover:bg-black transition-transform group-hover:scale-110">
+                      <Camera size={12} />
+                      <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
+                    </label>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                    Dars beradigan Fani
-                  </label>
-                  <div className="relative">
-                    <BookOpen className="absolute left-3 top-2.5 text-zinc-400" size={16} />
-                    <input
-                      type="text"
-                      value={subject}
-                      onChange={(e) => setSubject(e.target.value)}
-                      required
-                      placeholder="Masalan: Informatika va Axborot Texnologiyalari"
-                      className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 transition-all font-medium"
-                    />
-                  </div>
-                </div>
+                  <h3 className="text-base font-medium tracking-tight text-[#111111]">{name || 'O\'qituvchi'}</h3>
+                  <p className="text-xs text-gray-500 font-normal mb-2">{teacher?.email}</p>
 
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                    Telefon Raqami
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-2.5 text-zinc-400" size={16} />
-                    <input
-                      type="text"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+998 90 123 45 67"
-                      className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 transition-all font-medium"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                    Elektron Pochta (Email)
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-2.5 text-zinc-400" size={16} />
-                    <input
-                      type="email"
-                      value={teacher?.email || ''}
-                      disabled
-                      className="w-full pl-9 pr-3 py-2 text-sm bg-zinc-100/80 border border-zinc-200 rounded-xl text-zinc-500 font-medium cursor-not-allowed"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-zinc-100 flex justify-end">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-md active:scale-95 disabled:opacity-50"
-                >
-                  {loading ? <Loader2 className="animate-spin" size={14} /> : <Check size={14} />}
-                  <span>Saqlash</span>
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* TAB 2: SUBSCRIPTION & LIMITS */}
-          {activeTab === 'subscription' && (
-            <div className="space-y-6">
-              {/* Current Plan Overview Box */}
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-zinc-900 to-zinc-950 text-white relative overflow-hidden shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block mb-1">
-                      Joriy Obuna Holati
-                    </span>
-                    <h3 className="text-xl font-bold tracking-tight capitalize">
-                      {teacher?.plan || 'Free'} Plan
-                    </h3>
-                  </div>
+                  {/* Plan Badge Pill */}
                   {teacher?.plan === 'premium' ? (
-                    <div className="p-3 bg-amber-500/20 text-amber-400 rounded-2xl border border-amber-500/30">
-                      <Crown size={28} />
-                    </div>
+                    <span className="text-[9px] font-bold tracking-[0.25em] uppercase px-3 py-1 rounded-full bg-black text-white flex items-center gap-1">
+                      <Crown size={10} /> Premium
+                    </span>
+                  ) : teacher?.plan === 'standard' ? (
+                    <span className="text-[9px] font-bold tracking-[0.25em] uppercase px-3 py-1 rounded-full bg-gray-900 text-white flex items-center gap-1">
+                      <Zap size={10} /> Standard
+                    </span>
                   ) : (
-                    <div className="p-3 bg-white/10 text-white rounded-2xl border border-white/20">
-                      <Zap size={28} />
-                    </div>
+                    <span className="text-[9px] font-bold tracking-[0.25em] uppercase px-3 py-1 rounded-full border border-black/20 text-gray-600">
+                      Free Plan
+                    </span>
                   )}
                 </div>
 
-                <p className="text-xs text-zinc-300 leading-relaxed mb-4">
-                  {teacher?.plan === 'premium'
-                    ? 'Siz Premium tarifidasiz! Cheksiz AI testlar, OCR Scanner, Word/Excel eksport va Shaxsiy branding imkoniyatlaridan to\'liq foydalanishingiz mumkin.'
-                    : teacher?.plan === 'standard'
-                    ? 'Siz Standard tarifidasiz! Kuniga 25 ta AI test yaratish hamda DOCX va Excel fayllarni yuklab olish huquqiga egasiz.'
-                    : 'Siz Free (Bepul) tarifidasiz. Kuniga 3 ta AI test yaratish va 2 ta aktiv test saqlash cheklovi mavjud.'}
-                </p>
+                {/* Minimalist Menu Tabs */}
+                <div className="space-y-1.5 pt-4 border-t border-black/10">
+                  <button
+                    onClick={() => setActiveTab('profile')}
+                    className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-[0.2em] transition-all flex items-center justify-between group ${
+                      activeTab === 'profile'
+                        ? 'bg-[#111111] text-white shadow-xs'
+                        : 'text-gray-500 hover:text-black hover:bg-black/5'
+                    }`}
+                  >
+                    <span>01 / Shaxsiy Profil</span>
+                    <ArrowUpRight className={`transition-transform duration-300 ${activeTab === 'profile' ? '-rotate-45' : 'group-hover:-rotate-45'}`} size={14} />
+                  </button>
 
-                {teacher?.planExpiresAt && (
-                  <div className="text-[11px] text-zinc-400 pt-3 border-t border-white/10 flex items-center gap-1.5">
-                    <Shield size={12} />
-                    <span>Amal qilish muddati: {new Date(teacher.planExpiresAt).toLocaleDateString()}gacha</span>
-                  </div>
-                )}
+                  <button
+                    onClick={() => setActiveTab('subscription')}
+                    className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-[0.2em] transition-all flex items-center justify-between group ${
+                      activeTab === 'subscription'
+                        ? 'bg-[#111111] text-white shadow-xs'
+                        : 'text-gray-500 hover:text-black hover:bg-black/5'
+                    }`}
+                  >
+                    <span>02 / Obuna & Limitlar</span>
+                    <ArrowUpRight className={`transition-transform duration-300 ${activeTab === 'subscription' ? '-rotate-45' : 'group-hover:-rotate-45'}`} size={14} />
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('security')}
+                    className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-[0.2em] transition-all flex items-center justify-between group ${
+                      activeTab === 'security'
+                        ? 'bg-[#111111] text-white shadow-xs'
+                        : 'text-gray-500 hover:text-black hover:bg-black/5'
+                    }`}
+                  >
+                    <span>03 / Xavfsizlik & Parol</span>
+                    <ArrowUpRight className={`transition-transform duration-300 ${activeTab === 'security' ? '-rotate-45' : 'group-hover:-rotate-45'}`} size={14} />
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('branding')}
+                    className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-[0.2em] transition-all flex items-center justify-between group ${
+                      activeTab === 'branding'
+                        ? 'bg-[#111111] text-white shadow-xs'
+                        : 'text-gray-500 hover:text-black hover:bg-black/5'
+                    }`}
+                  >
+                    <span>04 / Maktab Brandingi</span>
+                    <ArrowUpRight className={`transition-transform duration-300 ${activeTab === 'branding' ? '-rotate-45' : 'group-hover:-rotate-45'}`} size={14} />
+                  </button>
+                </div>
               </div>
 
-              {/* Daily AI Usage Meter */}
-              <div className="p-5 bg-white rounded-2xl border border-zinc-200 shadow-xs">
-                <div className="flex items-center justify-between text-xs font-semibold text-zinc-800 mb-2">
-                  <span className="flex items-center gap-1.5">
-                    <Sparkles size={14} className="text-amber-500" />
-                    Kunlik AI Test Yaratish Limiti
-                  </span>
-                  <span>{todayAiCount} / {maxAiAllowed}</span>
-                </div>
-                <div className="w-full h-2.5 bg-zinc-100 rounded-full overflow-hidden border border-zinc-200">
-                  <div
-                    className={`h-full transition-all duration-500 ${
-                      aiProgressPercent >= 90 ? 'bg-red-500' : aiProgressPercent >= 60 ? 'bg-amber-500' : 'bg-emerald-500'
-                    }`}
-                    style={{ width: `${aiProgressPercent}%` }}
-                  ></div>
-                </div>
-                <p className="text-[11px] text-zinc-400 mt-2">
-                  Har kuni kechasi 00:00 da sun'iy intellekt limiti avtomatik ravishda yangilanadi.
-                </p>
+              {/* Status footer */}
+              <div className="pt-6 border-t border-black/10 text-[10px] tracking-[0.2em] uppercase text-gray-400">
+                STATUS: <span className="text-black font-bold">FAOL SESSYA</span>
               </div>
             </div>
-          )}
 
-          {/* TAB 3: SECURITY & PASSWORD */}
-          {activeTab === 'security' && (
-            <form onSubmit={handleChangePassword} className="space-y-5">
-              <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-3">
-                <Shield className="shrink-0 text-amber-600 mt-0.5" size={16} />
-                <p>
-                  Hisobingiz xavfsizligini ta'minlash uchun parolingizni muntazam yangilab turishingiz tavsiya etiladi. Parol kamida 6 ta belgidan iborat bo'lishi lozim.
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                    Joriy Parol
-                  </label>
-                  <div className="relative">
-                    <KeyRound className="absolute left-3 top-2.5 text-zinc-400" size={16} />
-                    <input
-                      type="password"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      required
-                      placeholder="••••••••"
-                      className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 transition-all font-medium"
-                    />
+            {/* RIGHT COLUMN: TAB CONTENT (8 cols) */}
+            <div className="md:col-span-8 p-6 overflow-y-auto bg-[#fdfdfd]">
+              
+              {/* TAB 1: SHAXSIY PROFIL */}
+              {activeTab === 'profile' && (
+                <form onSubmit={handleSaveProfile} className="space-y-6">
+                  <div>
+                    <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-gray-400 block mb-1">
+                      SECTION 01
+                    </span>
+                    <h3 className="text-lg font-medium tracking-tight text-[#111111] mb-6">
+                      Shaxsiy Ma'lumotlar
+                    </h3>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                    Yangi Parol
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-2.5 text-zinc-400" size={16} />
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      required
-                      placeholder="Kamida 6 ta belgi"
-                      className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 transition-all font-medium"
-                    />
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-gray-500 mb-1">
+                        F.I.SH (Ism va Familiya)
+                      </label>
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
+                        placeholder="Hasanboy Nurmuhammadov"
+                        className="w-full bg-transparent border-b border-black/20 focus:border-black py-2.5 text-sm text-[#111111] focus:outline-none transition-colors font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-gray-500 mb-1">
+                        Dars Beradigan Fani
+                      </label>
+                      <input
+                        type="text"
+                        value={subject}
+                        onChange={(e) => setSubject(e.target.value)}
+                        required
+                        placeholder="Informatika"
+                        className="w-full bg-transparent border-b border-black/20 focus:border-black py-2.5 text-sm text-[#111111] focus:outline-none transition-colors font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-gray-500 mb-1">
+                        Telefon Raqami
+                      </label>
+                      <input
+                        type="text"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="+998 90 123 45 67"
+                        className="w-full bg-transparent border-b border-black/20 focus:border-black py-2.5 text-sm text-[#111111] focus:outline-none transition-colors font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-gray-500 mb-1">
+                        Elektron Pochta (Email)
+                      </label>
+                      <input
+                        type="email"
+                        value={teacher?.email || ''}
+                        disabled
+                        className="w-full bg-transparent border-b border-black/10 py-2.5 text-sm text-gray-400 font-medium cursor-not-allowed"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                    Yangi Parolni Tasdiqlang
-                  </label>
-                  <div className="relative">
-                    <CheckCircle2 className="absolute left-3 top-2.5 text-zinc-400" size={16} />
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                      placeholder="Yangi parolni qayta kiriting"
-                      className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 transition-all font-medium"
-                    />
+                  <div className="pt-6 border-t border-black/10 flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="bg-[#111111] text-white hover:bg-black text-xs font-semibold uppercase tracking-[0.2em] rounded-full px-8 py-3.5 flex items-center gap-3 group transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                    >
+                      {loading ? <Loader2 className="animate-spin" size={14} /> : <span>Saqlash</span>}
+                      <ArrowUpRight className="group-hover:rotate-45 transition-transform duration-300" size={14} />
+                    </button>
                   </div>
-                </div>
-              </div>
+                </form>
+              )}
 
-              <div className="pt-4 border-t border-zinc-100 flex justify-end">
-                <button
-                  type="submit"
-                  disabled={passwordLoading}
-                  className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-md active:scale-95 disabled:opacity-50"
-                >
-                  {passwordLoading ? <Loader2 className="animate-spin" size={14} /> : <Lock size={14} />}
-                  <span>Parolni Yangilash</span>
-                </button>
-              </div>
-            </form>
-          )}
+              {/* TAB 2: OBUNA & LIMITLAR */}
+              {activeTab === 'subscription' && (
+                <div className="space-y-6">
+                  <div>
+                    <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-gray-400 block mb-1">
+                      SECTION 02
+                    </span>
+                    <h3 className="text-lg font-medium tracking-tight text-[#111111] mb-6">
+                      Obuna & AI Limitlari
+                    </h3>
+                  </div>
 
-          {/* TAB 4: BRANDING & SCHOOL LOGO */}
-          {activeTab === 'branding' && (
-            <form onSubmit={handleSaveProfile} className="space-y-5">
-              <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-xs flex items-start gap-3">
-                <Building className="shrink-0 text-blue-600 mt-0.5" size={16} />
-                <p>
-                  Ushbu ma'lumotlar Word hamda PDF formatda yuklab olinadigan test qog'ozlarining sarlavhasida va muassasa brendingida ko'rinadi.
-                </p>
-              </div>
+                  {/* Minimalist Plan Card */}
+                  <div className="p-6 rounded-2xl bg-[#111111] text-white shadow-md">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-gray-400">
+                        JORIY OBUNA
+                      </span>
+                      <span className="text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-white/10 text-white border border-white/20">
+                        {teacher?.plan || 'Free'}
+                      </span>
+                    </div>
 
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                  Maktab / O'quv Markazi Nomi
-                </label>
-                <div className="relative">
-                  <Building className="absolute left-3 top-2.5 text-zinc-400" size={16} />
-                  <input
-                    type="text"
-                    value={schoolName}
-                    onChange={(e) => setSchoolName(e.target.value)}
-                    placeholder="Masalan: 14-IDUM yoki Perfect Academy"
-                    className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900 transition-all font-medium"
-                  />
-                </div>
-              </div>
+                    <h4 className="text-2xl font-medium tracking-tight capitalize mb-2">
+                      {teacher?.plan === 'premium' ? 'Premium 👑 Plan' : teacher?.plan === 'standard' ? 'Standard 🔥 Plan' : 'Free Plan'}
+                    </h4>
 
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                  Muassasa Logotipi / Pechati
-                </label>
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 rounded-2xl bg-zinc-100 border border-zinc-300 flex items-center justify-center overflow-hidden shrink-0">
-                    {schoolLogo ? (
-                      <img src={schoolLogo} alt="Logo" className="w-full h-full object-contain" />
-                    ) : (
-                      <span className="text-[10px] text-zinc-400 text-center px-2">Logo yo'q</span>
+                    <p className="text-xs text-gray-400 leading-relaxed">
+                      {teacher?.plan === 'premium'
+                        ? 'Cheksiz AI testlar, OCR Scanner, Word/Excel eksport va Shaxsiy branding imkoniyati faol.'
+                        : 'Kunlik AI testlar soni va eksport imkoniyatlari obunangizga binoan cheklangan.'}
+                    </p>
+
+                    {teacher?.planExpiresAt && (
+                      <div className="mt-4 pt-4 border-t border-white/10 text-[10px] tracking-[0.2em] uppercase text-gray-400">
+                        MUDDATI: {new Date(teacher.planExpiresAt).toLocaleDateString()} GACHA
+                      </div>
                     )}
                   </div>
-                  <label className="flex items-center gap-2 bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-800 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors shadow-xs">
-                    <Upload size={14} />
-                    <span>Logo Yuklash</span>
-                    <input type="file" accept="image/*" onChange={handleLogoChange} className="hidden" />
-                  </label>
-                </div>
-              </div>
 
-              <div className="pt-4 border-t border-zinc-100 flex justify-end">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-white px-5 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-md active:scale-95 disabled:opacity-50"
-                >
-                  {loading ? <Loader2 className="animate-spin" size={14} /> : <Check size={14} />}
-                  <span>Brandingni Saqlash</span>
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-      </motion.div>
-    </div>
+                  {/* AI Progress Meter */}
+                  <div className="p-5 border border-black/10 rounded-2xl bg-white">
+                    <div className="flex items-center justify-between text-xs font-semibold text-[#111111] mb-2">
+                      <span className="uppercase tracking-[0.2em] text-[10px] text-gray-500">Kunlik AI Yaratish Limiti</span>
+                      <span>{todayAiCount} / {maxAiAllowed}</span>
+                    </div>
+                    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden border border-black/10">
+                      <div
+                        className="h-full bg-black transition-all duration-500"
+                        style={{ width: `${aiProgressPercent}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-[10px] text-gray-400 tracking-wider uppercase mt-2">
+                      Limitlar har kuni 00:00 da yangilanadi.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: XAVFSIZLIK & PAROL */}
+              {activeTab === 'security' && (
+                <form onSubmit={handleChangePassword} className="space-y-6">
+                  <div>
+                    <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-gray-400 block mb-1">
+                      SECTION 03
+                    </span>
+                    <h3 className="text-lg font-medium tracking-tight text-[#111111] mb-6">
+                      Xavfsizlik & Parolni Yangilash
+                    </h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-gray-500 mb-1">
+                        Joriy Parol
+                      </label>
+                      <input
+                        type="password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        required
+                        placeholder="••••••••"
+                        className="w-full bg-transparent border-b border-black/20 focus:border-black py-2.5 text-sm text-[#111111] focus:outline-none transition-colors font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-gray-500 mb-1">
+                        Yangi Parol
+                      </label>
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                        placeholder="Kamida 6 ta belgi"
+                        className="w-full bg-transparent border-b border-black/20 focus:border-black py-2.5 text-sm text-[#111111] focus:outline-none transition-colors font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-gray-500 mb-1">
+                        Yangi Parolni Tasdiqlang
+                      </label>
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        placeholder="Yangi parolni qayta kiriting"
+                        className="w-full bg-transparent border-b border-black/20 focus:border-black py-2.5 text-sm text-[#111111] focus:outline-none transition-colors font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-black/10 flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={passwordLoading}
+                      className="bg-[#111111] text-white hover:bg-black text-xs font-semibold uppercase tracking-[0.2em] rounded-full px-8 py-3.5 flex items-center gap-3 group transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                    >
+                      {passwordLoading ? <Loader2 className="animate-spin" size={14} /> : <span>Parolni Saqlash</span>}
+                      <ArrowUpRight className="group-hover:rotate-45 transition-transform duration-300" size={14} />
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* TAB 4: MAKTAB BRANDINGI */}
+              {activeTab === 'branding' && (
+                <form onSubmit={handleSaveProfile} className="space-y-6">
+                  <div>
+                    <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-gray-400 block mb-1">
+                      SECTION 04
+                    </span>
+                    <h3 className="text-lg font-medium tracking-tight text-[#111111] mb-6">
+                      Shaxsiy Branding & Logotip
+                    </h3>
+                  </div>
+
+                  <div className="space-y-5">
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-gray-500 mb-1">
+                        Maktab / O'quv Markazi Nomi
+                      </label>
+                      <input
+                        type="text"
+                        value={schoolName}
+                        onChange={(e) => setSchoolName(e.target.value)}
+                        placeholder="14-IDUM yoki Perfect Academy"
+                        className="w-full bg-transparent border-b border-black/20 focus:border-black py-2.5 text-sm text-[#111111] focus:outline-none transition-colors font-medium"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-gray-500 mb-2">
+                        Muassasa Logotipi
+                      </label>
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-2xl border border-black/10 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+                          {schoolLogo ? (
+                            <img src={schoolLogo} alt="Logo" className="w-full h-full object-contain" />
+                          ) : (
+                            <span className="text-[9px] text-gray-400 uppercase tracking-widest">Logo</span>
+                          )}
+                        </div>
+                        <label className="cursor-pointer px-5 py-2.5 rounded-full border border-black/20 hover:border-black text-xs font-semibold uppercase tracking-[0.2em] text-[#111111] transition-colors flex items-center gap-2">
+                          <Upload size={14} />
+                          <span>Rasm Tanlash</span>
+                          <input type="file" accept="image/*" onChange={handleLogoChange} className="hidden" />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-black/10 flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="bg-[#111111] text-white hover:bg-black text-xs font-semibold uppercase tracking-[0.2em] rounded-full px-8 py-3.5 flex items-center gap-3 group transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                    >
+                      {loading ? <Loader2 className="animate-spin" size={14} /> : <span>Brandingni Saqlash</span>}
+                      <ArrowUpRight className="group-hover:rotate-45 transition-transform duration-300" size={14} />
+                    </button>
+                  </div>
+                </form>
+              )}
+
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
   );
 }

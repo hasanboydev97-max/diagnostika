@@ -98,3 +98,10 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #BBBBBB; 
 }
+
+/* Custom Cursor Rules */
+@media (min-width: 768px) {
+  * {
+    cursor: none !important;
+  }
+}
