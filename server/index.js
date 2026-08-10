@@ -13,7 +13,7 @@ import bcrypt from 'bcryptjs';
 import katex from 'katex';
 import JSZip from 'jszip';
 import PDFDocument from 'pdfkit';
-import { Document, Paragraph, TextRun, Packer, HeadingLevel, AlignmentType } from 'docx';
+import { Document, Paragraph, TextRun, Packer, HeadingLevel, AlignmentType, ImportedXmlComponent } from 'docx';
 import * as mml2ommlModule from 'mathml2omml';
 const { mml2omml } = mml2ommlModule;
 
@@ -487,38 +487,57 @@ function isTextWord(word) {
   return /^[a-zA-Z'oEʻgEʻ]+$/i.test(cleanWord);
 }
 
-function cleanMathForText(text) {
-  if (!text) return '';
-  let str = String(text);
+function latexToOmml(latex) {
+  try {
+    const mathml = katex.renderToString(latex.trim(), { output: 'mathml', displayMode: false, throwOnError: false });
+    const mathMatch = mathml.match(/<math[\s\S]*?<\/math>/);
+    if (!mathMatch) return null;
+    let mathStr = mathMatch[0].replace(/<annotation[^>]*>[\s\S]*?<\/annotation>/g, '');
+    let omml = mml2omml(mathStr);
+    return omml;
+  } catch (e) {
+    return null;
+  }
+}
 
-  // Replace common LaTeX expressions with clean readable unicode symbols
-  str = str
-    .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
-    .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
-    .replace(/\\sqrt/g, '√')
-    .replace(/\\times/g, '×')
-    .replace(/\\div/g, '÷')
-    .replace(/\\pm/g, '±')
-    .replace(/\\leq/g, '≤')
-    .replace(/\\geq/g, '≥')
-    .replace(/\\neq/g, '≠')
-    .replace(/\\approx/g, '≈')
-    .replace(/\\infty/g, '∞')
-    .replace(/\\cdot/g, '·')
-    .replace(/\\alpha/g, 'α')
-    .replace(/\\beta/g, 'β')
-    .replace(/\\gamma/g, 'γ')
-    .replace(/\\pi/g, 'π')
-    .replace(/\\theta/g, 'θ')
-    .replace(/\^2/g, '²')
-    .replace(/\^3/g, '³')
-    .replace(/\^{([^}]+)}/g, '^($1)')
-    .replace(/_{([^}]+)}/g, '_($1)')
-    .replace(/<[^>]*>/g, '') // strip HTML tags
-    .replace(/\$/g, '') // strip LaTeX dollar signs
-    .replace(/\\/g, ''); // strip remaining backslashes
+function buildDocxChildren(content, options = {}) {
+  if (!content) return [new TextRun('')];
+  
+  // Format HTML/AI tags first
+  let text = String(content)
+    .replace(/<\s*code\s*>/gi, '`')
+    .replace(/<\s*\/\s*code\s*>/gi, '`')
+    .replace(/<[^>]*>/g, '');
+    
+  // Normalize $$ to $ for split
+  text = text.replace(/\$\$\s*=\s*/g, '$$').replace(/\$\s*=\s*\\frac/g, '$\\frac');
+  text = text.replace(/\$\$([\s\S]*?)\$\$/g, '$$$1$$');
 
-  return str.trim();
+  const parts = text.split('$');
+  const children = [];
+
+  parts.forEach((part, index) => {
+    if (index % 2 === 0) {
+      if (part) children.push(new TextRun({ text: part, ...options }));
+    } else {
+      if (!part.trim()) return;
+      
+      let cleanMath = part.trim();
+      if (cleanMath.startsWith('=\\')) {
+        cleanMath = cleanMath.substring(1);
+      }
+
+      const omml = latexToOmml(cleanMath);
+      if (omml) {
+        children.push(new ImportedXmlComponent(omml));
+      } else {
+        // Fallback to text if parsing fails
+        children.push(new TextRun({ text: `$${part}$`, ...options }));
+      }
+    }
+  });
+
+  return children;
 }
 
 async function buildDocxBuffer(title, subject, questions) {
@@ -542,12 +561,11 @@ async function buildDocxBuffer(title, subject, questions) {
 
   const optionLetters = ['A', 'B', 'C', 'D'];
   (questions || []).forEach((q, index) => {
-    const qText = cleanMathForText(q.questionText || '');
     children.push(
       new Paragraph({
         children: [
           new TextRun({ text: `${index + 1}. `, bold: true, size: 24 }),
-          new TextRun({ text: qText, bold: true, size: 24 })
+          ...buildDocxChildren(q.questionText || '', { bold: true, size: 24 })
         ],
         spacing: { before: 240, after: 120 }
       })
@@ -555,12 +573,11 @@ async function buildDocxBuffer(title, subject, questions) {
 
     (q.options || []).forEach((opt, oi) => {
       const letter = optionLetters[oi] || `${oi + 1}`;
-      const optText = cleanMathForText(opt || '');
       children.push(
         new Paragraph({
           children: [
             new TextRun({ text: `    ${letter}) `, bold: true, size: 22 }),
-            new TextRun({ text: optText, size: 22 })
+            ...buildDocxChildren(opt || '', { size: 22 })
           ],
           spacing: { after: 80 }
         })
