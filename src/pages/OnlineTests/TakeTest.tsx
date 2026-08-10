@@ -328,21 +328,23 @@ export default function TakeTest() {
     });
 
     const resultId = 'res_' + Date.now().toString();
+    const resultPayload = {
+      id: resultId,
+      testId,
+      studentName: studentName + (isForced ? ' (Qoidabuzarlik)' : ''),
+      answers,
+      score,
+      totalScore: test.questions.length,
+      questions: test.questions,
+      testTitle: test.title,
+      createdAt: new Date().toISOString()
+    };
     
     try {
       const res = await fetch(`${API_URL}/online-test-results`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: resultId,
-          testId,
-          studentName: studentName + (isForced ? ' (Qoidabuzarlik)' : ''),
-          answers,
-          score,
-          totalScore: test.questions.length,
-          questions: test.questions,
-          createdAt: new Date().toISOString()
-        })
+        body: JSON.stringify(resultPayload)
       });
       
       if (!res.ok) {
@@ -360,11 +362,16 @@ export default function TakeTest() {
         document.exitFullscreen().catch(err => console.log(err));
       }
 
-      // Muvaffaqiyatli topshirilgach keshni tozalash
+      // Muvaffaqiyatli topshirilgach keshni tozalash va natijani saqlash
       localStorage.removeItem(SAVE_KEY);
+      try {
+        sessionStorage.setItem(`result_${resultId}`, JSON.stringify(resultPayload));
+      } catch (e) {
+        console.warn('SessionStorage cache warning:', e);
+      }
 
       toast.success('Test muvaffaqiyatli yakunlandi!', { id: toastId });
-      navigate(`/online-tests/results/${resultId}`);
+      navigate(`/online-tests/results/${resultId}`, { state: { resultData: resultPayload } });
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || 'Xatolik yuz berdi. Iltimos qayta urinib ko\'ring.', { id: toastId });

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Loader2, ArrowLeft, BrainCircuit, CheckCircle2, XCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import FormattedText from '../../components/FormattedText';
@@ -20,37 +20,88 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 export default function TestResultView() {
   const { resultId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   
-  const [result, setResult] = useState<any>(null);
-  const [test, setTest] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState<any>(() => {
+    // 1. Initial State from navigation
+    if (location.state?.resultData) return location.state.resultData;
+    // 2. Initial State from sessionStorage
+    if (resultId) {
+      const cached = sessionStorage.getItem(`result_${resultId}`);
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return null;
+  });
+
+  const [test, setTest] = useState<any>(() => {
+    if (location.state?.resultData?.questions) {
+      return {
+        title: location.state.resultData.testTitle || 'Onlayn Test',
+        questions: location.state.resultData.questions
+      };
+    }
+    if (resultId) {
+      const cached = sessionStorage.getItem(`result_${resultId}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (parsed.questions) return { title: parsed.testTitle || 'Onlayn Test', questions: parsed.questions };
+        } catch (e) {}
+      }
+    }
+    return null;
+  });
+
+  const [loading, setLoading] = useState(!result);
 
   useEffect(() => {
     fetchResult();
   }, [resultId]);
 
-  const fetchResult = async () => {
+  const fetchResult = async (retryCount = 0) => {
     try {
       const res = await fetch(`${API_URL}/online-test-results/${resultId}`);
       if (res.ok) {
         const data = await res.json();
         setResult(data);
         
-        const testRes = await fetch(`${API_URL}/online-tests/${data.testId}`);
-        if (testRes.ok) {
-          const testData = await testRes.json();
-          setTest(testData);
-          
-          const percentage = Math.round((data.score / data.totalScore) * 100);
-          if (percentage >= 70) {
-            confetti({
-              particleCount: 150,
-              spread: 70,
-              origin: { y: 0.6 },
-              colors: ['#000', '#333', '#666']
-            });
+        let testData = null;
+        if (data.testId) {
+          try {
+            const testRes = await fetch(`${API_URL}/online-tests/${data.testId}`);
+            if (testRes.ok) {
+              testData = await testRes.json();
+            }
+          } catch (e) {
+            console.warn("Test meta-data fetch failed, using result embedded questions fallback", e);
           }
         }
+
+        // Fallback test object if test endpoint didn't respond
+        if (!testData && data.questions) {
+          testData = {
+            title: data.testTitle || 'Onlayn Test',
+            questions: data.questions
+          };
+        }
+
+        setTest(testData);
+        
+        const percentage = Math.round((data.score / (data.totalScore || 1)) * 100);
+        if (percentage >= 70) {
+          confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#000', '#333', '#666']
+          });
+        }
+      } else if (retryCount < 2) {
+        // Retry fetch after 800ms to handle race condition with backend indexing
+        setTimeout(() => fetchResult(retryCount + 1), 800);
+        return;
       }
     } catch (error) {
       console.error(error);
@@ -59,31 +110,34 @@ export default function TestResultView() {
     }
   };
 
-  if (loading) return (
+  if (loading && !result) return (
     <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex items-center justify-center">
       <MeshGradient />
       <Loader2 className="animate-spin text-gray-400 relative z-10" size={32} />
     </div>
   );
 
-  if (!result || !test) return (
+  // Fallback test object if result exists but test state is still null
+  const activeTest = test || (result?.questions ? { title: result.testTitle || 'Onlayn Test', questions: result.questions } : null);
+
+  if (!result || !activeTest) return (
     <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex flex-col items-center justify-center text-[#111111]">
       <MeshGradient />
       <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 rounded-2xl relative z-10 text-center">
-        <h2 className="text-xl font-medium mb-4 text-black">Result not found</h2>
+        <h2 className="text-xl font-medium mb-4 text-black">Natija topilmadi</h2>
         <button onClick={() => navigate('/online-tests')} className="text-sm font-medium hover:underline text-gray-500 hover:text-black">
-          Return to Dashboard
+          Dashboard'ga qaytish
         </button>
       </div>
     </div>
   );
 
-  const percentage = Math.round((result.score / result.totalScore) * 100);
+  const percentage = Math.round((result.score / (result.totalScore || 1)) * 100);
 
   // Group by subtopics for Recharts
   const topicStats: Record<string, { total: number, correct: number }> = {};
   
-  test.questions.forEach((q: any, i: number) => {
+  (activeTest?.questions || []).forEach((q: any, i: number) => {
     const topic = q.subtopic || 'Umumiy';
     if (!topicStats[topic]) topicStats[topic] = { total: 0, correct: 0 };
     
@@ -96,7 +150,7 @@ export default function TestResultView() {
 
   const chartData = Object.keys(topicStats).map(topic => {
     const stat = topicStats[topic];
-    const percentage = Math.round((stat.correct / stat.total) * 100);
+    const percentage = Math.round((stat.correct / (stat.total || 1)) * 100);
     return {
       subject: topic,
       Olashtirish: percentage,
@@ -134,21 +188,21 @@ export default function TestResultView() {
           <div className="lg:col-span-2 bg-white/60 backdrop-blur-xl rounded-[2rem] border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 flex flex-col h-full">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 border-b border-black/10 pb-8 mb-8">
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-500 mb-1">{test.title}</p>
+                <p className="text-sm font-medium text-gray-500 mb-1">{activeTest?.title || 'Onlayn Test'}</p>
                 <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-gray-900 mb-2">
-                  {studentName(result.studentName)}'s Results
+                  {formatStudentName(result.studentName)} Natijalari
                 </h1>
               </div>
               
               <div className="flex items-center gap-4 bg-white/50 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/50 shadow-sm">
                 <div className="text-center">
                   <span className="block text-3xl font-bold text-black">{percentage}%</span>
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Score</span>
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Foiz</span>
                 </div>
                 <div className="w-px h-10 bg-gray-200 mx-2"></div>
                 <div className="text-center">
                   <span className="block text-xl font-semibold text-gray-700">{result.score} / {result.totalScore}</span>
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Correct</span>
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Tog'ri</span>
                 </div>
               </div>
             </div>
@@ -160,7 +214,7 @@ export default function TestResultView() {
                 AI Xulosasi
               </h3>
               <p className="text-gray-600 text-sm md:text-base leading-relaxed whitespace-pre-wrap bg-blue-50/50 p-5 rounded-xl border border-blue-100 h-full">
-                {result.aiFeedback || "No AI feedback provided."}
+                {result.aiFeedback || "Natijangiz saqlandi! AI batafsil tavsiyalarni shakllantirmoqda..."}
               </p>
             </div>
           </div>
@@ -204,7 +258,7 @@ export default function TestResultView() {
         <div className="mt-12">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">Savollar Bo'yicha Natijalar</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {test.questions.map((q: any, i: number) => {
+            {(activeTest?.questions || []).map((q: any, i: number) => {
               const studentAnswers = result.answers || {};
               const studentAns = studentAnswers[i];
               const isCorrect = studentAns === q.correctOption;
@@ -230,7 +284,7 @@ export default function TestResultView() {
                   </div>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-auto pl-9">
-                    {q.options.map((opt: string, oIndex: number) => {
+                    {(q.options || []).map((opt: string, oIndex: number) => {
                       const isStudentChoice = studentAns === opt;
                       const isActuallyCorrect = opt === q.correctOption;
                       
@@ -260,7 +314,7 @@ export default function TestResultView() {
   );
 }
 
-function studentName(name: string) {
-  if (!name) return 'Student';
+function formatStudentName(name: string) {
+  if (!name) return 'O\'quvchi';
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
