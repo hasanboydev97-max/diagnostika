@@ -4,10 +4,11 @@ const TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '865588725
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
 const SAVED_CHAT_ID_KEY = 'maktab_telegram_saved_chat_id';
+const DEFAULT_CHAT_ID = '1744670071';
 
 export const getSavedChatId = (): string => {
   const envChatId = import.meta.env.VITE_TELEGRAM_CHAT_ID || '';
-  return localStorage.getItem(SAVED_CHAT_ID_KEY) || envChatId || '';
+  return localStorage.getItem(SAVED_CHAT_ID_KEY) || envChatId || DEFAULT_CHAT_ID;
 };
 
 export const saveChatId = (chatId: string): void => {
