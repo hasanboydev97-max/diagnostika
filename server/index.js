@@ -390,10 +390,49 @@ app.get('/api/online-tests', authMiddleware, async (req, res) => {
   }
 });
 
+function sanitizeQuestions(questionsList) {
+  if (!Array.isArray(questionsList)) return questionsList;
+  return questionsList.map((q) => {
+    let qText = q.questionText || '';
+
+    const asksForFormula = /quyidagi (ifoda|formula|amallar|dastur|kod)/i.test(qText);
+    const cleanForCheck = qText.replace(/A1\s*=\s*\d+|B1\s*=\s*\d+/gi, '');
+    const hasFormula = qText.includes('$') || qText.includes('`') || qText.includes('<code>') || /(=|\+|-|\*|\/|\\frac|\\sqrt)/.test(cleanForCheck);
+
+    if (asksForFormula && !hasFormula) {
+      if (/A1\s*=\s*12.*B1\s*=\s*4/i.test(qText)) {
+        qText = qText.replace(/quyidagi formulaning/i, 'quyidagi `=A1/B1 + 3` formulaning');
+      } else {
+        const sampleFormulas = [
+          '`=A1*2 + B1`',
+          '`=SUM(A1:B2)`',
+          '`=(A1+B1)/2`',
+          '`=A1/B1 + 3`',
+          '`=A1^2 - B1`',
+          '`=AVERAGE(A1:A5)`'
+        ];
+        const formulaToInject = sampleFormulas[qText.length % sampleFormulas.length];
+        qText = qText.replace(/quyidagi (ifoda|formula|dastur kodi|kod)/i, `quyidagi ${formulaToInject} $1si`);
+      }
+    }
+
+    // Strip dangling AI trailing numbers like ": 1" or ": 12"
+    qText = qText.replace(/:\s*\d+\s*$/, ':');
+
+    return {
+      ...q,
+      questionText: qText
+    };
+  });
+}
+
 app.get('/api/online-tests/:id', async (req, res) => {
   try {
-    const test = await OnlineTest.findOne({ id: req.params.id });
+    const test = await OnlineTest.findOne({ id: req.params.id }).lean();
     if (!test) return res.status(404).json({ error: 'Not found' });
+    if (test.questions) {
+      test.questions = sanitizeQuestions(test.questions);
+    }
     res.json(test);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1175,36 +1214,7 @@ Example:
     text = text.replace(/(?<!\\)\\n(u|abla|eq|eg|exists)/g, "\\\\n$1");
     
     let rawQuestions = JSON.parse(text);
-
-    // --- SENIOR LEVEL QUESTION FORMULA GUARD & SANITIZER ---
-    const sanitizedQuestions = rawQuestions.map((q) => {
-      let qText = q.questionText || '';
-
-      // Check if text refers to an expression/formula but lacks any formula/code/math wrapper
-      const asksForFormula = /quyidagi (ifoda|formula|amallar|dastur|kod)/i.test(qText);
-      const hasFormula = qText.includes('$') || qText.includes('`') || qText.includes('<code>') || /(=|\+|-|\*|\/|\\frac|\\sqrt)/.test(qText);
-
-      if (asksForFormula && !hasFormula) {
-        const sampleFormulas = [
-          '`=A1*2 + B1`',
-          '`=SUM(A1:B2)`',
-          '`=(A1+B1)/2`',
-          '`=IF(A1>10, "A\'lo", "Qoniqarsiz")`',
-          '`=A1^2 - B1`',
-          '`=AVERAGE(A1:A5)`'
-        ];
-        const formulaToInject = sampleFormulas[qText.length % sampleFormulas.length];
-        qText = qText.replace(/quyidagi (ifoda|formula|dastur kodi|kod)/i, `quyidagi ${formulaToInject} $1si`);
-      }
-
-      // Strip dangling AI trailing numbers like ": 1" or ": 12"
-      qText = qText.replace(/:\s*\d+\s*$/, ':');
-
-      return {
-        ...q,
-        questionText: qText
-      };
-    });
+    const sanitizedQuestions = sanitizeQuestions(rawQuestions);
 
     // Increment daily AI count for teacher
     teacher.lastAiGenDate = todayStr;
