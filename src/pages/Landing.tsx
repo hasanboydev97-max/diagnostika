@@ -48,7 +48,8 @@ export default function Landing() {
         <section className="grid grid-cols-1 md:grid-cols-12 gap-12">
           <div className="md:col-span-4 md:sticky md:top-32 h-fit">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="flex items-center gap-3 mb-8 md:mb-0">
-              <img src="/logo.png" alt="HB Ta'lim Diagnostikasi" className="h-12 w-auto object-contain bg-white rounded-xl border border-black/5 p-1 shadow-sm" />
+              <img src="/logo.png" alt="HB Diagnostikasi" className="w-10 h-10 rounded-xl object-contain bg-white border border-black/10 p-1 shadow-sm" />
+              <span className="font-extrabold text-lg tracking-tight text-neutral-900">HB Diagnostikasi</span>
             </motion.div>
           </div>
           <div className="md:col-span-8">

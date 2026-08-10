@@ -218,8 +218,8 @@ export default function Summary() {
           <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-[15px] sm:p-8 md:p-12 rounded-2xl md:rounded-[2rem] flex flex-col space-y-10 md:space-y-20">
           <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-black/5 pb-6">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="HB Ta'lim Diagnostikasi" className="h-10 md:h-14 w-auto object-contain rounded-lg bg-white p-1 border border-black/5 shadow-sm" />
-            <div className="hidden sm:block">
+            <img src="/logo.png" alt="HB Diagnostikasi" className="w-10 h-10 md:w-12 md:h-12 rounded-xl border border-black/10 bg-white p-1 object-contain shadow-sm" />
+            <div>
               <h1 className="font-bold text-lg md:text-xl text-neutral-main">HB Diagnostikasi</h1>
               <p className="text-[10px] text-gray-500">{studentData.studentName} • {studentData.grade || '5'}-sinf</p>
             </div>
