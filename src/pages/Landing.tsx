@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight, Plus, User, GraduationCap, Settings, Palette, Check, X,
-  Zap, Crown, Sparkles, Copy, ExternalLink, Send
+  Zap, Crown, Copy, ExternalLink, Send
 } from 'lucide-react';
 import MeshGradient, { palettes } from '../components/ui/MeshGradient';
 import { getToken } from '../lib/auth';
@@ -162,24 +162,27 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* PRICING SECTION */}
+        {/* PRICING SECTION (PREMIUM MINIMALIST UI) */}
         <section className="grid grid-cols-1 md:grid-cols-12 gap-12 border-t border-black/10 pt-16 md:pt-32">
           <div className="md:col-span-4 md:sticky md:top-32 h-fit">
             <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}>
               <h2 className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500 mb-4">
-                {t('landing.pricing_title', 'TARIFLAR VA OBUNA')}
+                {t('landing.pricing_title', 'TARIFLAR')}
               </h2>
-              <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
-                {t('landing.pricing_subtitle', 'O\'zingizga mos tarif rejasini tanlang va ta\'lim sifatini yangi bosqichga olib chiqing.')}
+              <h3 className="text-3xl md:text-4xl font-medium tracking-tight mb-4 text-[#111111] leading-tight">
+                Mos tarifni <span className="italic text-black/70">tanlang</span>
+              </h3>
+              <p className="text-sm text-gray-500 leading-relaxed max-w-xs mb-8">
+                {t('landing.pricing_subtitle', 'Har bir o\'qituvchi va ta\'lim muassasasi uchun moslashtirilgan xizmat paketlari.')}
               </p>
 
-              {/* Monthly vs Yearly Toggle */}
-              <div className="mt-8 inline-flex items-center p-1 bg-black/5 rounded-2xl border border-black/10 pointer-events-auto">
+              {/* Minimalist Billing Cycle Switch */}
+              <div className="inline-flex items-center p-1 bg-black/[0.04] border border-black/10 rounded-2xl pointer-events-auto">
                 <button
                   onClick={() => setBillingCycle('monthly')}
-                  className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
+                  className={`px-5 py-2.5 text-xs font-semibold rounded-xl transition-all duration-300 ${
                     billingCycle === 'monthly'
-                      ? 'bg-white text-black shadow-md scale-105'
+                      ? 'bg-white text-black shadow-[0_2px_10px_rgba(0,0,0,0.06)] scale-[1.02]'
                       : 'text-gray-500 hover:text-black'
                   }`}
                 >
@@ -187,14 +190,14 @@ export default function Landing() {
                 </button>
                 <button
                   onClick={() => setBillingCycle('yearly')}
-                  className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all flex items-center gap-1.5 ${
+                  className={`px-5 py-2.5 text-xs font-semibold rounded-xl transition-all duration-300 flex items-center gap-2 ${
                     billingCycle === 'yearly'
-                      ? 'bg-black text-white shadow-md scale-105'
+                      ? 'bg-black text-white shadow-[0_2px_10px_rgba(0,0,0,0.1)] scale-[1.02]'
                       : 'text-gray-500 hover:text-black'
                   }`}
                 >
                   <span>Yillik</span>
-                  <span className="bg-emerald-500 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-md uppercase">
+                  <span className="bg-emerald-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
                     -20%
                   </span>
                 </button>
@@ -202,199 +205,196 @@ export default function Landing() {
             </motion.div>
           </div>
 
-          <div className="md:col-span-8 grid grid-cols-1 lg:grid-cols-3 gap-6 pointer-events-auto">
-            {/* FREE PLAN CARD */}
+          <div className="md:col-span-8 flex flex-col gap-6 pointer-events-auto">
+            {/* FREE PLAN ITEM */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="bg-white/80 backdrop-blur-xl border border-black/10 rounded-3xl p-6 flex flex-col justify-between hover:border-black/20 hover:shadow-xl transition-all group"
+              transition={{ duration: 0.8 }}
+              onClick={() => {
+                if (token) navigate('/online-tests');
+                else navigate('/login');
+              }}
+              className="relative group cursor-pointer border border-black/10 hover:border-black/30 rounded-3xl p-8 transition-all duration-500 overflow-hidden bg-white/50 backdrop-blur-md"
             >
-              <div>
-                <div className="w-10 h-10 rounded-2xl bg-neutral-100 border border-black/5 flex items-center justify-center mb-6 text-neutral-600 group-hover:scale-110 transition-transform">
-                  <User className="w-5 h-5" />
-                </div>
-                <h3 className="text-xl font-bold text-neutral-900 mb-1">Free</h3>
-                <p className="text-xs text-neutral-500 mb-6">Platforma bilan tanishish uchun</p>
-                
-                <div className="mb-6">
-                  <span className="text-3xl font-extrabold text-neutral-900">0 so'm</span>
-                  <span className="text-xs text-neutral-400 ml-1">/ abadiy</span>
+              <div className="absolute inset-0 bg-neutral-100/80 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.87,0,0.13,1)] z-0" />
+
+              <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-6">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-[10px] font-semibold tracking-[0.3em] uppercase text-gray-400">BOSHLANG'ICH</span>
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-medium tracking-tight mb-2 group-hover:translate-x-1 transition-transform duration-300">
+                    Free (Bepul)
+                  </h3>
+                  <p className="text-sm text-gray-500 leading-relaxed max-w-sm mb-6 group-hover:translate-x-1 transition-transform duration-300 delay-75">
+                    Platforma imkoniyatlari bilan bepul tanishib chiqish uchun.
+                  </p>
+
+                  <ul className="space-y-2.5 text-xs text-gray-600 font-medium">
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-black shrink-0" strokeWidth={1.5} />
+                      <span>Kuniga 3 ta AI test yaratish</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-black shrink-0" strokeWidth={1.5} />
+                      <span>Maksimal 2 ta aktiv onlayn test</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-black shrink-0" strokeWidth={1.5} />
+                      <span>Test boshiga 15 ta o'quvchi</span>
+                    </li>
+                  </ul>
                 </div>
 
-                <ul className="space-y-3 mb-8 text-xs text-neutral-600">
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-emerald-500 shrink-0" strokeWidth={2.5} />
-                    <span>Kuniga <b>3 ta AI test</b> yaratish</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-emerald-500 shrink-0" strokeWidth={2.5} />
-                    <span>Maksimal <b>2 ta aktiv</b> onlayn test</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-emerald-500 shrink-0" strokeWidth={2.5} />
-                    <span>Test boshiga <b>15 ta o'quvchi</b></span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-emerald-500 shrink-0" strokeWidth={2.5} />
-                    <span>PDF natija yuklab olish</span>
-                  </li>
-                  <li className="flex items-center gap-2.5 text-neutral-400">
-                    <X className="w-4 h-4 text-neutral-300 shrink-0" />
-                    <span>DOCX (Word) va Excel eksport</span>
-                  </li>
-                </ul>
+                <div className="flex flex-col md:items-end justify-between shrink-0">
+                  <div className="text-3xl md:text-4xl font-medium tracking-tight text-neutral-900 mb-6">
+                    0 <span className="text-xs text-gray-400 font-normal tracking-normal">so'm / abadiy</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-black group-hover:translate-x-1 transition-transform">
+                    <span>Bepul Boshlash</span>
+                    <ArrowRight className="w-5 h-5 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-1 transition-all duration-500" strokeWidth={1.5} />
+                  </div>
+                </div>
               </div>
-
-              <button
-                onClick={() => {
-                  if (token) navigate('/online-tests');
-                  else navigate('/login');
-                }}
-                className="w-full py-3 px-4 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-neutral-900 font-semibold text-xs transition-colors flex items-center justify-center gap-2"
-              >
-                <span>Bepul Boshlash</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
             </motion.div>
 
-            {/* STANDARD PLAN CARD (POPULAR 🔥) */}
+            {/* STANDARD PLAN ITEM (RECOMMENDED 🔥) */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="bg-white border-2 border-black/90 shadow-[0_20px_50px_rgba(0,0,0,0.12)] rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden scale-[1.02] group"
+              transition={{ duration: 0.8, delay: 0.1 }}
+              onClick={() => {
+                if (!token) {
+                  toast.info("Tarifni tanlash uchun avval tizimga kiring!");
+                  navigate('/login');
+                } else {
+                  setSelectedPlanForPayment('standard');
+                }
+              }}
+              className="relative group cursor-pointer border-2 border-black rounded-3xl p-8 transition-all duration-500 overflow-hidden bg-white shadow-[0_16px_40px_rgba(0,0,0,0.06)]"
             >
-              {/* Popular Ribbon */}
-              <div className="absolute top-4 right-4 bg-black text-white text-[10px] font-extrabold uppercase px-3 py-1 rounded-full tracking-wider flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-amber-400" />
-                <span>Ommabop</span>
-              </div>
+              <div className="absolute inset-0 bg-neutral-900 text-white origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.87,0,0.13,1)] z-0" />
 
-              <div>
-                <div className="w-10 h-10 rounded-2xl bg-black text-white flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <Zap className="w-5 h-5 text-amber-400" />
+              <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-6">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-[10px] font-semibold tracking-[0.3em] uppercase bg-black text-white group-hover:bg-amber-400 group-hover:text-black transition-colors px-2.5 py-0.5 rounded-full">
+                      ENG OMMABOP
+                    </span>
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-medium tracking-tight mb-2 group-hover:translate-x-1 group-hover:text-white transition-all duration-300">
+                    Standard (Standart)
+                  </h3>
+                  <p className="text-sm text-gray-500 group-hover:text-neutral-300 leading-relaxed max-w-sm mb-6 group-hover:translate-x-1 transition-all duration-300 delay-75">
+                    Faol o'qituvchilar va repetitorlar uchun eng mukammal tanlov.
+                  </p>
+
+                  <ul className="space-y-2.5 text-xs text-gray-700 group-hover:text-neutral-200 font-medium">
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-black group-hover:text-amber-400 shrink-0" strokeWidth={1.5} />
+                      <span>Kuniga <b>25 ta AI test</b> (Math + Formula)</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-black group-hover:text-amber-400 shrink-0" strokeWidth={1.5} />
+                      <span><b>Cheksiz</b> aktiv onlayn testlar</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-black group-hover:text-amber-400 shrink-0" strokeWidth={1.5} />
+                      <span>Test boshiga <b>50 ta o'quvchi</b></span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-black group-hover:text-amber-400 shrink-0" strokeWidth={1.5} />
+                      <span><b>PDF + DOCX (Word)</b> yuklab olish</span>
+                    </li>
+                  </ul>
                 </div>
-                <h3 className="text-xl font-bold text-neutral-900 mb-1">Standard</h3>
-                <p className="text-xs text-neutral-500 mb-6">Faol o'qituvchilar va repetitorlar uchun</p>
 
-                <div className="mb-6">
-                  <span className="text-3xl font-extrabold text-neutral-900">
+                <div className="flex flex-col md:items-end justify-between shrink-0">
+                  <div className="text-3xl md:text-4xl font-medium tracking-tight text-neutral-900 group-hover:text-white mb-6 transition-colors">
                     {billingCycle === 'monthly' ? '49,000' : '470,000'}
-                  </span>
-                  <span className="text-xs font-semibold text-neutral-500 ml-1">
-                    so'm / {billingCycle === 'monthly' ? 'oy' : 'yil'}
-                  </span>
+                    <span className="text-xs text-gray-400 group-hover:text-neutral-400 font-normal tracking-normal ml-1">
+                      so'm / {billingCycle === 'monthly' ? 'oy' : 'yil'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-black group-hover:text-white group-hover:translate-x-1 transition-all">
+                    <span>Tanlash</span>
+                    <ArrowRight className="w-5 h-5 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-1 transition-all duration-500" strokeWidth={1.5} />
+                  </div>
                 </div>
-
-                <ul className="space-y-3 mb-8 text-xs text-neutral-700 font-medium">
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2.5} />
-                    <span>Kuniga <b>25 ta AI test</b> (Math + LaTeX)</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2.5} />
-                    <span><b>Cheksiz</b> aktiv onlayn testlar</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2.5} />
-                    <span>Test boshiga <b>50 ta o'quvchi</b></span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2.5} />
-                    <span><b>PDF + DOCX (Word)</b> eksport</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2.5} />
-                    <span>AI Chuqur Diagnostika & Tahlil</span>
-                  </li>
-                </ul>
               </div>
-
-              <button
-                onClick={() => {
-                  if (!token) {
-                    toast.info("Tarifni tanlash uchun avval tizimga kiring!");
-                    navigate('/login');
-                  } else {
-                    setSelectedPlanForPayment('standard');
-                  }
-                }}
-                className="w-full py-3 px-4 rounded-2xl bg-black hover:bg-neutral-800 text-white font-semibold text-xs transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-              >
-                <span>Standartni Tanlash</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
             </motion.div>
 
-            {/* PREMIUM PLAN CARD 👑 */}
+            {/* PREMIUM PLAN ITEM 👑 */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="bg-neutral-900 text-white border border-neutral-800 rounded-3xl p-6 flex flex-col justify-between hover:border-neutral-700 shadow-2xl transition-all group"
+              transition={{ duration: 0.8, delay: 0.2 }}
+              onClick={() => {
+                if (!token) {
+                  toast.info("Tarifni tanlash uchun avval tizimga kiring!");
+                  navigate('/login');
+                } else {
+                  setSelectedPlanForPayment('premium');
+                }
+              }}
+              className="relative group cursor-pointer border border-neutral-900 rounded-3xl p-8 transition-all duration-500 overflow-hidden bg-[#050505] text-white shadow-2xl"
             >
-              <div>
-                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center mb-6 text-amber-400 group-hover:scale-110 transition-transform">
-                  <Crown className="w-5 h-5" />
-                </div>
-                <h3 className="text-xl font-bold text-white mb-1">Premium</h3>
-                <p className="text-xs text-neutral-400 mb-6">Maktablar va xususiy markazlar uchun</p>
+              <div className="absolute inset-0 bg-neutral-900 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.87,0,0.13,1)] z-0" />
 
-                <div className="mb-6">
-                  <span className="text-3xl font-extrabold text-white">
+              <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-6">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-[10px] font-semibold tracking-[0.3em] uppercase bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2.5 py-0.5 rounded-full">
+                      PROFESSIONAL / MAKTAB
+                    </span>
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-medium tracking-tight mb-2 group-hover:translate-x-1 transition-transform duration-300">
+                    Premium (Maktab)
+                  </h3>
+                  <p className="text-sm text-neutral-400 leading-relaxed max-w-sm mb-6 group-hover:translate-x-1 transition-transform duration-300 delay-75">
+                    Maktablar, litseylar va o'quv markazlari uchun cheksiz imkoniyatlar.
+                  </p>
+
+                  <ul className="space-y-2.5 text-xs text-neutral-300 font-medium">
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-amber-400 shrink-0" strokeWidth={1.5} />
+                      <span><b>Cheksiz AI testlar</b> + OCR Scanser</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-amber-400 shrink-0" strokeWidth={1.5} />
+                      <span><b>Cheksiz</b> o'quvchilar va aktiv testlar</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-amber-400 shrink-0" strokeWidth={1.5} />
+                      <span><b>PDF + DOCX + Excel</b> natijalar analitikasi</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-amber-400 shrink-0" strokeWidth={1.5} />
+                      <span>Maktab logotipi va 24/7 VIP menejer</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="flex flex-col md:items-end justify-between shrink-0">
+                  <div className="text-3xl md:text-4xl font-medium tracking-tight text-white mb-6">
                     {billingCycle === 'monthly' ? '99,000' : '950,000'}
-                  </span>
-                  <span className="text-xs text-neutral-400 ml-1">
-                    so'm / {billingCycle === 'monthly' ? 'oy' : 'yil'}
-                  </span>
+                    <span className="text-xs text-neutral-400 font-normal tracking-normal ml-1">
+                      so'm / {billingCycle === 'monthly' ? 'oy' : 'yil'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-white group-hover:translate-x-1 transition-transform">
+                    <span>Ulanish</span>
+                    <ArrowRight className="w-5 h-5 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-1 transition-all duration-500" strokeWidth={1.5} />
+                  </div>
                 </div>
-
-                <ul className="space-y-3 mb-8 text-xs text-neutral-300">
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-amber-400 shrink-0" strokeWidth={2.5} />
-                    <span><b>Cheksiz AI testlar</b> + OCR Scanser</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-amber-400 shrink-0" strokeWidth={2.5} />
-                    <span><b>Cheksiz</b> aktiv onlayn testlar</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-amber-400 shrink-0" strokeWidth={2.5} />
-                    <span><b>Cheksiz o'quvchilar</b> sig'imi</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-amber-400 shrink-0" strokeWidth={2.5} />
-                    <span><b>PDF + DOCX + Excel</b> natijalar analitikasi</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-amber-400 shrink-0" strokeWidth={2.5} />
-                    <span>Maktab brendingi va shaxsiy logotip</span>
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check className="w-4 h-4 text-amber-400 shrink-0" strokeWidth={2.5} />
-                    <span>24/7 VIP qo'llab-quvvatlash & Menejer</span>
-                  </li>
-                </ul>
               </div>
-
-              <button
-                onClick={() => {
-                  if (!token) {
-                    toast.info("Tarifni tanlash uchun avval tizimga kiring!");
-                    navigate('/login');
-                  } else {
-                    setSelectedPlanForPayment('premium');
-                  }
-                }}
-                className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-extrabold text-xs transition-all shadow-lg hover:shadow-amber-500/25 flex items-center justify-center gap-2"
-              >
-                <span>Premiumga Ulanish</span>
-                <Crown className="w-4 h-4" />
-              </button>
             </motion.div>
           </div>
         </section>
