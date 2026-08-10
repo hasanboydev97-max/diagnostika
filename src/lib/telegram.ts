@@ -6,7 +6,8 @@ const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 const SAVED_CHAT_ID_KEY = 'maktab_telegram_saved_chat_id';
 
 export const getSavedChatId = (): string => {
-  return localStorage.getItem(SAVED_CHAT_ID_KEY) || '';
+  const envChatId = import.meta.env.VITE_TELEGRAM_CHAT_ID || '';
+  return localStorage.getItem(SAVED_CHAT_ID_KEY) || envChatId || '';
 };
 
 export const saveChatId = (chatId: string): void => {

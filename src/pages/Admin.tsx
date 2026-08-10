@@ -6,15 +6,36 @@ import { useNavigate } from 'react-router-dom';
 import type { QuestionBlueprint } from '../lib/blueprint';
 import { GRADE_BLUEPRINTS } from '../lib/gradeBlueprints';
 import { Check, Settings2, Users, PlusCircle, ChevronDown, Sparkles, Send } from 'lucide-react';
+import { toast } from 'sonner';
 import BlueprintEditorModal from '../components/BlueprintEditorModal';
 import AiTestCreatorModal from '../components/AiTestCreatorModal';
 import TelegramSendModal from '../components/TelegramSendModal';
+import { sendTelegramNotification, getSavedChatId } from '../lib/telegram';
 import MeshGradient from '../components/ui/MeshGradient';
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState<'new' | 'dashboard'>('new');
   const [allResults, setAllResults] = useState<StudentResult[]>([]);
   const [selectedTelegramResult, setSelectedTelegramResult] = useState<StudentResult | null>(null);
+
+  const handleSendTelegramDirect = async (result: StudentResult) => {
+    const existingChatId = getSavedChatId();
+    if (existingChatId) {
+      const toastId = toast.loading('Telegram-ga yuborilmoqda...');
+      try {
+        const res = await sendTelegramNotification(existingChatId, result);
+        if (res.success) {
+          toast.success('🚀 Telegram-ga muvaffaqiyatli yuborildi!', { id: toastId });
+        } else {
+          toast.error(res.message, { id: toastId });
+        }
+      } catch (err: any) {
+        toast.error('Xatolik: ' + (err.message || String(err)), { id: toastId });
+      }
+    } else {
+      setSelectedTelegramResult(result);
+    }
+  };
   
   const [studentName, setStudentName] = useState('');
   const [grade, setGrade] = useState('5');
@@ -230,7 +251,7 @@ export default function Admin() {
                         <button onClick={() => navigate('/summary/' + r.id)} className="flex-1 border border-black text-black hover:bg-black hover:text-white py-3 text-[10px] tracking-[0.15em] uppercase font-bold transition-colors">
                           Xulosani Ko'rish
                         </button>
-                        <button onClick={() => setSelectedTelegramResult(r)} className="px-4 bg-sky-500 text-white hover:bg-sky-600 py-3 text-[10px] tracking-wider uppercase font-bold transition-colors flex items-center justify-center gap-1">
+                        <button onClick={() => handleSendTelegramDirect(r)} className="px-4 bg-sky-500 text-white hover:bg-sky-600 py-3 text-[10px] tracking-wider uppercase font-bold transition-colors flex items-center justify-center gap-1">
                           <Send className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -283,7 +304,7 @@ export default function Admin() {
                           <td className="py-6 pl-6 font-mono text-sm tracking-widest text-black">{r.id}</td>
                           <td className="py-6 pl-6 font-mono text-sm tracking-widest text-gray-500">{r.pin || '---'}</td>
                           <td className="py-6 pr-4 md:pr-0 text-right flex justify-end gap-2">
-                            <button onClick={() => setSelectedTelegramResult(r)} className="bg-sky-500 hover:bg-sky-600 text-white px-3 py-2 text-[10px] uppercase tracking-widest font-bold transition-colors flex items-center gap-1.5 rounded-lg shadow-sm" title="Telegram-ga yuborish">
+                            <button onClick={() => handleSendTelegramDirect(r)} className="bg-sky-500 hover:bg-sky-600 text-white px-3 py-2 text-[10px] uppercase tracking-widest font-bold transition-colors flex items-center gap-1.5 rounded-lg shadow-sm" title="Telegram-ga yuborish">
                               <Send className="w-3.5 h-3.5" />
                               <span>Telegram</span>
                             </button>

@@ -7,6 +7,7 @@ import { sendTelegramNotification, getSavedChatId } from '../lib/telegram';
 import * as htmlToImage from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { Send } from 'lucide-react';
+import { toast } from 'sonner';
 import WelcomeModal from '../components/WelcomeModal';
 import TelegramSendModal from '../components/TelegramSendModal';
 import Footer from '../components/Footer';
@@ -30,7 +31,31 @@ export default function Summary() {
   const [showTelegramModal, setShowTelegramModal] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isRegeneratingAi, setIsRegeneratingAi] = useState(false);
+  const [isSendingTelegram, setIsSendingTelegram] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
+
+  const handleSendTelegramDirect = async () => {
+    if (!studentData) return;
+    const existingChatId = getSavedChatId();
+    if (existingChatId) {
+      setIsSendingTelegram(true);
+      const toastId = toast.loading('Telegram-ga yuborilmoqda...');
+      try {
+        const res = await sendTelegramNotification(existingChatId, studentData);
+        if (res.success) {
+          toast.success('🚀 Telegram-ga muvaffaqiyatli yuborildi!', { id: toastId });
+        } else {
+          toast.error(res.message, { id: toastId });
+        }
+      } catch (err: any) {
+        toast.error('Xatolik: ' + (err.message || String(err)), { id: toastId });
+      } finally {
+        setIsSendingTelegram(false);
+      }
+    } else {
+      setShowTelegramModal(true);
+    }
+  };
 
   const handleDownloadPdf = async () => {
     const element = printRef.current;
@@ -235,11 +260,18 @@ export default function Summary() {
               {studentData.studentName.charAt(0).toUpperCase()}
             </div>
             <button
-              onClick={() => setShowTelegramModal(true)}
-              className="print-hide flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 bg-sky-500 text-white rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-wider hover:bg-sky-600 transition-colors shadow-sm"
+              onClick={handleSendTelegramDirect}
+              disabled={isSendingTelegram}
+              className={`print-hide flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 bg-sky-500 text-white rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-wider hover:bg-sky-600 transition-colors shadow-sm ${
+                isSendingTelegram ? 'opacity-70 cursor-wait' : ''
+              }`}
             >
-              <Send className="w-3.5 h-3.5" />
-              <span>Telegram-ga Yuborish</span>
+              {isSendingTelegram ? (
+                <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : (
+                <Send className="w-3.5 h-3.5" />
+              )}
+              <span>{isSendingTelegram ? 'Yuborilmoqda...' : 'Telegram-ga Yuborish'}</span>
             </button>
             <button
               onClick={() => {
