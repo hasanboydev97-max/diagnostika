@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { getAuthHeaders, getToken, logout, getTeacher, fetchCurrentTeacher } from '../../lib/auth';
 import MeshGradient from '../../components/ui/MeshGradient';
+import TeacherProfileModal from '../../components/TeacherProfileModal';
+import { User, Settings } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -20,6 +22,7 @@ export default function OnlineTestsDashboard() {
   const [tests, setTests] = useState<OnlineTest[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
   const [teacher, setTeacher] = useState<any>(getTeacher());
 
@@ -86,32 +89,57 @@ export default function OnlineTestsDashboard() {
       <header className="border-b border-white/50 bg-white/60 backdrop-blur-xl sticky top-0 z-20 shadow-sm">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-zinc-900 text-white rounded flex items-center justify-center font-bold text-sm">
-              M
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm font-semibold text-zinc-900 leading-tight">O'qituvchi Portali</h1>
-                {/* Plan Badge */}
-                {teacher?.plan === 'premium' ? (
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 border border-amber-500/30 uppercase">
-                    👑 Premium
-                  </span>
-                ) : teacher?.plan === 'standard' ? (
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-black text-white uppercase">
-                    🔥 Standard
-                  </span>
+            {/* Clickable Avatar / Profile Trigger */}
+            <button
+              onClick={() => setIsProfileOpen(true)}
+              className="flex items-center gap-3 p-1.5 rounded-xl hover:bg-zinc-100/80 transition-all text-left group"
+              title="Profil Sozlamalari"
+            >
+              <div className="w-9 h-9 rounded-xl bg-zinc-900 text-white border border-zinc-700 overflow-hidden flex items-center justify-center font-bold text-sm shadow-xs group-hover:scale-105 transition-transform">
+                {teacher?.avatar ? (
+                  <img src={teacher.avatar} alt={teacher.name} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200 uppercase">
-                    Free
-                  </span>
+                  <span>{teacher?.name?.charAt(0)?.toUpperCase() || 'M'}</span>
                 )}
               </div>
-              <p className="text-[11px] text-zinc-500 font-medium">{teacher?.name}</p>
-            </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-sm font-semibold text-zinc-900 leading-tight group-hover:text-black">
+                    O'qituvchi Portali
+                  </h1>
+                  {/* Plan Badge */}
+                  {teacher?.plan === 'premium' ? (
+                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 border border-amber-500/30 uppercase">
+                      👑 Premium
+                    </span>
+                  ) : teacher?.plan === 'standard' ? (
+                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-black text-white uppercase">
+                      🔥 Standard
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200 uppercase">
+                      Free
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-zinc-500 font-medium flex items-center gap-1">
+                  <span>{teacher?.name}</span>
+                  <Settings size={11} className="text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </p>
+              </div>
+            </button>
           </div>
           
           <div className="flex items-center gap-2">
+            {/* Profile Button */}
+            <button
+              onClick={() => setIsProfileOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-zinc-200 hover:border-zinc-400 hover:bg-zinc-50 text-xs font-medium text-zinc-700 transition-colors"
+              title="Profil Sozlamalari"
+            >
+              <User size={14} />
+              <span className="hidden sm:inline">Profil</span>
+            </button>
             {/* Upgrade Plan Button */}
             {teacher?.plan !== 'premium' && (
               <button
@@ -261,6 +289,13 @@ export default function OnlineTestsDashboard() {
           )}
         </div>
       </main>
+
+      <TeacherProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        teacher={teacher}
+        onTeacherUpdate={(updatedTeacher) => setTeacher(updatedTeacher)}
+      />
     </div>
   );
 }

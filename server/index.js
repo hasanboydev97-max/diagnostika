@@ -98,7 +98,9 @@ const TeacherSchema = new mongoose.Schema({
   dailyAiCount: { type: Number, default: 0 },
   lastAiGenDate: { type: String, default: '' },
   schoolName: { type: String, default: '' },
-  schoolLogo: { type: String, default: '' }
+  schoolLogo: { type: String, default: '' },
+  avatar: { type: String, default: '' },
+  phone: { type: String, default: '' }
 }, { timestamps: true });
 const Teacher = mongoose.model('Teacher', TeacherSchema);
 
@@ -236,6 +238,55 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
     const teacher = await Teacher.findById(req.teacherId).select('-password');
     if (!teacher) return res.status(404).json({ error: 'Topilmadi' });
     res.json(teacher);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update Teacher Profile Info
+app.put('/api/auth/profile', authMiddleware, async (req, res) => {
+  try {
+    const { name, subject, schoolName, schoolLogo, avatar, phone } = req.body;
+    const teacher = await Teacher.findByIdAndUpdate(
+      req.teacherId,
+      {
+        ...(name ? { name } : {}),
+        ...(subject ? { subject } : {}),
+        schoolName: schoolName !== undefined ? schoolName : '',
+        schoolLogo: schoolLogo !== undefined ? schoolLogo : '',
+        avatar: avatar !== undefined ? avatar : '',
+        phone: phone !== undefined ? phone : ''
+      },
+      { new: true }
+    ).select('-password');
+
+    res.json({ success: true, teacher });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Change Teacher Password
+app.put('/api/auth/change-password', authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Joriy va yangi parolni kiriting' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Yangi parol kamida 6 ta belgidan iborat bo\'lishi kerak' });
+    }
+
+    const teacher = await Teacher.findById(req.teacherId);
+    if (!teacher) return res.status(404).json({ error: 'O\'qituvchi topilmadi' });
+
+    const isMatch = await bcrypt.compare(currentPassword, teacher.password);
+    if (!isMatch) return res.status(400).json({ error: 'Joriy parol xato kiritildi' });
+
+    teacher.password = await bcrypt.hash(newPassword, 10);
+    await teacher.save();
+
+    res.json({ success: true, message: 'Parol muvaffaqiyatli yangilandi' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
