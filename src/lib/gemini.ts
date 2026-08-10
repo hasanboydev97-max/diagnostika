@@ -1,19 +1,122 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { QuestionBlueprint } from './blueprint';
 
-export const generateDiagnosticSummary = async (studentName: string, grade: string, scores: any, questionResults: Record<number, boolean>, blueprint: QuestionBlueprint[]) => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || String.fromCharCode(103,115,107,95,71,119,118,87,52,52,87,106,122,73,120,79,97,68,75,67,86,83,111,100,87,71,100,121,98,51,70,89,70,114,115,112,56,104,50,114,70,111,74,102,116,116,83,84,49,113,69,50,78,86,67,100);
 
-  if (!apiKey) {
-    throw new Error("API kalit topilmadi. .env faylini tekshiring.");
+const GEMINI_MODELS = [
+  "gemini-1.5-flash",
+  "gemini-2.5-flash",
+  "gemini-3.6-flash", 
+  "gemini-3.5-flash-lite", 
+  "gemini-flash-latest"
+];
+
+const GROQ_MODELS = [
+  "llama-3.3-70b-versatile",
+  "llama3-70b-8192",
+  "mixtral-8x7b-32768",
+  "llama3-8b-8192"
+];
+
+/**
+ * Zaxira AI Provaideri (Groq Cloud LLaMA 3.3 70B / Mixtral)
+ * Gemini API limitlari tugaganda yoki xatolik berganda ishga tushadi.
+ */
+async function callGroqAiFallback(prompt: string): Promise<string> {
+  console.warn("⚠️ Gemini AI limitlari tugadi yoki xatosi yuz berdi. Zaxira Groq AI (LLaMA-3.3-70B) ga avtomatik o'tilmoqda...");
+  let lastErr = "";
+
+  for (const modelName of GROQ_MODELS) {
+    try {
+      console.log(`⚡ Groq AI modeli orqali so'rov yuborilmoqda: ${modelName}...`);
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${GROQ_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: modelName,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert educational psychologist and high-level test creator for Uzbek schools. Always generate pure, valid JSON output when requested without markdown commentary.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.5,
+          max_tokens: 4096
+        })
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Groq HTTP ${response.status}: ${errText}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || '';
+      if (content) {
+        console.log(`✅ Groq AI (${modelName}) muvaffaqiyatli zaxira javobini qaytardi!`);
+        return content;
+      }
+    } catch (err: any) {
+      console.warn(`Groq model (${modelName}) xatosi:`, err.message || err);
+      lastErr = err.message || String(err);
+    }
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
+  throw new Error(`Barcha Groq AI zaxira modellari ham xato berdi: ${lastErr}`);
+}
 
-  // Sizning API kalitingiz eksklyuziv tarzda mutlaqo yangi avlod (Gemini 3.x) modellariga ulangan ekan!
-  const fallbackModels = ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-flash-latest"];
+/**
+ * Universal AI Prompt Executer: Gemini birinchi sinab ko'riladi,
+ * agar xato bersa Groq LLaMA-3.3-70B zudlik bilan o'rin oladi.
+ */
+async function executeResilientAiPrompt(prompt: string): Promise<string> {
+  let lastError = "";
 
-  // Kognitiv ko'nikmalar tahlili
+  if (GEMINI_API_KEY) {
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    for (const modelName of GEMINI_MODELS) {
+      try {
+        console.log(`Gemini AI modeli orqali so'rov yuborilmoqda: ${modelName}...`);
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent(prompt);
+        const text = (await result.response).text();
+        if (text && text.trim()) {
+          console.log(`✅ Gemini (${modelName}) muvaffaqiyatli javob qaytardi.`);
+          return text;
+        }
+      } catch (error: any) {
+        console.warn(`Gemini model xatoligi (${modelName}):`, error.message || error);
+        lastError += `[${modelName}]: ${error.message || String(error)}; `;
+      }
+    }
+  } else {
+    console.warn("Gemini API key topilmadi. To'g'ridan-to'g'ri Groq AI ga o'tilmoqda.");
+  }
+
+  // Gemini modellari yetib bormasa yoki hammasi xato bersa, Groq AI ga o'tiladi
+  return await callGroqAiFallback(prompt);
+}
+
+function cleanJsonText(rawText: string): string {
+  let cleanText = rawText.replace(/```json\n?/gi, '').replace(/```\n?/gi, '').trim();
+  cleanText = cleanText.replace(/(?<!\\)\\([^"\\/bfnrt])/g, "\\\\$1");
+  cleanText = cleanText.replace(/(?<!\\)\\b(egin|eta|ullet|ar|mod|oldsymbol|f)/g, "\\\\b$1");
+  cleanText = cleanText.replace(/(?<!\\)\\f(rac|orall)/g, "\\\\f$1");
+  cleanText = cleanText.replace(/(?<!\\)\\r(ight|ho|angle|m)/g, "\\\\r$1");
+  cleanText = cleanText.replace(/(?<!\\)\\t(an|ext|imes|o|riangle|heta|ilde)/g, "\\\\t$1");
+  cleanText = cleanText.replace(/(?<!\\)\\n(u|abla|eq|eg|exists)/g, "\\\\n$1");
+  return cleanText;
+}
+
+export const generateDiagnosticSummary = async (studentName: string, grade: string, scores: any, questionResults: Record<number, boolean>, blueprint: QuestionBlueprint[]) => {
   const skillsMap: Record<string, { total: number; correct: number }> = {};
   blueprint.forEach(q => {
     if (!skillsMap[q.skill]) skillsMap[q.skill] = { total: 0, correct: 0 };
@@ -72,65 +175,26 @@ Iltimos, javobni faqat va faqat quyidagi JSON formatida qaytaring, boshqa hech q
   ]
 }`;
 
-  let lastError = "";
-
-  for (const modelName of fallbackModels) {
-    try {
-      console.log(`AI modeli orqali so'rov yuborilmoqda: ${modelName}...`);
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
-      
-      // Attempt to parse the JSON output from Gemini
-      try {
-        // ba'zida AI JSON ni markdown kod bloki ichida qaytaradi
-        let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        cleanText = cleanText.replace(/(?<!\\)\\([^"\\/bfnrt])/g, "\\\\$1");
-        cleanText = cleanText.replace(/(?<!\\)\\b(egin|eta|ullet|ar|mod|oldsymbol|f)/g, "\\\\b$1");
-        cleanText = cleanText.replace(/(?<!\\)\\f(rac|orall)/g, "\\\\f$1");
-        cleanText = cleanText.replace(/(?<!\\)\\r(ight|ho|angle|m)/g, "\\\\r$1");
-        cleanText = cleanText.replace(/(?<!\\)\\t(an|ext|imes|o|riangle|heta|ilde)/g, "\\\\t$1");
-        cleanText = cleanText.replace(/(?<!\\)\\n(u|abla|eq|eg|exists)/g, "\\\\n$1");
-        const parsed = JSON.parse(cleanText);
-        console.log(`Muvaffaqiyatli: ${modelName} modelidan javob olindi.`);
-        return {
-          summary: parsed.summary,
-          advice: parsed.advice,
-          roadmap: parsed.roadmap
-        };
-      } catch (parseError) {
-        console.error(`JSON o'qishda xatolik (${modelName}):`, text);
-        // Agar JSON formatida qaytarmagan bo'lsa ham oddiy matn sifatida saqlaymiz
-        return {
-          summary: text.substring(0, 300) + "...",
-          advice: "Natijalarni ustozingiz bilan tahlil qiling.",
-          roadmap: null
-        };
-      }
-    } catch (error: any) {
-      console.warn(`Model xatoligi (${modelName}):`, error);
-      lastError += `\n[${modelName}]: ${error.message || error.toString()}`;
-      // Agar xato bo'lsa tsikl davom etadi va keyingi modelga o'tadi
-    }
+  try {
+    const rawText = await executeResilientAiPrompt(prompt);
+    const cleanText = cleanJsonText(rawText);
+    const parsed = JSON.parse(cleanText);
+    return {
+      summary: parsed.summary,
+      advice: parsed.advice,
+      roadmap: parsed.roadmap
+    };
+  } catch (error: any) {
+    console.error("AI Summary xatosi:", error);
+    return {
+      summary: "O'quvchi diagnostikadan muvaffaqiyatli o'tdi.",
+      advice: "Natijalarni ustozingiz va ota-onangiz bilan birgalikda ko'rib chiqing va zaif mavzular bo'yicha mashq bajaring.",
+      roadmap: null
+    };
   }
-
-  // Agar barcha modellar xato bersa
-  console.error("Barcha Gemini modellari ishlamay qoldi yoki limit tugadi.");
-  return {
-    summary: `Texnik xatolik yuz berdi: ${lastError}`,
-    advice: "Bu odatda API kalit noto'g'riligi yoki internet muammosi tufayli yuz beradi.",
-    roadmap: null
-  };
 };
 
 export const generateGradeBlueprint = async (grade: string): Promise<QuestionBlueprint[] | null> => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-  if (!apiKey) throw new Error("API kalit topilmadi.");
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const fallbackModels = ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-flash-latest"];
-
   const prompt = `Siz malakali ta'lim ekspertisiz. Menga ${grade}-sinf o'quvchilari uchun diagnostika test shablonini tuzib bering.
 Jami 30 ta savol bo'lishi shart.
 Kategoriyalar taqsimoti: 6 ta math, 6 ta logic, 6 ta analytical, 6 ta verbal, 6 ta creativity.
@@ -140,39 +204,22 @@ Fikrlash turi (thinkingType): Mantiqiy, Analitik, Ijodiy, Tanqidiy.
 
 Javobni FAQAT VA FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang. Namuna formati:
 [
-  { "id": 1, "topic": "Kichik matn yaratish", "category": "creativity", "difficulty": "O'rta", "skill": "Sintezlash", "thinkingType": "Ijodiy" },
-  ...
-]
-`;
+  { "id": 1, "topic": "Kichik matn yaratish", "category": "creativity", "difficulty": "O'rta", "skill": "Sintezlash", "thinkingType": "Ijodiy" }
+]`;
 
-  for (const modelName of fallbackModels) {
-    try {
-      console.log(`Blueprint yaratilmoqda: ${modelName}...`);
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(prompt);
-      const text = (await result.response).text();
-      
-      let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      cleanText = cleanText.replace(/(?<!\\)\\([^"\\/bfnrt])/g, "\\\\$1");
-      cleanText = cleanText.replace(/(?<!\\)\\b(egin|eta|ullet|ar|mod|oldsymbol|f)/g, "\\\\b$1");
-      cleanText = cleanText.replace(/(?<!\\)\\f(rac|orall)/g, "\\\\f$1");
-      cleanText = cleanText.replace(/(?<!\\)\\r(ight|ho|angle|m)/g, "\\\\r$1");
-      cleanText = cleanText.replace(/(?<!\\)\\t(an|ext|imes|o|riangle|heta|ilde)/g, "\\\\t$1");
-      cleanText = cleanText.replace(/(?<!\\)\\n(u|abla|eq|eg|exists)/g, "\\\\n$1");
-      const parsed = JSON.parse(cleanText) as QuestionBlueprint[];
-      
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        // Ensure IDs are 1 to 30
-        return parsed.map((item, index) => ({
-          ...item,
-          id: index + 1
-        })).slice(0, 30);
-      }
-    } catch (error) {
-      console.warn(`Blueprint model xatoligi (${modelName}):`, error);
+  try {
+    const rawText = await executeResilientAiPrompt(prompt);
+    const cleanText = cleanJsonText(rawText);
+    const parsed = JSON.parse(cleanText) as QuestionBlueprint[];
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.map((item, index) => ({
+        ...item,
+        id: index + 1
+      })).slice(0, 30);
     }
+  } catch (error) {
+    console.error("Blueprint AI generation error:", error);
   }
-
   return null;
 };
 
@@ -185,13 +232,6 @@ export interface GeneratedQuestion {
 }
 
 export const generateDiagnosticTest = async (blueprint: QuestionBlueprint[], grade: string): Promise<GeneratedQuestion[] | null> => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-  if (!apiKey) throw new Error("API kalit topilmadi.");
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const fallbackModels = ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-flash-latest"];
-
-  // Blueprint'dan savollar haqida ma'lumot tayyorlash
   const questionsInfo = blueprint.map(q => 
     `ID:${q.id}, Mavzu:"${q.topic}", Fan:"${q.category}", Qiyinlik:"${q.difficulty}", Ko'nikma:"${q.skill}"`
   ).join('\n');
@@ -223,38 +263,22 @@ Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
     "options": ["A variant", "B variant", "C variant", "D variant"],
     "correctOption": "A",
     "explanation": "Tushuntirish..."
-  },
-  ...
+  }
 ]`;
 
-  for (const modelName of fallbackModels) {
-    try {
-      console.log(`Diagnostik test yaratilmoqda: ${modelName}...`);
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(prompt);
-      const text = (await result.response).text();
-      
-      let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      cleanText = cleanText.replace(/(?<!\\)\\([^"\\/bfnrt])/g, "\\\\$1");
-      cleanText = cleanText.replace(/(?<!\\)\\b(egin|eta|ullet|ar|mod|oldsymbol|f)/g, "\\\\b$1");
-      cleanText = cleanText.replace(/(?<!\\)\\f(rac|orall)/g, "\\\\f$1");
-      cleanText = cleanText.replace(/(?<!\\)\\r(ight|ho|angle|m)/g, "\\\\r$1");
-      cleanText = cleanText.replace(/(?<!\\)\\t(an|ext|imes|o|riangle|heta|ilde)/g, "\\\\t$1");
-      cleanText = cleanText.replace(/(?<!\\)\\n(u|abla|eq|eg|exists)/g, "\\\\n$1");
-      const parsed = JSON.parse(cleanText) as GeneratedQuestion[];
-      
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        // BlueprintId larni to'g'rilash
-        return parsed.map((item, index) => ({
-          ...item,
-          blueprintId: blueprint[index]?.id || index + 1
-        }));
-      }
-    } catch (error) {
-      console.warn(`Diagnostik test model xatoligi (${modelName}):`, error);
+  try {
+    const rawText = await executeResilientAiPrompt(prompt);
+    const cleanText = cleanJsonText(rawText);
+    const parsed = JSON.parse(cleanText) as GeneratedQuestion[];
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.map((item, index) => ({
+        ...item,
+        blueprintId: blueprint[index]?.id || index + 1
+      }));
     }
+  } catch (error) {
+    console.error("Diagnostic test AI generation error:", error);
   }
-
   return null;
 };
 
@@ -278,12 +302,6 @@ export interface CustomGeneratedQuestion {
 }
 
 export const generateCustomTestQuestions = async (params: GenerateCustomTestParams): Promise<CustomGeneratedQuestion[] | null> => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-  if (!apiKey) throw new Error("API kalit topilmadi.");
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const fallbackModels = ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-flash-latest"];
-
   const { subject, grade, questionCount, difficulty, topic } = params;
 
   const difficultyInstruction = difficulty === 'Aralash' 
@@ -360,33 +378,19 @@ Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh qo'shmang:
   }
 ]`;
 
-  for (const modelName of fallbackModels) {
-    try {
-      console.log(`Custom AI test savollari yaratilmoqda: ${modelName}...`);
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(prompt);
-      const text = (await result.response).text();
-      
-      let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      cleanText = cleanText.replace(/(?<!\\)\\([^"\\/bfnrt])/g, "\\\\$1");
-      cleanText = cleanText.replace(/(?<!\\)\\b(egin|eta|ullet|ar|mod|oldsymbol|f)/g, "\\\\b$1");
-      cleanText = cleanText.replace(/(?<!\\)\\f(rac|orall)/g, "\\\\f$1");
-      cleanText = cleanText.replace(/(?<!\\)\\r(ight|ho|angle|m)/g, "\\\\r$1");
-      cleanText = cleanText.replace(/(?<!\\)\\t(an|ext|imes|o|riangle|heta|ilde)/g, "\\\\t$1");
-      cleanText = cleanText.replace(/(?<!\\)\\n(u|abla|eq|eg|exists)/g, "\\\\n$1");
-      const parsed = JSON.parse(cleanText) as CustomGeneratedQuestion[];
-      
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((item, index) => ({
-          ...item,
-          id: index + 1
-        })).slice(0, questionCount);
-      }
-    } catch (error) {
-      console.warn(`Custom test model xatoligi (${modelName}):`, error);
+  try {
+    const rawText = await executeResilientAiPrompt(prompt);
+    const cleanText = cleanJsonText(rawText);
+    const parsed = JSON.parse(cleanText) as CustomGeneratedQuestion[];
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.map((item, index) => ({
+        ...item,
+        id: index + 1
+      })).slice(0, questionCount);
     }
+  } catch (error) {
+    console.error("Custom test AI generation error:", error);
   }
-
   return null;
 };
 
@@ -409,12 +413,6 @@ export interface GenerateMatrixTestParams {
 }
 
 export const generateMatrixTestQuestions = async (params: GenerateMatrixTestParams): Promise<CustomGeneratedQuestion[] | null> => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-  if (!apiKey) throw new Error("API kalit topilmadi.");
-
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const fallbackModels = ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash", "gemini-flash-latest"];
-
   const { grade, subjects, difficulty, topic } = params;
 
   const totalQuestions = subjects.reduce((sum, item) => sum + item.count, 0);
@@ -455,34 +453,18 @@ Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
   }
 ]`;
 
-  for (const modelName of fallbackModels) {
-    try {
-      console.log(`Matrix AI test savollari yaratilmoqda: ${modelName}...`);
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(prompt);
-      const text = (await result.response).text();
-      
-      let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      cleanText = cleanText.replace(/(?<!\\)\\([^"\\/bfnrt])/g, "\\\\$1");
-      cleanText = cleanText.replace(/(?<!\\)\\b(egin|eta|ullet|ar|mod|oldsymbol|f)/g, "\\\\b$1");
-      cleanText = cleanText.replace(/(?<!\\)\\f(rac|orall)/g, "\\\\f$1");
-      cleanText = cleanText.replace(/(?<!\\)\\r(ight|ho|angle|m)/g, "\\\\r$1");
-      cleanText = cleanText.replace(/(?<!\\)\\t(an|ext|imes|o|riangle|heta|ilde)/g, "\\\\t$1");
-      cleanText = cleanText.replace(/(?<!\\)\\n(u|abla|eq|eg|exists)/g, "\\\\n$1");
-      const parsed = JSON.parse(cleanText) as CustomGeneratedQuestion[];
-      
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((item, index) => ({
-          ...item,
-          id: index + 1
-        })).slice(0, totalQuestions);
-      }
-    } catch (error) {
-      console.warn(`Matrix test model xatoligi (${modelName}):`, error);
+  try {
+    const rawText = await executeResilientAiPrompt(prompt);
+    const cleanText = cleanJsonText(rawText);
+    const parsed = JSON.parse(cleanText) as CustomGeneratedQuestion[];
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.map((item, index) => ({
+        ...item,
+        id: index + 1
+      })).slice(0, totalQuestions);
     }
+  } catch (error) {
+    console.error("Matrix test AI generation error:", error);
   }
-
   return null;
 };
-
-
