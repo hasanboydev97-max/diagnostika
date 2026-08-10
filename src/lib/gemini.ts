@@ -294,6 +294,40 @@ export const generateCustomTestQuestions = async (params: GenerateCustomTestPara
     ? `Asosiy mavzu yo'nalishi: "${topic}".` 
     : `Mavzular ${grade}-sinf ${subject} darsligidagi muhim mavzulardan tanlansin.`;
 
+  let subjectSpecificRules = "";
+  const subLower = subject.toLowerCase();
+  
+  if (subLower.includes('kimyo')) {
+    subjectSpecificRules = `
+FAN BO'YICHA MAXSUS KO'RSATMA (KIMYO):
+- Kimyoviy moddalar formulalari (masalan $H_2SO_4$, $NaOH$, $CaCO_3$) va reaksiyalar tenglamalari (masalan $2H_2 + O_2 \\rightarrow 2H_2O$) toza LaTeX formatida $...$ ichida yozilsin.
+- Modda miqdori (mol), molar massa, eritmalar va elementlar davriy sistemasi bo'yicha sifatli savollar tuzilsin.`;
+  } else if (subLower.includes('biologiya')) {
+    subjectSpecificRules = `
+FAN BO'YICHA MAXSUS KO'RSATMA (BIOLOGIYA):
+- Genetikaga oid masalalar va genotiplar ($AA$, $Aa$, $aa$, $F_1$, $F_2$) toza formatda yozilsin.
+- Hujayra biologiyasi, botanika, zoologiya, odam anatomiyasi va ekologiya bo'yicha mantiqiy savollar shakllantirilsin.`;
+  } else if (subLower.includes('ingliz') || subLower.includes('english')) {
+    subjectSpecificRules = `
+FAN BO'YICHA MAXSUS KO'RSATMA (INGLIZ TILI):
+- Savollar va javob variantlari toza English tilida bo'lsin.
+- Grammar (Tenses, Conditionals, Passive Voice), Vocabulary (Synonyms, Antonyms) va Reading bo'yicha sifatli savollar tuzilsin. Bo'sh o'rinlar uchun '_____' ishlatilsin.`;
+  } else if (subLower.includes('rus') || subLower.includes('russian')) {
+    subjectSpecificRules = `
+FAN BO'YICHA MAXSUS KO'RSATMA (RUS TILI):
+- Savollar va javob variantlari toza Rus tilida (Кириллица) yozilsin.
+- Грамматика (Падежи, Склонения, Спряжения глаголов, Орфография) va Лексика bo'yicha aniq savollar tuzilsin.`;
+  } else if (subLower.includes('informatika') || subLower.includes('it')) {
+    subjectSpecificRules = `
+FAN BO'YICHA MAXSUS KO'RSATMA (INFORMATIKA):
+- MS Excel formulalari (=SUM(), =AVERAGE()), Mantiqiy amallar (AND, OR, NOT), Algoritmlar, Dasturlash (Python/Pascal) va Ma'lumot hajmlari (Bayt, KB, MB) bo'yicha savollar tuzilsin.
+- Formulalar yoki koddagi matematik amallarni backtick yoki \`$$\` ichida emas, toza text yoki $...$ formatida yozing.`;
+  } else if (subLower.includes('matematika') || subLower.includes('math')) {
+    subjectSpecificRules = `
+FAN BO'YICHA MAXSUS KO'RSATMA (MATEMATIKA):
+- Barcha matematik ifodalar, kasrlar, ildizlar va tenglamalar toza LaTeX formatida $...$ ichida yozilsin (masalan $\\frac{3}{4}$, $\\sqrt{144}$, $x^2 + 5x + 6 = 0$).`;
+  }
+
   const prompt = `Siz tajribali ${grade}-sinf o'qituvchisiz. Quyidagi parametrlar bo'yicha jami ${questionCount} ta sifatli test savoli tuzing:
 
 - Fan: ${subject}
@@ -301,6 +335,7 @@ export const generateCustomTestQuestions = async (params: GenerateCustomTestPara
 - Savollar soni: ${questionCount} ta
 - Qiyinlik darajasi sharti: ${difficultyInstruction}
 - ${topicInstruction}
+${subjectSpecificRules}
 
 Har bir savolda:
 - Savol matni (aniq, tushunarli, ${grade}-sinf standartlariga mos)

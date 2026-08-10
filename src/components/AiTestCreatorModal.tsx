@@ -49,7 +49,7 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose }:
 
   useEffect(() => {
     db.getAllCategories().then(cats => {
-      const defaults = ['Matematika', 'Mantiq', 'Analitik', 'Verbal', 'Kreativlik'];
+      const defaults = ['Matematika', 'Informatika', 'Kimyo', 'Biologiya', 'Ingliz tili', 'Rus tili', 'Mantiq'];
       const allCats = Array.from(new Set([...defaults, ...cats]));
       
       const initialSubjectCounts: SubjectCount[] = allCats.map((cat, idx) => ({
