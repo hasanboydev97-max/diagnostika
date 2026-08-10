@@ -88,8 +88,13 @@ const TeacherSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   subject: { type: String, required: true },
-  role: { type: String, enum: ['teacher', 'admin'], default: 'teacher' }
-});
+  role: { type: String, enum: ['teacher', 'admin'], default: 'teacher' },
+  plan: { type: String, enum: ['free', 'standard', 'premium'], default: 'free' },
+  planStatus: { type: String, enum: ['active', 'pending', 'expired'], default: 'active' },
+  requestedPlan: { type: String, enum: ['standard', 'premium', null], default: null },
+  paymentNote: { type: String, default: '' },
+  planExpiresAt: { type: Date, default: null }
+}, { timestamps: true });
 const Teacher = mongoose.model('Teacher', TeacherSchema);
 
 const JWT_SECRET = process.env.JWT_SECRET || 'maktab-test-super-secret-key';
@@ -195,11 +200,11 @@ app.post('/api/auth/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     // Hardcoded logic: Make admin@maktab.uz an admin automatically
     const role = email.toLowerCase() === 'admin@maktab.uz' ? 'admin' : 'teacher';
-    const teacher = new Teacher({ name, email, password: hashedPassword, subject, role });
+    const teacher = new Teacher({ name, email, password: hashedPassword, subject, role, plan: 'free', planStatus: 'active' });
     await teacher.save();
     
     const token = jwt.sign({ id: teacher._id, role: teacher.role }, JWT_SECRET, { expiresIn: '7d' });
-    res.status(201).json({ token, teacher: { id: teacher._id, name, email, subject, role: teacher.role } });
+    res.status(201).json({ token, teacher: { id: teacher._id, name, email, subject, role: teacher.role, plan: teacher.plan, planStatus: teacher.planStatus } });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -215,7 +220,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (!isMatch) return res.status(400).json({ error: 'Email yoki parol xato.' });
     
     const token = jwt.sign({ id: teacher._id, role: teacher.role || 'teacher' }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, teacher: { id: teacher._id, name: teacher.name, email, subject: teacher.subject, role: teacher.role || 'teacher' } });
+    res.json({ token, teacher: { id: teacher._id, name: teacher.name, email: teacher.email, subject: teacher.subject, role: teacher.role || 'teacher', plan: teacher.plan || 'free', planStatus: teacher.planStatus || 'active', requestedPlan: teacher.requestedPlan, paymentNote: teacher.paymentNote, planExpiresAt: teacher.planExpiresAt } });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -226,6 +231,71 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
     const teacher = await Teacher.findById(req.teacherId).select('-password');
     if (!teacher) return res.status(404).json({ error: 'Topilmadi' });
     res.json(teacher);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --- Subscription Endpoints ---
+app.post('/api/subscription/request', authMiddleware, async (req, res) => {
+  try {
+    const { requestedPlan, paymentNote } = req.body;
+    if (!['standard', 'premium'].includes(requestedPlan)) {
+      return res.status(400).json({ error: 'Yaroqsiz tarif rejasi' });
+    }
+
+    const teacher = await Teacher.findByIdAndUpdate(
+      req.teacherId,
+      {
+        requestedPlan,
+        paymentNote: paymentNote || '',
+        planStatus: 'pending'
+      },
+      { new: true }
+    ).select('-password');
+
+    res.json({ success: true, teacher });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/admin/subscriptions', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const teachers = await Teacher.find().select('-password').sort({ updatedAt: -1 });
+    res.json(teachers);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/admin/subscriptions/update-plan', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const { teacherId, plan, status, durationDays } = req.body;
+    if (!teacherId || !['free', 'standard', 'premium'].includes(plan)) {
+      return res.status(400).json({ error: 'Ma\'lumotlar to\'liq emas' });
+    }
+
+    let planExpiresAt = null;
+    if (plan !== 'free') {
+      const days = parseInt(durationDays, 10) || 30;
+      const now = new Date();
+      now.setDate(now.getDate() + days);
+      planExpiresAt = now;
+    }
+
+    const updatedTeacher = await Teacher.findByIdAndUpdate(
+      teacherId,
+      {
+        plan,
+        planStatus: status || 'active',
+        requestedPlan: null,
+        planExpiresAt
+      },
+      { new: true }
+    ).select('-password');
+
+    res.json({ success: true, teacher: updatedTeacher });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

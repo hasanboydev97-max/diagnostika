@@ -2,8 +2,15 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Plus, User, GraduationCap, Settings, Palette, Check, X } from 'lucide-react';
+import { 
+  ArrowRight, Plus, User, GraduationCap, Settings, Palette, Check, X,
+  Zap, Crown, Sparkles, Copy, ExternalLink, Send
+} from 'lucide-react';
 import MeshGradient, { palettes } from '../components/ui/MeshGradient';
+import { getToken } from '../lib/auth';
+import { db } from '../lib/db';
+import { toast } from 'sonner';
+import type { PlanType } from '../utils/planLimits';
 
 const containerVariants: any = {
   hidden: { opacity: 0 },
@@ -31,6 +38,15 @@ export default function Landing() {
     const saved = localStorage.getItem('bg-palette');
     return saved ? parseInt(saved, 10) : new Date().getDay();
   });
+
+  // Subscription state
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [selectedPlanForPayment, setSelectedPlanForPayment] = useState<PlanType | null>(null);
+  const [paymentNote, setPaymentNote] = useState('');
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+  const [copiedCard, setCopiedCard] = useState(false);
+
+  const token = getToken();
 
   useEffect(() => {
     localStorage.setItem('bg-minimal', isMinimal.toString());
@@ -142,6 +158,243 @@ export default function Landing() {
                 </div>
               </div>
               <ArrowRight className="relative z-10 w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 group-hover:text-black transition-all duration-500" strokeWidth={1.5} />
+            </motion.div>
+          </div>
+        </section>
+
+        {/* PRICING SECTION */}
+        <section className="grid grid-cols-1 md:grid-cols-12 gap-12 border-t border-black/10 pt-16 md:pt-32">
+          <div className="md:col-span-4 md:sticky md:top-32 h-fit">
+            <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}>
+              <h2 className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500 mb-4">
+                {t('landing.pricing_title', 'TARIFLAR VA OBUNA')}
+              </h2>
+              <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
+                {t('landing.pricing_subtitle', 'O\'zingizga mos tarif rejasini tanlang va ta\'lim sifatini yangi bosqichga olib chiqing.')}
+              </p>
+
+              {/* Monthly vs Yearly Toggle */}
+              <div className="mt-8 inline-flex items-center p-1 bg-black/5 rounded-2xl border border-black/10 pointer-events-auto">
+                <button
+                  onClick={() => setBillingCycle('monthly')}
+                  className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
+                    billingCycle === 'monthly'
+                      ? 'bg-white text-black shadow-md scale-105'
+                      : 'text-gray-500 hover:text-black'
+                  }`}
+                >
+                  Oylik
+                </button>
+                <button
+                  onClick={() => setBillingCycle('yearly')}
+                  className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all flex items-center gap-1.5 ${
+                    billingCycle === 'yearly'
+                      ? 'bg-black text-white shadow-md scale-105'
+                      : 'text-gray-500 hover:text-black'
+                  }`}
+                >
+                  <span>Yillik</span>
+                  <span className="bg-emerald-500 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-md uppercase">
+                    -20%
+                  </span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+
+          <div className="md:col-span-8 grid grid-cols-1 lg:grid-cols-3 gap-6 pointer-events-auto">
+            {/* FREE PLAN CARD */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="bg-white/80 backdrop-blur-xl border border-black/10 rounded-3xl p-6 flex flex-col justify-between hover:border-black/20 hover:shadow-xl transition-all group"
+            >
+              <div>
+                <div className="w-10 h-10 rounded-2xl bg-neutral-100 border border-black/5 flex items-center justify-center mb-6 text-neutral-600 group-hover:scale-110 transition-transform">
+                  <User className="w-5 h-5" />
+                </div>
+                <h3 className="text-xl font-bold text-neutral-900 mb-1">Free</h3>
+                <p className="text-xs text-neutral-500 mb-6">Platforma bilan tanishish uchun</p>
+                
+                <div className="mb-6">
+                  <span className="text-3xl font-extrabold text-neutral-900">0 so'm</span>
+                  <span className="text-xs text-neutral-400 ml-1">/ abadiy</span>
+                </div>
+
+                <ul className="space-y-3 mb-8 text-xs text-neutral-600">
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-500 shrink-0" strokeWidth={2.5} />
+                    <span>Kuniga <b>3 ta AI test</b> yaratish</span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-500 shrink-0" strokeWidth={2.5} />
+                    <span>Maksimal <b>2 ta aktiv</b> onlayn test</span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-500 shrink-0" strokeWidth={2.5} />
+                    <span>Test boshiga <b>15 ta o'quvchi</b></span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-500 shrink-0" strokeWidth={2.5} />
+                    <span>PDF natija yuklab olish</span>
+                  </li>
+                  <li className="flex items-center gap-2.5 text-neutral-400">
+                    <X className="w-4 h-4 text-neutral-300 shrink-0" />
+                    <span>DOCX (Word) va Excel eksport</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                onClick={() => {
+                  if (token) navigate('/online-tests');
+                  else navigate('/login');
+                }}
+                className="w-full py-3 px-4 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-neutral-900 font-semibold text-xs transition-colors flex items-center justify-center gap-2"
+              >
+                <span>Bepul Boshlash</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </motion.div>
+
+            {/* STANDARD PLAN CARD (POPULAR 🔥) */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="bg-white border-2 border-black/90 shadow-[0_20px_50px_rgba(0,0,0,0.12)] rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden scale-[1.02] group"
+            >
+              {/* Popular Ribbon */}
+              <div className="absolute top-4 right-4 bg-black text-white text-[10px] font-extrabold uppercase px-3 py-1 rounded-full tracking-wider flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-amber-400" />
+                <span>Ommabop</span>
+              </div>
+
+              <div>
+                <div className="w-10 h-10 rounded-2xl bg-black text-white flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <Zap className="w-5 h-5 text-amber-400" />
+                </div>
+                <h3 className="text-xl font-bold text-neutral-900 mb-1">Standard</h3>
+                <p className="text-xs text-neutral-500 mb-6">Faol o'qituvchilar va repetitorlar uchun</p>
+
+                <div className="mb-6">
+                  <span className="text-3xl font-extrabold text-neutral-900">
+                    {billingCycle === 'monthly' ? '49,000' : '470,000'}
+                  </span>
+                  <span className="text-xs font-semibold text-neutral-500 ml-1">
+                    so'm / {billingCycle === 'monthly' ? 'oy' : 'yil'}
+                  </span>
+                </div>
+
+                <ul className="space-y-3 mb-8 text-xs text-neutral-700 font-medium">
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2.5} />
+                    <span>Kuniga <b>25 ta AI test</b> (Math + LaTeX)</span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2.5} />
+                    <span><b>Cheksiz</b> aktiv onlayn testlar</span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2.5} />
+                    <span>Test boshiga <b>50 ta o'quvchi</b></span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2.5} />
+                    <span><b>PDF + DOCX (Word)</b> eksport</span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2.5} />
+                    <span>AI Chuqur Diagnostika & Tahlil</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                onClick={() => {
+                  if (!token) {
+                    toast.info("Tarifni tanlash uchun avval tizimga kiring!");
+                    navigate('/login');
+                  } else {
+                    setSelectedPlanForPayment('standard');
+                  }
+                }}
+                className="w-full py-3 px-4 rounded-2xl bg-black hover:bg-neutral-800 text-white font-semibold text-xs transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+              >
+                <span>Standartni Tanlash</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </motion.div>
+
+            {/* PREMIUM PLAN CARD 👑 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="bg-neutral-900 text-white border border-neutral-800 rounded-3xl p-6 flex flex-col justify-between hover:border-neutral-700 shadow-2xl transition-all group"
+            >
+              <div>
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center mb-6 text-amber-400 group-hover:scale-110 transition-transform">
+                  <Crown className="w-5 h-5" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-1">Premium</h3>
+                <p className="text-xs text-neutral-400 mb-6">Maktablar va xususiy markazlar uchun</p>
+
+                <div className="mb-6">
+                  <span className="text-3xl font-extrabold text-white">
+                    {billingCycle === 'monthly' ? '99,000' : '950,000'}
+                  </span>
+                  <span className="text-xs text-neutral-400 ml-1">
+                    so'm / {billingCycle === 'monthly' ? 'oy' : 'yil'}
+                  </span>
+                </div>
+
+                <ul className="space-y-3 mb-8 text-xs text-neutral-300">
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-amber-400 shrink-0" strokeWidth={2.5} />
+                    <span><b>Cheksiz AI testlar</b> + OCR Scanser</span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-amber-400 shrink-0" strokeWidth={2.5} />
+                    <span><b>Cheksiz</b> aktiv onlayn testlar</span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-amber-400 shrink-0" strokeWidth={2.5} />
+                    <span><b>Cheksiz o'quvchilar</b> sig'imi</span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-amber-400 shrink-0" strokeWidth={2.5} />
+                    <span><b>PDF + DOCX + Excel</b> natijalar analitikasi</span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-amber-400 shrink-0" strokeWidth={2.5} />
+                    <span>Maktab brendingi va shaxsiy logotip</span>
+                  </li>
+                  <li className="flex items-center gap-2.5">
+                    <Check className="w-4 h-4 text-amber-400 shrink-0" strokeWidth={2.5} />
+                    <span>24/7 VIP qo'llab-quvvatlash & Menejer</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                onClick={() => {
+                  if (!token) {
+                    toast.info("Tarifni tanlash uchun avval tizimga kiring!");
+                    navigate('/login');
+                  } else {
+                    setSelectedPlanForPayment('premium');
+                  }
+                }}
+                className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-extrabold text-xs transition-all shadow-lg hover:shadow-amber-500/25 flex items-center justify-center gap-2"
+              >
+                <span>Premiumga Ulanish</span>
+                <Crown className="w-4 h-4" />
+              </button>
             </motion.div>
           </div>
         </section>
@@ -337,6 +590,146 @@ export default function Landing() {
           <Palette className="w-5 h-5" />
         </button>
       </div>
+
+      {/* SUBSCRIPTION PAYMENT MODAL */}
+      <AnimatePresence>
+        {selectedPlanForPayment && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md pointer-events-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-3xl max-w-lg w-full p-6 md:p-8 shadow-2xl border border-black/10 relative overflow-hidden"
+            >
+              <button
+                onClick={() => setSelectedPlanForPayment(null)}
+                className="absolute top-5 right-5 p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-500 hover:text-black transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-black text-white flex items-center justify-center font-bold text-xl shadow-md">
+                  {selectedPlanForPayment === 'standard' ? <Zap className="w-6 h-6 text-amber-400" /> : <Crown className="w-6 h-6 text-amber-400" />}
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-neutral-900 capitalize">
+                    {selectedPlanForPayment} Tarifiga Ulanish
+                  </h3>
+                  <p className="text-xs text-neutral-500">
+                    To'lov qilgandan so'ng admin доступni tezkor ochib beradi
+                  </p>
+                </div>
+              </div>
+
+              {/* Plan Price Summary */}
+              <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200/80 mb-6 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider block">To'lov summasi</span>
+                  <span className="text-2xl font-extrabold text-neutral-900">
+                    {selectedPlanForPayment === 'standard' 
+                      ? (billingCycle === 'monthly' ? '49,000 so\'m' : '470,000 so\'m')
+                      : (billingCycle === 'monthly' ? '99,000 so\'m' : '950,000 so\'m')}
+                  </span>
+                </div>
+                <span className="bg-black text-white text-xs font-bold px-3 py-1.5 rounded-xl uppercase">
+                  {billingCycle === 'monthly' ? '1 Oylik' : '1 Yillik (-20%)'}
+                </span>
+              </div>
+
+              {/* Payment Details */}
+              <div className="space-y-4 mb-6">
+                <div className="p-4 rounded-2xl bg-neutral-900 text-white border border-neutral-800">
+                  <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block mb-1">
+                    💳 KARTA RAQAMI (CLICK / PAYME)
+                  </span>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-lg md:text-xl font-bold tracking-wider">
+                      8600 0000 0000 0000
+                    </span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText("8600000000000000");
+                        setCopiedCard(true);
+                        toast.success("Karta raqami nusxalandi!");
+                        setTimeout(() => setCopiedCard(false), 2000);
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                    >
+                      {copiedCard ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedCard ? 'Nusxalandi' : 'Nusxalash'}</span>
+                    </button>
+                  </div>
+                  <span className="text-[11px] text-neutral-400 block mt-1">Egasining ismi: HB DIAGNOSTIKA MCHJ</span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-neutral-500 p-2">
+                  <span>Yoki Telegram orqali bog'laning:</span>
+                  <a
+                    href="https://t.me/hb_admin_bot"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-black font-bold hover:underline flex items-center gap-1"
+                  >
+                    <span>@hb_admin_bot</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">
+                    Telefon raqamingiz yoki to'lov cheki (kodi):
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Masalan: +998 90 123 45 67 yoki Chek kodi #8492"
+                    value={paymentNote}
+                    onChange={(e) => setPaymentNote(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl border border-neutral-300 focus:outline-none focus:border-black text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setSelectedPlanForPayment(null)}
+                  className="flex-1 py-3 rounded-2xl border border-neutral-200 text-neutral-700 font-semibold text-xs hover:bg-neutral-100 transition-colors"
+                >
+                  Bekor qilish
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!selectedPlanForPayment || !token) return;
+                    setIsSubmittingPayment(true);
+                    try {
+                      await db.requestSubscription(token, selectedPlanForPayment, paymentNote);
+                      toast.success("To'lov so'rovi yuborildi! Admin tez orada dostupni faollashtiradi.");
+                      setSelectedPlanForPayment(null);
+                      setPaymentNote('');
+                    } catch (err: any) {
+                      toast.error(err.message || "Xatolik yuz berdi");
+                    } finally {
+                      setIsSubmittingPayment(false);
+                    }
+                  }}
+                  disabled={isSubmittingPayment}
+                  className="flex-1 py-3 rounded-2xl bg-black hover:bg-neutral-800 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-2 shadow-lg"
+                >
+                  {isSubmittingPayment ? (
+                    <span>Yuborilmoqda...</span>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>So'rovni Yuborish</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

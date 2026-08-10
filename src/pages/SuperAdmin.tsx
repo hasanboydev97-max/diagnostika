@@ -10,7 +10,12 @@ import {
   LayoutDashboard,
   LogOut,
   Search,
-  ArrowRight
+  ArrowRight,
+  Crown,
+  Zap,
+  CheckCircle2,
+  Clock,
+  ShieldCheck
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getToken, getTeacher } from '../lib/auth';
@@ -30,17 +35,18 @@ const itemVariants: any = {
 };
 
 export default function SuperAdmin() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'teachers' | 'tests' | 'results'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'teachers' | 'subscriptions' | 'tests' | 'results'>('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({ teachers: 0, tests: 0, results: 0 });
   const [teachers, setTeachers] = useState<any[]>([]);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [tests, setTests] = useState<any[]>([]);
   const [results, setResults] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   
   const navigate = useNavigate();
 
-  useEffect(() => {
+  const fetchAdminData = async () => {
     const token = getToken();
     const teacherData = getTeacher() || {};
     
@@ -50,28 +56,30 @@ export default function SuperAdmin() {
       return;
     }
 
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const [statsData, teachersData, testsData, resultsData] = await Promise.all([
-          db.getAdminStats(token),
-          db.getAdminTeachers(token),
-          db.getAdminTests(token),
-          db.getAdminResults(token)
-        ]);
-        
-        setStats(statsData);
-        setTeachers(teachersData);
-        setTests(testsData);
-        setResults(resultsData);
-      } catch (error: any) {
-        toast.error(error.message || 'Xatolik yuz berdi');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    setIsLoading(true);
+    try {
+      const [statsData, teachersData, subsData, testsData, resultsData] = await Promise.all([
+        db.getAdminStats(token),
+        db.getAdminTeachers(token),
+        db.getAdminSubscriptions(token),
+        db.getAdminTests(token),
+        db.getAdminResults(token)
+      ]);
+      
+      setStats(statsData);
+      setTeachers(teachersData);
+      setSubscriptions(subsData || []);
+      setTests(testsData);
+      setResults(resultsData);
+    } catch (error: any) {
+      toast.error(error.message || 'Xatolik yuz berdi');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchData();
+  useEffect(() => {
+    fetchAdminData();
   }, [navigate]);
 
   useEffect(() => {
@@ -114,20 +122,35 @@ export default function SuperAdmin() {
     </div>
   );
 
+  const pendingSubsCount = useMemo(() => {
+    return subscriptions.filter(s => s.planStatus === 'pending').length;
+  }, [subscriptions]);
+
+  const handleUpdateTeacherPlan = async (teacherId: string, plan: string, status: string = 'active', durationDays: number = 30) => {
+    const token = getToken();
+    if (!token) return;
+    try {
+      await db.updateTeacherPlan(token, teacherId, plan, status, durationDays);
+      toast.success(`Dostup faollashtirildi! Tarif: ${plan.toUpperCase()}`);
+      fetchAdminData();
+    } catch (err: any) {
+      toast.error(err.message || "Xatolik yuz berdi");
+    }
+  };
+
   return (
-    <div className="min-h-screen relative font-sans text-[#111111] selection:bg-black selection:text-white pb-32 overflow-x-hidden">
+    <div className="min-h-screen text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">
       <MeshGradient />
-      
-      <div className="max-w-[1600px] mx-auto px-6 py-16 md:py-32 flex flex-col gap-16 md:gap-32 relative z-10">
-        <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-12 rounded-3xl">
+
+      <div className="max-w-7xl mx-auto px-6 py-12 md:py-32 flex flex-col gap-16 md:gap-32 relative z-10">
+        
+        {/* HEADER & NAV */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
           
-        <section className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-24">
-          
-          {/* LEFT SIDEBAR (STICKY) */}
-          <div className="md:col-span-4 md:sticky md:top-32 h-fit flex flex-col gap-12 md:gap-16">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="flex flex-col gap-6">
-              <div className="flex items-center gap-3">
-                <img src="/logo.png" alt="HB Logo" className="w-10 h-10 rounded-xl border border-black/10 bg-white p-0.5 object-contain shadow-sm" />
+          {/* LEFT SIDEBAR NAVIGATION */}
+          <div className="md:col-span-4 md:sticky md:top-32 h-fit flex flex-col gap-8">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
+              <div className="flex items-center gap-3 mb-4">
                 <span className="text-[10px] font-semibold tracking-[0.3em] uppercase text-gray-500 flex items-center gap-2">
                   <ShieldAlert className="w-3.5 h-3.5" /> Boshqaruv
                 </span>
@@ -138,6 +161,7 @@ export default function SuperAdmin() {
             <nav className="flex flex-col gap-0 border-t border-black/10">
               {[
                 { id: 'overview', icon: LayoutDashboard, label: 'Umumiy Holat' },
+                { id: 'subscriptions', icon: Crown, label: 'Tariflar & Dostup', badge: pendingSubsCount },
                 { id: 'teachers', icon: Users, label: 'O\'qituvchilar' },
                 { id: 'tests', icon: FileText, label: 'Barcha Testlar' },
                 { id: 'results', icon: Award, label: 'Natijalar' }
@@ -152,7 +176,12 @@ export default function SuperAdmin() {
                   >
                     <span className="flex items-center gap-4 text-sm font-semibold tracking-[0.1em] uppercase">
                       <Icon className="w-4 h-4" strokeWidth={isActive ? 2 : 1.5} />
-                      {tab.label}
+                      <span>{tab.label}</span>
+                      {tab.badge ? (
+                        <span className="bg-amber-500 text-black text-[10px] font-extrabold px-2 py-0.5 rounded-full animate-pulse">
+                          {tab.badge}
+                        </span>
+                      ) : null}
                     </span>
                     {isActive && <ArrowRight className="w-4 h-4" />}
                   </button>
@@ -250,6 +279,138 @@ export default function SuperAdmin() {
                         )}
                       </motion.div>
                     </div>
+                  </motion.div>
+                )}
+
+                {/* SUBSCRIPTIONS & PAYMENT APPROVAL TAB */}
+                {activeTab === 'subscriptions' && (
+                  <motion.div variants={containerVariants} initial="hidden" animate="show" className="flex flex-col w-full">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-black/10 pb-8 mb-8 gap-6">
+                      <div>
+                        <motion.h2 variants={itemVariants} className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500 mb-1">
+                          Obuna va To'lovlar Boshqaruvi
+                        </motion.h2>
+                        <p className="text-xs text-gray-400">Foydalanuvchilarga to'lovdan so'ng 1 ta bosishda dostup ochib bering</p>
+                      </div>
+                      
+                      <motion.div variants={itemVariants} className="relative w-full md:w-72">
+                        <input 
+                          type="text" 
+                          placeholder="Foydalanuvchi yoki email..." 
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full border-b border-black/20 pb-2 bg-transparent text-lg focus:outline-none focus:border-black transition-colors placeholder:text-gray-300"
+                        />
+                        <Search className="absolute right-0 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" strokeWidth={1.5} />
+                      </motion.div>
+                    </div>
+
+                    {subscriptions.length === 0 ? (
+                      <EmptyState message="Obuna so'rovlari topilmadi." />
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left whitespace-nowrap border-collapse">
+                          <thead>
+                            <tr>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Foydalanuvchi</th>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Joriy Tarif</th>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">So'rov / Chek (Raqam)</th>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Holat</th>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest text-right">Dostup Ochish</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {subscriptions
+                              .filter(s => !searchQuery || s.name?.toLowerCase().includes(searchQuery.toLowerCase()) || s.email?.toLowerCase().includes(searchQuery.toLowerCase()))
+                              .map(s => {
+                                const isPending = s.planStatus === 'pending';
+                                return (
+                                  <tr key={s._id} className={`group transition-colors border-b border-black/10 ${isPending ? 'bg-amber-500/5' : 'hover:bg-[#f8f8f8]'}`}>
+                                    <td className="py-6 pl-4 md:pl-0">
+                                      <div className="text-base font-bold text-neutral-900">{s.name}</div>
+                                      <div className="text-xs text-neutral-500">{s.email}</div>
+                                    </td>
+                                    
+                                    {/* Current Plan Badge */}
+                                    <td className="py-6 pl-6">
+                                      {s.plan === 'premium' ? (
+                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 font-extrabold text-[11px] uppercase border border-amber-500/30">
+                                          <Crown className="w-3.5 h-3.5" /> Premium
+                                        </span>
+                                      ) : s.plan === 'standard' ? (
+                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black text-white font-extrabold text-[11px] uppercase">
+                                          <Zap className="w-3.5 h-3.5 text-amber-400" /> Standard
+                                        </span>
+                                      ) : (
+                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 text-neutral-600 font-bold text-[11px] uppercase border border-neutral-200">
+                                          Free (Bepul)
+                                        </span>
+                                      )}
+                                    </td>
+
+                                    {/* Requested Plan / Payment Note */}
+                                    <td className="py-6 pl-6">
+                                      {s.requestedPlan ? (
+                                        <div className="space-y-1">
+                                          <span className="text-xs font-bold text-black uppercase tracking-wider block">
+                                            So'rov: {s.requestedPlan}
+                                          </span>
+                                          {s.paymentNote && (
+                                            <span className="text-xs text-neutral-500 font-mono block bg-white px-2 py-1 rounded border border-neutral-200 w-fit">
+                                              {s.paymentNote}
+                                            </span>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <span className="text-xs text-neutral-400">—</span>
+                                      )}
+                                    </td>
+
+                                    {/* Status */}
+                                    <td className="py-6 pl-6">
+                                      {isPending ? (
+                                        <span className="inline-flex items-center gap-1 text-amber-600 font-extrabold text-xs animate-pulse">
+                                          <Clock className="w-3.5 h-3.5" /> Kutilmoqda
+                                        </span>
+                                      ) : (
+                                        <span className="inline-flex items-center gap-1 text-emerald-600 font-bold text-xs">
+                                          <CheckCircle2 className="w-3.5 h-3.5" /> Faol
+                                        </span>
+                                      )}
+                                    </td>
+
+                                    {/* Dostup Actions */}
+                                    <td className="py-6 pr-4 md:pr-0 text-right">
+                                      <div className="flex items-center justify-end gap-2">
+                                        {isPending && s.requestedPlan && (
+                                          <button
+                                            onClick={() => handleUpdateTeacherPlan(s._id, s.requestedPlan, 'active', 30)}
+                                            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1"
+                                          >
+                                            <ShieldCheck className="w-3.5 h-3.5" />
+                                            <span>Ochish (30 kun)</span>
+                                          </button>
+                                        )}
+
+                                        {/* Direct Plan Switcher */}
+                                        <select
+                                          value={s.plan || 'free'}
+                                          onChange={(e) => handleUpdateTeacherPlan(s._id, e.target.value, 'active', 30)}
+                                          className="text-xs font-semibold bg-white border border-neutral-300 rounded-xl px-2 py-1.5 focus:outline-none focus:border-black"
+                                        >
+                                          <option value="free">Free</option>
+                                          <option value="standard">Standard (30 Kun)</option>
+                                          <option value="premium">Premium (30 Kun)</option>
+                                        </select>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </motion.div>
                 )}
 
@@ -424,8 +585,7 @@ export default function SuperAdmin() {
               </motion.div>
             </AnimatePresence>
           </div>
-          {/* END MAIN CONTENT */}
-        </section>
+
         </div>
       </div>
     </div>

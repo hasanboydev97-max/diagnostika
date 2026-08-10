@@ -202,6 +202,40 @@ export const db = {
     return res.json();
   },
 
+  async requestSubscription(token: string, requestedPlan: string, paymentNote?: string) {
+    const res = await fetch(`${API_URL}/subscription/request`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ requestedPlan, paymentNote })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  async getAdminSubscriptions(token: string) {
+    const res = await fetch(`${API_URL}/admin/subscriptions`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  async updateTeacherPlan(token: string, teacherId: string, plan: string, status: string = 'active', durationDays: number = 30) {
+    const res = await fetch(`${API_URL}/admin/subscriptions/update-plan`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ teacherId, plan, status, durationDays })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
   // --- Diagnostic Tests (Local) ---
   async saveDiagnosticTest(test: DiagnosticTest): Promise<void> {
     const current = await localforage.getItem<DiagnosticTest[]>(LOCAL_DIAGNOSTIC_TESTS_KEY) || [];
