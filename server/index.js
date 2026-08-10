@@ -13,6 +13,7 @@ import bcrypt from 'bcryptjs';
 import katex from 'katex';
 import JSZip from 'jszip';
 import PDFDocument from 'pdfkit';
+import { Document, Paragraph, TextRun, Packer, HeadingLevel, AlignmentType } from 'docx';
 import * as mml2ommlModule from 'mathml2omml';
 const { mml2omml } = mml2ommlModule;
 
@@ -433,227 +434,120 @@ function isTextWord(word) {
   return /^[a-zA-Z'oEʻgEʻ]+$/i.test(cleanWord);
 }
 
-function autoFormatMath(text) {
-  if (!text) return text;
-  let normalized = text.replace(/\$/g, '');
-  const tokens = normalized.split(/(\s+)/);
-  let result = "";
-  let inMath = false;
-  let mathBuffer = "";
-  for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i];
-    if (token.trim() === '') {
-      if (inMath) mathBuffer += token;
-      else result += token;
-      continue;
-    }
-    if (isTextWord(token)) {
-      if (inMath) {
-        let trimmed = mathBuffer.trimRight();
-        let spaces = mathBuffer.substring(trimmed.length);
-        result += `$${trimmed}$${spaces}`;
-        inMath = false;
-        mathBuffer = "";
-      }
-      result += token;
-    } else {
-      if (!inMath) inMath = true;
-      mathBuffer += token;
-    }
-  }
-  if (inMath) {
-    let trimmed = mathBuffer.trimRight();
-    let spaces = mathBuffer.substring(trimmed.length);
-    if (trimmed.length > 0) result += `$${trimmed}$${spaces}`;
-  }
-  return result;
-}
+function cleanMathForText(text) {
+  if (!text) return '';
+  let str = String(text);
 
-function latexToOmml(latex) {
-  try {
-    const mathml = katex.renderToString(latex.trim(), { output: 'mathml', displayMode: false, throwOnError: false });
-    const mathMatch = mathml.match(/<math[\s\S]*?<\/math>/);
-    if (!mathMatch) return null;
-    let mathStr = mathMatch[0].replace(/<annotation[^>]*>[\s\S]*?<\/annotation>/g, '');
-    let omml = mml2omml(mathStr);
-    // Strip namespace declarations — they conflict with the parent document namespaces
-    // and cause Word to reject the file as corrupted
-    omml = omml.replace(/\s+xmlns:[a-zA-Z0-9]+=["'][^"']*["']/g, '');
-    // Fix undefined styles that cause Word document corruption
-    omml = omml.replace(/<m:sty m:val="undefined"\/>/g, '<m:sty m:val="p"/>');
-    return omml;
-  } catch (e) {
-    return null;
-  }
-}
+  // Replace common LaTeX expressions with clean readable unicode symbols
+  str = str
+    .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
+    .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
+    .replace(/\\sqrt/g, '√')
+    .replace(/\\times/g, '×')
+    .replace(/\\div/g, '÷')
+    .replace(/\\pm/g, '±')
+    .replace(/\\leq/g, '≤')
+    .replace(/\\geq/g, '≥')
+    .replace(/\\neq/g, '≠')
+    .replace(/\\approx/g, '≈')
+    .replace(/\\infty/g, '∞')
+    .replace(/\\cdot/g, '·')
+    .replace(/\\alpha/g, 'α')
+    .replace(/\\beta/g, 'β')
+    .replace(/\\gamma/g, 'γ')
+    .replace(/\\pi/g, 'π')
+    .replace(/\\theta/g, 'θ')
+    .replace(/\^2/g, '²')
+    .replace(/\^3/g, '³')
+    .replace(/\^{([^}]+)}/g, '^($1)')
+    .replace(/_{([^}]+)}/g, '_($1)')
+    .replace(/<[^>]*>/g, '') // strip HTML tags
+    .replace(/\$/g, '') // strip LaTeX dollar signs
+    .replace(/\\/g, ''); // strip remaining backslashes
 
-// Build XML paragraphs for a content string (returns array of XML strings)
-function buildXmlParagraphs(content, bold = false, heading = null, align = null) {
-  const paragraphs = [];
-
-  const makePara = (innerXml, extraPPr = '') => {
-    let pPr = '';
-    if (heading || align || extraPPr) {
-      pPr = '<w:pPr>';
-      if (heading === 1) pPr += '<w:pStyle w:val="Heading1"/>';
-      else if (heading === 2) pPr += '<w:pStyle w:val="Heading2"/>';
-      if (align) pPr += `<w:jc w:val="${align}"/>`;
-      pPr += extraPPr + '</w:pPr>';
-    }
-    return `<w:p>${pPr}${innerXml}</w:p>`;
-  };
-
-  const makeRun = (text, isBold) => {
-    const rPr = isBold ? '<w:rPr><w:b/><w:bCs/></w:rPr>' : '';
-    return `<w:r>${rPr}<w:t xml:space="preserve">${escapeXml(text)}</w:t></w:r>`;
-  };
-
-  if (!content) {
-    paragraphs.push(makePara(''));
-    return paragraphs;
-  }
-
-  const formattedContent = autoFormatMath(content);
-  const parts = formattedContent.split('$');
-  let currentRuns = [];
-
-  const flushParagraph = () => {
-    paragraphs.push(makePara(currentRuns.join('')));
-    currentRuns = [];
-  };
-
-  parts.forEach((part, index) => {
-    if (index % 2 === 0) {
-      // Plain text
-      const lines = part.split('\n');
-      lines.forEach((line, lineIndex) => {
-        if (line) currentRuns.push(makeRun(line, bold));
-        if (lineIndex < lines.length - 1) flushParagraph();
-      });
-    } else {
-      // Math expression
-      const omml = latexToOmml(part);
-      if (omml) {
-        // oMath is inline math, it belongs inside w:p along with w:r
-        currentRuns.push(omml);
-      } else {
-        currentRuns.push(makeRun(`$${part}$`, bold));
-      }
-    }
-  });
-
-  if (currentRuns.length > 0) flushParagraph();
-  return paragraphs;
-}
-
-function buildDocxXml(title, subject, questions) {
-  const NS = [
-    'xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"',
-    'xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"',
-    'xmlns:o="urn:schemas-microsoft-com:office:office"',
-    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"',
-    'xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"',
-    'xmlns:v="urn:schemas-microsoft-com:vml"',
-    'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"',
-    'xmlns:w10="urn:schemas-microsoft-com:office:word"',
-    'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"',
-    'xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"',
-    'xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml"',
-    'mc:Ignorable="w14 w15"'
-  ].join(' ');
-
-  const bodyParts = [];
-
-  // Title
-  bodyParts.push(`<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:jc w:val="center"/></w:pPr><w:r><w:t>${escapeXml(title)}</w:t></w:r></w:p>`);
-
-  // Subject
-  bodyParts.push(`<w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>${escapeXml('Fan: ' + subject)}</w:t></w:r></w:p>`);
-  bodyParts.push(`<w:p><w:r><w:t></w:t></w:r></w:p>`);
-
-  // Questions
-  const optionLetters = ['A', 'B', 'C', 'D'];
-  questions.forEach((q, index) => {
-    const qText = `${index + 1}. ${q.questionText}`;
-    bodyParts.push(...buildXmlParagraphs(qText, true));
-    (q.options || []).forEach((opt, oi) => {
-      bodyParts.push(...buildXmlParagraphs(`${optionLetters[oi]}) ${opt}`, false));
-    });
-    bodyParts.push(`<w:p><w:r><w:t></w:t></w:r></w:p>`);
-  });
-
-  // Answer key — find which letter matches correctOption
-  bodyParts.push(`<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>Kalit javoblar</w:t></w:r></w:p>`);
-  questions.forEach((q, index) => {
-    const correctIdx = (q.options || []).findIndex(o => o === q.correctOption);
-    const correctLetter = correctIdx >= 0 ? optionLetters[correctIdx] : q.correctOption;
-    bodyParts.push(...buildXmlParagraphs(`${index + 1}. ${correctLetter}`, true));
-  });
-
-  const sectPr = `<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="850" w:bottom="1134" w:left="1701" w:header="709" w:footer="709" w:gutter="0"/></w:sectPr>`;
-
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body>${bodyParts.join('')}${sectPr}</w:body></w:document>`;
-}
-
-function buildStylesXml() {
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-          xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"
-          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-          mc:Ignorable="w14">
-  <w:docDefaults>
-    <w:rPrDefault><w:rPr>
-      <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>
-      <w:sz w:val="24"/><w:szCs w:val="24"/>
-    </w:rPr></w:rPrDefault>
-  </w:docDefaults>
-  <w:style w:type="paragraph" w:styleId="Normal">
-    <w:name w:val="Normal"/>
-    <w:rPr><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>
-  </w:style>
-  <w:style w:type="paragraph" w:styleId="Heading1">
-    <w:name w:val="heading 1"/>
-    <w:pPr><w:jc w:val="center"/></w:pPr>
-    <w:rPr><w:b/><w:bCs/><w:sz w:val="32"/><w:szCs w:val="32"/></w:rPr>
-  </w:style>
-  <w:style w:type="paragraph" w:styleId="Heading2">
-    <w:name w:val="heading 2"/>
-    <w:rPr><w:b/><w:bCs/><w:sz w:val="28"/><w:szCs w:val="28"/></w:rPr>
-  </w:style>
-</w:styles>`;
+  return str.trim();
 }
 
 async function buildDocxBuffer(title, subject, questions) {
-  const zip = new JSZip();
+  const children = [
+    // Title
+    new Paragraph({
+      text: title || 'Test',
+      heading: HeadingLevel.HEADING_1,
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 200 }
+    }),
+    // Subject
+    new Paragraph({
+      children: [
+        new TextRun({ text: `Fan: ${subject || ''}`, italic: true, size: 24 })
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 400 }
+    })
+  ];
 
-  zip.file('[Content_Types].xml',
-    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-  <Default Extension="xml" ContentType="application/xml"/>
-  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
-  <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
-</Types>`);
+  const optionLetters = ['A', 'B', 'C', 'D'];
+  (questions || []).forEach((q, index) => {
+    const qText = cleanMathForText(q.questionText || '');
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({ text: `${index + 1}. `, bold: true, size: 24 }),
+          new TextRun({ text: qText, bold: true, size: 24 })
+        ],
+        spacing: { before: 240, after: 120 }
+      })
+    );
 
-  zip.file('_rels/.rels',
-    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
-</Relationships>`);
+    (q.options || []).forEach((opt, oi) => {
+      const letter = optionLetters[oi] || `${oi + 1}`;
+      const optText = cleanMathForText(opt || '');
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({ text: `    ${letter}) `, bold: true, size: 22 }),
+            new TextRun({ text: optText, size: 22 })
+          ],
+          spacing: { after: 80 }
+        })
+      );
+    });
+  });
 
-  zip.file('word/_rels/document.xml.rels',
-    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
-</Relationships>`);
+  // Answer Key Section
+  children.push(
+    new Paragraph({
+      text: 'Kalit Javoblar:',
+      heading: HeadingLevel.HEADING_2,
+      spacing: { before: 400, after: 200 }
+    })
+  );
 
-  zip.file('word/document.xml', buildDocxXml(title, subject, questions));
-  zip.file('word/styles.xml', buildStylesXml());
+  const answerRuns = (questions || []).map((q, index) => {
+    const correctIdx = (q.options || []).findIndex(o => o === q.correctOption);
+    const letter = correctIdx >= 0 ? optionLetters[correctIdx] : (q.correctOption || '?');
+    return new TextRun({ text: `${index + 1}.${letter}   `, bold: true, size: 22 });
+  });
 
-  return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+  children.push(
+    new Paragraph({
+      children: answerRuns,
+      spacing: { after: 200 }
+    })
+  );
+
+  const doc = new Document({
+    sections: [{
+      properties: {},
+      children
+    }]
+  });
+
+  return await Packer.toBuffer(doc);
 }
 
-// GET DOCX Export
+// GET DOCX Export — Official docx package generator
 app.get('/api/online-tests/:id/export/docx', async (req, res) => {
   try {
     const test = await OnlineTest.findOne({ id: req.params.id });
@@ -662,7 +556,7 @@ app.get('/api/online-tests/:id/export/docx', async (req, res) => {
     const buffer = await buildDocxBuffer(test.title, test.subject, test.questions);
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(test.title)}.docx"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(test.title || 'Test')}.docx"`);
     res.send(buffer);
   } catch (error) {
     console.error("DOCX Export Error:", error);
@@ -946,29 +840,18 @@ app.get('/api/online-tests/:id/export/pdf', async (req, res) => {
       doc.moveDown(0.4);
 
       // Question text
-      const qLabel = `${i + 1}. `;
-      const formatted = autoFormatMath(String(q.questionText || ''));
-      const parts = formatted.split('$');
-      let qText = qLabel;
-      parts.forEach((p, pi) => {
-        qText += pi % 2 === 0 ? p : latexToText(p);
-      });
+      const qText = `${i + 1}. ${cleanMathForText(q.questionText || '')}`;
 
       // Check if near bottom — manual page break
       if (doc.y > 720) doc.addPage();
 
-      doc.font('Helvetica-Bold').fontSize(11).text(qText.trim(), { lineGap: 2 });
+      doc.font('Helvetica-Bold').fontSize(11).text(qText, { lineGap: 2 });
 
       // Options
       (q.options || []).forEach((opt, oi) => {
-        const letterLabel = `   ${optionLetters[oi]}) `;
-        const fmtOpt = autoFormatMath(String(opt || ''));
-        const optParts = fmtOpt.split('$');
-        let optText = letterLabel;
-        optParts.forEach((p, pi) => {
-          optText += pi % 2 === 0 ? p : latexToText(p);
-        });
-        doc.font('Helvetica').fontSize(11).text(optText.trim(), { lineGap: 1 });
+        const letterLabel = optionLetters[oi] || `${oi + 1}`;
+        const optText = `   ${letterLabel}) ${cleanMathForText(opt || '')}`;
+        doc.font('Helvetica').fontSize(11).text(optText, { lineGap: 1 });
       });
     });
 
