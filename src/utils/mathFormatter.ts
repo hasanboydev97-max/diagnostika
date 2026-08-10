@@ -2,7 +2,12 @@ function isTextWord(word: string): boolean {
   // Strip trailing punctuation for the check
   const cleanWord = word.replace(/^[.,!?:;()]+|[.,!?:;()]+$/g, '');
   
-  if (cleanWord.length < 2) return false; // Single letters are math (x, y, a)
+  if (!cleanWord) return true;
+
+  // Pure numbers (e.g. "1", "12", "100") are plain text, not math formulas
+  if (/^\d+$/.test(cleanWord)) return true;
+
+  if (cleanWord.length < 2) return true; // Single letters/numbers are text unless wrapped in $...$
   
   // Explicitly ignore our code placeholders so they don't get wrapped in $
   if (/___(CODE|PRE)_BLOCK_\d+___/.test(cleanWord)) {
@@ -12,7 +17,7 @@ function isTextWord(word: string): boolean {
   // Checking for ANY backslash, digits, or math symbols explicitly
   for (let i = 0; i < cleanWord.length; i++) {
     const c = cleanWord[i];
-    if ("0123456789+*/=<>|[]{}^_-\\".includes(c)) {
+    if ("+*/=<>|[]{}^_-\\".includes(c)) {
       return false; // It's math
     }
   }
