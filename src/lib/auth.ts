@@ -16,6 +16,26 @@ export const getAuthHeaders = () => {
   };
 };
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+export const fetchCurrentTeacher = async () => {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const res = await fetch(`${API_URL}/auth/me`, {
+      headers: getAuthHeaders()
+    });
+    if (res.ok) {
+      const freshTeacher = await res.json();
+      setTeacher(freshTeacher);
+      return freshTeacher;
+    }
+  } catch (err) {
+    console.error('Failed to sync current teacher data:', err);
+  }
+  return getTeacher();
+};
+
 export const logout = () => {
   removeToken();
   removeTeacher();

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, ChevronRight, FileText, Search, Trash2, LogOut, ShieldAlert } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { getAuthHeaders, getToken, logout, getTeacher } from '../../lib/auth';
+import { getAuthHeaders, getToken, logout, getTeacher, fetchCurrentTeacher } from '../../lib/auth';
 import MeshGradient from '../../components/ui/MeshGradient';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -21,7 +21,7 @@ export default function OnlineTestsDashboard() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
-  const teacher = getTeacher();
+  const [teacher, setTeacher] = useState<any>(getTeacher());
 
   useEffect(() => {
     if (!getToken()) {
@@ -29,6 +29,9 @@ export default function OnlineTestsDashboard() {
       return;
     }
     fetchTests();
+    fetchCurrentTeacher().then(fresh => {
+      if (fresh) setTeacher(fresh);
+    });
   }, []);
 
   const fetchTests = async () => {

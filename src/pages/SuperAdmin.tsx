@@ -14,7 +14,7 @@ import {
   Crown
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getToken, getTeacher } from '../lib/auth';
+import { getToken, getTeacher, fetchCurrentTeacher } from '../lib/auth';
 import MeshGradient from '../components/ui/MeshGradient';
 
 const containerVariants: any = {
@@ -110,6 +110,7 @@ export default function SuperAdmin() {
     try {
       await db.updateTeacherPlan(token, teacherId, plan, status, durationDays);
       toast.success(`Dostup faollashtirildi! Tarif: ${plan.toUpperCase()}`);
+      await fetchCurrentTeacher();
       fetchAdminData();
     } catch (err: any) {
       toast.error(err.message || "Xatolik yuz berdi");
