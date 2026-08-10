@@ -93,7 +93,11 @@ const TeacherSchema = new mongoose.Schema({
   planStatus: { type: String, enum: ['active', 'pending', 'expired'], default: 'active' },
   requestedPlan: { type: String, enum: ['standard', 'premium', null], default: null },
   paymentNote: { type: String, default: '' },
-  planExpiresAt: { type: Date, default: null }
+  planExpiresAt: { type: Date, default: null },
+  dailyAiCount: { type: Number, default: 0 },
+  lastAiGenDate: { type: String, default: '' },
+  schoolName: { type: String, default: '' },
+  schoolLogo: { type: String, default: '' }
 }, { timestamps: true });
 const Teacher = mongoose.model('Teacher', TeacherSchema);
 
@@ -888,6 +892,31 @@ function pdfRenderLine(doc, content, opts = {}) {
   doc.fontSize(opts.fontSize || 11).text(line.trim(), opts);
 }
 
+// GET Excel/CSV Export — Available for Standard and Premium plans
+app.get('/api/online-tests/:id/export/excel', async (req, res) => {
+  try {
+    const test = await OnlineTest.findOne({ id: req.params.id });
+    if (!test) return res.status(404).json({ error: 'Test topilmadi' });
+
+    const results = await OnlineTestResult.find({ testId: req.params.id }).sort({ createdAt: -1 });
+
+    let csvContent = '\uFEFF'; // UTF-8 BOM for Excel Uzbek characters
+    csvContent += 'O\'quvchi F.I.SH,Ball,Maksimal Ball,Foiz,Sana\n';
+
+    results.forEach(r => {
+      const percent = Math.round((r.score / (r.totalScore || 1)) * 100);
+      const dateStr = r.createdAt ? new Date(r.createdAt).toLocaleString() : '';
+      csvContent += `"${r.studentName || ''}",${r.score || 0},${r.totalScore || 0},${percent}%,${dateStr}\n`;
+    });
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(test.title || 'Test')}_Natijalar.csv"`);
+    res.send(csvContent);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET PDF Export — pure JS pdfkit (works everywhere, no Chrome needed)
 app.get('/api/online-tests/:id/export/pdf', async (req, res) => {
   try {
@@ -980,6 +1009,16 @@ app.get('/api/online-tests/:id/export/pdf', async (req, res) => {
 
 app.post('/api/online-tests', authMiddleware, async (req, res) => {
   try {
+    const teacher = await Teacher.findById(req.teacherId);
+    if (teacher && teacher.plan === 'free') {
+      const activeCount = await OnlineTest.countDocuments({ teacherId: req.teacherId });
+      if (activeCount >= 2) {
+        return res.status(403).json({
+          error: 'Free (Bepul) tarifda maksimal 2 ta aktiv test saqlashingiz mumkin. Cheksiz testlar yaratish uchun Standard yoki Premium tarifiga o\'ting.'
+        });
+      }
+    }
+
     const test = new OnlineTest({ ...req.body, teacherId: req.teacherId });
     await test.save();
     res.status(201).json({ message: 'Test created successfully', id: test.id });
@@ -1001,6 +1040,20 @@ app.post('/api/online-test-results', async (req, res) => {
       }
       if (test.endTime && now > new Date(test.endTime)) {
         return res.status(403).json({ error: 'Test is closed.' });
+      }
+
+      // Check max students limit based on teacher plan
+      if (test.teacherId) {
+        const creator = await Teacher.findById(test.teacherId);
+        if (creator) {
+          const studentCount = await OnlineTestResult.countDocuments({ testId: data.testId });
+          const maxStudents = creator.plan === 'premium' ? Infinity : (creator.plan === 'standard' ? 50 : 15);
+          if (studentCount >= maxStudents) {
+            return res.status(403).json({
+              error: `Ushbu test uchun o'quvchilar limiti (${maxStudents} ta) to'lgan. Ustozingiz tarifini oshirishi kerak.`
+            });
+          }
+        }
       }
     }
 
@@ -1086,6 +1139,21 @@ app.get('/api/online-test-results/:id', async (req, res) => {
 app.post('/api/online-tests/generate', authMiddleware, async (req, res) => {
   try {
     const { topic, questionCount, subject } = req.body;
+
+    // --- Tier Limit Guard ---
+    const teacher = await Teacher.findById(req.teacherId);
+    if (!teacher) return res.status(404).json({ error: 'O\'qituvchi topilmadi' });
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    let dailyCount = teacher.lastAiGenDate === todayStr ? (teacher.dailyAiCount || 0) : 0;
+    const maxAllowed = teacher.plan === 'premium' ? Infinity : (teacher.plan === 'standard' ? 25 : 3);
+
+    if (dailyCount >= maxAllowed) {
+      return res.status(403).json({
+        error: `Sizning ${teacher.plan.toUpperCase()} tarifingiz bo'yicha kunlik AI test yaratish limiti (${maxAllowed} ta) to'lgan. Davom etish uchun tarifni oshiring.`
+      });
+    }
+
     const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
     
     if (!apiKey) {
@@ -1192,6 +1260,12 @@ Example:
     text = text.replace(/(?<!\\)\\n(u|abla|eq|eg|exists)/g, "\\\\n$1");
     
     const questions = JSON.parse(text);
+    
+    // Increment daily AI count for teacher
+    teacher.lastAiGenDate = todayStr;
+    teacher.dailyAiCount = dailyCount + 1;
+    await teacher.save();
+
     res.json({ questions });
   } catch (error) {
     console.error('AI Gen Error:', error);

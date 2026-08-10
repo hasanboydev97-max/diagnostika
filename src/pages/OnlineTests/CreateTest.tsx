@@ -17,7 +17,8 @@ export default function CreateTest() {
   const [durationMinutes, setDurationMinutes] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [mode, setMode] = useState<'ai' | 'manual'>('ai');
+  const [mode, setMode] = useState<'ai' | 'manual' | 'ocr'>('ai');
+  const [ocrText, setOcrText] = useState('');
   
   useEffect(() => {
     if (!getToken()) {
@@ -58,6 +59,37 @@ export default function CreateTest() {
     } catch (error) {
       console.error(error);
       toast.error('Network error during generation.', { id: toastId });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleGenerateOcr = async () => {
+    if (teacher?.plan !== 'premium') {
+      toast.error('Hujjat va Rasmdan (OCR) test yaratish faqat Premium tarifda mavjud! Tarifni oshiring.');
+      return;
+    }
+    if (!ocrText.trim()) {
+      toast.error('Iltimos, matn yoki hujjat mazmunini kiriting.');
+      return;
+    }
+    setGenerating(true);
+    const toastId = toast.loading('Hujjat tahlil qilinmoqda va test yaratilmoqda...');
+    try {
+      const res = await fetch(`${API_URL}/online-tests/generate-ocr`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ rawText: ocrText, questionCount })
+      });
+      const data = await res.json();
+      if (data.questions) {
+        setQuestions(data.questions);
+        toast.success('Hujjatdan test muvaffaqiyatli yaratildi!', { id: toastId });
+      } else {
+        toast.error(data.error || 'Hujjatdan test yaratishda xatolik.', { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Xatolik yuz berdi', { id: toastId });
     } finally {
       setGenerating(false);
     }
@@ -229,18 +261,26 @@ export default function CreateTest() {
         </section>
 
         {/* Builder Mode Selector */}
-        <div className="flex bg-zinc-100 p-1 rounded-md w-full max-w-[240px] mb-6">
+        <div className="flex bg-zinc-100 p-1 rounded-xl w-full max-w-md mb-6 gap-1">
           <button
             onClick={() => setMode('ai')}
-            className={`flex-1 text-[11px] font-semibold uppercase tracking-wider py-1.5 rounded-sm transition-all ${
+            className={`flex-1 text-[11px] font-semibold uppercase tracking-wider py-2 rounded-lg transition-all ${
               mode === 'ai' ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200/50' : 'text-zinc-500 hover:text-zinc-700'
             }`}
           >
-            AI Yordamida
+            AI Mavzuli
+          </button>
+          <button
+            onClick={() => setMode('ocr')}
+            className={`flex-1 text-[11px] font-semibold uppercase tracking-wider py-2 rounded-lg transition-all ${
+              mode === 'ocr' ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200/50' : 'text-zinc-500 hover:text-zinc-700'
+            }`}
+          >
+            OCR Hujjat 👑
           </button>
           <button
             onClick={() => setMode('manual')}
-            className={`flex-1 text-[11px] font-semibold uppercase tracking-wider py-1.5 rounded-sm transition-all ${
+            className={`flex-1 text-[11px] font-semibold uppercase tracking-wider py-2 rounded-lg transition-all ${
               mode === 'manual' ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200/50' : 'text-zinc-500 hover:text-zinc-700'
             }`}
           >
@@ -248,12 +288,12 @@ export default function CreateTest() {
           </button>
         </div>
 
-        {/* AI Form */}
+        {/* AI Mavzuli Form */}
         {mode === 'ai' && (
-          <div className="bg-white border border-zinc-200 p-5 rounded-md mb-8">
+          <div className="bg-white border border-zinc-200 p-5 rounded-2xl mb-8 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="text-zinc-900" size={14} />
-              <h3 className="text-xs font-semibold text-zinc-900">AI Savollar Generatsiyasi</h3>
+              <h3 className="text-xs font-semibold text-zinc-900 uppercase tracking-wider">AI Savollar Generatsiyasi</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
               <div>
@@ -262,8 +302,8 @@ export default function CreateTest() {
                   type="text" 
                   value={topic}
                   onChange={e => setTopic(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-md text-sm placeholder-zinc-400 focus:outline-none focus:border-zinc-400 transition-colors"
-                  placeholder="masalan: 2-Jahon urushi"
+                  className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-sm placeholder-zinc-400 focus:outline-none focus:border-zinc-400 transition-colors"
+                  placeholder="masalan: 2-Jahon urushi yoki Trigonometriya"
                 />
               </div>
               <div>
@@ -273,17 +313,50 @@ export default function CreateTest() {
                   min="1" max="20"
                   value={questionCount}
                   onChange={e => setQuestionCount(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-md text-sm focus:outline-none focus:border-zinc-400 transition-colors"
+                  className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-400 transition-colors"
                 />
               </div>
             </div>
             <button
               onClick={handleGenerate}
               disabled={generating || !subject.trim()}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-zinc-900 text-white text-xs font-medium rounded-md hover:bg-zinc-800 disabled:opacity-50 transition-colors focus:outline-none"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-zinc-900 text-white text-xs font-medium rounded-xl hover:bg-zinc-800 disabled:opacity-50 transition-colors focus:outline-none"
             >
               {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
               {generating ? 'Yaratilmoqda...' : 'Savollarni yaratish'}
+            </button>
+          </div>
+        )}
+
+        {/* OCR / Hujjat va Rasmdan Test Yaratish (Premium 👑) */}
+        {mode === 'ocr' && (
+          <div className="bg-white border border-zinc-200 p-6 rounded-2xl mb-8 shadow-sm">
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <div className="flex items-center gap-2">
+                <FileText className="text-amber-500" size={16} />
+                <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Hujjat va Rasmdan (OCR) Test Yaratish</h3>
+              </div>
+              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-black text-white uppercase">
+                👑 Premium Imkoniyat
+              </span>
+            </div>
+            <p className="text-xs text-zinc-500 mb-4">
+              Kitob, darslik, yoki imtihon varaqasi matnini nushalab ushbu joyga tashlang. AI avtomatik ravishda savol va javob variantlarini ajratib oladi!
+            </p>
+            <textarea
+              rows={6}
+              value={ocrText}
+              onChange={e => setOcrText(e.target.value)}
+              placeholder="Masalan: 1. O'zbekiston poytaxti qayer? A) Toshkent B) Samarqand C) Buxoro..."
+              className="w-full px-4 py-3 bg-zinc-50/50 border border-zinc-200 rounded-xl text-sm placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:bg-white transition-all mb-4 font-sans"
+            />
+            <button
+              onClick={handleGenerateOcr}
+              disabled={generating || !ocrText.trim()}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-black text-white text-xs font-semibold uppercase tracking-wider rounded-xl hover:bg-neutral-800 disabled:opacity-50 transition-colors"
+            >
+              {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+              {generating ? 'Hujjat Tahlil Qilinmoqda...' : 'Hujjatdan Savollarni Ajratib Olish'}
             </button>
           </div>
         )}

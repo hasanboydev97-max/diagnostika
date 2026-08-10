@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, FileText, Download } from 'lucide-react';
-import { getAuthHeaders, getToken } from '../../lib/auth';
+import { getAuthHeaders, getToken, getTeacher } from '../../lib/auth';
 import MeshGradient from '../../components/ui/MeshGradient';
 import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
@@ -66,7 +66,22 @@ export default function TestDetails() {
 
   const handleExportWord = () => {
     if (!test) return;
+    const teacher = getTeacher();
+    if (teacher?.plan === 'free') {
+      toast.error('Word (DOCX) eksporti faqat Standard va Premium tariflarda mavjud! Tarifni oshiring.');
+      return;
+    }
     window.open(`${API_URL}/online-tests/${testId}/export/docx`, '_blank');
+  };
+
+  const handleExportExcel = () => {
+    if (!test) return;
+    const teacher = getTeacher();
+    if (teacher?.plan === 'free') {
+      toast.error('Excel (CSV) eksporti faqat Standard va Premium tariflarda mavjud! Tarifni oshiring.');
+      return;
+    }
+    window.open(`${API_URL}/online-tests/${testId}/export/excel`, '_blank');
   };
 
   const handleDownloadPDF = async () => {
@@ -197,20 +212,29 @@ export default function TestDetails() {
                   <ExternalLink size={14} /> Yechib ko'rish
                 </button>
                 
-                <div className="flex gap-2 w-full mt-1.5">
+                <div className="grid grid-cols-3 gap-2 w-full mt-1.5">
                   <button
                     onClick={handleExportWord}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 bg-white border border-zinc-200 text-zinc-700 text-[11px] font-semibold rounded-md hover:bg-zinc-50 transition-colors"
+                    className="flex items-center justify-center gap-1 px-2 py-2 bg-white border border-zinc-200 text-zinc-700 text-[11px] font-semibold rounded-md hover:bg-zinc-50 transition-colors"
+                    title="Word hujjat"
                   >
                     <FileText size={12} /> Word
                   </button>
                   <button
+                    onClick={handleExportExcel}
+                    className="flex items-center justify-center gap-1 px-2 py-2 bg-white border border-zinc-200 text-zinc-700 text-[11px] font-semibold rounded-md hover:bg-zinc-50 transition-colors"
+                    title="Excel CSV jadval"
+                  >
+                    <FileText size={12} className="text-emerald-600" /> Excel
+                  </button>
+                  <button
                     onClick={handleDownloadPDF}
                     disabled={isDownloadingPdf}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 bg-white border border-zinc-200 text-zinc-700 text-[11px] font-semibold rounded-md hover:bg-zinc-50 transition-colors disabled:opacity-50"
+                    className="flex items-center justify-center gap-1 px-2 py-2 bg-white border border-zinc-200 text-zinc-700 text-[11px] font-semibold rounded-md hover:bg-zinc-50 transition-colors disabled:opacity-50"
+                    title="PDF fayl"
                   >
                     {isDownloadingPdf
-                      ? <><Loader2 size={12} className="animate-spin" /> Tayyor...</>
+                      ? <><Loader2 size={12} className="animate-spin" /> ...</>
                       : <><Download size={12} /> PDF</>
                     }
                   </button>
