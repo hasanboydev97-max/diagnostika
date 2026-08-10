@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChevronRight, FileText, Search, Trash2, LogOut, ShieldAlert } from 'lucide-react';
+import { Plus, ChevronRight, FileText, Search, Trash2, ShieldAlert } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { getAuthHeaders, getToken, logout, getTeacher, fetchCurrentTeacher } from '../../lib/auth';
+import { getAuthHeaders, getToken, getTeacher, fetchCurrentTeacher } from '../../lib/auth';
 import MeshGradient from '../../components/ui/MeshGradient';
 import TeacherProfileModal from '../../components/TeacherProfileModal';
-import { User, Settings } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -88,68 +87,35 @@ export default function OnlineTestsDashboard() {
       {/* Top Navbar / Header Area */}
       <header className="border-b border-white/50 bg-white/60 backdrop-blur-xl sticky top-0 z-20 shadow-sm">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+          {/* Logo & Portal Title */}
           <div className="flex items-center gap-3">
-            {/* Clickable Avatar / Profile Trigger */}
-            <button
-              onClick={() => setIsProfileOpen(true)}
-              className="flex items-center gap-3 p-1.5 rounded-xl hover:bg-zinc-100/80 transition-all text-left group"
-              title="Profil Sozlamalari"
-            >
-              <div className="w-9 h-9 rounded-xl bg-zinc-900 text-white border border-zinc-700 overflow-hidden flex items-center justify-center font-bold text-sm shadow-xs group-hover:scale-105 transition-transform">
-                {teacher?.avatar ? (
-                  <img src={teacher.avatar} alt={teacher.name} className="w-full h-full object-cover" />
+            <div className="w-8 h-8 bg-zinc-900 text-white rounded-xl flex items-center justify-center font-bold text-sm shadow-xs">
+              M
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm font-semibold text-zinc-900 leading-tight">O'qituvchi Portali</h1>
+                {/* Plan Badge */}
+                {teacher?.plan === 'premium' ? (
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 border border-amber-500/30 uppercase">
+                    👑 Premium
+                  </span>
+                ) : teacher?.plan === 'standard' ? (
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-black text-white uppercase">
+                    🔥 Standard
+                  </span>
                 ) : (
-                  <span>{teacher?.name?.charAt(0)?.toUpperCase() || 'M'}</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200 uppercase">
+                    Free
+                  </span>
                 )}
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-sm font-semibold text-zinc-900 leading-tight group-hover:text-black">
-                    O'qituvchi Portali
-                  </h1>
-                  {/* Plan Badge */}
-                  {teacher?.plan === 'premium' ? (
-                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 border border-amber-500/30 uppercase">
-                      👑 Premium
-                    </span>
-                  ) : teacher?.plan === 'standard' ? (
-                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-black text-white uppercase">
-                      🔥 Standard
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200 uppercase">
-                      Free
-                    </span>
-                  )}
-                </div>
-                <p className="text-[11px] text-zinc-500 font-medium flex items-center gap-1">
-                  <span>{teacher?.name}</span>
-                  <Settings size={11} className="text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </p>
-              </div>
-            </button>
+              <p className="text-[11px] text-zinc-500 font-medium">{teacher?.name}</p>
+            </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            {/* Profile Button */}
-            <button
-              onClick={() => setIsProfileOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-zinc-200 hover:border-zinc-400 hover:bg-zinc-50 text-xs font-medium text-zinc-700 transition-colors"
-              title="Profil Sozlamalari"
-            >
-              <User size={14} />
-              <span className="hidden sm:inline">Profil</span>
-            </button>
-            {/* Upgrade Plan Button */}
-            {teacher?.plan !== 'premium' && (
-              <button
-                onClick={() => navigate('/')}
-                className="px-3 py-1.5 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 border border-amber-500/30 text-xs font-semibold transition-colors hidden sm:flex items-center gap-1"
-              >
-                <span>Tarifni Oshirish</span>
-              </button>
-            )}
-
+          {/* Right Header Actions: Admin link & Google-style Profile Avatar */}
+          <div className="flex items-center gap-3">
             {teacher?.role === 'admin' && (
               <button
                 onClick={() => navigate('/superadmin')}
@@ -159,19 +125,21 @@ export default function OnlineTestsDashboard() {
                 <span className="hidden sm:inline">Admin Panel</span>
               </button>
             )}
+
+            {/* Google-Style Clickable Avatar */}
             <button
-              onClick={() => navigate('/online-tests/create')}
-              className="flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+              onClick={() => setIsProfileOpen(true)}
+              className="relative p-0.5 rounded-full border-2 border-black/20 hover:border-black transition-all group focus:outline-none"
+              title="Profil Sozlamalari & Hisob"
             >
-              <Plus size={14} />
-              <span className="hidden sm:inline">Yangi Test</span>
-            </button>
-            <button
-              onClick={logout}
-              className="p-1.5 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-md transition-colors"
-              title="Chiqish"
-            >
-              <LogOut size={16} />
+              <div className="w-9 h-9 rounded-full bg-[#111111] text-white overflow-hidden flex items-center justify-center font-bold text-sm group-hover:scale-105 transition-transform shadow-xs">
+                {teacher?.avatar ? (
+                  <img src={teacher.avatar} alt={teacher.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span>{teacher?.name?.charAt(0)?.toUpperCase() || 'M'}</span>
+                )}
+              </div>
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
             </button>
           </div>
         </div>
@@ -193,18 +161,28 @@ export default function OnlineTestsDashboard() {
           </div>
         )}
         
-        {/* Search Bar */}
-        <div className="mb-6 relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-zinc-400" />
+        {/* Search Bar & Create Test Action Area */}
+        <div className="mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="relative flex-1 w-full">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+              <Search className="h-4 w-4" />
+            </div>
+            <input
+              type="text"
+              placeholder="Testlarni qidirish..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-white/80 backdrop-blur-md border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-900 transition-colors shadow-xs"
+            />
           </div>
-          <input
-            type="text"
-            placeholder="Test qidirish..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="block w-full pl-9 pr-4 py-3 bg-white/60 backdrop-blur-md border border-white/50 rounded-xl shadow-sm text-sm font-medium text-zinc-900 placeholder-zinc-400 focus:outline-none focus:border-white focus:bg-white/80 transition-all"
-          />
+
+          <button
+            onClick={() => navigate('/online-tests/create')}
+            className="w-full sm:w-auto px-6 py-2.5 bg-[#111111] hover:bg-black text-white rounded-xl text-xs font-bold uppercase tracking-[0.15em] flex items-center justify-center gap-2 shadow-sm transition-all hover:scale-105 active:scale-95 group shrink-0"
+          >
+            <Plus size={16} />
+            <span>Yangi Test Yaratish</span>
+          </button>
         </div>
 
         {/* List Section */}

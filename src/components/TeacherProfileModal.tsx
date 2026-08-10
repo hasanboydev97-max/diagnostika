@@ -7,10 +7,12 @@ import {
   Camera, 
   Upload, 
   Zap, 
-  Crown
+  Crown,
+  LogOut
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getAuthHeaders, setTeacher } from '../lib/auth';
+import { getAuthHeaders, setTeacher, logout } from '../lib/auth';
+import { useNavigate } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -27,6 +29,7 @@ export default function TeacherProfileModal({
   teacher,
   onTeacherUpdate
 }: TeacherProfileModalProps) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'profile' | 'subscription' | 'security' | 'branding'>('profile');
   const [loading, setLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
@@ -285,9 +288,24 @@ export default function TeacherProfileModal({
                 </div>
               </div>
 
-              {/* Status footer */}
-              <div className="pt-6 border-t border-black/10 text-[10px] tracking-[0.2em] uppercase text-gray-400">
-                STATUS: <span className="text-black font-bold">FAOL SESSYA</span>
+              {/* Status footer & Logout */}
+              <div className="pt-4 border-t border-black/10 flex flex-col gap-3">
+                <div className="text-[10px] tracking-[0.2em] uppercase text-gray-400">
+                  STATUS: <span className="text-black font-bold">FAOL SESSYA</span>
+                </div>
+                <button
+                  onClick={() => {
+                    logout();
+                    onClose();
+                  }}
+                  className="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-[0.2em] text-red-600 hover:bg-red-50 transition-colors flex items-center justify-between group border border-red-200/50"
+                >
+                  <span className="flex items-center gap-2">
+                    <LogOut size={14} />
+                    <span>Tizimdan Chiqish</span>
+                  </span>
+                  <ArrowUpRight className="group-hover:rotate-45 transition-transform duration-300" size={14} />
+                </button>
               </div>
             </div>
 
@@ -401,11 +419,24 @@ export default function TeacherProfileModal({
                       {teacher?.plan === 'premium' ? 'Premium 👑 Plan' : teacher?.plan === 'standard' ? 'Standard 🔥 Plan' : 'Free Plan'}
                     </h4>
 
-                    <p className="text-xs text-gray-400 leading-relaxed">
+                    <p className="text-xs text-gray-400 leading-relaxed mb-4">
                       {teacher?.plan === 'premium'
                         ? 'Cheksiz AI testlar, OCR Scanner, Word/Excel eksport va Shaxsiy branding imkoniyati faol.'
                         : 'Kunlik AI testlar soni va eksport imkoniyatlari obunangizga binoan cheklangan.'}
                     </p>
+
+                    {teacher?.plan !== 'premium' && (
+                      <button
+                        onClick={() => {
+                          onClose();
+                          navigate('/#pricing');
+                        }}
+                        className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs uppercase tracking-[0.2em] py-3 rounded-xl transition-colors flex items-center justify-center gap-2 group"
+                      >
+                        <span>Tarifni Oshirish (Upgrade)</span>
+                        <ArrowUpRight className="group-hover:rotate-45 transition-transform duration-300" size={14} />
+                      </button>
+                    )}
 
                     {teacher?.planExpiresAt && (
                       <div className="mt-4 pt-4 border-t border-white/10 text-[10px] tracking-[0.2em] uppercase text-gray-400">
