@@ -25,6 +25,15 @@ const unescapeBasic = (text: string) => {
     .replace(/&amp;/g, "&");
 };
 
+// Helper to detect if content inside backticks/code tags is actually a LaTeX math expression
+const isMathFormula = (code: string): boolean => {
+  const trimmed = code.trim();
+  if (trimmed.startsWith('$') || trimmed.endsWith('$')) return true;
+  if (trimmed.startsWith('\\(') || trimmed.startsWith('\\[')) return true;
+  if (/\\(frac|sqrt|sum|int|lim|alpha|beta|gamma|theta|pi|infty|times|div|le|ge|neq|approx|pm|cdot|begin|matrix)/.test(trimmed)) return true;
+  return false;
+};
+
 export default function FormattedText({ content, className = '' }: FormattedTextProps) {
   if (!content) return null;
 
@@ -37,7 +46,22 @@ export default function FormattedText({ content, className = '' }: FormattedText
 
   text = unescapeBasic(text); // decode &gt; so we can format it properly if needed
 
-  // 2. Extract code blocks to prevent math formatting from ruining them
+  // 2. Unwrap backticks or <code> tags if they wrap math formulas (e.g. `$$\frac{a}{b}$$` or `\frac{a}{b}`)
+  text = text.replace(/`([^`]+)`/g, (match, inner) => {
+    if (isMathFormula(inner)) {
+      return inner;
+    }
+    return match;
+  });
+
+  text = text.replace(/<code>([\s\S]*?)<\/code>/gi, (match, inner) => {
+    if (isMathFormula(inner)) {
+      return inner;
+    }
+    return match;
+  });
+
+  // 3. Extract code blocks to prevent math formatting from ruining them
   const codeBlocks: string[] = [];
   let placeholderIndex = 0;
 
@@ -65,10 +89,22 @@ export default function FormattedText({ content, className = '' }: FormattedText
     return `___CODE_BLOCK_${placeholderIndex++}___`;
   });
 
-  // 3. Apply math formatting only to the non-code parts
-  let formattedText = autoFormatMath(text);
+  // 4. Pre-process LaTeX delimiters
+  // Convert \[...\] -> $...$ and \(...\) -> $...$
+  text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$1$$');
+  text = text.replace(/\\\(([\s\S]*?)\\\)/g, '$$1$');
 
-  // 4. Split by $ to render math and text
+  // Convert $$...$$ (display math) to $...$ so split('$') handles it smoothly
+  text = text.replace(/\$\$\s*=\s*/g, '$$').replace(/\$\s*=\s*\\frac/g, '$\\frac');
+  text = text.replace(/\$\$([\s\S]*?)\$\$/g, '$$1$');
+
+  // 5. Apply math formatting only if text DOES NOT already contain $ or LaTeX commands
+  let formattedText = text;
+  if (!text.includes('$') && !text.includes('\\frac') && !text.includes('\\sqrt')) {
+    formattedText = autoFormatMath(text);
+  }
+
+  // 6. Split by $ to render math and text
   const parts = formattedText.split('$');
   const renderedElements = parts.map((part, index) => {
     // If it's an even index, it's normal text (but might contain code block placeholders)
@@ -113,12 +149,19 @@ export default function FormattedText({ content, className = '' }: FormattedText
       return <span key={index}>{subParts}</span>;
     } else {
       // It's a math block
+      if (!part.trim()) return null;
+
+      let cleanMath = part.trim();
+      if (cleanMath.startsWith('=\\')) {
+        cleanMath = cleanMath.substring(1);
+      }
+
       try {
-        const html = katex.renderToString(part, {
+        const html = katex.renderToString(cleanMath, {
           throwOnError: false,
           displayMode: false
         });
-        return <span key={index} dangerouslySetInnerHTML={{ __html: html }} />;
+        return <span key={index} className="inline-block mx-0.5 align-middle" dangerouslySetInnerHTML={{ __html: html }} />;
       } catch (e) {
         return <span key={index} className="text-red-500 font-bold">${part}$</span>;
       }

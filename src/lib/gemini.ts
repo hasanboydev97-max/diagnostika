@@ -213,6 +213,7 @@ MUHIM QOIDALAR:
 3. Variantlar ichida faqat BITTA to'g'ri javob bo'lsin
 4. Noto'g'ri variantlar ham mantiqan ishonchli bo'lsin (tasodifiy emas)
 5. "Oson" savollar oddiy, "O'rta" chuqurroq, "Qiyin" murakkab bo'lsin
+6. Matematik va informatikaga oid barcha formulalar (masalan Excel formulalari, kasrlar, ildizlar) toza LaTeX ko'rinishida yozilsin: inline formulalar uchun $...$ belgisidan foydalanilsin (masalan: $A1 = 10$, $\\frac{A1+B1+C1}{2}$). Formulalarni backtick \`...\` yoki $$...$$ ichiga olmang.
 
 Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
 [

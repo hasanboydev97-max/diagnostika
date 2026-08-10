@@ -24,6 +24,11 @@ function isTextWord(word: string): boolean {
 export function autoFormatMath(text: string): string {
   if (!text) return text;
   
+  // If the text already has LaTeX delimiters or commands, do not attempt to strip $ or reformat
+  if (text.includes('$') || text.includes('\\frac') || text.includes('\\sqrt') || text.includes('\\(') || text.includes('\\[')) {
+    return text;
+  }
+  
   // 1. Strip all existing $ to normalize the string
   let normalized = text.replace(/\$/g, '');
   
