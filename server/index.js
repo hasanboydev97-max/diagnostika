@@ -490,32 +490,43 @@ function cleanMathForText(text) {
   if (!text) return '';
   let str = String(text);
 
-  // Replace common LaTeX expressions with clean readable unicode symbols
+  // Use ASCII-safe representations — PDFKit's built-in Helvetica font
+  // does NOT support most Unicode math symbols (√, ², ∞, α, etc.)
+  // They get corrupted to random characters like '"'. Use plain ASCII instead.
   str = str
+    // Handle nested sqrt first (e.g. \sqrt{7-4\sqrt{3}})
+    .replace(/\\sqrt\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g, 'sqrt($1)')
+    .replace(/\\sqrt/g, 'sqrt')
     .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
-    .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
-    .replace(/\\sqrt/g, '√')
-    .replace(/\\times/g, '×')
-    .replace(/\\div/g, '÷')
-    .replace(/\\pm/g, '±')
-    .replace(/\\leq/g, '≤')
-    .replace(/\\geq/g, '≥')
-    .replace(/\\neq/g, '≠')
-    .replace(/\\approx/g, '≈')
-    .replace(/\\infty/g, '∞')
-    .replace(/\\cdot/g, '·')
-    .replace(/\\alpha/g, 'α')
-    .replace(/\\beta/g, 'β')
-    .replace(/\\gamma/g, 'γ')
-    .replace(/\\pi/g, 'π')
-    .replace(/\\theta/g, 'θ')
-    .replace(/\^2/g, '²')
-    .replace(/\^3/g, '³')
+    .replace(/\\times/g, '*')
+    .replace(/\\div/g, '/')
+    .replace(/\\pm/g, '+-')
+    .replace(/\\leq/g, '<=')
+    .replace(/\\geq/g, '>=')
+    .replace(/\\neq/g, '!=')
+    .replace(/\\approx/g, '~')
+    .replace(/\\infty/g, 'inf')
+    .replace(/\\cdot/g, '*')
+    .replace(/\\alpha/g, 'alpha')
+    .replace(/\\beta/g, 'beta')
+    .replace(/\\gamma/g, 'gamma')
+    .replace(/\\pi/g, 'pi')
+    .replace(/\\theta/g, 'theta')
+    .replace(/\\sin/g, 'sin')
+    .replace(/\\cos/g, 'cos')
+    .replace(/\\tan/g, 'tan')
+    .replace(/\\log/g, 'log')
+    .replace(/\\ln/g, 'ln')
+    .replace(/\\sum/g, 'sum')
+    .replace(/\\int/g, 'int')
+    .replace(/\^2/g, '^2')
+    .replace(/\^3/g, '^3')
     .replace(/\^{([^}]+)}/g, '^($1)')
     .replace(/_{([^}]+)}/g, '_($1)')
     .replace(/<[^>]*>/g, '') // strip HTML tags
     .replace(/\$/g, '') // strip LaTeX dollar signs
-    .replace(/\\/g, ''); // strip remaining backslashes
+    .replace(/\\/g, '') // strip remaining backslashes
+    .replace(/\{|\}/g, ''); // strip remaining braces
 
   return str.trim();
 }
