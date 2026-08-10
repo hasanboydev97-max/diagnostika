@@ -1233,39 +1233,94 @@ app.post('/api/online-tests/generate', authMiddleware, async (req, res) => {
     const genAI = new GoogleGenerativeAI(apiKey);
     const modelsToTry = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-flash-latest'];
 
-    // ─── Clean positive-only prompt (no ❌ FORBIDDEN negative examples) ───
-    const prompt = `Siz O'zbekiston maktablari uchun professional ${subject} fanidan test tuzuvchi sun'iy intellektsiz.
+    // ═══════════════════════════════════════════════════════════════
+    // FAN-AWARE PROMPT BUILDER — har bir fan turi uchun alohida qoida
+    // ═══════════════════════════════════════════════════════════════
+    function buildTestPrompt({ topic, subject, questionCount = 5, difficulty = 'aralash' }) {
+      const s = (subject || '').toLowerCase();
+      const isExactScience = /matematika|fizika|kimyo|algebra|geometriya|trigonometriya|analitik/i.test(s);
+      const isLanguage     = /ingliz|rus|nemis|o.zbek tili|ona tili|adabiyot|fransuz|arab/i.test(s);
+      const isInformatics  = /informatika|dasturlash|excel|python|javascript|algoritmlar/i.test(s);
+
+      let formatRules, examples;
+
+      if (isExactScience) {
+        formatRules = `
+LaTeX YOZISH QOIDALARI:
+- Alohida formula: $$...$$   |   Matn ichida: $...$
+- Kasr: $$\\\\frac{a}{b}$$   |   Daraja: $x^{2}$   |   Ildiz: $\\\\sqrt{x}$, $\\\\sqrt[3]{8}$
+- Indeks: $x_{1}$, $a_{n}$   |   Trigonometriya: $\\\\sin\\\\alpha$, $\\\\cos x$, $\\\\tan\\\\beta$
+- Gradus: $60^{\\\\circ}$
+- Tenglamalar sistemasi: $$\\\\begin{cases} x+y=5\\\\\\\\ x-y=1 \\\\end{cases}$$
+- Fizika birliklari oddiy matnda: "5 m/s", "10 N", "220 V"
+MAJBURIY: questionText ichida to'liq, aniq son/formula bo'lsin. Hech qachon "___" yoki bo'sh joy qoldirmang.`;
+
+        examples = `{"questionText":"Hisoblang: $$\\\\sqrt{144}-\\\\sqrt{49}+\\\\sqrt{25}$$","options":["$10$","$8$","$12$","$14$"],"correctOption":"$10$","type":"multiple_choice","subtopic":"Ildizlar","difficulty":"oson"}
+{"questionText":"Tenglamani yeching: $$x^{2}-5x+6=0$$","options":["$x_1=1,\\\\, x_2=6$","$x_1=2,\\\\, x_2=3$","$x_1=-2,\\\\, x_2=-3$","$x_1=3,\\\\, x_2=4$"],"correctOption":"$x_1=2,\\\\, x_2=3$","type":"multiple_choice","subtopic":"Kvadrat tenglamalar","difficulty":"o'rta"}
+{"questionText":"Soddalashtiring: $$\\\\sin^{2}\\\\alpha+\\\\cos^{2}\\\\alpha$$","options":["$1$","$0$","$2\\\\sin\\\\alpha$","$\\\\sin\\\\alpha\\\\cos\\\\alpha$"],"correctOption":"$1$","type":"multiple_choice","subtopic":"Trigonometrik ayniyatlar","difficulty":"oson"}
+{"questionText":"Kasrning maxrajini irratsionallikdan qutqaring: $$\\\\frac{1}{\\\\sqrt{5}-\\\\sqrt{2}}$$","options":["$\\\\sqrt{5}+\\\\sqrt{2}$","$\\\\frac{\\\\sqrt{5}+\\\\sqrt{2}}{3}$","$\\\\sqrt{5}-\\\\sqrt{2}$","$3$"],"correctOption":"$\\\\frac{\\\\sqrt{5}+\\\\sqrt{2}}{3}$","type":"multiple_choice","subtopic":"Irratsional ifodalar","difficulty":"qiyin"}
+{"questionText":"Viyet teoremasiga ko'ra, $$x^{2}-5x+6=0$$ tenglamaning ildizlari yig'indisi va ko'paytmasini toping.","options":["Yig'indisi: $5$, Ko'paytmasi: $6$","Yig'indisi: $-5$, Ko'paytmasi: $6$","Yig'indisi: $6$, Ko'paytmasi: $5$","Yig'indisi: $5$, Ko'paytmasi: $-6$"],"correctOption":"Yig'indisi: $5$, Ko'paytmasi: $6$","type":"multiple_choice","subtopic":"Viyet teoremasi","difficulty":"o'rta"}
+{"questionText":"$$[0^{\\\\circ}, 90^{\\\\circ}]$$ oralig'idagi $$2\\\\sin x-\\\\sqrt{3}=0$$ tenglamaning ildizini toping.","options":["$60^{\\\\circ}$","$30^{\\\\circ}$","$45^{\\\\circ}$","$90^{\\\\circ}$"],"correctOption":"$60^{\\\\circ}$","type":"multiple_choice","subtopic":"Trigonometrik tenglamalar","difficulty":"o'rta"}`;
+
+      } else if (isLanguage) {
+        formatRules = `
+QOIDA: Formula kerak emas. Har bir savol aniq gap, so'z yoki matn parchasi ustida qurilsin.
+- Grammatika: to'liq gapni keltiring — "Choose the correct form: She ___ to school every day."
+- Matn tushunish: qisqa (3-5 gapli) parcha keltirib, keyin savol bering.
+- Lug'at/tarjima: so'zni aniq tirnoq ichida ko'rsating.
+MAJBURIY: savol matnida bo'sh joy yoki noaniqlik qoldirmang — hamma narsa aniq va to'liq yozilsin.`;
+
+        examples = `{"questionText":"Choose the correct form: 'She ___ to school every day.'","options":["go","goes","going","gone"],"correctOption":"goes","type":"multiple_choice","subtopic":"Present Simple","difficulty":"oson"}
+{"questionText":"'Bright' so'ziga eng yaqin ma'nodagi sinonimni tanlang.","options":["dull","shiny","dark","quiet"],"correctOption":"shiny","type":"multiple_choice","subtopic":"Vocabulary","difficulty":"o'rta"}
+{"questionText":"Quyidagi gapda qaysi so'z noto'g'ri ishlatilgan? 'Yesterday I have seen a good film.'","options":["Yesterday","have seen","good","film"],"correctOption":"have seen","type":"multiple_choice","subtopic":"Past Simple vs Present Perfect","difficulty":"qiyin"}`;
+
+      } else if (isInformatics) {
+        formatRules = `
+QOIDA: Kod yoki Excel formulasi backtick (\`) ichida yoziladi, LaTeX EMAS.
+- Excel: \`=SUM(A1:B5)\`, \`=IF(A1>10,"Katta","Kichik")\`
+- Kod: \`for i in range(10): print(i)\`
+MAJBURIY: savol ichida aniq formula/kod bo'lsin — "quyidagi formula" deb umumiy yozmang, formulaning o'zini keltiring.`;
+
+        examples = `{"questionText":"Quyidagi \`=IF(A1>50,\\"O'tdi\\",\\"Yiqildi\\")\` formulasi A1=60 bo'lganda qanday natija beradi?","options":["O'tdi","Yiqildi","60","Xato"],"correctOption":"O'tdi","type":"multiple_choice","subtopic":"Excel IF funksiyasi","difficulty":"o'rta"}
+{"questionText":"Python'da \`len([1, 2, 3, 4, 5])\` ifodasi qanday natija qaytaradi?","options":["4","5","6","Xato"],"correctOption":"5","type":"multiple_choice","subtopic":"Python ro'yxatlar","difficulty":"oson"}`;
+
+      } else {
+        // Tarix, Biologiya, Geografiya, Iqtisod, Huquq va boshqalar
+        formatRules = `
+QOIDA: Formula kerak emas. Savolda aniq fakt, sana, atama yoki tushuncha bo'lsin.
+- Sanalar aniq yozilsin: "1991-yil 1-sentyabr", "milodiy III asr"
+- Atama va tushunchalar to'liq, bo'sh joysiz yozilsin.
+MAJBURIY: savol o'zida barcha kerakli faktni to'liq saqlasin — tashqi kontekstga muhtoj bo'lmasin.`;
+
+        examples = `{"questionText":"O'zbekiston Respublikasi qachon mustaqillikka erishdi?","options":["1991-yil 1-sentyabr","1990-yil 20-iyun","1992-yil 8-dekabr","1989-yil 21-oktyabr"],"correctOption":"1991-yil 1-sentyabr","type":"multiple_choice","subtopic":"Yangi tarix","difficulty":"oson"}
+{"questionText":"Inson tanasidagi eng katta bez qaysi?","options":["Jigar","Buyrak","Me'da osti bezi","Qalqonsimon bez"],"correctOption":"Jigar","type":"multiple_choice","subtopic":"Anatomiya","difficulty":"o'rta"}`;
+      }
+
+      return `Siz O'zbekiston maktablari uchun professional ${subject} fanidan test tuzuvchi sun'iy intellektsiz. Vazifangiz — pedagogik jihatdan sifatli, xilma-xil va xatosiz test savollarini yaratish.
 
 MAVZU: ${topic}
-SAVOLLAR SONI: ${questionCount || 5}
+SAVOLLAR SONI: ${questionCount}
+QIYINLIK DARAJASI: ${difficulty} (aralash bo'lsa — oson/o'rta/qiyin taxminan teng taqsimlansin)
 
-VAZIFA: Har bir savol matni (questionText) ichida aniq matematik ifoda LaTeX formatida yozilgan bo'lishi shart.
+${formatRules}
 
-LaTeX YOZISH QOIDALARI:
-- Alohida ko'rsatiladigan formula: $$...$$
-- Matn ichidagi formula: $...$
-- Kasr: $$\\frac{a}{b}$$
-- Daraja: $x^{2}$
-- Ildiz: $\\sqrt{x}$, $\\sqrt[3]{8}$
-- Indeks: $x_{1}$, $a_{n}$
-- Trigonometriya: $\\sin\\alpha$, $\\cos x$, $\\tan\\beta$
-- Gradus: $60^{\\circ}$
-- Tenglamalar sistemasi: $$\\begin{cases} x+y=5\\\\ x-y=1 \\end{cases}$$
-- Excel/Informatika formulalari: backtick bilan: \`=SUM(A1:B5)\`
+SIFAT MEZONLARI (har bir savolni yaratishdan oldin o'zingizni shu bo'yicha tekshiring):
+1. Savol matni to'liq va mustaqil tushunarli bo'lsin — tashqi kontekstga muhtoj bo'lmasin.
+2. 4 ta variant: 1 ta to'g'ri, 3 ta noto'g'ri. Noto'g'ri variantlar mantiqiy yaqin, lekin aniq xato bo'lsin.
+3. To'g'ri javob pozitsiyasi savoldan savolga tasodifiy taqsimlansin.
+4. Bir xil savol yoki bir xil variantlar takrorlanmasin.
+5. Har bir savol aniq bitta subtopic'ga tegishli bo'lsin, subtopic'lar xilma-xil bo'lsin.
+6. Faktik yoki grammatik xatolar bo'lmasin.
 
-TO'G'RI YOZILGAN SAVOLLAR NAMUNASI (shu uslubga qat'iy amal qiling):
+TO'G'RI FORMATLANGAN NAMUNALAR (aynan shu uslub va aniqlikda yozing):
+${examples}
 
-{"questionText":"Hisoblang: $$\\sqrt{144}-\\sqrt{49}+\\sqrt{25}$$","options":["$10$","$8$","$12$","$14$"],"correctOption":"$10$","type":"multiple_choice","subtopic":"Ildizlar"}
-{"questionText":"Tenglamani yeching: $$x^{2}-5x+6=0$$","options":["$x_1=1,\\, x_2=6$","$x_1=2,\\, x_2=3$","$x_1=-2,\\, x_2=-3$","$x_1=3,\\, x_2=4$"],"correctOption":"$x_1=2,\\, x_2=3$","type":"multiple_choice","subtopic":"Kvadrat tenglamalar"}
-{"questionText":"Soddalashtiring: $$\\sin^{2}\\alpha+\\cos^{2}\\alpha$$","options":["$1$","$0$","$2\\sin\\alpha$","$\\sin\\alpha\\cos\\alpha$"],"correctOption":"$1$","type":"multiple_choice","subtopic":"Trigonometrik ayniyatlar"}
-{"questionText":"Kasrning maxrajini irratsionallikdan qutqaring: $$\\frac{1}{\\sqrt{5}-\\sqrt{2}}$$","options":["$\\sqrt{5}+\\sqrt{2}$","$\\frac{\\sqrt{5}+\\sqrt{2}}{3}$","$\\sqrt{5}-\\sqrt{2}$","$3$"],"correctOption":"$\\frac{\\sqrt{5}+\\sqrt{2}}{3}$","type":"multiple_choice","subtopic":"Irratsional ifodalar"}
-{"questionText":"Viyet teoremasiga ko'ra, $$x^{2}-5x+6=0$$ tenglamaning ildizlari yig'indisi va ko'paytmasini toping.","options":["Yig'indisi: $5$, Ko'paytmasi: $6$","Yig'indisi: $-5$, Ko'paytmasi: $6$","Yig'indisi: $6$, Ko'paytmasi: $5$","Yig'indisi: $5$, Ko'paytmasi: $-6$"],"correctOption":"Yig'indisi: $5$, Ko'paytmasi: $6$","type":"multiple_choice","subtopic":"Viyet teoremasi"}
-{"questionText":"Agar $$x^{2}-6x+k=0$$ tenglama karrali ildizga ega bo'lsa, $k$ ning qiymatini toping.","options":["$9$","$6$","$12$","$3$"],"correctOption":"$9$","type":"multiple_choice","subtopic":"Diskriminant"}
-{"questionText":"$$[0^{\\circ}, 90^{\\circ}]$$ oralig'idagi $$2\\sin x-\\sqrt{3}=0$$ tenglamaning ildizini toping.","options":["$60^{\\circ}$","$30^{\\circ}$","$45^{\\circ}$","$90^{\\circ}$"],"correctOption":"$60^{\\circ}$","type":"multiple_choice","subtopic":"Trigonometrik tenglamalar"}
+CHIQISH FORMATI:
+Faqat xom (raw) JSON massiv qaytaring. Markdown code fence (\`\`\`) ishlatmang, boshida yoki oxirida hech qanday matn/izoh yozmang.
+Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, difficulty maydonlari bo'lsin.`;
+    }
 
-Har bir savolni ANIQ raqamlar va formulalar bilan yozing — mavzuga (${topic}) mos, lekin yuqoridagi strukturaviy uslubda.
-Faqat xom JSON massiv qaytaring. Boshida yoki oxirida hech qanday izoh, markdown yoki \`\`\` yozmang.
-Har bir savolda 1 ta to'g'ri va 3 ta noto'g'ri variant, to'g'ri javob pozitsiyasi tasodifiy bo'lsin.`;
+    const prompt = buildTestPrompt({ topic, subject, questionCount: questionCount || 5, difficulty: req.body.difficulty || 'aralash' });
 
     // ─── Detect broken question (formula replaced with bare '1') ───
     function isQuestionBroken(qText) {
