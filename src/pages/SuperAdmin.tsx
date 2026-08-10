@@ -11,11 +11,7 @@ import {
   LogOut,
   Search,
   ArrowRight,
-  Crown,
-  Zap,
-  CheckCircle2,
-  Clock,
-  ShieldCheck
+  Crown
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getToken, getTeacher } from '../lib/auth';
@@ -282,15 +278,17 @@ export default function SuperAdmin() {
                   </motion.div>
                 )}
 
-                {/* SUBSCRIPTIONS & PAYMENT APPROVAL TAB */}
+                {/* SUBSCRIPTIONS & PAYMENT APPROVAL TAB (PREMIUM MINIMALIST UI) */}
                 {activeTab === 'subscriptions' && (
                   <motion.div variants={containerVariants} initial="hidden" animate="show" className="flex flex-col w-full">
                     <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-black/10 pb-8 mb-8 gap-6">
                       <div>
                         <motion.h2 variants={itemVariants} className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500 mb-1">
-                          Obuna va To'lovlar Boshqaruvi
+                          OBUNA VA DOSTUP BOSHQARUVI
                         </motion.h2>
-                        <p className="text-xs text-gray-400">Foydalanuvchilarga to'lovdan so'ng 1 ta bosishda dostup ochib bering</p>
+                        <p className="text-xs text-gray-400 leading-relaxed max-w-sm">
+                          Foydalanuvchi to'lov so'rovlarini ko'rish hamda 1 marta bosishda tariflarni faollashtirish.
+                        </p>
                       </div>
                       
                       <motion.div variants={itemVariants} className="relative w-full md:w-72">
@@ -306,7 +304,7 @@ export default function SuperAdmin() {
                     </div>
 
                     {subscriptions.length === 0 ? (
-                      <EmptyState message="Obuna so'rovlari topilmadi." />
+                      <EmptyState message="Hech qanday obuna so'rovi mavjud emas." />
                     ) : (
                       <div className="overflow-x-auto">
                         <table className="w-full text-left whitespace-nowrap border-collapse">
@@ -314,7 +312,7 @@ export default function SuperAdmin() {
                             <tr>
                               <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Foydalanuvchi</th>
                               <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Joriy Tarif</th>
-                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">So'rov / Chek (Raqam)</th>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">So'rov / Chek kodi</th>
                               <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Holat</th>
                               <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest text-right">Dostup Ochish</th>
                             </tr>
@@ -325,25 +323,26 @@ export default function SuperAdmin() {
                               .map(s => {
                                 const isPending = s.planStatus === 'pending';
                                 return (
-                                  <tr key={s._id} className={`group transition-colors border-b border-black/10 ${isPending ? 'bg-amber-500/5' : 'hover:bg-[#f8f8f8]'}`}>
-                                    <td className="py-6 pl-4 md:pl-0">
-                                      <div className="text-base font-bold text-neutral-900">{s.name}</div>
-                                      <div className="text-xs text-neutral-500">{s.email}</div>
+                                  <tr key={s._id} className="group hover:bg-black/[0.02] transition-colors border-b border-black/10">
+                                    {/* User Details */}
+                                    <td className="py-6 pl-4 md:pl-0 group-hover:pl-4 transition-all duration-300">
+                                      <div className="text-lg md:text-xl font-medium tracking-tight text-neutral-900">{s.name}</div>
+                                      <div className="text-xs font-mono tracking-wider text-gray-400 mt-0.5">{s.email}</div>
                                     </td>
                                     
                                     {/* Current Plan Badge */}
                                     <td className="py-6 pl-6">
                                       {s.plan === 'premium' ? (
-                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 font-extrabold text-[11px] uppercase border border-amber-500/30">
-                                          <Crown className="w-3.5 h-3.5" /> Premium
+                                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-white bg-black px-3 py-1 rounded-full shadow-sm">
+                                          Premium 👑
                                         </span>
                                       ) : s.plan === 'standard' ? (
-                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black text-white font-extrabold text-[11px] uppercase">
-                                          <Zap className="w-3.5 h-3.5 text-amber-400" /> Standard
+                                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-black border border-black/80 px-3 py-1 rounded-full bg-black/5">
+                                          Standard 🔥
                                         </span>
                                       ) : (
-                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 text-neutral-600 font-bold text-[11px] uppercase border border-neutral-200">
-                                          Free (Bepul)
+                                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-400 border border-black/10 px-3 py-1 rounded-full">
+                                          Free
                                         </span>
                                       )}
                                     </td>
@@ -351,56 +350,58 @@ export default function SuperAdmin() {
                                     {/* Requested Plan / Payment Note */}
                                     <td className="py-6 pl-6">
                                       {s.requestedPlan ? (
-                                        <div className="space-y-1">
-                                          <span className="text-xs font-bold text-black uppercase tracking-wider block">
-                                            So'rov: {s.requestedPlan}
+                                        <div className="flex flex-col gap-0.5">
+                                          <span className="text-xs font-semibold tracking-wide text-neutral-900 uppercase">
+                                            {s.requestedPlan} TARIFI
                                           </span>
-                                          {s.paymentNote && (
-                                            <span className="text-xs text-neutral-500 font-mono block bg-white px-2 py-1 rounded border border-neutral-200 w-fit">
+                                          {s.paymentNote ? (
+                                            <span className="text-[11px] font-mono text-gray-500">
                                               {s.paymentNote}
                                             </span>
+                                          ) : (
+                                            <span className="text-[11px] text-gray-300">Chek biriktirilmagan</span>
                                           )}
                                         </div>
                                       ) : (
-                                        <span className="text-xs text-neutral-400">—</span>
+                                        <span className="text-xs text-gray-300">—</span>
                                       )}
                                     </td>
 
                                     {/* Status */}
                                     <td className="py-6 pl-6">
                                       {isPending ? (
-                                        <span className="inline-flex items-center gap-1 text-amber-600 font-extrabold text-xs animate-pulse">
-                                          <Clock className="w-3.5 h-3.5" /> Kutilmoqda
+                                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-amber-600 border border-amber-500/30 px-3 py-1 rounded-full bg-amber-500/5">
+                                          Kutilmoqda ⏳
                                         </span>
                                       ) : (
-                                        <span className="inline-flex items-center gap-1 text-emerald-600 font-bold text-xs">
-                                          <CheckCircle2 className="w-3.5 h-3.5" /> Faol
+                                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-400 border border-black/10 px-3 py-1 rounded-full">
+                                          Faol 🟢
                                         </span>
                                       )}
                                     </td>
 
-                                    {/* Dostup Actions */}
+                                    {/* Dostup Action Buttons */}
                                     <td className="py-6 pr-4 md:pr-0 text-right">
-                                      <div className="flex items-center justify-end gap-2">
+                                      <div className="flex items-center justify-end gap-3">
                                         {isPending && s.requestedPlan && (
                                           <button
                                             onClick={() => handleUpdateTeacherPlan(s._id, s.requestedPlan, 'active', 30)}
-                                            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1"
+                                            className="px-4 py-2 rounded-xl bg-black hover:bg-neutral-800 text-white font-medium text-xs tracking-wide uppercase transition-all duration-300 shadow-sm flex items-center gap-1.5"
                                           >
-                                            <ShieldCheck className="w-3.5 h-3.5" />
-                                            <span>Ochish (30 kun)</span>
+                                            <span>Dostup Ochish</span>
+                                            <ArrowRight className="w-3.5 h-3.5 transform -rotate-45 group-hover:rotate-0 transition-transform" />
                                           </button>
                                         )}
 
-                                        {/* Direct Plan Switcher */}
+                                        {/* Minimalist Plan Selector Dropdown */}
                                         <select
                                           value={s.plan || 'free'}
                                           onChange={(e) => handleUpdateTeacherPlan(s._id, e.target.value, 'active', 30)}
-                                          className="text-xs font-semibold bg-white border border-neutral-300 rounded-xl px-2 py-1.5 focus:outline-none focus:border-black"
+                                          className="text-xs font-semibold uppercase tracking-wider bg-transparent border border-black/10 rounded-xl px-3 py-2 focus:outline-none hover:border-black/30 transition-all text-neutral-800"
                                         >
                                           <option value="free">Free</option>
-                                          <option value="standard">Standard (30 Kun)</option>
-                                          <option value="premium">Premium (30 Kun)</option>
+                                          <option value="standard">Standard (30 kun)</option>
+                                          <option value="premium">Premium (30 kun)</option>
                                         </select>
                                       </div>
                                     </td>
