@@ -487,6 +487,40 @@ function isTextWord(word) {
   return /^[a-zA-Z'oEʻgEʻ]+$/i.test(cleanWord);
 }
 
+function cleanMathForText(text) {
+  if (!text) return '';
+  let str = String(text);
+
+  // Replace common LaTeX expressions with clean readable unicode symbols
+  str = str
+    .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
+    .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
+    .replace(/\\sqrt/g, '√')
+    .replace(/\\times/g, '×')
+    .replace(/\\div/g, '÷')
+    .replace(/\\pm/g, '±')
+    .replace(/\\leq/g, '≤')
+    .replace(/\\geq/g, '≥')
+    .replace(/\\neq/g, '≠')
+    .replace(/\\approx/g, '≈')
+    .replace(/\\infty/g, '∞')
+    .replace(/\\cdot/g, '·')
+    .replace(/\\alpha/g, 'α')
+    .replace(/\\beta/g, 'β')
+    .replace(/\\gamma/g, 'γ')
+    .replace(/\\pi/g, 'π')
+    .replace(/\\theta/g, 'θ')
+    .replace(/\^2/g, '²')
+    .replace(/\^3/g, '³')
+    .replace(/\^{([^}]+)}/g, '^($1)')
+    .replace(/_{([^}]+)}/g, '_($1)')
+    .replace(/<[^>]*>/g, '') // strip HTML tags
+    .replace(/\$/g, '') // strip LaTeX dollar signs
+    .replace(/\\/g, ''); // strip remaining backslashes
+
+  return str.trim();
+}
+
 function latexToOmml(latex) {
   try {
     const mathml = katex.renderToString(latex.trim(), { output: 'mathml', displayMode: false, throwOnError: false });
