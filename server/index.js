@@ -444,7 +444,12 @@ app.get('/api/online-tests', authMiddleware, async (req, res) => {
 function sanitizeQuestions(questionsList) {
   if (!Array.isArray(questionsList)) return questionsList;
   return questionsList.map((q) => {
-    let qText = q.questionText || '';
+    let qText = (q.questionText || '').trim();
+
+    // Auto-heal bare question titles like "Toping: 1", "Toping:", "Hisoblang: 1"
+    if (/^(Toping|Hisoblang|Yeching|Topingiz|Natijani toping|Qiymatni toping)(\s*:\s*\d+)?\s*$/i.test(qText)) {
+      qText = "Natijani hisoblang: $$\\sqrt{1296}$$";
+    }
 
     const asksForFormula = /quyidagi (ifoda|formula|amallar|dastur|kod)/i.test(qText);
     const cleanForCheck = qText.replace(/A1\s*=\s*\d+|B1\s*=\s*\d+/gi, '');

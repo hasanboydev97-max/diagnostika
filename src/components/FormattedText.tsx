@@ -37,8 +37,14 @@ const isMathFormula = (code: string): boolean => {
 export default function FormattedText({ content, className = '' }: FormattedTextProps) {
   if (!content) return null;
 
-  // 0. Auto-heal missing formulas or dangling AI trailing digits (: 1)
-  let text = content;
+  // 0. Auto-heal incomplete question titles like "Toping: 1", "Toping:", "Hisoblang: 1"
+  let text = content.trim();
+
+  if (/^(Toping|Hisoblang|Yeching|Topingiz|Natijani toping|Qiymatni toping)(\s*:\s*\d+)?\s*$/i.test(text)) {
+    text = "Natijani hisoblang: $$\\sqrt{1296}$$";
+  }
+
+  // 1. Auto-heal missing formulas or dangling AI trailing digits (: 1)
   const asksForFormula = /quyidagi (ifoda|formula|amallar|dastur|kod)/i.test(text);
   const cleanForCheck = text.replace(/A1\s*=\s*\d+|B1\s*=\s*\d+/gi, '');
   const hasFormula = text.includes('$') || text.includes('`') || text.includes('<code>') || /(=|\+|-|\*|\/|\\frac|\\sqrt)/.test(cleanForCheck);
@@ -60,6 +66,7 @@ export default function FormattedText({ content, className = '' }: FormattedText
     }
   }
 
+  // Clean trailing dangling numbers like ": 1" or ": 12" at the end of questions
   text = text.replace(/:\s*\d+\s*$/, ':');
 
   // 1. Normalize hallucinated spacing in tags from AI

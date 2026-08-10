@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, Suspense, lazy } from 'react';
-import CustomCursor from './components/CustomCursor';
 import InitialLoader from './components/InitialLoader';
 import { Toaster } from 'sonner';
 
@@ -30,7 +29,6 @@ function App() {
 
   return (
     <BrowserRouter>
-      <CustomCursor />
       <PwaInstallPrompt />
       <Suspense fallback={<RouteLoader />}>
         <Routes>
