@@ -43,7 +43,10 @@ function buildDocxChildren(content, options = {}) {
 
       const omml = latexToOmml(cleanMath);
       if (omml) {
-        children.push(new ImportedXmlComponent(omml));
+        const parsed = ImportedXmlComponent.fromXmlString(omml);
+        if (parsed && parsed.root && parsed.root.length > 0) {
+          children.push(parsed.root[0]);
+        }
       } else {
         children.push(new TextRun({ text: `$${part}$`, ...options }));
       }
