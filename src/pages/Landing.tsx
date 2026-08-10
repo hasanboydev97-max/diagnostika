@@ -48,9 +48,7 @@ export default function Landing() {
         <section className="grid grid-cols-1 md:grid-cols-12 gap-12">
           <div className="md:col-span-4 md:sticky md:top-32 h-fit">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="flex items-center gap-3 mb-8 md:mb-0">
-              <div className="w-8 h-8 rounded-full border border-black/10 flex items-center justify-center font-bold text-xs tracking-tighter bg-white text-black">
-                HB.
-              </div>
+              <img src="/logo.png" alt="HB Logo" className="w-9 h-9 rounded-lg object-contain bg-white border border-black/10 p-0.5 shadow-sm" />
               <span className="text-xs font-semibold tracking-[0.3em] uppercase text-gray-500">
                 Diagnostika
               </span>
@@ -222,7 +220,7 @@ export default function Landing() {
         {/* FOOTER */}
         <footer className="pt-20 pb-8 flex flex-col md:flex-row items-center justify-between gap-6 pointer-events-auto border-t border-black/10">
           <div className="flex items-center gap-2">
-            <span className="font-display font-semibold text-lg">HB.</span>
+            <img src="/logo.png" alt="HB Logo" className="w-8 h-8 rounded-lg object-contain bg-white border border-black/10 p-0.5" />
             <span className="text-sm font-medium tracking-[0.2em] text-[#111111]">DIAGNOSTIKA</span>
           </div>
           <p className="text-sm text-neutral-500 font-medium">© {new Date().getFullYear()} HB. {t('landing.footer_rights')}</p>

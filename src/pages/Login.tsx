@@ -141,9 +141,7 @@ export default function Login() {
         </button>
         
         <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 md:w-20 md:h-20 rounded-none mx-auto mb-6 md:mb-8 border border-black/10 bg-[#fdfdfd] flex items-center justify-center font-bold text-2xl tracking-tighter text-black">
-            HB.
-          </div>
+          <img src="/logo.png" alt="HB Logo" className="w-16 h-16 md:w-20 md:h-20 object-contain mx-auto mb-6 md:mb-8 rounded-2xl border border-black/10 p-2 shadow-sm bg-white" />
         </div>
         <h2 className="mt-2 text-center text-3xl font-medium tracking-tight text-black">
           {t('login.title')}

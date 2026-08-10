@@ -125,8 +125,8 @@ export default function WelcomeModal({
             {/* Logo Area */}
             <motion.div variants={itemVariants} className="relative mb-4 md:mb-8 group flex-shrink-0">
               <div className={`absolute inset-0 rounded-2xl blur-xl opacity-40 group-hover:opacity-70 transition-opacity duration-700 ${isPassed ? 'bg-blue-400' : 'bg-rose-500'}`}></div>
-              <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl md:rounded-[24px] shadow-lg mb-6 overflow-hidden border border-white/20 bg-white flex items-center justify-center font-bold text-2xl md:text-3xl text-neutral-900 tracking-tighter">
-                HB.
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl md:rounded-[24px] shadow-lg mb-6 overflow-hidden border border-white/20 bg-white flex items-center justify-center p-2">
+                <img src="/logo.png" alt="HB Logo" className="w-full h-full object-contain" />
               </div>
             </motion.div>
 

@@ -10,9 +10,7 @@ export default function Footer({ onPrint, isGeneratingPdf }: FooterProps) {
     <footer className="pt-8 pb-6 border-t border-slate-200">
       <div className="flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-md border border-slate-200 flex items-center justify-center bg-white font-bold text-lg text-neutral-900 tracking-tighter">
-            HB.
-          </div>
+          <img src="/logo.png" alt="HB Diagnostikasi" className="w-10 h-10 rounded-md object-contain border border-slate-200 bg-white p-0.5 shadow-sm" />
           <div>
             <h3 className="font-bold text-neutral-main text-sm">HB Diagnostikasi</h3>
             <p className="text-xs text-neutral-secondary mt-0.5">Diagnostika xulosasi &copy; {new Date().getFullYear()}</p>

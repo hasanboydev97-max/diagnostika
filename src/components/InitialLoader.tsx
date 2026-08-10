@@ -55,7 +55,7 @@ export default function InitialLoader({ onComplete }: { onComplete: () => void }
           className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#fdfdfd] text-[#111111]"
         >
           <div className="flex flex-col items-center w-full max-w-[200px] px-4">
-            <h1 className="text-4xl md:text-5xl font-medium tracking-tight mb-8 font-sans">HB.</h1>
+            <img src="/logo.png" alt="HB Logo" className="w-16 h-16 object-contain mb-8 animate-pulse" />
             
             <div className="w-full h-[1px] bg-black/10 relative overflow-hidden mb-6">
               <motion.div 

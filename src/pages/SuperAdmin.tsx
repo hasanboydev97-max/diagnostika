@@ -127,9 +127,7 @@ export default function SuperAdmin() {
           <div className="md:col-span-4 md:sticky md:top-32 h-fit flex flex-col gap-12 md:gap-16">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="flex flex-col gap-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-none border border-black/10 flex items-center justify-center font-bold text-xs tracking-tighter bg-white text-black">
-                  HB.
-                </div>
+                <img src="/logo.png" alt="HB Logo" className="w-10 h-10 rounded-xl border border-black/10 bg-white p-0.5 object-contain shadow-sm" />
                 <span className="text-[10px] font-semibold tracking-[0.3em] uppercase text-gray-500 flex items-center gap-2">
                   <ShieldAlert className="w-3.5 h-3.5" /> Boshqaruv
                 </span>

@@ -17,6 +17,8 @@ const TestResultView = lazy(() => import('./pages/OnlineTests/TestResultView'));
 const TestDetails = lazy(() => import('./pages/OnlineTests/TestDetails'));
 const TeacherAuth = lazy(() => import('./pages/OnlineTests/TeacherAuth'));
 
+import PwaInstallPrompt from './components/PwaInstallPrompt';
+
 const RouteLoader = () => (
   <div className="min-h-screen bg-[#fdfdfd] flex items-center justify-center">
     <div className="w-6 h-6 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
@@ -29,6 +31,7 @@ function App() {
   return (
     <BrowserRouter>
       <CustomCursor />
+      <PwaInstallPrompt />
       <Suspense fallback={<RouteLoader />}>
         <Routes>
           <Route path="/" element={<Landing />} />
