@@ -811,6 +811,36 @@ app.get('/api/online-tests/:id/export/excel', async (req, res) => {
   }
 });
 
+function sanitizePdfText(text) {
+  if (!text) return '';
+  let str = String(text);
+
+  // Convert Cyrillic Uzbek/Russian characters to clean Latin equivalents if any exist in string
+  const cyrillicToLatinMap = {
+    'А':'A', 'а':'a', 'Б':'B', 'б':'b', 'В':'V', 'в':'v', 'Г':'G', 'г':'g', 'Д':'D', 'д':'d',
+    'Е':'E', 'е':'e', 'Ё':'Yo', 'ё':'yo', 'Ж':'Zh', 'ж':'zh', 'З':'Z', 'з':'z', 'И':'I', 'и':'i',
+    'Й':'Y', 'й':'y', 'К':'K', 'к':'k', 'Л':'L', 'л':'l', 'М':'M', 'м':'m', 'Н':'N', 'н':'n',
+    'О':'O', 'о':'o', 'П':'P', 'п':'p', 'Р':'R', 'р':'r', 'С':'S', 'с':'s', 'Т':'T', 'т':'t',
+    'У':'U', 'у':'u', 'Ф':'F', 'ф':'f', 'Х':'X', 'х':'x', 'Ц':'Ts', 'ц':'ts', 'Ч':'Ch', 'ч':'ch',
+    'Ш':'Sh', 'ш':'sh', 'Щ':'Shch', 'щ':'shch', 'Ъ':'', 'ъ':'', 'Ы':'Y', 'ы':'y', 'Ь':'', 'ь':'',
+    'Э':'E', 'э':'e', 'Ю':'Yu', 'ю':'yu', 'Я':'Ya', 'я':'ya', 'Ў':'O\'', 'ў':'o\'', 'Қ':'Q', 'қ':'q',
+    'Ғ':'G\'', 'ғ':'g\'', 'Ҳ':'H', 'ҳ':'h'
+  };
+
+  str = str.replace(/[А-яЁёЎўҚқҒғҲҳ]/g, m => cyrillicToLatinMap[m] || m);
+
+  // Replace non-WinAnsi typographical quotes/dashes/accents with clean ASCII equivalents
+  str = str
+    .replace(/[ʻ’'`ʼ]/g, "'")
+    .replace(/[“”"]/g, '"')
+    .replace(/[–—]/g, '-')
+    .replace(/«/g, '"')
+    .replace(/»/g, '"')
+    .replace(/\s+/g, ' ');
+
+  return cleanMathForText(str);
+}
+
 // GET PDF Export — pure JS pdfkit (works everywhere, no Chrome needed)
 app.get('/api/online-tests/:id/export/pdf', async (req, res) => {
   try {
@@ -830,9 +860,9 @@ app.get('/api/online-tests/:id/export/pdf', async (req, res) => {
 
     // Title
     doc.font('Helvetica-Bold').fontSize(18)
-      .text(test.title || 'Test', { align: 'center' });
+      .text(sanitizePdfText(test.title || 'Test'), { align: 'center' });
     doc.font('Helvetica').fontSize(12)
-      .text(`Fan: ${test.subject || ''}`, { align: 'center' });
+      .text(`Fan: ${sanitizePdfText(test.subject || '')}`, { align: 'center' });
     doc.moveDown(1);
 
     // Questions
@@ -840,7 +870,7 @@ app.get('/api/online-tests/:id/export/pdf', async (req, res) => {
       doc.moveDown(0.4);
 
       // Question text
-      const qText = `${i + 1}. ${cleanMathForText(q.questionText || '')}`;
+      const qText = `${i + 1}. ${sanitizePdfText(q.questionText || '')}`;
 
       // Check if near bottom — manual page break
       if (doc.y > 720) doc.addPage();
@@ -850,7 +880,7 @@ app.get('/api/online-tests/:id/export/pdf', async (req, res) => {
       // Options
       (q.options || []).forEach((opt, oi) => {
         const letterLabel = optionLetters[oi] || `${oi + 1}`;
-        const optText = `   ${letterLabel}) ${cleanMathForText(opt || '')}`;
+        const optText = `   ${letterLabel}) ${sanitizePdfText(opt || '')}`;
         doc.font('Helvetica').fontSize(11).text(optText, { lineGap: 1 });
       });
     });
