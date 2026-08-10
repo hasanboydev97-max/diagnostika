@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { db, type StudentResult } from '../lib/db';
 import { generateDiagnosticSummary } from '../lib/gemini';
+import { sendTelegramNotification, getSavedChatId } from '../lib/telegram';
 import * as htmlToImage from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { Send } from 'lucide-react';
@@ -127,6 +128,15 @@ export default function Summary() {
       db.getResult(resultId).then(data => {
         if (data) {
           setStudentData(data);
+          
+          // Auto-send Telegram notification if Chat ID is saved and not sent for this session yet
+          const savedChatId = getSavedChatId();
+          const sentKey = `tg_auto_sent_${resultId}`;
+          if (savedChatId && !sessionStorage.getItem(sentKey)) {
+            sessionStorage.setItem(sentKey, 'true');
+            sendTelegramNotification(savedChatId, data).catch((err: any) => console.error('Auto Telegram error:', err));
+          }
+
           // Calculate cohort average
           db.getAllResults().then(all => {
              const sameGrade = all.filter(r => r.grade === data.grade);
