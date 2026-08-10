@@ -665,8 +665,8 @@ app.get('/api/online-tests/:id/export/docx', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(test.title || 'Test')}.docx"`);
     res.send(buffer);
   } catch (error) {
-    console.error("DOCX Export Error:", error);
-    res.status(500).json({ error: 'Server error generating DOCX' });
+    console.error("DOCX Export Error:", error.message, error.stack);
+    res.status(500).json({ error: 'Server error generating DOCX', detail: error.message });
   }
 });
 
