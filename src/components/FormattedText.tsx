@@ -152,7 +152,7 @@ export default function FormattedText({ content, className = '' }: FormattedText
 
   // Convert $$...$$ (display math) to $...$ so split('$') handles it smoothly
   text = text.replace(/\$\$\s*=\s*/g, '$$').replace(/\$\s*=\s*\\frac/g, '$\\frac');
-  text = text.replace(/\$\$([\s\S]*?)\$\$/g, '$$1$');
+  text = text.replace(/\$\$([\s\S]*?)\$\$/g, '$$$1$$');
 
   // 5. Apply math formatting only if text DOES NOT already contain $ or LaTeX commands
   let formattedText = text;
