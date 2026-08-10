@@ -1233,110 +1233,88 @@ app.post('/api/online-tests/generate', authMiddleware, async (req, res) => {
     const genAI = new GoogleGenerativeAI(apiKey);
     const modelsToTry = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-flash-latest'];
 
-    const prompt = `# ROLE
-You are a professional ${subject} exam question creator for Uzbek schools.
-Topic: ${topic}
-Number of questions: ${questionCount || 5}
+    // ─── Clean positive-only prompt (no ❌ FORBIDDEN negative examples) ───
+    const prompt = `Siz O'zbekiston maktablari uchun professional ${subject} fanidan test tuzuvchi sun'iy intellektsiz.
 
-# ═══════════════════════════════════════════════════
-# ABSOLUTE RULE #1: EVERY questionText MUST CONTAIN THE REAL FORMULA
-# ═══════════════════════════════════════════════════
-DO NOT write a bare verb followed by a number.
-The number you are tempted to put IS THE FORMULA ITSELF — write it in LaTeX instead.
+MAVZU: ${topic}
+SAVOLLAR SONI: ${questionCount || 5}
 
-❌ FORBIDDEN — these will BREAK the application:
-  "Hisoblang: 1"
-  "Soddalashtiring: 1"
-  "Tenglamani yeching: 1"
-  "Tenglamaning ildizlarini toping: 1"
-  "Agar 1 tenglama karrali bo'lsa..."
-  "Viyet teoremasiga ko'ra, 1 tenglamaning..."
-  Any questionText that ends with a bare digit like ": 1" or ": 2" or ": 12"
+VAZIFA: Har bir savol matni (questionText) ichida aniq matematik ifoda LaTeX formatida yozilgan bo'lishi shart.
 
-✅ CORRECT — write EXACTLY like these examples:
-  "Hisoblang: $$\\sqrt{144}-\\sqrt{49}+\\sqrt{25}$$"
-  "Soddalashtiring: $$\\sqrt{50}+\\sqrt{8}$$"
-  "Soddalashtiring: $$\\sin^{2}\\alpha+\\cos^{2}\\alpha$$"
-  "Tenglamani yeching: $$x^{2}-5x+6=0$$"
-  "Tenglamaning ildizlarini toping: $$x^{2}-7x+12=0$$"
-  "Tenglamaning ildizlari kvadratlari yig'indisini toping: $$x^{2}-7x+10=0$$"
-  "Tenglama ildizlarining o'rta arifmetigini toping: $$x^{2}-10x+24=0$$"
-  "Kasrning maxrajini irratsionallikdan qutqaring: $$\\frac{1}{\\sqrt{5}-\\sqrt{2}}$$"
-  "Viyet teoremasiga ko'ra, $$x^{2}-5x+6=0$$ tenglamaning ildizlari yig'indisi va ko'paytmasini toping."
-  "Agar $$x^{2}-6x+k=0$$ tenglama karrali ildizga ega bo'lsa, $k$ ning qiymatini toping."
-  "$$0^{\\circ}\\le x\\le 90^{\\circ}$$ oralig'idagi $$2\\sin x-\\sqrt{3}=0$$ tenglamaning ildizini toping."
-  "Hisoblang: $$\\frac{\\sqrt{75}-\\sqrt{48}}{\\sqrt{3}}$$"
+LaTeX YOZISH QOIDALARI:
+- Alohida ko'rsatiladigan formula: $$...$$
+- Matn ichidagi formula: $...$
+- Kasr: $$\\frac{a}{b}$$
+- Daraja: $x^{2}$
+- Ildiz: $\\sqrt{x}$, $\\sqrt[3]{8}$
+- Indeks: $x_{1}$, $a_{n}$
+- Trigonometriya: $\\sin\\alpha$, $\\cos x$, $\\tan\\beta$
+- Gradus: $60^{\\circ}$
+- Tenglamalar sistemasi: $$\\begin{cases} x+y=5\\\\ x-y=1 \\end{cases}$$
+- Excel/Informatika formulalari: backtick bilan: \`=SUM(A1:B5)\`
 
-# ═══════════════════════════════════════════════════
-# RULE #2: LaTeX FORMATTING
-# ═══════════════════════════════════════════════════
-- Display math (standalone formula): $$...$$
-- Inline math: $...$
-- Fractions: $$\\frac{a}{b}$$ — NEVER write a/b
-- Exponents: $x^{2}$ — NEVER write x^2 outside dollar signs
-- Square roots: $\\sqrt{x}$, $\\sqrt[3]{8}$
-- Subscripts: $x_{1}$, $a_{n}$
-- Trig: $\\sin\\alpha$, $\\cos x$, $\\tan\\beta$
-- Degrees: $60^{\\circ}$
-- Systems: $$\\begin{cases} x+y=5\\\\ x-y=1 \\end{cases}$$
-- Excel/Informatics formulas: backtick notation: \`=SUM(A1:B5)\`
+TO'G'RI YOZILGAN SAVOLLAR NAMUNASI (shu uslubga qat'iy amal qiling):
 
-# ═══════════════════════════════════════════════════
-# RULE #3: OUTPUT
-# ═══════════════════════════════════════════════════
-Return ONLY a raw JSON array. No markdown code fences. No text before or after.
-One correct option. Three wrong options. Randomize correct answer position.
+{"questionText":"Hisoblang: $$\\sqrt{144}-\\sqrt{49}+\\sqrt{25}$$","options":["$10$","$8$","$12$","$14$"],"correctOption":"$10$","type":"multiple_choice","subtopic":"Ildizlar"}
+{"questionText":"Tenglamani yeching: $$x^{2}-5x+6=0$$","options":["$x_1=1,\\, x_2=6$","$x_1=2,\\, x_2=3$","$x_1=-2,\\, x_2=-3$","$x_1=3,\\, x_2=4$"],"correctOption":"$x_1=2,\\, x_2=3$","type":"multiple_choice","subtopic":"Kvadrat tenglamalar"}
+{"questionText":"Soddalashtiring: $$\\sin^{2}\\alpha+\\cos^{2}\\alpha$$","options":["$1$","$0$","$2\\sin\\alpha$","$\\sin\\alpha\\cos\\alpha$"],"correctOption":"$1$","type":"multiple_choice","subtopic":"Trigonometrik ayniyatlar"}
+{"questionText":"Kasrning maxrajini irratsionallikdan qutqaring: $$\\frac{1}{\\sqrt{5}-\\sqrt{2}}$$","options":["$\\sqrt{5}+\\sqrt{2}$","$\\frac{\\sqrt{5}+\\sqrt{2}}{3}$","$\\sqrt{5}-\\sqrt{2}$","$3$"],"correctOption":"$\\frac{\\sqrt{5}+\\sqrt{2}}{3}$","type":"multiple_choice","subtopic":"Irratsional ifodalar"}
+{"questionText":"Viyet teoremasiga ko'ra, $$x^{2}-5x+6=0$$ tenglamaning ildizlari yig'indisi va ko'paytmasini toping.","options":["Yig'indisi: $5$, Ko'paytmasi: $6$","Yig'indisi: $-5$, Ko'paytmasi: $6$","Yig'indisi: $6$, Ko'paytmasi: $5$","Yig'indisi: $5$, Ko'paytmasi: $-6$"],"correctOption":"Yig'indisi: $5$, Ko'paytmasi: $6$","type":"multiple_choice","subtopic":"Viyet teoremasi"}
+{"questionText":"Agar $$x^{2}-6x+k=0$$ tenglama karrali ildizga ega bo'lsa, $k$ ning qiymatini toping.","options":["$9$","$6$","$12$","$3$"],"correctOption":"$9$","type":"multiple_choice","subtopic":"Diskriminant"}
+{"questionText":"$$[0^{\\circ}, 90^{\\circ}]$$ oralig'idagi $$2\\sin x-\\sqrt{3}=0$$ tenglamaning ildizini toping.","options":["$60^{\\circ}$","$30^{\\circ}$","$45^{\\circ}$","$90^{\\circ}$"],"correctOption":"$60^{\\circ}$","type":"multiple_choice","subtopic":"Trigonometrik tenglamalar"}
 
-[
-  {
-    "questionText": "Hisoblang: $$\\sqrt{144}-\\sqrt{49}+\\sqrt{25}$$",
-    "options": ["$10$", "$8$", "$12$", "$14$"],
-    "correctOption": "$10$",
-    "type": "multiple_choice",
-    "subtopic": "Surds"
-  },
-  {
-    "questionText": "Tenglamani yeching: $$x^{2}-5x+6=0$$",
-    "options": ["$x_1=1,\\, x_2=6$", "$x_1=2,\\, x_2=3$", "$x_1=-2,\\, x_2=-3$", "$x_1=3,\\, x_2=4$"],
-    "correctOption": "$x_1=2,\\, x_2=3$",
-    "type": "multiple_choice",
-    "subtopic": "Quadratic equations"
-  }
-]`;
+Har bir savolni ANIQ raqamlar va formulalar bilan yozing — mavzuga (${topic}) mos, lekin yuqoridagi strukturaviy uslubda.
+Faqat xom JSON massiv qaytaring. Boshida yoki oxirida hech qanday izoh, markdown yoki \`\`\` yozmang.
+Har bir savolda 1 ta to'g'ri va 3 ta noto'g'ri variant, to'g'ri javob pozitsiyasi tasodifiy bo'lsin.`;
 
-    let text = "";
-    let success = false;
-    
-    for (const modelName of modelsToTry) {
-      try {
-        console.log(`Test generatsiya qilish uchun model sinab ko'rilmoqda: ${modelName}...`);
-        const model = genAI.getGenerativeModel({ model: modelName });
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        text = response.text();
-        success = true;
-        console.log(`Muvaffaqiyatli! ${modelName} orqali test generatsiya qilindi.`);
-        break;
-      } catch (modelError) {
-        console.warn(`Model xatosi (${modelName}):`, modelError.message);
+    // ─── Detect broken question (formula replaced with bare '1') ───
+    function isQuestionBroken(qText) {
+      if (!qText) return true;
+      if (qText.includes('$') || qText.includes('`')) return false;
+      const hasMathVerb = /hisoblang|hisobla|soddalashtir|yeching|toping|topingiz|qutqaring|irratsional|ildiz|tenglama|viyet|sistemasini|sistemasidan|oralig|qiymatini|yig.indisini|ko.paytmasini|arifmetigi|diskriminant|karrali/i.test(qText);
+      if (!hasMathVerb) return false;
+      return /\b1\b/.test(qText) || /:\s*\d+\s*[+\-*\/]?\s*$/.test(qText);
+    }
+
+    // ─── generateWithRetry: JSON mode + retry on broken formulas ───
+    async function generateWithRetry() {
+      for (const modelName of modelsToTry) {
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            console.log(`[AI Gen] ${modelName} — urinish ${attempt}/3...`);
+            const model = genAI.getGenerativeModel({
+              model: modelName,
+              generationConfig: { responseMimeType: 'application/json' }
+            });
+            const result = await model.generateContent(prompt);
+            const raw = result.response.text().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+            const questions = JSON.parse(raw);
+            if (!Array.isArray(questions) || questions.length === 0) {
+              console.warn(`  ↩ Bo'sh array, qayta urinilmoqda...`);
+              continue;
+            }
+            const broken = questions.filter(q => isQuestionBroken(q.questionText));
+            if (broken.length > 0) {
+              console.warn(`  ↩ ${broken.length}/${questions.length} ta savol buzilgan, qayta urinilmoqda...`);
+              continue;
+            }
+            console.log(`  ✅ ${modelName} (urinish ${attempt}): ${questions.length} ta sifatli savol.`);
+            return questions;
+          } catch (err) {
+            console.warn(`  ✗ ${modelName} urinish ${attempt}: ${err.message}`);
+          }
+        }
       }
+      return null;
     }
 
-    if (!success) {
-      return res.status(500).json({ error: 'Barcha modellar limitdan oshgan yoki xatolik yuz berdi.' });
+    const rawQuestions = await generateWithRetry();
+
+    if (!rawQuestions) {
+      return res.status(500).json({ error: "AI sifatli savol yarata olmadi. Keyinroq qayta urinib ko'ring." });
     }
-    
-    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    
-    // Fix bad escaped characters (like LaTeX \\sqrt, \\frac, \\right, \\tan) generated by LLM
-    text = text.replace(/(?<!\\)\\([^"\\/bfnrt])/g, "\\\\$1");
-    text = text.replace(/(?<!\\)\\b(egin|eta|ullet|ar|mod|oldsymbol|f)/g, "\\\\b$1");
-    text = text.replace(/(?<!\\)\\f(rac|orall)/g, "\\\\f$1");
-    text = text.replace(/(?<!\\)\\r(ight|ho|angle|m)/g, "\\\\r$1");
-    text = text.replace(/(?<!\\)\\t(an|ext|imes|o|riangle|heta|ilde)/g, "\\\\t$1");
-    text = text.replace(/(?<!\\)\\n(u|abla|eq|eg|exists)/g, "\\\\n$1");
-    
-    let rawQuestions = JSON.parse(text);
+
+    // sanitizeQuestions is now a last-resort safety net only
     const sanitizedQuestions = sanitizeQuestions(rawQuestions);
 
     // Increment daily AI count for teacher
@@ -1350,6 +1328,7 @@ One correct option. Three wrong options. Randomize correct answer position.
     res.status(500).json({ error: error.message });
   }
 });
+
 
 // Old API check endpoint removed to favor the atomic save logic
 
