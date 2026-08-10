@@ -104,6 +104,22 @@ export default function SuperAdmin() {
     return results.filter(r => r.studentName?.toLowerCase().includes(q) || r.test?.title?.toLowerCase().includes(q) || r.testId?.toLowerCase().includes(q));
   }, [results, searchQuery]);
 
+  const pendingSubsCount = useMemo(() => {
+    return subscriptions.filter(s => s.planStatus === 'pending').length;
+  }, [subscriptions]);
+
+  const handleUpdateTeacherPlan = async (teacherId: string, plan: string, status: string = 'active', durationDays: number = 30) => {
+    const token = getToken();
+    if (!token) return;
+    try {
+      await db.updateTeacherPlan(token, teacherId, plan, status, durationDays);
+      toast.success(`Dostup faollashtirildi! Tarif: ${plan.toUpperCase()}`);
+      fetchAdminData();
+    } catch (err: any) {
+      toast.error(err.message || "Xatolik yuz berdi");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#fdfdfd] flex flex-col justify-center items-center font-sans">
@@ -121,22 +137,6 @@ export default function SuperAdmin() {
       <p className="text-gray-500 text-lg">{message}</p>
     </div>
   );
-
-  const pendingSubsCount = useMemo(() => {
-    return subscriptions.filter(s => s.planStatus === 'pending').length;
-  }, [subscriptions]);
-
-  const handleUpdateTeacherPlan = async (teacherId: string, plan: string, status: string = 'active', durationDays: number = 30) => {
-    const token = getToken();
-    if (!token) return;
-    try {
-      await db.updateTeacherPlan(token, teacherId, plan, status, durationDays);
-      toast.success(`Dostup faollashtirildi! Tarif: ${plan.toUpperCase()}`);
-      fetchAdminData();
-    } catch (err: any) {
-      toast.error(err.message || "Xatolik yuz berdi");
-    }
-  };
 
   return (
     <div className="min-h-screen text-[#111111] font-sans selection:bg-black selection:text-white relative overflow-hidden">

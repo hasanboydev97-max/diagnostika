@@ -87,12 +87,38 @@ export default function OnlineTestsDashboard() {
               M
             </div>
             <div>
-              <h1 className="text-sm font-semibold text-zinc-900 leading-tight">O'qituvchi Portali</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm font-semibold text-zinc-900 leading-tight">O'qituvchi Portali</h1>
+                {/* Plan Badge */}
+                {teacher?.plan === 'premium' ? (
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 border border-amber-500/30 uppercase">
+                    👑 Premium
+                  </span>
+                ) : teacher?.plan === 'standard' ? (
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-black text-white uppercase">
+                    🔥 Standard
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200 uppercase">
+                    Free
+                  </span>
+                )}
+              </div>
               <p className="text-[11px] text-zinc-500 font-medium">{teacher?.name}</p>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
+            {/* Upgrade Plan Button */}
+            {teacher?.plan !== 'premium' && (
+              <button
+                onClick={() => navigate('/')}
+                className="px-3 py-1.5 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 border border-amber-500/30 text-xs font-semibold transition-colors hidden sm:flex items-center gap-1"
+              >
+                <span>Tarifni Oshirish</span>
+              </button>
+            )}
+
             {teacher?.role === 'admin' && (
               <button
                 onClick={() => navigate('/superadmin')}
@@ -121,6 +147,20 @@ export default function OnlineTestsDashboard() {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8 relative z-10">
+        {/* Pending Subscription Request Banner */}
+        {teacher?.planStatus === 'pending' && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">⏳</span>
+              <div>
+                <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wider">To'lov ko'rib chiqilmoqda</h4>
+                <p className="text-xs text-amber-800">
+                  {teacher?.requestedPlan?.toUpperCase()} tarifiga ulanish so'rovingiz qabul qilindi. Admin tekshiruvidan so'ng dostup faollashadi.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Search Bar */}
         <div className="mb-6 relative">
