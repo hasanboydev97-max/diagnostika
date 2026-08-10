@@ -443,37 +443,122 @@ app.get('/api/online-tests', authMiddleware, async (req, res) => {
 
 function sanitizeQuestions(questionsList) {
   if (!Array.isArray(questionsList)) return questionsList;
+
+  // Topic-aware formula examples for injection when AI fails to generate real formula
+  const mathExamples = [
+    { verb: 'hisoblang', formula: '$$\\sqrt{144} - \\sqrt{49} + \\sqrt{25}$$', expected: '10' },
+    { verb: 'soddalashtiring', formula: '$$\\sqrt{50} + \\sqrt{8}$$', expected: '$$7\\sqrt{2}$$' },
+    { verb: 'yeching', formula: '$$2x^{2} - 8x + 6 = 0$$', expected: '$$x_1=1,\\, x_2=3$$' },
+    { verb: 'toping', formula: '$$\\sqrt{x+3} = 4$$', expected: '$$x=13$$' },
+    { verb: 'tenglamani yeching', formula: '$$x^{2} - 5x + 6 = 0$$', expected: '$$x_1=2,\\, x_2=3$$' },
+    { verb: 'soddalashtiring', formula: '$$\\sin^{2}\\alpha + \\cos^{2}\\alpha$$', expected: '$$1$$' },
+  ];
+
   return questionsList.map((q) => {
     let qText = (q.questionText || '').trim();
 
-    // Auto-heal bare question titles like "Toping: 1", "Toping:", "Hisoblang: 1"
-    if (/^(Toping|Hisoblang|Yeching|Topingiz|Natijani toping|Qiymatni toping)(\s*:\s*\d+)?\s*$/i.test(qText)) {
-      qText = "Natijani hisoblang: $$\\sqrt{1296}$$";
-    }
+    // ─────────────────────────────────────────────────────
+    // DETECTION: Does this question lack a real formula?
+    // Patterns seen in screenshots:
+    //  "Hisoblang: 1"
+    //  "Soddalashtiring: 1"
+    //  "Tenglamani yeching: 1"
+    //  "Kasrning maxrajini irratsionallikdan qutqaring: 1 +"
+    //  "Viyet teoremasiga ko'ra, 1 tenglamaning..."
+    //  "Agar 1 tenglama karrali..."
+    //  "Tenglamaning 0 <= x <= 90 oralig'idagi ildizini toping: 1"
+    // ─────────────────────────────────────────────────────
+    const hasRealFormula = qText.includes('$') || qText.includes('`') || qText.includes('<code>');
 
-    const asksForFormula = /quyidagi (ifoda|formula|amallar|dastur|kod)/i.test(qText);
-    const cleanForCheck = qText.replace(/A1\s*=\s*\d+|B1\s*=\s*\d+/gi, '');
-    const hasFormula = qText.includes('$') || qText.includes('`') || qText.includes('<code>') || /(=|\+|-|\*|\/|\\frac|\\sqrt)/.test(cleanForCheck);
+    if (!hasRealFormula) {
+      // Pattern A: ends with ": 1" or ": 1 +" or ": 1+" — formula placeholder was '1'
+      const endsWithPlaceholder = /:\s*1\s*[\+\-\*\/]?\s*$/.test(qText);
 
-    if (asksForFormula && !hasFormula) {
-      if (/A1\s*=\s*12.*B1\s*=\s*4/i.test(qText)) {
-        qText = qText.replace(/quyidagi formulaning/i, 'quyidagi `=A1/B1 + 3` formulaning');
-      } else {
-        const sampleFormulas = [
-          '`=A1*2 + B1`',
-          '`=SUM(A1:B2)`',
-          '`=(A1+B1)/2`',
-          '`=A1/B1 + 3`',
-          '`=A1^2 - B1`',
-          '`=AVERAGE(A1:A5)`'
-        ];
-        const formulaToInject = sampleFormulas[qText.length % sampleFormulas.length];
-        qText = qText.replace(/quyidagi (ifoda|formula|dastur kodi|kod)/i, `quyidagi ${formulaToInject} $1si`);
+      // Pattern B: contains " 1 " surrounded by Uzbek math words — floating placeholder
+      const hasFloating1 = /,\s*1\s+tenglama/i.test(qText) || /\bagar\s+1\s+/i.test(qText);
+
+      // Pattern C: ends with "toping: 1" or similar — bare trailing 1 after colon
+      const endsWithColon1 = /:\s*\d+\s*$/.test(qText);
+
+      if (endsWithPlaceholder || hasFloating1 || endsWithColon1) {
+        // Determine the topic from question text and pick matching formula
+        const lowerQ = qText.toLowerCase();
+        let injected = null;
+
+        if (/soddalashtir|simplif/i.test(lowerQ) && /sin|cos|tan|trig/i.test(lowerQ)) {
+          injected = { formula: '$$\\sin^{2}\\alpha + \\cos^{2}\\alpha$$', expected: '$$1$$' };
+        } else if (/soddalashtir/i.test(lowerQ)) {
+          injected = { formula: '$$\\sqrt{50} + \\sqrt{8}$$', expected: '$$7\\sqrt{2}$$' };
+        } else if (/irratsionallikdan qutqar/i.test(lowerQ)) {
+          injected = { formula: '$$\\frac{1}{\\sqrt{5}-\\sqrt{2}}$$', expected: '$$\\frac{\\sqrt{5}+\\sqrt{2}}{3}$$' };
+        } else if (/viyet|yig.indisi.*ko.paytmas|ko.paytmas.*yig.indisi/i.test(lowerQ)) {
+          injected = { formula: '$$x^{2} - 5x + 6 = 0$$', expected: 'Yig\'indisi: $5$, Ko\'paytmasi: $6$' };
+        } else if (/karrali|diskriminant|teng ikkita/i.test(lowerQ)) {
+          injected = { formula: '$$x^{2} - 6x + k = 0$$', expected: '$$k=9$$' };
+        } else if (/kvadrat.*yig.indisi|ildizlar.*kvadrat/i.test(lowerQ)) {
+          injected = { formula: '$$x^{2} - 7x + 10 = 0$$', expected: '$$29$$' };
+        } else if (/o.ra arifmetigi|o.rta arifmetik/i.test(lowerQ)) {
+          injected = { formula: '$$x^{2} - 10x + 24 = 0$$', expected: '$$5$$' };
+        } else if (/tenglamaning ildizlari.*toping|ildizlarini toping/i.test(lowerQ)) {
+          injected = { formula: '$$x^{2} - 7x + 12 = 0$$', expected: '$$x_1=3,\\, x_2=4$$' };
+        } else if (/tenglamani yeching|yeching/i.test(lowerQ)) {
+          injected = { formula: '$$2x^{2} - 8x + 6 = 0$$', expected: '$$x_1=1,\\, x_2=3$$' };
+        } else if (/\d+\s*<=?\s*x\s*<=?\s*\d+|oralig.idagi|trigonometrik/i.test(lowerQ)) {
+          injected = { formula: '$$2\\sin x - \\sqrt{3} = 0$$', expected: '$$x=60°$$' };
+        } else if (/hisoblang|hisobla|qiymatini hisob/i.test(lowerQ)) {
+          injected = { formula: '$$\\sqrt{144} - \\sqrt{49} + \\sqrt{25}$$', expected: '$$10$$' };
+        } else if (/toping|topingiz|natijani/i.test(lowerQ)) {
+          injected = { formula: '$$\\sqrt{x+3} = 4$$', expected: '$$x=13$$' };
+        } else {
+          // Generic fallback
+          injected = { formula: '$$x^{2} - 5x + 6 = 0$$', expected: '$$x_1=2,\\, x_2=3$$' };
+        }
+
+        if (injected) {
+          // Replace the dangling "1" or clean up and attach formula
+          // Remove trailing ": 1", ": 1 +", ": 1+" etc.
+          qText = qText
+            .replace(/,\s*1\s+tenglama/i, ', quyidagi tenglama')  // "Viyet, 1 tenglama" -> "Viyet, quyidagi tenglama"
+            .replace(/\bagar\s+1\s+tenglama/i, 'Agar quyidagi tenglama')
+            .replace(/:\s*1\s*[\+\-\*\/]?\s*$/, ':')  // strip trailing ": 1 +"
+            .replace(/:\s*\d+\s*$/, ':')               // strip any other trailing digit
+            .trimEnd();
+
+          // Re-attach the formula properly
+          if (!qText.endsWith(':')) qText += ':';
+          qText = qText + ' ' + injected.formula;
+
+          // Also fix the correct option if it's wrong
+          if (q.correctOption === '1' || q.correctOption === 1) {
+            return {
+              ...q,
+              questionText: qText,
+              correctOption: injected.expected,
+              options: q.options?.map((opt, idx) => {
+                if (opt === '1' || opt === 1) return injected.expected;
+                return opt;
+              })
+            };
+          }
+        }
       }
     }
 
-    // Strip dangling AI trailing numbers like ": 1" or ": 12"
-    qText = qText.replace(/:\s*\d+\s*$/, ':');
+    // ─────────────────────────────────────────────────────
+    // INFORMATICS: inject missing formulas for code questions
+    // ─────────────────────────────────────────────────────
+    const asksForFormula = /quyidagi (ifoda|formula|amallar|dastur|kod)/i.test(qText);
+    const cleanForCheck = qText.replace(/A\d+\s*=\s*\d+/gi, '');
+    const hasFormulaNow = qText.includes('$') || qText.includes('`') || qText.includes('<code>');
+
+    if (asksForFormula && !hasFormulaNow) {
+      const sampleFormulas = [
+        '`=A1*2 + B1`', '`=SUM(A1:B2)`', '`=(A1+B1)/2`',
+        '`=A1/B1 + 3`', '`=A1^2 - B1`', '`=AVERAGE(A1:A5)`'
+      ];
+      const formulaToInject = sampleFormulas[qText.length % sampleFormulas.length];
+      qText = qText.replace(/quyidagi (ifoda|formula|dastur kodi|kod)/i, `quyidagi ${formulaToInject} $1si`);
+    }
 
     return {
       ...q,
@@ -481,6 +566,7 @@ function sanitizeQuestions(questionsList) {
     };
   });
 }
+
 
 app.get('/api/online-tests/:id', async (req, res) => {
   try {
@@ -1172,68 +1258,73 @@ app.post('/api/online-tests/generate', authMiddleware, async (req, res) => {
     const modelsToTry = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-flash-latest'];
 
     const prompt = `# ROLE
-You are an expert ${subject} teacher and professional exam creator.
-Your job is to generate high-quality multiple-choice questions suitable for school students.
+You are a professional ${subject} exam question creator for Uzbek schools.
 Topic: ${topic}
 Number of questions: ${questionCount || 5}
 
-# IMPORTANT RULES
-1. ALL mathematical expressions MUST be written using valid LaTeX.
-2. NEVER write formulas as plain text.
+# ═══════════════════════════════════════════════════
+# ABSOLUTE RULE #1: EVERY questionText MUST CONTAIN THE REAL FORMULA
+# ═══════════════════════════════════════════════════
+DO NOT write a bare verb followed by a number.
+The number you are tempted to put IS THE FORMULA ITSELF — write it in LaTeX instead.
 
-❌ Wrong: \\sqrt{25}, x^2, 3/5, >=, <=, !=
-✅ Correct: $\\sqrt{25}$, $x^{2}$, $\\frac{3}{5}$, $\\ge$, $\\le$, $\\ne$
+❌ FORBIDDEN — these will BREAK the application:
+  "Hisoblang: 1"
+  "Soddalashtiring: 1"
+  "Tenglamani yeching: 1"
+  "Tenglamaning ildizlarini toping: 1"
+  "Agar 1 tenglama karrali bo'lsa..."
+  "Viyet teoremasiga ko'ra, 1 tenglamaning..."
+  Any questionText that ends with a bare digit like ": 1" or ": 2" or ": 12"
 
-3. Display equations MUST use $$ ... $$
-Example:
-$$
-\\sqrt{144}-\\sqrt{49}+\\sqrt{25}
-$$
+✅ CORRECT — write EXACTLY like these examples:
+  "Hisoblang: $$\\sqrt{144}-\\sqrt{49}+\\sqrt{25}$$"
+  "Soddalashtiring: $$\\sqrt{50}+\\sqrt{8}$$"
+  "Soddalashtiring: $$\\sin^{2}\\alpha+\\cos^{2}\\alpha$$"
+  "Tenglamani yeching: $$x^{2}-5x+6=0$$"
+  "Tenglamaning ildizlarini toping: $$x^{2}-7x+12=0$$"
+  "Tenglamaning ildizlari kvadratlari yig'indisini toping: $$x^{2}-7x+10=0$$"
+  "Tenglama ildizlarining o'rta arifmetigini toping: $$x^{2}-10x+24=0$$"
+  "Kasrning maxrajini irratsionallikdan qutqaring: $$\\frac{1}{\\sqrt{5}-\\sqrt{2}}$$"
+  "Viyet teoremasiga ko'ra, $$x^{2}-5x+6=0$$ tenglamaning ildizlari yig'indisi va ko'paytmasini toping."
+  "Agar $$x^{2}-6x+k=0$$ tenglama karrali ildizga ega bo'lsa, $k$ ning qiymatini toping."
+  "$$0^{\\circ}\\le x\\le 90^{\\circ}$$ oralig'idagi $$2\\sin x-\\sqrt{3}=0$$ tenglamaning ildizini toping."
+  "Hisoblang: $$\\frac{\\sqrt{75}-\\sqrt{48}}{\\sqrt{3}}$$"
 
-4. Inline expressions MUST use $...$
-Example: $f(x)=x^2$
+# ═══════════════════════════════════════════════════
+# RULE #2: LaTeX FORMATTING
+# ═══════════════════════════════════════════════════
+- Display math (standalone formula): $$...$$
+- Inline math: $...$
+- Fractions: $$\\frac{a}{b}$$ — NEVER write a/b
+- Exponents: $x^{2}$ — NEVER write x^2 outside dollar signs
+- Square roots: $\\sqrt{x}$, $\\sqrt[3]{8}$
+- Subscripts: $x_{1}$, $a_{n}$
+- Trig: $\\sin\\alpha$, $\\cos x$, $\\tan\\beta$
+- Degrees: $60^{\\circ}$
+- Systems: $$\\begin{cases} x+y=5\\\\ x-y=1 \\end{cases}$$
+- Excel/Informatics formulas: backtick notation: \`=SUM(A1:B5)\`
 
-5. Use only KaTeX / MathJax compatible LaTeX. Allowed commands include: \\frac, \\sqrt, \\pi, \\sin, \\cos, \\tan, \\lim, \\sum, \\int, \\pm, \\times, \\div, \\neq, \\le, \\ge, \\approx, \\infty.
-6. Fractions MUST always use $\\frac{a}{b}$. Never use a/b.
-7. Exponents: $x^{2}$, $a^{10}$. Never write x^2.
-8. Subscripts: $a_{1}$, $x_{n}$.
-9. Absolute values: $\\left|x\\right|$.
-10. Parentheses: Always use \\left( \\right) when expressions become long.
-11. Systems of equations:
-$$
-\\begin{cases}
-x+y=5\\\\
-x-y=1
-\\end{cases}
-$$
+# ═══════════════════════════════════════════════════
+# RULE #3: OUTPUT
+# ═══════════════════════════════════════════════════
+Return ONLY a raw JSON array. No markdown code fences. No text before or after.
+One correct option. Three wrong options. Randomize correct answer position.
 
-12. INFORMATICS & EXCEL FORMULAS:
-    - If a question asks "quyidagi ifoda", "quyidagi formula", or "hisoblang", YOU MUST INCLUDE THE EXACT FORMULA OR CODE IN BACKTICKS (e.g. \`=A1+B1/2\` or \`COUNTIF(A1:A10, ">5")\`).
-    - NEVER generate questions referencing "quyidagi ifoda" without providing the actual formula!
-    - NEVER append trailing numbers like ": 1" or dangling digits at the end of the question text.
-
-# QUESTION QUALITY
-Only ONE option is correct.
-Randomize the correct answer position.
-Difficulty should match the requested level.
-
-# OUTPUT FORMAT
-Return ONLY valid JSON.
-DO NOT OUTPUT ANYTHING EXCEPT A VALID JSON ARRAY.
-
-Example:
 [
   {
     "questionText": "Hisoblang: $$\\sqrt{144}-\\sqrt{49}+\\sqrt{25}$$",
-    "options": [
-      "$10$",
-      "$8$",
-      "$12$",
-      "$14$"
-    ],
+    "options": ["$10$", "$8$", "$12$", "$14$"],
     "correctOption": "$10$",
     "type": "multiple_choice",
-    "subtopic": "Arithmetic"
+    "subtopic": "Surds"
+  },
+  {
+    "questionText": "Tenglamani yeching: $$x^{2}-5x+6=0$$",
+    "options": ["$x_1=1,\\, x_2=6$", "$x_1=2,\\, x_2=3$", "$x_1=-2,\\, x_2=-3$", "$x_1=3,\\, x_2=4$"],
+    "correctOption": "$x_1=2,\\, x_2=3$",
+    "type": "multiple_choice",
+    "subtopic": "Quadratic equations"
   }
 ]`;
 
