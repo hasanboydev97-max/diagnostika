@@ -441,116 +441,12 @@ app.get('/api/online-tests', authMiddleware, async (req, res) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════════
-// MASTER FORMULA HEALING ENGINE
-// Root cause: AI replaces ALL formulas with bare '1' throughout
-// the question text — not just trailing ': 1' but also:
-//   "1 oralig'idagi 1 tenglamaning ildizini toping."
-//   "Agar 1 va 1 bo'lsa, 1 ni toping."
-//   "Tenglamalar sistemasidan 1 yig'indisini toping: 1"
-// Fix: if question has no '$'/'`' AND has bare '1' AND has a math verb → broken
-// ═══════════════════════════════════════════════════════════════
-function sanitizeQuestions(questionsList) {
-  if (!Array.isArray(questionsList)) return questionsList;
-
-  // Math verbs that indicate a formula MUST be present
-  const MATH_VERB_RE = /hisoblang|hisobla|soddalashtir|yeching|toping|topingiz|qutqaring|irratsional|ildiz|tenglama|viyet|sistemasini|sistemasidan|oraligidagi|oralig.idagi|qiymatini|yig.indisini|ko.paytmasini|arifmetigi|diskriminant|karrali|qiymatini toping/i;
-
-  // Topic → formula mapping (ordered from specific to generic)
-  function pickFormula(lowerQ) {
-    if (/sin.+cos|cos.+sin|sin.+tan|soddalashtir.+(trig|sin|cos|tan)|sin.*alpha|cos.*alpha/i.test(lowerQ))
-      return { f: '$$\\sin^{2}\\alpha + \\cos^{2}\\alpha$$', clean: (t) => t + ' $$\\sin^{2}\\alpha + \\cos^{2}\\alpha$$' };
-    if (/soddalashtir/i.test(lowerQ))
-      return { f: '$$\\sqrt{50} + \\sqrt{8}$$', clean: (t) => t + ' $$\\sqrt{50} + \\sqrt{8}$$' };
-    if (/irratsionallikdan qutqar/i.test(lowerQ))
-      return { f: '$$\\frac{1}{\\sqrt{7}-\\sqrt{6}}$$', clean: (t) => t + ' $$\\frac{1}{\\sqrt{7}-\\sqrt{6}}$$' };
-    if (/viyet|yig.indisi.*ko.paytm|ko.paytm.*yig.indisi/i.test(lowerQ))
-      return { f: '$$x^{2} - 5x + 6 = 0$$', clean: (t) => "Viyet teoremasiga ko'ra, $$x^{2} - 5x + 6 = 0$$ tenglamaning ildizlari yig'indisi va ko'paytmasini toping." };
-    if (/karrali|teng ikkita ildiz|karrali ildiz/i.test(lowerQ))
-      return { f: '$$x^{2} - 6x + k = 0$$', clean: (t) => "Agar $$x^{2} - 6x + k = 0$$ tenglama karrali ildizga ega bo'lsa, $k$ ning qiymatini toping." };
-    if (/kvadrat.*yig.indisi|ildizlar.*kvadrat/i.test(lowerQ))
-      return { f: '$$x^{2} - 7x + 10 = 0$$', clean: (t) => "Tenglamaning ildizlari kvadratlari yig'indisini toping: $$x^{2} - 7x + 10 = 0$$" };
-    if (/o.ra arifmetigi|o.rta arifmetik/i.test(lowerQ))
-      return { f: '$$x^{2} - 10x + 24 = 0$$', clean: (t) => "Tenglama ildizlarining o'rta arifmetigini toping: $$x^{2} - 10x + 24 = 0$$" };
-    if (/sistemasini yeching.*ko.paytm|ko.paytm.*sistemasini/i.test(lowerQ))
-      return { f: '$$\\begin{cases} x+y=10\\\\\\ xy=24 \\end{cases}$$', clean: (t) => "Tenglamalar sistemasini yeching va $xy$ ko'paytmasini toping: $$\\begin{cases} x+y=10\\\\ xy=24 \\end{cases}$$" };
-    if (/sistemasidan.*x.*qiymatini|sistemasidan.*y.*qiymatini/i.test(lowerQ))
-      return { f: '$$\\begin{cases} 2x+y=7\\\\\\ x-y=2 \\end{cases}$$', clean: (t) => "Tenglamalar sistemasidan $x$ ning qiymatini toping: $$\\begin{cases} 2x+y=7\\\\ x-y=2 \\end{cases}$$" };
-    if (/sistemasini yeching|sistemasidan/i.test(lowerQ))
-      return { f: '$$\\begin{cases} x+y=5\\\\\\ x-y=1 \\end{cases}$$', clean: (t) => "Tenglamalar sistemasini yeching: $$\\begin{cases} x+y=5\\\\ x-y=1 \\end{cases}$$" };
-    if (/ildizlarini toping|ildizini toping/i.test(lowerQ))
-      return { f: '$$x^{2} - 7x + 12 = 0$$', clean: (t) => "Tenglamaning ildizlarini toping: $$x^{2} - 7x + 12 = 0$$" };
-    if (/tenglamani yeching|yeching/i.test(lowerQ))
-      return { f: '$$2x^{2} - 8x + 6 = 0$$', clean: (t) => "Tenglamani yeching: $$2x^{2} - 8x + 6 = 0$$" };
-    if (/oralig.idagi|oraligidagi/i.test(lowerQ))
-      return { f: '$$2\\sin x - \\sqrt{3} = 0$$', clean: (t) => "$$[0°, 180°]$$ oralig'idagi $$2\\sin x - \\sqrt{3} = 0$$ tenglamaning ildizini toping." };
-    if (/agar.*bo.lsa.*toping|agar.*qiymatini/i.test(lowerQ))
-      return { f: '$$\\sin\\alpha = \\frac{3}{5}$$', clean: (t) => "Agar $$\\sin\\alpha = \\frac{3}{5}$$ bo'lsa, $\\cos\\alpha$ ni toping." };
-    if (/hisoblang|hisobla|qiymatini hisob/i.test(lowerQ))
-      return { f: '$$\\sqrt{144} - \\sqrt{49} + \\sqrt{25}$$', clean: (t) => "Hisoblang: $$\\sqrt{144} - \\sqrt{49} + \\sqrt{25}$$" };
-    if (/toping|topingiz|natijani/i.test(lowerQ))
-      return { f: '$$\\sqrt{x+3} = 4$$', clean: (t) => "Tenglamaning ildizini toping: $$\\sqrt{x+3} = 4$$" };
-    // Generic math fallback
-    return { f: '$$x^{2} - 5x + 6 = 0$$', clean: (t) => "Tenglamani yeching: $$x^{2} - 5x + 6 = 0$$" };
-  }
-
-  return questionsList.map((q) => {
-    let qText = (q.questionText || '').trim();
-
-    // ─── Step 1: Already has formula markers? Leave it alone ───
-    const hasRealFormula = qText.includes('$') || qText.includes('`') || qText.includes('<code>');
-    if (hasRealFormula) {
-      // Still fix informatics missing formula case
-      const asksForFormula = /quyidagi (ifoda|formula|amallar|dastur|kod)/i.test(qText);
-      if (asksForFormula && !qText.includes('`') && !qText.includes('<code>')) {
-        const sf = ['`=A1*2+B1`','`=SUM(A1:B2)`','`=(A1+B1)/2`','`=A1/B1+3`','`=A1^2-B1`','`=AVERAGE(A1:A5)`'];
-        qText = qText.replace(/quyidagi (ifoda|formula|dastur kodi|kod)/i, `quyidagi ${sf[qText.length % sf.length]} $1si`);
-      }
-      return { ...q, questionText: qText };
-    }
-
-    // ─── Step 2: No formula markers. Does it have a math verb? ───
-    const hasMathVerb = MATH_VERB_RE.test(qText);
-    if (!hasMathVerb) {
-      return { ...q, questionText: qText }; // non-math question, leave alone
-    }
-
-    // ─── Step 3: Has math verb. Does it have ANY bare '1' as placeholder? ───
-    // \b1\b matches standalone '1' not surrounded by digits/letters
-    const hasBare1 = /\b1\b/.test(qText);
-    // Also check: ends with number after colon (e.g. ": 12")
-    const hasTrailingNum = /:\s*\d+\s*[+\-*\/]?\s*$/.test(qText);
-    // Also check: ends with period but has bare 1 mid-sentence
-    const hasMidSentence1 = /\b1\b/.test(qText.replace(/:\s*\d+\s*$/, ''));
-
-    if (!hasBare1 && !hasTrailingNum) {
-      // Math verb present but no bare '1' and no trailing number → valid question
-      return { ...q, questionText: qText };
-    }
-
-    // ─── Step 4: Question is broken — inject topic-appropriate formula ───
-    const lowerQ = qText.toLowerCase();
-    const { f, clean } = pickFormula(lowerQ);
-
-    // Use the clean() function which generates a complete, proper question
-    const fixedText = clean(qText);
-
-    return {
-      ...q,
-      questionText: fixedText
-    };
-  });
-}
-
 
 
 app.get('/api/online-tests/:id', async (req, res) => {
   try {
     const test = await OnlineTest.findOne({ id: req.params.id }).lean();
     if (!test) return res.status(404).json({ error: 'Not found' });
-    if (test.questions) {
-      test.questions = sanitizeQuestions(test.questions);
-    }
     res.json(test);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1369,8 +1265,8 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
       return res.status(500).json({ error: "AI sifatli savol yarata olmadi. Keyinroq qayta urinib ko'ring." });
     }
 
-    // sanitizeQuestions is now a last-resort safety net only
-    const sanitizedQuestions = sanitizeQuestions(rawQuestions);
+    // Removed sanitizeQuestions. The robust generation handles quality now.
+    const sanitizedQuestions = rawQuestions;
 
     // Increment daily AI count for teacher
     teacher.lastAiGenDate = todayStr;
