@@ -522,10 +522,20 @@ function cleanMathForText(text) {
 
 function latexToOmml(latex) {
   try {
-    const mathml = katex.renderToString(latex.trim(), { output: 'mathml', displayMode: false, throwOnError: false });
+    // Sanitize input: strip any XML-unsafe characters before parsing
+    const safeLaTeX = latex.trim()
+      .replace(/&(?!amp;|lt;|gt;|quot;|apos;)/g, '&amp;');
+    const mathml = katex.renderToString(safeLaTeX, { output: 'mathml', displayMode: false, throwOnError: false });
     const mathMatch = mathml.match(/<math[\s\S]*?<\/math>/);
     if (!mathMatch) return null;
-    let mathStr = mathMatch[0].replace(/<annotation[^>]*>[\s\S]*?<\/annotation>/g, '');
+    // Strip annotation tags which can contain LaTeX with unsafe XML characters
+    let mathStr = mathMatch[0]
+      .replace(/<semantics>([\s\S]*?)<\/semantics>/g, (_, inner) => {
+        // Only keep non-annotation children
+        return inner.replace(/<annotation[^>]*>[\s\S]*?<\/annotation>/g, '');
+      })
+      .replace(/<annotation[^>]*>[\s\S]*?<\/annotation>/g, '')
+      .replace(/<semantics>/g, '').replace(/<\/semantics>/g, '');
     let omml = mml2omml(mathStr);
     return omml;
   } catch (e) {
@@ -562,13 +572,21 @@ function buildDocxChildren(content, options = {}) {
 
       const omml = latexToOmml(cleanMath);
       if (omml) {
-        const parsed = ImportedXmlComponent.fromXmlString(omml);
-        if (parsed && parsed.root && parsed.root.length > 0) {
-          children.push(parsed.root[0]);
+        try {
+          const parsed = ImportedXmlComponent.fromXmlString(omml);
+          if (parsed && parsed.root && parsed.root.length > 0) {
+            children.push(parsed.root[0]);
+          } else {
+            // Fallback: render as unicode text
+            children.push(new TextRun({ text: cleanMathForText(cleanMath), ...options }));
+          }
+        } catch {
+          // XML parse failed — fallback to unicode text
+          children.push(new TextRun({ text: cleanMathForText(cleanMath), ...options }));
         }
       } else {
-        // Fallback to text if parsing fails
-        children.push(new TextRun({ text: `$${part}$`, ...options }));
+        // latexToOmml returned null — fallback to unicode text
+        children.push(new TextRun({ text: cleanMathForText(cleanMath), ...options }));
       }
     }
   });
