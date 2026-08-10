@@ -676,7 +676,7 @@ function buildTestHtml(title, subject, questions) {
   // Render each piece of text with KaTeX inline
   const renderText = (text) => {
     if (!text) return '';
-    const formatted = autoFormatMath(String(text));
+    const formatted = String(text);
     const parts = formatted.split('$');
     return parts.map((part, i) => {
       if (i % 2 === 0) {
@@ -878,7 +878,7 @@ function latexToText(latex) {
 // Render content string to PDF (handles $math$ inline)
 function pdfRenderLine(doc, content, opts = {}) {
   if (!content) return;
-  const formatted = autoFormatMath(String(content));
+  const formatted = String(content);
   const parts = formatted.split('$');
   let line = '';
   parts.forEach((part, i) => {
