@@ -1,8 +1,9 @@
 {
-  "name": "HB Diagnostikasi - Imtihon va Analitika Platformasi",
-  "short_name": "HB Diagnostika",
-  "description": "Senior darajadagi maktab diagnostikasi, avtomatik testlar va AI tahlil platformasi",
+  "name": "HB Diagnostikasi",
+  "short_name": "HB Diagnostikasi",
+  "description": "HB Diagnostikasi imtihon va analitika platformasi ilovasi",
   "start_url": "/",
+  "id": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
@@ -19,6 +20,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
