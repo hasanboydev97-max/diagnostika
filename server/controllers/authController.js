@@ -30,8 +30,12 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { password } = req.body;
-    const email = req.body.email?.toLowerCase().trim();
+    // Tizimda allaqachon katta harf bilan saqlangan (Admin@...) akkauntlarga kiritish uchun
+    // login paytida toLowerCase() qilinmaydi.
+    const email = req.body.email?.trim();
     
+    // Agar foydalanuvchi "Admin@maktab.uz" va "admin@maktab.uz" qilib 2 ta ochgan bo'lsa, 
+    // u qanday harf bilan yozsa, o'sha akkauntiga kiradi.
     const teacher = await Teacher.findOne({ email });
     if (!teacher) return res.status(400).json({ error: 'Email yoki parol xato.' });
     
