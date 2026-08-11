@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Loader2, Copy, Play } from 'lucide-react';
+import { Loader2, Copy, Play } from 'lucide-react';
 import FormattedText from '../../components/FormattedText';
 import { toast } from 'sonner';
 
