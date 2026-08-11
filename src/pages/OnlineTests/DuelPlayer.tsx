@@ -154,32 +154,32 @@ export default function DuelPlayer() {
 
       {status === 'login' && (
         <div className="flex-1 flex items-center justify-center p-6 relative z-10">
-          <form onSubmit={handleJoin} className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-2xl rounded-3xl p-8 max-w-sm w-full text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-orange-500 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg shadow-rose-200">
-              <Swords size={32} className="text-white" />
+          <form onSubmit={handleJoin} className="bg-white/80 backdrop-blur-2xl border border-black/10 shadow-2xl rounded-3xl p-10 max-w-sm w-full text-center transform transition-all hover:scale-[1.02] duration-500">
+            <div className="w-16 h-16 bg-zinc-900 rounded-2xl mx-auto mb-8 flex items-center justify-center transform rotate-12 shadow-2xl">
+              <Swords size={32} className="text-white -rotate-12" />
             </div>
-            <h1 className="text-2xl font-bold text-zinc-800 mb-6">Duyelga Ulanish</h1>
+            <h1 className="text-2xl font-bold text-zinc-900 mb-8 tracking-tight">Duyelga Ulanish</h1>
             
             <input 
               type="text" 
-              placeholder="Duyel PIN" 
+              placeholder="DUYEL PIN" 
               value={pin}
               onChange={e => setPin(e.target.value)}
-              className="w-full text-center text-2xl font-bold tracking-widest px-4 py-4 bg-zinc-100 border border-zinc-200 rounded-xl mb-4 focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-200 transition-all"
+              className="w-full text-center text-3xl font-black tracking-[0.3em] px-4 py-5 bg-zinc-50/50 border border-black/10 rounded-2xl mb-4 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all placeholder:font-medium placeholder:tracking-widest placeholder:text-zinc-300 placeholder:text-lg"
               maxLength={6}
             />
             
             <input 
               type="text" 
-              placeholder="Ismingiz" 
+              placeholder="Ismingiz (Masalan: Ali)" 
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full text-center text-lg px-4 py-4 bg-zinc-100 border border-zinc-200 rounded-xl mb-6 focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-200 transition-all"
+              className="w-full text-center text-lg px-4 py-5 bg-zinc-50/50 border border-black/10 rounded-2xl mb-8 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all placeholder:text-zinc-400"
             />
             
             <button 
               type="submit"
-              className="w-full bg-gradient-to-r from-rose-500 to-orange-500 text-white py-4 rounded-xl font-bold text-lg hover:from-rose-600 hover:to-orange-600 transition-all shadow-lg shadow-rose-200"
+              className="w-full bg-zinc-900 text-white py-5 rounded-2xl font-bold text-lg hover:bg-black transition-all hover:shadow-xl hover:-translate-y-1 duration-300"
             >
               Jangga kirish
             </button>
@@ -300,31 +300,34 @@ export default function DuelPlayer() {
 
       {status === 'finished' && p1 && p2 && (
         <div className="flex-1 flex items-center justify-center p-6 relative z-10">
-          <div className="bg-white/90 backdrop-blur-xl border border-white/50 shadow-2xl rounded-3xl p-10 max-w-lg w-full text-center">
-            <Trophy size={64} className="text-yellow-500 mx-auto mb-6" />
-            <h1 className="text-3xl font-black text-zinc-900 mb-8">Natijalar</h1>
+          <div className="bg-white/80 backdrop-blur-2xl border border-black/10 shadow-2xl rounded-3xl p-12 max-w-lg w-full text-center animate-in zoom-in duration-500">
+            <Trophy size={80} className="text-zinc-900 mx-auto mb-6" strokeWidth={1.5} />
+            <h1 className="text-3xl font-black text-zinc-900 mb-2 tracking-tight">Natijalar</h1>
+            <p className="text-zinc-500 mb-10 font-medium tracking-wide">Duyel yakunlandi!</p>
             
-            <div className="flex items-end justify-center gap-4 mb-10">
-              <div className={`flex flex-col items-center ${p1.score >= p2.score ? 'order-2' : 'order-1 opacity-70'}`}>
-                <div className="font-bold text-zinc-600 mb-2 truncate w-24">{p1.score >= p2.score ? p1.name : p2.name}</div>
-                <div className={`w-24 ${p1.score >= p2.score ? 'h-32 bg-yellow-400' : 'h-24 bg-zinc-300'} rounded-t-xl flex items-center justify-center text-white font-black text-2xl shadow-inner`}>
-                  {p1.score >= p2.score ? '1' : '2'}
+            <div className="flex items-end justify-center gap-6 mb-12 h-48">
+              {/* Number 1 */}
+              <div className="flex flex-col items-center order-2 z-20">
+                <div className="font-bold text-zinc-900 mb-3 truncate w-28 text-lg">{p1.score >= p2.score ? p1.name : p2.name}</div>
+                <div className="w-28 h-32 bg-zinc-900 rounded-t-2xl flex items-center justify-center text-white font-black text-4xl shadow-[0_0_40px_rgba(0,0,0,0.2)]">
+                  #1
                 </div>
-                <div className="mt-2 font-bold">{p1.score >= p2.score ? p1.score : p2.score} ball</div>
+                <div className="mt-4 font-black text-xl">{p1.score >= p2.score ? p1.score : p2.score} <span className="text-sm font-medium text-zinc-500">ball</span></div>
               </div>
               
-              <div className={`flex flex-col items-center ${p1.score < p2.score ? 'order-2' : 'order-1 opacity-70'}`}>
-                <div className="font-bold text-zinc-600 mb-2 truncate w-24">{p1.score < p2.score ? p1.name : p2.name}</div>
-                <div className={`w-24 ${p1.score < p2.score ? 'h-32 bg-yellow-400' : 'h-24 bg-zinc-300'} rounded-t-xl flex items-center justify-center text-white font-black text-2xl shadow-inner`}>
-                  {p1.score < p2.score ? '1' : '2'}
+              {/* Number 2 */}
+              <div className="flex flex-col items-center order-1 z-10 opacity-90 transform translate-y-4">
+                <div className="font-semibold text-zinc-500 mb-3 truncate w-24">{p1.score < p2.score ? p1.name : p2.name}</div>
+                <div className="w-24 h-24 bg-white border-2 border-black/10 rounded-t-2xl flex items-center justify-center text-zinc-400 font-black text-3xl">
+                  #2
                 </div>
-                <div className="mt-2 font-bold">{p1.score < p2.score ? p1.score : p2.score} ball</div>
+                <div className="mt-4 font-bold text-zinc-600 text-lg">{p1.score < p2.score ? p1.score : p2.score} <span className="text-sm font-medium text-zinc-400">ball</span></div>
               </div>
             </div>
             
             <button 
               onClick={() => navigate('/')}
-              className="w-full bg-black text-white py-4 rounded-xl font-bold text-lg hover:bg-zinc-800 transition-colors"
+              className="w-full bg-zinc-900 text-white py-5 rounded-2xl font-bold text-lg hover:bg-black transition-all hover:shadow-xl hover:-translate-y-1 duration-300"
             >
               Bosh sahifaga qaytish
             </button>

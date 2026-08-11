@@ -90,18 +90,18 @@ export default function LivePlayer() {
 
       {status === 'login' && (
         <div className="flex-1 flex items-center justify-center p-6 relative z-10">
-          <form onSubmit={handleJoin} className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-2xl rounded-3xl p-8 max-w-sm w-full text-center">
-            <div className="w-16 h-16 bg-indigo-600 rounded-2xl mx-auto mb-6 flex items-center justify-center transform rotate-12 shadow-lg shadow-indigo-200">
-              <span className="text-white font-black text-2xl -rotate-12">HB</span>
+          <form onSubmit={handleJoin} className="bg-white/80 backdrop-blur-2xl border border-black/10 shadow-2xl rounded-3xl p-10 max-w-sm w-full text-center transform transition-all hover:scale-[1.02] duration-500">
+            <div className="w-16 h-16 bg-zinc-900 rounded-2xl mx-auto mb-8 flex items-center justify-center transform rotate-12 shadow-2xl">
+              <span className="text-white font-black text-2xl -rotate-12 tracking-tighter">HB</span>
             </div>
-            <h1 className="text-2xl font-bold text-zinc-800 mb-6">Jonli Testga Ulanish</h1>
+            <h1 className="text-2xl font-bold text-zinc-900 mb-8 tracking-tight">Jonli Testga Ulanish</h1>
             
             <input 
               type="text" 
-              placeholder="Game PIN" 
+              placeholder="GAME PIN" 
               value={pin}
               onChange={e => setPin(e.target.value)}
-              className="w-full text-center text-2xl font-bold tracking-widest px-4 py-4 bg-zinc-100 border border-zinc-200 rounded-xl mb-4 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all placeholder:font-normal placeholder:tracking-normal placeholder:text-zinc-400"
+              className="w-full text-center text-3xl font-black tracking-[0.3em] px-4 py-5 bg-zinc-50/50 border border-black/10 rounded-2xl mb-4 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all placeholder:font-medium placeholder:tracking-widest placeholder:text-zinc-300 placeholder:text-lg"
               maxLength={6}
             />
             
@@ -110,12 +110,12 @@ export default function LivePlayer() {
               placeholder="Ismingiz (Masalan: Ali)" 
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full text-center text-lg px-4 py-4 bg-zinc-100 border border-zinc-200 rounded-xl mb-6 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all placeholder:text-zinc-400"
+              className="w-full text-center text-lg px-4 py-5 bg-zinc-50/50 border border-black/10 rounded-2xl mb-8 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all placeholder:text-zinc-400"
             />
             
             <button 
               type="submit"
-              className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+              className="w-full bg-zinc-900 text-white py-5 rounded-2xl font-bold text-lg hover:bg-black transition-all hover:shadow-xl hover:-translate-y-1 duration-300"
             >
               Ulanish
             </button>
@@ -125,10 +125,10 @@ export default function LivePlayer() {
 
       {status === 'waiting' && (
         <div className="flex-1 flex items-center justify-center p-6 relative z-10">
-          <div className="text-center animate-in fade-in slide-in-from-bottom-4">
-            <h2 className="text-3xl font-black text-zinc-900 mb-4">Siz ulandingiz!</h2>
-            <p className="text-zinc-500 mb-8 font-medium">O'qituvchi o'yinni boshlashini kuting. Asosiy ekranga qarab turing 👀</p>
-            <Loader2 className="animate-spin text-indigo-500 mx-auto" size={48} />
+          <div className="text-center animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <h2 className="text-4xl font-black text-zinc-900 mb-4 tracking-tight">Siz ulandingiz!</h2>
+            <p className="text-zinc-500 mb-12 font-medium text-lg">O'qituvchi o'yinni boshlashini kuting. Asosiy ekranga qarab turing 👀</p>
+            <Loader2 className="animate-spin text-zinc-900 mx-auto" size={48} />
           </div>
         </div>
       )}
@@ -186,20 +186,21 @@ export default function LivePlayer() {
 
       {status === 'finished' && (
         <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
-          <div className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-2xl rounded-3xl p-10 max-w-sm w-full text-center">
-            <Trophy size={64} className="text-yellow-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-zinc-900 mb-2">O'yin tugadi!</h1>
+          <div className="bg-white/80 backdrop-blur-2xl border border-black/10 shadow-2xl rounded-3xl p-12 max-w-md w-full text-center transform animate-in zoom-in duration-500">
+            <Trophy size={80} className="text-zinc-900 mx-auto mb-6" strokeWidth={1.5} />
+            <h1 className="text-3xl font-black text-zinc-900 mb-4 tracking-tight">O'yin tugadi!</h1>
             
-            <div className="my-8">
-              <p className="text-sm text-zinc-500 font-medium uppercase tracking-wider mb-2">Sizning o'rningiz</p>
-              <div className="text-6xl font-black text-indigo-600">
+            <div className="my-10 p-8 bg-zinc-50 rounded-3xl border border-black/5 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-zinc-900 to-transparent opacity-20"></div>
+              <p className="text-xs text-zinc-400 font-bold uppercase tracking-[0.3em] mb-4">SIZNING O'RNINGIZ</p>
+              <div className="text-7xl font-black text-zinc-900 tracking-tighter">
                 #{rank}
               </div>
             </div>
 
             <button 
               onClick={() => navigate('/')}
-              className="w-full bg-zinc-900 text-white py-3 rounded-xl font-bold hover:bg-zinc-800 transition-colors"
+              className="w-full bg-zinc-900 text-white py-5 rounded-2xl font-bold hover:bg-black transition-all hover:shadow-xl hover:-translate-y-1 duration-300"
             >
               Bosh sahifaga qaytish
             </button>

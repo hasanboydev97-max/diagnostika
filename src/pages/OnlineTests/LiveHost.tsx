@@ -145,43 +145,45 @@ export default function LiveHost() {
       
       {status === 'waiting' && (
         <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
-          <div className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-2xl rounded-3xl p-10 max-w-2xl w-full text-center">
-            <h1 className="text-2xl font-bold text-zinc-800 mb-2">{test.title}</h1>
-            <p className="text-zinc-500 mb-4">O'quvchilar ushbu manzilga kirishlari kerak:</p>
-            <div className="bg-zinc-100 rounded-lg py-3 px-6 inline-block mb-6 border border-zinc-200">
-              <span className="font-mono text-xl font-bold text-zinc-900 tracking-tight">{window.location.host}/live</span>
-            </div>
-            <p className="text-zinc-500 mb-2">Va quyidagi PIN kodni kiritadilar:</p>
+          <div className="bg-white/80 backdrop-blur-2xl border border-black/10 shadow-2xl rounded-[3rem] p-12 max-w-4xl w-full text-center">
+            <h1 className="text-3xl font-black text-zinc-900 mb-2 tracking-tight">{test.title}</h1>
+            <p className="text-xs text-zinc-400 font-bold uppercase tracking-[0.3em] mb-12">O'QUVCHILAR USHBU MANZILGA KIRISHLARI KERAK:</p>
             
-            <div className="text-6xl sm:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 tracking-widest mb-10 drop-shadow-sm">
+            <div className="bg-zinc-50 rounded-2xl py-4 px-8 inline-block mb-12 border border-black/5 shadow-inner">
+              <span className="font-mono text-3xl font-black text-zinc-900 tracking-tighter">{window.location.host}/live</span>
+            </div>
+            
+            <p className="text-xs text-zinc-400 font-bold uppercase tracking-[0.3em] mb-6">PIN KOD:</p>
+            
+            <div className="text-[6rem] md:text-[8rem] lg:text-[10rem] leading-none font-black text-zinc-900 tracking-tighter mb-16">
               {pin || '...'}
             </div>
             
-            <div className="flex items-center justify-between bg-zinc-50 border border-zinc-200 rounded-2xl p-4 mb-8">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center">
-                  <Users size={24} />
+            <div className="flex flex-col md:flex-row items-center justify-between bg-zinc-50/50 border border-black/5 rounded-3xl p-6 mb-10 gap-6">
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 bg-zinc-900 text-white rounded-2xl flex items-center justify-center shadow-xl">
+                  <Users size={32} />
                 </div>
                 <div className="text-left">
-                  <p className="text-xs text-zinc-500 uppercase tracking-wider font-bold">Ulandi</p>
-                  <p className="text-xl font-bold text-zinc-900">{players.length} ta o'quvchi</p>
+                  <p className="text-xs text-zinc-400 uppercase tracking-[0.3em] font-bold mb-1">ULANDI</p>
+                  <p className="text-3xl font-black text-zinc-900">{players.length} ta o'quvchi</p>
                 </div>
               </div>
               <button 
                 onClick={startGame}
-                className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 flex items-center gap-2"
+                className="w-full md:w-auto bg-zinc-900 text-white px-10 py-5 rounded-2xl font-bold text-lg hover:bg-black transition-all shadow-xl hover:-translate-y-1 flex items-center justify-center gap-3"
               >
-                <Play fill="currentColor" size={18} /> Boshlash
+                <Play fill="currentColor" size={20} /> O'yinni Boshlash
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-2 justify-center max-h-48 overflow-y-auto">
+            <div className="flex flex-wrap gap-3 justify-center max-h-48 overflow-y-auto p-2">
               {players.map((p, i) => (
-                <span key={i} className="px-4 py-2 bg-indigo-50 text-indigo-700 font-semibold rounded-lg text-sm border border-indigo-100 animate-in fade-in zoom-in">
+                <span key={i} className="px-5 py-3 bg-white text-zinc-900 font-bold rounded-xl text-lg border border-black/10 shadow-sm animate-in zoom-in duration-300">
                   {p.name}
                 </span>
               ))}
-              {players.length === 0 && <span className="text-zinc-400 text-sm italic">O'quvchilar kutilmoqda...</span>}
+              {players.length === 0 && <span className="text-zinc-300 font-medium italic text-lg">O'quvchilar kutilmoqda...</span>}
             </div>
           </div>
         </div>
@@ -259,40 +261,42 @@ export default function LiveHost() {
 
       {status === 'finished' && (
         <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
-          <div className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-2xl rounded-3xl p-10 max-w-3xl w-full text-center">
-            <Trophy size={64} className="text-yellow-500 mx-auto mb-6" />
-            <h1 className="text-4xl font-black text-zinc-900 mb-8">G'oliblar!</h1>
+          <div className="bg-white/80 backdrop-blur-2xl border border-black/10 shadow-2xl rounded-[3rem] p-12 max-w-4xl w-full text-center animate-in zoom-in duration-700">
+            <Trophy size={80} className="text-zinc-900 mx-auto mb-6" strokeWidth={1.5} />
+            <h1 className="text-5xl font-black text-zinc-900 mb-12 tracking-tight">G'oliblar!</h1>
             
-            <div className="flex flex-col md:flex-row items-end justify-center gap-4 mb-10 h-64">
-              {/* Top 3 Podium */}
+            <div className="flex flex-col md:flex-row items-end justify-center gap-6 mb-16 h-72">
+              {/* 2nd Place */}
               {players[1] && (
-                <div className="flex flex-col items-center flex-1 z-10">
-                  <span className="font-bold text-xl mb-2">{players[1].name}</span>
-                  <span className="font-mono font-bold text-zinc-500 mb-2">{players[1].score}</span>
-                  <div className="w-full bg-gray-200 h-32 rounded-t-xl flex justify-center pt-4 text-4xl font-black text-gray-400">2</div>
+                <div className="flex flex-col items-center flex-1 z-10 animate-in slide-in-from-bottom-12 duration-1000 delay-300">
+                  <span className="font-bold text-2xl mb-3 text-zinc-800">{players[1].name}</span>
+                  <span className="font-mono font-bold text-zinc-400 mb-4">{players[1].score} ball</span>
+                  <div className="w-full max-w-[150px] bg-white border-2 border-black/5 h-40 rounded-t-3xl flex justify-center pt-6 text-5xl font-black text-zinc-300 shadow-lg">2</div>
                 </div>
               )}
+              {/* 1st Place */}
               {players[0] && (
-                <div className="flex flex-col items-center flex-1 z-20">
-                  <span className="font-bold text-2xl mb-2 text-yellow-600">{players[0].name}</span>
-                  <span className="font-mono font-bold text-zinc-500 mb-2">{players[0].score}</span>
-                  <div className="w-full bg-yellow-400 h-48 rounded-t-xl flex justify-center pt-4 text-5xl font-black text-yellow-600 shadow-xl">1</div>
+                <div className="flex flex-col items-center flex-1 z-20 animate-in slide-in-from-bottom-24 duration-1000 delay-500">
+                  <span className="font-black text-3xl mb-3 text-zinc-900">{players[0].name}</span>
+                  <span className="font-mono font-bold text-zinc-500 mb-4">{players[0].score} ball</span>
+                  <div className="w-full max-w-[180px] bg-zinc-900 h-56 rounded-t-3xl flex justify-center pt-6 text-6xl font-black text-white shadow-[0_0_50px_rgba(0,0,0,0.2)]">1</div>
                 </div>
               )}
+              {/* 3rd Place */}
               {players[2] && (
-                <div className="flex flex-col items-center flex-1 z-0">
-                  <span className="font-bold text-lg mb-2">{players[2].name}</span>
-                  <span className="font-mono font-bold text-zinc-500 mb-2">{players[2].score}</span>
-                  <div className="w-full bg-amber-700/80 h-24 rounded-t-xl flex justify-center pt-4 text-3xl font-black text-amber-900">3</div>
+                <div className="flex flex-col items-center flex-1 z-0 animate-in slide-in-from-bottom-8 duration-1000 delay-100">
+                  <span className="font-bold text-xl mb-3 text-zinc-700">{players[2].name}</span>
+                  <span className="font-mono font-bold text-zinc-400 mb-4">{players[2].score} ball</span>
+                  <div className="w-full max-w-[130px] bg-zinc-100 border-2 border-black/5 h-28 rounded-t-3xl flex justify-center pt-6 text-4xl font-black text-zinc-300 shadow-sm">3</div>
                 </div>
               )}
             </div>
 
             <button 
               onClick={() => navigate('/online-tests')}
-              className="bg-zinc-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-zinc-800 transition-colors flex items-center gap-2 mx-auto"
+              className="bg-zinc-900 text-white px-10 py-5 rounded-2xl font-bold hover:bg-black transition-all flex items-center gap-3 mx-auto shadow-xl hover:-translate-y-1"
             >
-              <ArrowLeft size={18} /> Dashboard'ga qaytish
+              <ArrowLeft size={20} /> Dashboard'ga qaytish
             </button>
           </div>
         </div>
