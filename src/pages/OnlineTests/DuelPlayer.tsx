@@ -259,7 +259,7 @@ export default function DuelPlayer() {
               <div className="flex-1 bg-zinc-100 rounded-full h-3 overflow-hidden">
                 <div 
                   className="bg-blue-500 h-full transition-all duration-500" 
-                  style={{ width: \`\${((p1?.currentQuestion || 0) / test.questions.length) * 100}%\` }}
+                  style={{ width: `${((p1?.currentQuestion || 0) / test.questions.length) * 100}%` }}
                 ></div>
               </div>
               <span className="text-xs font-bold w-8 text-right">{p1?.score}/{test.questions.length}</span>
@@ -270,7 +270,7 @@ export default function DuelPlayer() {
               <div className="flex-1 bg-zinc-100 rounded-full h-3 overflow-hidden">
                 <div 
                   className="bg-red-500 h-full transition-all duration-500" 
-                  style={{ width: \`\${((p2?.currentQuestion || 0) / test.questions.length) * 100}%\` }}
+                  style={{ width: `${((p2?.currentQuestion || 0) / test.questions.length) * 100}%` }}
                 ></div>
               </div>
               <span className="text-xs font-bold w-8 text-right">{p2?.score}/{test.questions.length}</span>
@@ -308,17 +308,17 @@ export default function DuelPlayer() {
             <h1 className="text-3xl font-black text-zinc-900 mb-8">Natijalar</h1>
             
             <div className="flex items-end justify-center gap-4 mb-10">
-              <div className={\`flex flex-col items-center \${p1.score >= p2.score ? 'order-2' : 'order-1 opacity-70'}\`}>
+              <div className={`flex flex-col items-center ${p1.score >= p2.score ? 'order-2' : 'order-1 opacity-70'}`}>
                 <div className="font-bold text-zinc-600 mb-2 truncate w-24">{p1.score >= p2.score ? p1.name : p2.name}</div>
-                <div className={\`w-24 \${p1.score >= p2.score ? 'h-32 bg-yellow-400' : 'h-24 bg-zinc-300'} rounded-t-xl flex items-center justify-center text-white font-black text-2xl shadow-inner\`}>
+                <div className={`w-24 ${p1.score >= p2.score ? 'h-32 bg-yellow-400' : 'h-24 bg-zinc-300'} rounded-t-xl flex items-center justify-center text-white font-black text-2xl shadow-inner`}>
                   {p1.score >= p2.score ? '1' : '2'}
                 </div>
                 <div className="mt-2 font-bold">{p1.score >= p2.score ? p1.score : p2.score} ball</div>
               </div>
               
-              <div className={\`flex flex-col items-center \${p1.score < p2.score ? 'order-2' : 'order-1 opacity-70'}\`}>
+              <div className={`flex flex-col items-center ${p1.score < p2.score ? 'order-2' : 'order-1 opacity-70'}`}>
                 <div className="font-bold text-zinc-600 mb-2 truncate w-24">{p1.score < p2.score ? p1.name : p2.name}</div>
-                <div className={\`w-24 \${p1.score < p2.score ? 'h-32 bg-yellow-400' : 'h-24 bg-zinc-300'} rounded-t-xl flex items-center justify-center text-white font-black text-2xl shadow-inner\`}>
+                <div className={`w-24 ${p1.score < p2.score ? 'h-32 bg-yellow-400' : 'h-24 bg-zinc-300'} rounded-t-xl flex items-center justify-center text-white font-black text-2xl shadow-inner`}>
                   {p1.score < p2.score ? '1' : '2'}
                 </div>
                 <div className="mt-2 font-bold">{p1.score < p2.score ? p1.score : p2.score} ball</div>
