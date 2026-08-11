@@ -25,7 +25,8 @@ export default function DuelPlayer() {
   const [status, setStatus] = useState<'login' | 'lobby' | 'active' | 'finished'>('login');
   
   // Login states
-  const [pin, setPin] = useState('');
+  const queryParams = new URLSearchParams(location.search);
+  const [pin, setPin] = useState(queryParams.get('pin') || '');
   const [name, setName] = useState('');
   
   // Duel states
@@ -142,8 +143,9 @@ export default function DuelPlayer() {
   };
 
   const copyLink = () => {
-    navigator.clipboard.writeText(pin);
-    toast.success('PIN nusxalandi');
+    const inviteLink = `${window.location.origin}/duel?pin=${pin}`;
+    navigator.clipboard.writeText(inviteLink);
+    toast.success("Taklif havolasi (link) nusxalandi! Do'stingizga yuboring.");
   };
 
   const fadeUp = {
@@ -190,6 +192,7 @@ export default function DuelPlayer() {
                   value={name}
                   onChange={e => setName(e.target.value)}
                   className="w-full bg-white border border-black/10 px-6 py-4 text-center text-lg focus:outline-none focus:border-black transition-colors"
+                  required
                 />
               </div>
               
@@ -218,9 +221,11 @@ export default function DuelPlayer() {
                 onClick={copyLink}
                 className="mb-16 group cursor-pointer border border-black/10 px-12 py-8 bg-white hover:border-black transition-colors flex flex-col items-center gap-4"
               >
-                <p className="text-xs uppercase tracking-[0.3em] text-gray-500">PIN KOD (Nusxalash uchun bosing)</p>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500 font-bold">Taklif havolasini nusxalash</p>
                 <div className="text-6xl tracking-widest font-light">{pin}</div>
-                <Copy size={16} className="text-gray-300 group-hover:text-black transition-colors mt-2" />
+                <div className="flex items-center gap-2 mt-4 text-xs font-bold uppercase tracking-[0.2em] text-black">
+                  <Copy size={16} /> Linkni nusxalash
+                </div>
               </div>
             )}
 

@@ -116,6 +116,28 @@ export default function Landing() {
               <ArrowRight className="relative z-10 w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 group-hover:text-black transition-all duration-500" strokeWidth={1.5} />
             </motion.div>
 
+            {/* Duel Portali */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.1 }}
+              onClick={() => navigate('/duel')}
+              className="relative group cursor-pointer border-b border-black/10 py-10 px-6 -mx-6 flex flex-col md:flex-row md:items-end justify-between gap-6 pointer-events-auto overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-neutral-100 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.87,0,0.13,1)] z-0 rounded-xl" />
+              
+              <div className="relative z-10 flex flex-col md:flex-row gap-6 md:items-center">
+                <div className="w-12 h-12 rounded-full bg-white border border-neutral-200 flex items-center justify-center shrink-0 group-hover:border-black/30 group-hover:shadow-[0_0_15px_rgba(0,0,0,0.05)] transition-all duration-500">
+                  <Zap className="w-6 h-6 text-neutral-500 group-hover:text-amber-500 transition-colors duration-500" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <h3 className="text-2xl md:text-3xl font-medium mb-3 transition-all duration-300 group-hover:translate-x-1">1v1 Duel</h3>
+                  <p className="text-neutral-500 leading-relaxed max-w-md transition-all duration-300 delay-75 group-hover:translate-x-1">
+                    Do'stingiz bilan real vaqtda bellashing. Pin kod orqali duelga qo'shiling.
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="relative z-10 w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 group-hover:text-black transition-all duration-500" strokeWidth={1.5} />
+            </motion.div>
+
             {/* O'qituvchi Portali */}
             <motion.div 
               initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
