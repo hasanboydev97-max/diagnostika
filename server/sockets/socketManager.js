@@ -135,6 +135,23 @@ export const setupSockets = (httpServer) => {
       });
     });
 
+    socket.on('rejoin_duel', ({ pin, name, isCreator }) => {
+      const room = duelRooms.get(pin);
+      if (!room) return;
+      
+      socket.join(pin);
+      if (isCreator) {
+        room.player1.id = socket.id;
+      } else if (room.player2 && room.player2.name === name) {
+        room.player2.id = socket.id;
+      }
+      
+      io.to(pin).emit('duel_update', {
+        player1: room.player1,
+        player2: room.player2
+      });
+    });
+
     socket.on('start_duel', ({ pin }) => {
       const room = duelRooms.get(pin);
       if (!room || socket.id !== room.player1.id) return; // Only creator can start

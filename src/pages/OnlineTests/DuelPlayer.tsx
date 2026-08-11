@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -40,9 +40,31 @@ export default function DuelPlayer() {
   const [hasAnsweredCurrent, setHasAnsweredCurrent] = useState(false);
   const [myScore, setMyScore] = useState(0);
 
+  // Refs to avoid stale closures in socket listener
+  const pinRef = useRef(pin);
+  const nameRef = useRef(name);
+  const isCreatorRef = useRef(isCreator);
+  const statusRef = useRef(status);
+
+  useEffect(() => { pinRef.current = pin; }, [pin]);
+  useEffect(() => { nameRef.current = name; }, [name]);
+  useEffect(() => { isCreatorRef.current = isCreator; }, [isCreator]);
+  useEffect(() => { statusRef.current = status; }, [status]);
+
   useEffect(() => {
     const newSocket = io(SOCKET_URL);
     setSocket(newSocket);
+
+    newSocket.on('connect', () => {
+      console.log('Socket connected/reconnected:', newSocket.id);
+      if (pinRef.current && nameRef.current && statusRef.current !== 'login') {
+        newSocket.emit('rejoin_duel', {
+          pin: pinRef.current,
+          name: nameRef.current,
+          isCreator: isCreatorRef.current
+        });
+      }
+    });
 
     const state = location.state as any;
     if (state?.isCreator && state?.testId && state?.studentName) {
