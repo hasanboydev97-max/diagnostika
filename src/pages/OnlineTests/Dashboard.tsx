@@ -86,7 +86,7 @@ export default function OnlineTestsDashboard() {
       
       {/* Top Navbar / Header Area */}
       <header className="border-b border-white/50 bg-white/60 backdrop-blur-xl sticky top-0 z-20 shadow-sm">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo & Portal Title */}
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-zinc-900 text-white rounded-xl flex items-center justify-center font-bold text-sm shadow-xs">
@@ -145,7 +145,7 @@ export default function OnlineTestsDashboard() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8 relative z-10">
+      <main className="max-w-7xl mx-auto px-6 py-8 relative z-10">
         {/* Pending Subscription Request Banner */}
         {teacher?.planStatus === 'pending' && (
           <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-4">
@@ -186,84 +186,96 @@ export default function OnlineTestsDashboard() {
         </div>
 
         {/* List Section */}
-        <div className="border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl overflow-hidden bg-white/60 backdrop-blur-xl">
+        <div>
           {loading ? (
-            <div className="divide-y divide-zinc-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="p-4 flex items-center justify-between animate-pulse">
-                  <div className="space-y-2 w-1/3">
-                    <div className="h-4 bg-zinc-100 rounded w-full"></div>
-                    <div className="h-3 bg-zinc-50 rounded w-2/3"></div>
+                <div key={i} className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-6 h-[160px] flex flex-col justify-between animate-pulse">
+                  <div className="space-y-3 w-full">
+                    <div className="flex justify-between">
+                       <div className="h-5 bg-zinc-100 rounded-lg w-16"></div>
+                       <div className="h-5 bg-zinc-100 rounded-lg w-6"></div>
+                    </div>
+                    <div className="h-5 bg-zinc-200 rounded w-full"></div>
+                    <div className="h-5 bg-zinc-200 rounded w-2/3"></div>
+                  </div>
+                  <div className="flex justify-between items-center border-t border-zinc-100 pt-3">
+                     <div className="h-3 bg-zinc-100 rounded w-24"></div>
+                     <div className="h-5 bg-zinc-100 rounded w-5"></div>
                   </div>
                 </div>
               ))}
             </div>
           ) : filteredTests.length === 0 ? (
-            <div className="text-center py-16 flex flex-col items-center">
-              <div className="w-12 h-12 border border-zinc-200 rounded-md flex items-center justify-center mb-3 bg-zinc-50">
-                <FileText className="text-zinc-400 w-5 h-5" />
+            <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl p-16 flex flex-col items-center justify-center text-center">
+              <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-6 border border-gray-100">
+                <FileText className="text-gray-400" size={32} strokeWidth={1.5} />
               </div>
-              <h3 className="text-sm font-medium text-zinc-900 mb-1">Ma'lumot topilmadi</h3>
-              <p className="text-xs text-zinc-500 mb-4">
-                {search ? "Qidiruvingizga mos test yo'q." : "Hali hech qanday test yaratmagansiz."}
-              </p>
+              <h3 className="text-xl font-bold text-black mb-2">Ma'lumot topilmadi</h3>
+              <p className="text-gray-500 mb-8 max-w-md">Hali hech qanday test yaratmagansiz. O'quvchilaringiz uchun birinchi onlayn testingizni yarating.</p>
               {!search && (
-                <button
+                <button 
                   onClick={() => navigate('/online-tests/create')}
-                  className="text-xs font-medium text-zinc-900 hover:underline underline-offset-2 flex items-center gap-1"
+                  className="px-6 py-2.5 bg-white border border-gray-200 text-black hover:bg-gray-50 text-sm font-bold tracking-wide rounded-xl transition-all shadow-sm flex items-center gap-2"
                 >
-                  <Plus size={12} /> Test yaratish
+                  <Plus size={16} strokeWidth={2} />
+                  Test yaratish
                 </button>
               )}
             </div>
           ) : (
-            <motion.ul 
+            <motion.div 
               initial="hidden"
               animate="show"
               variants={{
                 hidden: { opacity: 0 },
                 show: { opacity: 1, transition: { staggerChildren: 0.05 } }
               }}
-              className="divide-y divide-zinc-100"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             >
               {filteredTests.map((test) => (
-                <motion.li
+                <motion.div
                   variants={{
                     hidden: { opacity: 0, y: 10 },
                     show: { opacity: 1, y: 0, transition: { duration: 0.3 } }
                   }}
                   key={test.id}
-                  className="group hover:bg-zinc-50 transition-all flex items-center justify-between p-4 cursor-pointer hover:pl-6"
                   onClick={() => navigate(`/online-tests/details/${test.id}`)}
+                  className="bg-white/80 backdrop-blur-xl border border-black/5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-6 hover:bg-white hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:border-black/10 transition-all cursor-pointer group relative flex flex-col h-full overflow-hidden"
                 >
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-zinc-900 leading-none mb-1.5">{test.title}</h3>
-                      <div className="flex items-center gap-2 text-[11px] text-zinc-500">
-                        <span className="font-medium bg-zinc-100 border border-zinc-200 px-1.5 py-0.5 rounded text-zinc-700">
-                          {test.subject}
-                        </span>
-                        <span>{test.questions?.length || 0} savol</span>
-                        <span>•</span>
-                        <span>{new Date(test.createdAt).toLocaleDateString()}</span>
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#111111]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="px-3 py-1 bg-gray-100/80 rounded-lg text-[10px] uppercase tracking-wider font-bold text-gray-600 border border-black/5 group-hover:bg-gray-100 group-hover:text-black transition-colors">{test.subject}</span>
+                      <button 
+                        onClick={(e) => handleDeleteTest(e, test.id)}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 z-10"
+                        title="O'chirish"
+                      >
+                        <Trash2 size={16} strokeWidth={1.5} />
+                      </button>
+                    </div>
+                    
+                    <h3 className="text-lg font-bold text-[#111111] group-hover:text-accent transition-colors mb-3 line-clamp-2 leading-snug">{test.title}</h3>
+                  </div>
+                  
+                  <div className="mt-4 pt-4 border-t border-black/5 flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-xs text-gray-500 font-medium">
+                      <div className="flex items-center gap-1.5">
+                        <FileText size={14} strokeWidth={1.5} />
+                        <span>{test?.questions?.length || 0} savol</span>
                       </div>
+                      <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                      <span>{new Date(test.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-[#111111] group-hover:text-white transition-colors">
+                      <ChevronRight size={16} className="text-gray-400 group-hover:text-white transition-colors" strokeWidth={2} />
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => handleDeleteTest(e, test.id)}
-                      className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100"
-                      title="O'chirish"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                    <div className="text-zinc-400 group-hover:text-zinc-900 transition-colors">
-                      <ChevronRight size={16} />
-                    </div>
-                  </div>
-                </motion.li>
+                </motion.div>
               ))}
-            </motion.ul>
+            </motion.div>
           )}
         </div>
       </main>

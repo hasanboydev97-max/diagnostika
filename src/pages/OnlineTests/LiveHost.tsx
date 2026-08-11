@@ -163,7 +163,7 @@ export default function LiveHost() {
           <motion.div 
             key="waiting"
             initial="initial" animate="animate" exit="exit" variants={fadeUp}
-            className="flex-1 container mx-auto max-w-5xl flex flex-col justify-center items-center p-8 lg:p-16 gap-12"
+            className="flex-1 container mx-auto max-w-7xl flex flex-col justify-center items-center p-8 lg:p-16 gap-12"
           >
             <div className="text-center w-full">
               <motion.p variants={fadeUp} className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4">
@@ -227,7 +227,7 @@ export default function LiveHost() {
           <motion.div 
             key="active"
             initial="initial" animate="animate" exit="exit" variants={fadeUp}
-            className="flex-1 flex flex-col container mx-auto max-w-5xl py-12 px-6"
+            className="flex-1 flex flex-col container mx-auto max-w-7xl py-12 px-6"
           >
             {/* Top Bar */}
             <div className="flex items-center justify-between pb-6 border-b border-black/10 mb-12">

@@ -252,7 +252,7 @@ export default function CreateTest() {
       
       {/* Header */}
       <header className="border-b border-white/50 bg-white/60 backdrop-blur-xl sticky top-0 z-30 shadow-sm">
-        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
           <button 
             onClick={() => navigate('/online-tests')}
             className="flex items-center gap-2 text-xs font-medium text-zinc-500 hover:text-zinc-900 transition-colors"
@@ -272,7 +272,7 @@ export default function CreateTest() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-6 py-8 relative z-20">
+      <main className="max-w-7xl mx-auto px-6 py-8 relative z-20">
         
         {/* Settings Section */}
         <section className="mb-10 bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-6 md:p-8">

@@ -188,7 +188,7 @@ export default function TestDetails() {
       
       {/* Header */}
       <header className="border-b border-white/50 bg-white/60 backdrop-blur-xl sticky top-0 z-30 shadow-sm">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
           <button 
             onClick={() => navigate('/online-tests')}
             className="flex items-center gap-2 text-xs font-medium text-zinc-500 hover:text-zinc-900 transition-colors"
@@ -201,7 +201,7 @@ export default function TestDetails() {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8 relative z-20">
+      <div className="max-w-7xl mx-auto px-6 py-8 relative z-20">
 
         {/* Print-only View (Hidden on screen) */}
         <div id="print-view" className="hidden print:block mb-8 bg-white p-8">
