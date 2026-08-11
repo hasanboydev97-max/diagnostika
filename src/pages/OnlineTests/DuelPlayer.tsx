@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
-import { Swords, Trophy, Loader2, Copy } from 'lucide-react';
-import MeshGradient from '../../components/ui/MeshGradient';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Trophy, Loader2, Copy, Play } from 'lucide-react';
 import FormattedText from '../../components/FormattedText';
 import { toast } from 'sonner';
 
@@ -146,89 +146,99 @@ export default function DuelPlayer() {
     toast.success('PIN nusxalandi');
   };
 
+  const fadeUp = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 },
+    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
+  };
+
   if (!socket) return null;
 
   return (
-    <div className="min-h-screen relative font-sans text-zinc-900 bg-[#fdfdfd] overflow-hidden flex flex-col">
-      <MeshGradient />
-
-      {status === 'login' && (
-        <div className="flex-1 flex items-center justify-center p-6 relative z-10">
-          <form onSubmit={handleJoin} className="bg-white/80 backdrop-blur-2xl border border-black/10 shadow-2xl rounded-3xl p-10 max-w-sm w-full text-center transform transition-all hover:scale-[1.02] duration-500">
-            <div className="w-16 h-16 bg-zinc-900 rounded-2xl mx-auto mb-8 flex items-center justify-center transform rotate-12 shadow-2xl">
-              <Swords size={32} className="text-white -rotate-12" />
+    <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans selection:bg-black selection:text-white flex flex-col">
+      <AnimatePresence mode="wait">
+        
+        {/* LOGIN SCREEN */}
+        {status === 'login' && (
+          <motion.div 
+            key="login"
+            initial="initial" animate="animate" exit="exit" variants={fadeUp}
+            className="flex-1 flex flex-col items-center justify-center p-6 w-full max-w-md mx-auto"
+          >
+            <div className="text-center mb-12">
+              <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4">1v1 Duyel</p>
+              <h1 className="text-3xl font-medium tracking-tight">Jangga qo'shilish</h1>
             </div>
-            <h1 className="text-2xl font-bold text-zinc-900 mb-8 tracking-tight">Duyelga Ulanish</h1>
             
-            <input 
-              type="text" 
-              placeholder="DUYEL PIN" 
-              value={pin}
-              onChange={e => setPin(e.target.value)}
-              className="w-full text-center text-3xl font-black tracking-[0.3em] px-4 py-5 bg-zinc-50/50 border border-black/10 rounded-2xl mb-4 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all placeholder:font-medium placeholder:tracking-widest placeholder:text-zinc-300 placeholder:text-lg"
-              maxLength={6}
-            />
-            
-            <input 
-              type="text" 
-              placeholder="Ismingiz (Masalan: Ali)" 
-              value={name}
-              onChange={e => setName(e.target.value)}
-              className="w-full text-center text-lg px-4 py-5 bg-zinc-50/50 border border-black/10 rounded-2xl mb-8 focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-all placeholder:text-zinc-400"
-            />
-            
-            <button 
-              type="submit"
-              className="w-full bg-zinc-900 text-white py-5 rounded-2xl font-bold text-lg hover:bg-black transition-all hover:shadow-xl hover:-translate-y-1 duration-300"
-            >
-              Jangga kirish
-            </button>
-          </form>
-        </div>
-      )}
+            <form onSubmit={handleJoin} className="w-full space-y-6">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-2 pl-2">Pin Kod</p>
+                <input 
+                  type="text" 
+                  value={pin}
+                  onChange={e => setPin(e.target.value)}
+                  className="w-full bg-white border border-black/10 px-6 py-4 text-center text-2xl font-mono tracking-widest focus:outline-none focus:border-black transition-colors"
+                  maxLength={6}
+                />
+              </div>
+              
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-2 pl-2">Ismingiz</p>
+                <input 
+                  type="text" 
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  className="w-full bg-white border border-black/10 px-6 py-4 text-center text-lg focus:outline-none focus:border-black transition-colors"
+                />
+              </div>
+              
+              <button 
+                type="submit"
+                className="w-full bg-[#111111] text-[#fdfdfd] py-5 mt-4 hover:bg-black transition-colors flex items-center justify-center gap-4"
+              >
+                <span className="text-xs uppercase tracking-[0.2em]">Kirish</span>
+              </button>
+            </form>
+          </motion.div>
+        )}
 
-      {status === 'lobby' && (
-        <div className="flex-1 flex items-center justify-center p-6 relative z-10">
-          <div className="bg-white/80 backdrop-blur-xl border border-white/50 shadow-2xl rounded-3xl p-8 max-w-md w-full text-center">
-            <h2 className="text-2xl font-bold text-zinc-900 mb-2">Duyel xonasi</h2>
-            {isCreator ? (
-              <p className="text-zinc-500 mb-6 text-sm">Raqibingizga quyidagi PIN ni bering:</p>
-            ) : (
-              <p className="text-zinc-500 mb-6 text-sm">Yaratuvchi o'yinni boshlashini kuting...</p>
-            )}
+        {/* LOBBY SCREEN */}
+        {status === 'lobby' && (
+          <motion.div 
+            key="lobby"
+            initial="initial" animate="animate" exit="exit" variants={fadeUp}
+            className="flex-1 flex flex-col items-center justify-center p-6 max-w-2xl mx-auto w-full text-center"
+          >
+            <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4">1v1 Duyel</p>
+            <h2 className="text-3xl md:text-5xl font-medium mb-12">Tayyorgarlik</h2>
 
             {isCreator && (
-              <div className="bg-zinc-100 border border-zinc-200 rounded-2xl p-6 mb-8 relative group cursor-pointer" onClick={copyLink}>
-                <div className="text-6xl font-black text-rose-600 tracking-widest">{pin}</div>
-                <div className="absolute top-2 right-2 p-2 bg-white rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Copy size={16} className="text-zinc-500" />
-                </div>
+              <div 
+                onClick={copyLink}
+                className="mb-16 group cursor-pointer border border-black/10 px-12 py-8 bg-white hover:border-black transition-colors flex flex-col items-center gap-4"
+              >
+                <p className="text-xs uppercase tracking-[0.3em] text-gray-500">PIN KOD (Nusxalash uchun bosing)</p>
+                <div className="text-6xl tracking-widest font-light">{pin}</div>
+                <Copy size={16} className="text-gray-300 group-hover:text-black transition-colors mt-2" />
               </div>
             )}
 
-            <div className="flex items-center justify-between gap-4 mb-8">
-              <div className="flex-1 bg-blue-50 border border-blue-100 rounded-xl p-4 text-center">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <span className="font-bold text-blue-700">{p1?.name?.[0] || name[0]}</span>
-                </div>
-                <p className="font-semibold text-blue-900 truncate">{p1?.name || name}</p>
+            <div className="flex items-center justify-center w-full gap-8 mb-16">
+              <div className="flex-1 border-b border-black/10 pb-4 text-left">
+                <p className="text-xs uppercase tracking-[0.3em] text-gray-400 mb-2">1-O'yinchi</p>
+                <p className="text-xl font-medium">{p1?.name || name}</p>
               </div>
-              <div className="text-zinc-400 font-black italic">VS</div>
-              <div className="flex-1 bg-red-50 border border-red-100 rounded-xl p-4 text-center">
+              <div className="text-xs uppercase tracking-[0.3em] text-gray-300">VS</div>
+              <div className="flex-1 border-b border-black/10 pb-4 text-right">
+                <p className="text-xs uppercase tracking-[0.3em] text-gray-400 mb-2">2-O'yinchi</p>
                 {p2 ? (
-                  <>
-                    <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                      <span className="font-bold text-red-700">{p2.name[0]}</span>
-                    </div>
-                    <p className="font-semibold text-red-900 truncate">{p2.name}</p>
-                  </>
+                  <p className="text-xl font-medium">{p2.name}</p>
                 ) : (
-                  <>
-                    <div className="w-12 h-12 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-2 border-2 border-dashed border-zinc-300">
-                      <Loader2 size={20} className="text-zinc-400 animate-spin" />
-                    </div>
-                    <p className="font-medium text-zinc-500 text-sm">Kutilmoqda...</p>
-                  </>
+                  <div className="flex items-center justify-end gap-2 text-gray-400">
+                    <Loader2 size={16} className="animate-spin" />
+                    <span className="text-sm">Kutilmoqda</span>
+                  </div>
                 )}
               </div>
             </div>
@@ -237,103 +247,128 @@ export default function DuelPlayer() {
               <button 
                 onClick={handleStartDuel}
                 disabled={!p2}
-                className="w-full bg-black text-white py-4 rounded-xl font-bold text-lg hover:bg-zinc-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-[#111111] text-[#fdfdfd] py-4 px-12 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-black transition-colors flex items-center justify-center gap-4 mx-auto"
               >
-                Boshlash
+                <span className="text-xs uppercase tracking-[0.2em]">Jangni boshlash</span>
+                <Play size={14} fill="currentColor" />
               </button>
             )}
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
 
-      {status === 'active' && test && (
-        <div className="flex-1 flex flex-col p-4 sm:p-6 max-w-4xl mx-auto w-full relative z-10">
-          
-          {/* Progress Bars */}
-          <div className="bg-white/80 backdrop-blur-xl border border-white/50 rounded-2xl p-4 shadow-sm mb-6 flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <span className="w-20 truncate font-semibold text-xs text-blue-800">{p1?.name}</span>
-              <div className="flex-1 bg-zinc-100 rounded-full h-3 overflow-hidden">
-                <div 
-                  className="bg-blue-500 h-full transition-all duration-500" 
-                  style={{ width: `${((p1?.currentQuestion || 0) / test.questions.length) * 100}%` }}
-                ></div>
+        {/* ACTIVE DUEL SCREEN */}
+        {status === 'active' && test && (
+          <motion.div 
+            key="active"
+            initial="initial" animate="animate" exit="exit" variants={fadeUp}
+            className="flex-1 flex flex-col container mx-auto max-w-5xl py-8 px-6"
+          >
+            {/* Progress Header */}
+            <div className="grid grid-cols-2 gap-12 border-b border-black/10 pb-8 mb-12">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs uppercase tracking-[0.2em]">{p1?.name}</span>
+                  <span className="text-xs font-mono">{p1?.score}/{test.questions.length}</span>
+                </div>
+                <div className="h-1 bg-black/5 w-full">
+                  <div 
+                    className="h-full bg-black transition-all duration-500"
+                    style={{ width: `${((p1?.currentQuestion || 0) / test.questions.length) * 100}%` }}
+                  />
+                </div>
               </div>
-              <span className="text-xs font-bold w-8 text-right">{p1?.score}/{test.questions.length}</span>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <span className="w-20 truncate font-semibold text-xs text-red-800">{p2?.name}</span>
-              <div className="flex-1 bg-zinc-100 rounded-full h-3 overflow-hidden">
-                <div 
-                  className="bg-red-500 h-full transition-all duration-500" 
-                  style={{ width: `${((p2?.currentQuestion || 0) / test.questions.length) * 100}%` }}
-                ></div>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs uppercase tracking-[0.2em]">{p2?.name}</span>
+                  <span className="text-xs font-mono">{p2?.score}/{test.questions.length}</span>
+                </div>
+                <div className="h-1 bg-black/5 w-full">
+                  <div 
+                    className="h-full bg-black transition-all duration-500"
+                    style={{ width: `${((p2?.currentQuestion || 0) / test.questions.length) * 100}%` }}
+                  />
+                </div>
               </div>
-              <span className="text-xs font-bold w-8 text-right">{p2?.score}/{test.questions.length}</span>
             </div>
-          </div>
 
-          {/* Question Card */}
-          <div className="flex-1 bg-white border border-zinc-200 rounded-3xl shadow-xl overflow-hidden flex flex-col">
-            <div className="p-6 sm:p-10 border-b border-zinc-100 flex-1 flex items-center justify-center text-center">
-              <h2 className="text-xl sm:text-2xl font-bold text-zinc-900">
+            {/* Question */}
+            <div className="mb-16">
+              <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4 text-center">Savol {currentQIndex + 1}</p>
+              <h2 className="text-3xl md:text-4xl font-medium leading-relaxed text-center max-w-3xl mx-auto">
                 <FormattedText content={test.questions[currentQIndex]?.questionText} />
               </h2>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 bg-zinc-50 p-4">
+            {/* Options */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-auto">
               {test.questions[currentQIndex]?.options.map((opt: string, i: number) => (
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   key={i}
                   onClick={() => handleAnswer(i)}
                   disabled={hasAnsweredCurrent}
-                  className="bg-white border border-zinc-200 p-6 rounded-2xl text-left hover:border-black hover:shadow-md transition-all disabled:opacity-50"
+                  className="border border-black/10 bg-white p-8 md:p-12 text-center text-lg md:text-xl font-medium hover:border-black transition-colors flex items-center justify-center disabled:opacity-50"
                 >
                   <FormattedText content={opt} />
-                </button>
+                </motion.button>
               ))}
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
 
-      {status === 'finished' && p1 && p2 && (
-        <div className="flex-1 flex items-center justify-center p-6 relative z-10">
-          <div className="bg-white/80 backdrop-blur-2xl border border-black/10 shadow-2xl rounded-3xl p-12 max-w-lg w-full text-center animate-in zoom-in duration-500">
-            <Trophy size={80} className="text-zinc-900 mx-auto mb-6" strokeWidth={1.5} />
-            <h1 className="text-3xl font-black text-zinc-900 mb-2 tracking-tight">Natijalar</h1>
-            <p className="text-zinc-500 mb-10 font-medium tracking-wide">Duyel yakunlandi!</p>
+        {/* FINISHED SCREEN */}
+        {status === 'finished' && p1 && p2 && (
+          <motion.div 
+            key="finished"
+            initial="initial" animate="animate" exit="exit" variants={fadeUp}
+            className="flex-1 flex flex-col items-center justify-center p-6 text-center"
+          >
+            <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4">Natija</p>
+            <h1 className="text-4xl md:text-6xl font-medium tracking-tight mb-20">Jang yakunlandi</h1>
             
-            <div className="flex items-end justify-center gap-6 mb-12 h-48">
-              {/* Number 1 */}
-              <div className="flex flex-col items-center order-2 z-20">
-                <div className="font-bold text-zinc-900 mb-3 truncate w-28 text-lg">{p1.score >= p2.score ? p1.name : p2.name}</div>
-                <div className="w-28 h-32 bg-zinc-900 rounded-t-2xl flex items-center justify-center text-white font-black text-4xl shadow-[0_0_40px_rgba(0,0,0,0.2)]">
-                  #1
+            <div className="flex items-end justify-center gap-4 md:gap-16 border-b border-black/10 pb-0 w-full max-w-2xl h-64 mb-16">
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: '70%', opacity: 1 }}
+                transition={{ duration: 1, delay: 0.4 }}
+                className={`flex-1 flex flex-col items-center ${p1.score < p2.score ? 'bg-gray-100 border-t border-l border-r border-black/10' : 'bg-[#111111] text-white'}`}
+              >
+                <div className="flex flex-col items-center -mt-16 mb-4">
+                  <span className={`text-sm font-medium mb-1 ${p1.score >= p2.score ? 'text-black' : 'text-gray-500'}`}>{p1.name}</span>
+                  <span className={`text-xs font-mono ${p1.score >= p2.score ? 'text-gray-500' : 'text-gray-400'}`}>{p1.score} pt</span>
                 </div>
-                <div className="mt-4 font-black text-xl">{p1.score >= p2.score ? p1.score : p2.score} <span className="text-sm font-medium text-zinc-500">ball</span></div>
-              </div>
-              
-              {/* Number 2 */}
-              <div className="flex flex-col items-center order-1 z-10 opacity-90 transform translate-y-4">
-                <div className="font-semibold text-zinc-500 mb-3 truncate w-24">{p1.score < p2.score ? p1.name : p2.name}</div>
-                <div className="w-24 h-24 bg-white border-2 border-black/10 rounded-t-2xl flex items-center justify-center text-zinc-400 font-black text-3xl">
-                  #2
+                <span className={`text-3xl font-light mt-auto mb-6 ${p1.score >= p2.score ? 'text-gray-400' : 'text-gray-300'}`}>
+                  {p1.score >= p2.score ? '1' : '2'}
+                </span>
+              </motion.div>
+
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: '70%', opacity: 1 }}
+                transition={{ duration: 1, delay: 0.6 }}
+                className={`flex-1 flex flex-col items-center ${p2.score <= p1.score ? 'bg-gray-100 border-t border-l border-r border-black/10' : 'bg-[#111111] text-white'}`}
+              >
+                <div className="flex flex-col items-center -mt-16 mb-4">
+                  <span className={`text-sm font-medium mb-1 ${p2.score > p1.score ? 'text-black' : 'text-gray-500'}`}>{p2.name}</span>
+                  <span className={`text-xs font-mono ${p2.score > p1.score ? 'text-gray-500' : 'text-gray-400'}`}>{p2.score} pt</span>
                 </div>
-                <div className="mt-4 font-bold text-zinc-600 text-lg">{p1.score < p2.score ? p1.score : p2.score} <span className="text-sm font-medium text-zinc-400">ball</span></div>
-              </div>
+                <span className={`text-3xl font-light mt-auto mb-6 ${p2.score > p1.score ? 'text-gray-400' : 'text-gray-300'}`}>
+                  {p2.score > p1.score ? '1' : '2'}
+                </span>
+              </motion.div>
             </div>
-            
+
             <button 
               onClick={() => navigate('/')}
-              className="w-full bg-zinc-900 text-white py-5 rounded-2xl font-bold text-lg hover:bg-black transition-all hover:shadow-xl hover:-translate-y-1 duration-300"
+              className="border border-[#111111] text-[#111111] py-4 px-12 hover:bg-[#111111] hover:text-white transition-colors"
             >
-              Bosh sahifaga qaytish
+              <span className="text-xs uppercase tracking-[0.2em]">Bosh sahifaga qaytish</span>
             </button>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+
+      </AnimatePresence>
     </div>
   );
 }
