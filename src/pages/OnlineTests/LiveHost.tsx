@@ -251,11 +251,19 @@ export default function LiveHost() {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-auto">
-                  {test.questions[currentQuestionIndex].options.map((opt: string, i: number) => (
-                    <div key={i} className="border border-black/10 p-6 flex items-center justify-center text-lg bg-white">
-                      <FormattedText content={opt} />
-                    </div>
-                  ))}
+                  {test.questions[currentQuestionIndex].options.map((opt: string, i: number) => {
+                    const colors = [
+                      'bg-gradient-to-br from-rose-50 to-rose-100/50 border-rose-200 text-rose-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)]',
+                      'bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200 text-blue-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)]',
+                      'bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200 text-amber-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)]',
+                      'bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200 text-emerald-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)]'
+                    ];
+                    return (
+                      <div key={i} className={`border p-6 flex items-center justify-center text-lg rounded-2xl ${colors[i % 4]}`}>
+                        <FormattedText content={opt} />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 

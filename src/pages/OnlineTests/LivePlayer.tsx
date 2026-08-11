@@ -166,14 +166,19 @@ export default function LivePlayer() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-auto">
               {test.questions[currentQuestionIndex]?.options.map((opt: string, i: number) => {
-                // Remove the bulky borders and colors. Use a minimal approach.
+                const colors = [
+                  'bg-gradient-to-br from-rose-50 to-rose-100/50 border-rose-200 text-rose-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)] hover:border-rose-400 hover:shadow-[inset_0_2px_15px_rgba(255,255,255,1)]',
+                  'bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200 text-blue-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)] hover:border-blue-400 hover:shadow-[inset_0_2px_15px_rgba(255,255,255,1)]',
+                  'bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200 text-amber-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)] hover:border-amber-400 hover:shadow-[inset_0_2px_15px_rgba(255,255,255,1)]',
+                  'bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200 text-emerald-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)] hover:border-emerald-400 hover:shadow-[inset_0_2px_15px_rgba(255,255,255,1)]'
+                ];
                 return (
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     key={i}
                     onClick={() => handleAnswer(i)}
-                    className="border border-black/10 bg-white p-8 md:p-12 text-center text-lg md:text-xl font-medium hover:border-black transition-colors flex items-center justify-center"
+                    className={`border p-8 md:p-12 text-center text-lg md:text-xl font-medium rounded-2xl transition-all flex items-center justify-center ${colors[i % 4]}`}
                   >
                     <FormattedText content={opt} />
                   </motion.button>
