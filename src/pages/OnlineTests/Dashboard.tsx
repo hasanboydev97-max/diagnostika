@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChevronRight, FileText, Search, Trash2, ShieldAlert } from 'lucide-react';
+import { Plus, ChevronRight, FileText, Search, Trash2, ShieldAlert, Crown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { getAuthHeaders, getToken, getTeacher, fetchCurrentTeacher } from '../../lib/auth';
@@ -81,71 +81,6 @@ export default function OnlineTestsDashboard() {
   );
 
   return (
-    <div className="min-h-screen relative font-sans text-[#111111] overflow-x-hidden bg-[#fdfdfd]">
-      <MeshGradient />
-      
-      {/* Top Navbar / Header Area */}
-      <header className="border-b border-white/50 bg-white/60 backdrop-blur-xl sticky top-0 z-20 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          {/* Logo & Portal Title */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-zinc-900 text-white rounded-xl flex items-center justify-center font-bold text-sm shadow-xs">
-              M
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm font-semibold text-zinc-900 leading-tight">O'qituvchi Portali</h1>
-                {/* Plan Badge */}
-                {teacher?.plan === 'premium' ? (
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 border border-amber-500/30 uppercase">
-                    👑 Premium
-                  </span>
-                ) : teacher?.plan === 'standard' ? (
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-black text-white uppercase">
-                    🔥 Standard
-                  </span>
-                ) : (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600 border border-zinc-200 uppercase">
-                    Free
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-zinc-500 font-medium">{teacher?.name}</p>
-            </div>
-          </div>
-          
-          {/* Right Header Actions: Admin link & Google-style Profile Avatar */}
-          <div className="flex items-center gap-3">
-            {teacher?.role === 'admin' && (
-              <button
-                onClick={() => navigate('/superadmin')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-zinc-200 hover:border-zinc-400 hover:bg-zinc-50 text-xs font-medium text-zinc-700 transition-colors"
-              >
-                <ShieldAlert size={14} />
-                <span className="hidden sm:inline">Admin Panel</span>
-              </button>
-            )}
-
-            {/* Google-Style Clickable Avatar */}
-            <button
-              onClick={() => setIsProfileOpen(true)}
-              className="relative p-0.5 rounded-full border-2 border-black/20 hover:border-black transition-all group focus:outline-none"
-              title="Profil Sozlamalari & Hisob"
-            >
-              <div className="w-9 h-9 rounded-full bg-[#111111] text-white overflow-hidden flex items-center justify-center font-bold text-sm group-hover:scale-105 transition-transform shadow-xs">
-                {teacher?.avatar ? (
-                  <img src={teacher.avatar} alt={teacher.name} className="w-full h-full object-cover" />
-                ) : (
-                  <span>{teacher?.name?.charAt(0)?.toUpperCase() || 'M'}</span>
-                )}
-              </div>
-              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-6 py-8 relative z-10">
         {/* Pending Subscription Request Banner */}
         {teacher?.planStatus === 'pending' && (
           <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-4">
@@ -211,7 +146,7 @@ export default function OnlineTestsDashboard() {
               <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-6 border border-gray-100">
                 <FileText className="text-gray-400" size={32} strokeWidth={1.5} />
               </div>
-              <h3 className="text-xl font-bold text-black mb-2">Ma'lumot topilmadi</h3>
+              <h3 className="text-xl font-semibold text-black mb-2">Ma'lumot topilmadi</h3>
               <p className="text-gray-500 mb-8 max-w-md">Hali hech qanday test yaratmagansiz. O'quvchilaringiz uchun birinchi onlayn testingizni yarating.</p>
               {!search && (
                 <button 
@@ -257,7 +192,7 @@ export default function OnlineTestsDashboard() {
                       </button>
                     </div>
                     
-                    <h3 className="text-lg font-bold text-[#111111] group-hover:text-accent transition-colors mb-3 line-clamp-2 leading-snug">{test.title}</h3>
+                    <h3 className="text-lg font-semibold text-[#111111] group-hover:text-accent transition-colors mb-3 line-clamp-2 leading-snug">{test.title}</h3>
                   </div>
                   
                   <div className="mt-4 pt-4 border-t border-black/5 flex items-center justify-between">

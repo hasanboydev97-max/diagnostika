@@ -42,14 +42,13 @@ export default function DuelPlayer() {
 
   // Refs to avoid stale closures in socket listener
   const pinRef = useRef(pin);
+  pinRef.current = pin;
   const nameRef = useRef(name);
+  nameRef.current = name;
   const isCreatorRef = useRef(isCreator);
+  isCreatorRef.current = isCreator;
   const statusRef = useRef(status);
-
-  useEffect(() => { pinRef.current = pin; }, [pin]);
-  useEffect(() => { nameRef.current = name; }, [name]);
-  useEffect(() => { isCreatorRef.current = isCreator; }, [isCreator]);
-  useEffect(() => { statusRef.current = status; }, [status]);
+  statusRef.current = status;
 
   useEffect(() => {
     const newSocket = io(SOCKET_URL);
@@ -77,7 +76,7 @@ export default function DuelPlayer() {
 
     newSocket.on('error', (msg) => {
       toast.error(msg);
-      if (status === 'lobby' && !isCreator) setStatus('login');
+      if (statusRef.current === 'lobby') setStatus('login');
     });
 
     newSocket.on('duel_created', ({ pin, testId }) => {
@@ -87,8 +86,8 @@ export default function DuelPlayer() {
     });
 
     newSocket.on('duel_ready', ({ player1, player2, testId: newTestId }) => {
-      if (!isCreator) {
-        setPin(pin);
+      if (!isCreatorRef.current) {
+        setPin(pinRef.current);
         fetchTest(newTestId);
         setStatus('lobby');
       }

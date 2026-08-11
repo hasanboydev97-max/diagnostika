@@ -137,7 +137,9 @@ export const setupSockets = (httpServer) => {
 
     socket.on('rejoin_duel', ({ pin, name, isCreator }) => {
       const room = duelRooms.get(pin);
-      if (!room) return;
+      if (!room) {
+        return socket.emit('error', 'Duyel xonasi topilmadi. Qaytadan boshlash uchun sahifani yangilang.');
+      }
       
       socket.join(pin);
       if (isCreator) {
@@ -154,7 +156,12 @@ export const setupSockets = (httpServer) => {
 
     socket.on('start_duel', ({ pin }) => {
       const room = duelRooms.get(pin);
-      if (!room || socket.id !== room.player1.id) return; // Only creator can start
+      if (!room) {
+        return socket.emit('error', 'Duyel topilmadi');
+      }
+      if (socket.id !== room.player1.id) {
+        return socket.emit('error', 'Faqat xona yaratuvchisi duyelni boshlashi mumkin');
+      }
       room.status = 'active';
       io.to(pin).emit('duel_started');
     });

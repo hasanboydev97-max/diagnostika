@@ -107,6 +107,12 @@ export default function LiveHost() {
     return () => clearInterval(timerRef.current);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      socket?.disconnect();
+    };
+  }, [socket]);
+
   const triggerConfetti = () => {
     confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 }, colors: ['#111111', '#555555', '#999999'] });
   };

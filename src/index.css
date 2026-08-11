@@ -14,7 +14,7 @@
   --color-border: #E5E5E5;
   
   --font-sans: 'Space Grotesk', system-ui, sans-serif;
-  --font-display: 'Clash Display', sans-serif;
+  --font-display: 'Clash Display', 'IgraSans', system-ui, sans-serif;
 }
 
 @font-face {
@@ -31,19 +31,6 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  html[lang="ru"] body,
-  html[lang="ru"] h1, 
-  html[lang="ru"] h2, 
-  html[lang="ru"] h3, 
-  html[lang="ru"] h4, 
-  html[lang="ru"] h5, 
-  html[lang="ru"] h6,
-  html[lang="ru"] button,
-  html[lang="ru"] input,
-  html[lang="ru"] span {
-    font-family: 'IgraSans', system-ui, sans-serif !important;
   }
 
   h1, h2, h3, h4, h5, h6 {
