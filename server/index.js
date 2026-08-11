@@ -1367,8 +1367,11 @@ const io = new Server(httpServer, {
   }
 });
 
-// Live Quiz State
-const liveRooms = new Map(); // pin -> { hostId, testId, currentQuestion, players: [{ socketId, name, score }], answers: [...] }
+// Live Kahoot Rooms
+const liveRooms = new Map();
+
+// Duel Rooms
+const duelRooms = new Map();
 
 io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id);
@@ -1447,15 +1450,103 @@ io.on('connection', (socket) => {
 
   socket.on('end_game', ({ pin }) => {
     const room = liveRooms.get(pin);
-    if (room && room.hostId === socket.id) {
+    if (!room) return;
+    io.to(pin).emit('game_ended', { players: room.players });
+    liveRooms.delete(pin);
+  });
+
+  // ==========================================
+  // 1v1 DUEL SOCKET LOGIC
+  // ==========================================
+
+  socket.on('create_duel', ({ testId, name }) => {
+    const pin = Math.floor(100000 + Math.random() * 900000).toString();
+    duelRooms.set(pin, {
+      testId,
+      player1: { id: socket.id, name, score: 0, currentQuestion: 0, finished: false },
+      player2: null,
+      status: 'waiting' // waiting, active, finished
+    });
+    socket.join(pin);
+    socket.emit('duel_created', { pin, testId });
+  });
+
+  socket.on('join_duel', ({ pin, name }) => {
+    const room = duelRooms.get(pin);
+    if (!room) {
+      return socket.emit('error', 'Duyel topilmadi yoki xato PIN kod');
+    }
+    if (room.player2) {
+      return socket.emit('error', 'Ushbu duyel allaqachon to\'lgan');
+    }
+    if (room.status !== 'waiting') {
+      return socket.emit('error', 'Duyel allaqachon boshlangan');
+    }
+    
+    room.player2 = { id: socket.id, name, score: 0, currentQuestion: 0, finished: false };
+    socket.join(pin);
+    
+    // Notify both players that duel can start
+    io.to(pin).emit('duel_ready', { 
+      player1: room.player1.name, 
+      player2: room.player2.name,
+      testId: room.testId
+    });
+  });
+
+  socket.on('start_duel', ({ pin }) => {
+    const room = duelRooms.get(pin);
+    if (!room || socket.id !== room.player1.id) return; // Only creator can start
+    room.status = 'active';
+    io.to(pin).emit('duel_started');
+  });
+
+  socket.on('duel_progress', ({ pin, score, currentQuestion }) => {
+    const room = duelRooms.get(pin);
+    if (!room) return;
+
+    // Update state
+    let isP1 = room.player1.id === socket.id;
+    if (isP1) {
+      room.player1.score = score;
+      room.player1.currentQuestion = currentQuestion;
+    } else if (room.player2 && room.player2.id === socket.id) {
+      room.player2.score = score;
+      room.player2.currentQuestion = currentQuestion;
+    }
+
+    // Broadcast update to the room
+    io.to(pin).emit('duel_update', {
+      player1: room.player1,
+      player2: room.player2
+    });
+  });
+
+  socket.on('duel_finish', ({ pin }) => {
+    const room = duelRooms.get(pin);
+    if (!room) return;
+
+    if (room.player1.id === socket.id) room.player1.finished = true;
+    if (room.player2 && room.player2.id === socket.id) room.player2.finished = true;
+
+    // Broadcast update so both see who finished
+    io.to(pin).emit('duel_update', {
+      player1: room.player1,
+      player2: room.player2
+    });
+
+    if (room.player1.finished && (room.player2 ? room.player2.finished : true)) {
       room.status = 'finished';
-      io.to(pin).emit('game_ended', { players: room.players });
-      liveRooms.delete(pin);
+      io.to(pin).emit('duel_ended', {
+        player1: room.player1,
+        player2: room.player2
+      });
+      duelRooms.delete(pin);
     }
   });
 
   socket.on('disconnect', () => {
-    // Handle player disconnect
+    console.log('Client disconnected:', socket.id);
     for (const [pin, room] of liveRooms.entries()) {
       if (room.hostId === socket.id) {
         // Host disconnected
