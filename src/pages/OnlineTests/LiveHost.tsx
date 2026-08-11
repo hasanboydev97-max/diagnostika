@@ -149,7 +149,7 @@ export default function LiveHost() {
             <h1 className="text-2xl font-bold text-zinc-800 mb-2">{test.title}</h1>
             <p className="text-zinc-500 mb-4">O'quvchilar ushbu manzilga kirishlari kerak:</p>
             <div className="bg-zinc-100 rounded-lg py-3 px-6 inline-block mb-6 border border-zinc-200">
-              <span className="font-mono text-xl font-bold text-zinc-900 tracking-tight">bmdiagnostika.vercel.app/live</span>
+              <span className="font-mono text-xl font-bold text-zinc-900 tracking-tight">{window.location.host}/live</span>
             </div>
             <p className="text-zinc-500 mb-2">Va quyidagi PIN kodni kiritadilar:</p>
             
