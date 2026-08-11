@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Sparkles, Plus, Trash2, Loader2, Save, Settings2, FileText } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, Sparkles, Plus, Trash2, Loader2, Save, Settings2, FileText, Upload, Table } from 'lucide-react';
 import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
 import { getAuthHeaders, getToken, getTeacher } from '../../lib/auth';
@@ -10,6 +10,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function CreateTest() {
   const navigate = useNavigate();
+  const location = useLocation();
   const teacher = getTeacher();
   const [title, setTitle] = useState('');
   const [subject] = useState(teacher?.subject || '');
@@ -17,7 +18,7 @@ export default function CreateTest() {
   const [durationMinutes, setDurationMinutes] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [mode, setMode] = useState<'ai' | 'manual' | 'ocr'>('ai');
+  const [mode, setMode] = useState<'ai' | 'manual' | 'ocr' | 'excel'>('excel');
   const [ocrText, setOcrText] = useState('');
   
   useEffect(() => {
@@ -27,12 +28,16 @@ export default function CreateTest() {
     }
   }, [navigate]);
   
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [topic, setTopic] = useState('');
   const [questionCount, setQuestionCount] = useState(5);
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   
-  const [questions, setQuestions] = useState<any[]>([]);
+  const [questions, setQuestions] = useState<any[]>(() => {
+    const st = location.state as any;
+    return st?.importedQuestions || [];
+  });
 
   const handleGenerate = async () => {
     if (!subject.trim()) {
@@ -83,8 +88,9 @@ export default function CreateTest() {
       });
       const data = await res.json();
       if (data.questions) {
-        setQuestions(data.questions);
+        setQuestions([...questions, ...data.questions]);
         toast.success('Hujjatdan test muvaffaqiyatli yaratildi!', { id: toastId });
+        setOcrText('');
       } else {
         toast.error(data.error || 'Hujjatdan test yaratishda xatolik.', { id: toastId });
       }
@@ -93,6 +99,90 @@ export default function CreateTest() {
     } finally {
       setGenerating(false);
     }
+  };
+
+  const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setGenerating(true);
+    const toastId = toast.loading('Fayl tahlil qilinmoqda...');
+    
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const data = evt.target?.result;
+        // Dymamically import xlsx to keep bundle light
+        const XLSX = await import('xlsx');
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        
+        // Export to array of arrays
+        const rows: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        const newQuestions = [];
+        // Skip row 0 if it looks like a header (e.g. contains 'savol' or 'A')
+        const headerText = rows[0] ? rows[0].join('').toLowerCase() : '';
+        const startIdx = (headerText.includes('savol') || headerText.includes('variant')) ? 1 : 0;
+
+        for (let i = startIdx; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || row.length < 6) continue;
+          
+          const questionText = String(row[0] || '').trim();
+          if (!questionText) continue;
+
+          const options = [
+            String(row[1] || '').trim(),
+            String(row[2] || '').trim(),
+            String(row[3] || '').trim(),
+            String(row[4] || '').trim()
+          ];
+
+          let correctRaw = String(row[5] || '').trim();
+          let correctOption = '';
+
+          const upperCorrect = correctRaw.toUpperCase();
+          if (upperCorrect === 'A') correctOption = options[0];
+          else if (upperCorrect === 'B') correctOption = options[1];
+          else if (upperCorrect === 'C') correctOption = options[2];
+          else if (upperCorrect === 'D') correctOption = options[3];
+          else {
+             if (options.includes(correctRaw)) {
+               correctOption = correctRaw;
+             } else {
+               correctOption = options[0]; // fallback
+             }
+          }
+
+          newQuestions.push({
+            questionText,
+            options,
+            correctOption,
+            type: 'multiple_choice'
+          });
+        }
+
+        if (newQuestions.length > 0) {
+           setQuestions([...questions, ...newQuestions]);
+           toast.success(`${newQuestions.length} ta savol muvaffaqiyatli import qilindi!`, { id: toastId });
+        } else {
+           toast.error('Fayldan hech qanday savol topilmadi. Formatni tekshiring.', { id: toastId });
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error('Faylni o\'qishda xatolik yuz berdi.', { id: toastId });
+      } finally {
+        setGenerating(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    };
+    reader.onerror = () => {
+      toast.error('Faylni o\'qishda xatolik yuz berdi.', { id: toastId });
+      setGenerating(false);
+    };
+    reader.readAsArrayBuffer(file);
   };
 
   const handleSave = async () => {
@@ -261,48 +351,110 @@ export default function CreateTest() {
         </section>
 
         {/* Builder Mode Selector */}
-        <div className="flex bg-zinc-100 p-1 rounded-xl w-full max-w-md mb-6 gap-1">
+        <div className="flex bg-zinc-100 p-1 rounded-xl w-full max-w-[600px] mb-6 gap-1 overflow-x-auto">
+          <button
+            onClick={() => setMode('excel')}
+            className={`flex-1 min-w-[120px] text-[11px] font-semibold uppercase tracking-wider py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+              mode === 'excel' ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200/50' : 'text-zinc-500 hover:text-zinc-700'
+            }`}
+          >
+            <Table size={14} /> Excel Import
+          </button>
           <button
             onClick={() => setMode('ai')}
-            className={`flex-1 text-[11px] font-semibold uppercase tracking-wider py-2 rounded-lg transition-all ${
+            className={`flex-1 min-w-[120px] text-[11px] font-semibold uppercase tracking-wider py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
               mode === 'ai' ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200/50' : 'text-zinc-500 hover:text-zinc-700'
             }`}
           >
-            AI Mavzuli
+            <Sparkles size={14} /> AI Mavzuli
           </button>
           <button
             onClick={() => setMode('ocr')}
-            className={`flex-1 text-[11px] font-semibold uppercase tracking-wider py-2 rounded-lg transition-all ${
+            className={`flex-1 min-w-[120px] text-[11px] font-semibold uppercase tracking-wider py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
               mode === 'ocr' ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200/50' : 'text-zinc-500 hover:text-zinc-700'
             }`}
           >
-            OCR Hujjat 👑
+            <FileText size={14} /> OCR 👑
           </button>
           <button
             onClick={() => setMode('manual')}
-            className={`flex-1 text-[11px] font-semibold uppercase tracking-wider py-2 rounded-lg transition-all ${
+            className={`flex-1 min-w-[120px] text-[11px] font-semibold uppercase tracking-wider py-2 px-3 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
               mode === 'manual' ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200/50' : 'text-zinc-500 hover:text-zinc-700'
             }`}
           >
-            Qo'lda kiritish
+            <Plus size={14} /> Qo'lda kiritish
           </button>
         </div>
 
+        {/* Excel Import Form */}
+        {mode === 'excel' && (
+          <div className="bg-white border border-zinc-200 p-6 rounded-2xl mb-8 shadow-sm text-center">
+            <div className="mx-auto w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
+              <Table size={24} />
+            </div>
+            <h3 className="text-base font-semibold text-zinc-900 tracking-tight mb-2">Excel orqali savollarni yuklash</h3>
+            <p className="text-sm text-zinc-500 mb-6 max-w-lg mx-auto leading-relaxed">
+              50-100 ta savolni bir soniyada yuklang. Excel faylingiz quyidagi tartibda bo'lishi kerak:
+            </p>
+            
+            <div className="bg-zinc-50 border border-zinc-100 rounded-xl p-4 text-left max-w-xl mx-auto mb-6 text-[11px] overflow-x-auto shadow-inner">
+              <table className="w-full text-zinc-600 border-collapse">
+                <thead>
+                  <tr className="border-b border-zinc-200 text-zinc-900 uppercase tracking-wider text-[10px]">
+                    <th className="p-2 font-bold text-left">A ustun</th>
+                    <th className="p-2 font-bold text-left">B ustun</th>
+                    <th className="p-2 font-bold text-left">C ustun</th>
+                    <th className="p-2 font-bold text-left">D ustun</th>
+                    <th className="p-2 font-bold text-left">E ustun</th>
+                    <th className="p-2 font-bold text-left">F ustun</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="p-2">Savol matni</td>
+                    <td className="p-2">A variant</td>
+                    <td className="p-2">B variant</td>
+                    <td className="p-2">C variant</td>
+                    <td className="p-2">D variant</td>
+                    <td className="p-2 font-medium text-emerald-600">To'g'ri javob harfi (A/B/C/D)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <input 
+              type="file" 
+              accept=".xlsx, .xls, .csv" 
+              ref={fileInputRef}
+              onChange={handleExcelUpload}
+              className="hidden" 
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={generating}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-zinc-900 text-white text-xs font-semibold uppercase tracking-wider rounded-xl hover:bg-zinc-800 disabled:opacity-50 transition-colors focus:outline-none shadow-md"
+            >
+              {generating ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+              {generating ? 'Fayl o\'qilmoqda...' : 'Excel faylni tanlash'}
+            </button>
+          </div>
+        )}
+
         {/* AI Mavzuli Form */}
         {mode === 'ai' && (
-          <div className="bg-white border border-zinc-200 p-5 rounded-2xl mb-8 shadow-sm">
+          <div className="bg-white border border-zinc-200 p-6 rounded-2xl mb-8 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="text-zinc-900" size={14} />
-              <h3 className="text-xs font-semibold text-zinc-900 uppercase tracking-wider">AI Savollar Generatsiyasi</h3>
+              <Sparkles className="text-zinc-900" size={16} />
+              <h3 className="text-sm font-semibold text-zinc-900 uppercase tracking-wider">AI Savollar Generatsiyasi</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
               <div>
                 <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Aniq mavzu (Ixtiyoriy)</label>
                 <input 
                   type="text" 
                   value={topic}
                   onChange={e => setTopic(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-sm placeholder-zinc-400 focus:outline-none focus:border-zinc-400 transition-colors"
+                  className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:bg-white transition-colors"
                   placeholder="masalan: 2-Jahon urushi yoki Trigonometriya"
                 />
               </div>
@@ -313,16 +465,16 @@ export default function CreateTest() {
                   min="1" max="20"
                   value={questionCount}
                   onChange={e => setQuestionCount(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-400 transition-colors"
+                  className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-400 focus:bg-white transition-colors"
                 />
               </div>
             </div>
             <button
               onClick={handleGenerate}
               disabled={generating || !subject.trim()}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-zinc-900 text-white text-xs font-medium rounded-xl hover:bg-zinc-800 disabled:opacity-50 transition-colors focus:outline-none"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-zinc-900 text-white text-xs font-semibold uppercase tracking-wider rounded-xl hover:bg-zinc-800 disabled:opacity-50 transition-colors focus:outline-none shadow-md"
             >
-              {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+              {generating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
               {generating ? 'Yaratilmoqda...' : 'Savollarni yaratish'}
             </button>
           </div>
@@ -334,29 +486,42 @@ export default function CreateTest() {
             <div className="flex items-center justify-between gap-2 mb-4">
               <div className="flex items-center gap-2">
                 <FileText className="text-amber-500" size={16} />
-                <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Hujjat va Rasmdan (OCR) Test Yaratish</h3>
+                <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider">Hujjatdan (OCR) Test Yaratish</h3>
               </div>
-              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-black text-white uppercase">
+              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-black text-white uppercase shadow-sm">
                 👑 Premium Imkoniyat
               </span>
             </div>
             <p className="text-xs text-zinc-500 mb-4">
-              Kitob, darslik, yoki imtihon varaqasi matnini nushalab ushbu joyga tashlang. AI avtomatik ravishda savol va javob variantlarini ajratib oladi!
+              Kitob, darslik, yoki imtihon varaqasi matnini nusxalab ushbu joyga tashlang. AI avtomatik ravishda savol va javob variantlarini ajratib oladi!
             </p>
             <textarea
               rows={6}
               value={ocrText}
               onChange={e => setOcrText(e.target.value)}
               placeholder="Masalan: 1. O'zbekiston poytaxti qayer? A) Toshkent B) Samarqand C) Buxoro..."
-              className="w-full px-4 py-3 bg-zinc-50/50 border border-zinc-200 rounded-xl text-sm placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:bg-white transition-all mb-4 font-sans"
+              className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:bg-white transition-all mb-4 font-sans"
             />
             <button
               onClick={handleGenerateOcr}
               disabled={generating || !ocrText.trim()}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-black text-white text-xs font-semibold uppercase tracking-wider rounded-xl hover:bg-neutral-800 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-black text-white text-xs font-semibold uppercase tracking-wider rounded-xl hover:bg-neutral-800 disabled:opacity-50 transition-colors shadow-md"
             >
-              {generating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+              {generating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
               {generating ? 'Hujjat Tahlil Qilinmoqda...' : 'Hujjatdan Savollarni Ajratib Olish'}
+            </button>
+          </div>
+        )}
+
+        {/* Add Manual Button (only when in manual mode) */}
+        {mode === 'manual' && (
+          <div className="mb-8">
+             <button
+              onClick={addManualQuestion}
+              className="w-full py-4 flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-600 bg-white border-2 border-dashed border-zinc-300 rounded-xl hover:bg-zinc-50 hover:text-zinc-900 hover:border-zinc-400 transition-all shadow-sm"
+            >
+              <Plus size={16} />
+              Qo'lda yangi savol qo'shish
             </button>
           </div>
         )}
@@ -364,18 +529,21 @@ export default function CreateTest() {
         {/* Questions Editor */}
         {questions.length > 0 && (
           <div className="space-y-4 mb-8">
-            <div className="flex items-center gap-2 mb-2 border-b border-zinc-200 pb-2">
-              <FileText size={16} className="text-zinc-400" />
-              <h2 className="text-sm font-semibold">Savollar Listi ({questions.length})</h2>
+            <div className="flex items-center gap-2 mb-4 border-b border-zinc-200 pb-3">
+              <FileText size={18} className="text-zinc-500" />
+              <h2 className="text-base font-semibold text-zinc-900 tracking-tight">Umumiy Savollar ({questions.length})</h2>
             </div>
             
             {questions.map((q, qIndex) => (
-              <div key={qIndex} className="bg-white p-4 sm:p-5 rounded-md border border-zinc-200">
-                <div className="flex gap-4 items-start mb-4">
-                  <span className="font-mono text-[10px] font-bold text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded mt-1.5">
-                    {String(qIndex + 1).padStart(2, '0')}
+              <div key={qIndex} className="bg-white p-5 rounded-xl border border-zinc-200 shadow-sm relative overflow-hidden group">
+                {/* Visual marker */}
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-zinc-200 group-hover:bg-zinc-800 transition-colors"></div>
+                
+                <div className="flex gap-4 items-start mb-5 pl-2">
+                  <span className="font-mono text-xs font-bold text-zinc-500 bg-zinc-100 px-2 py-1 rounded-md mt-1 border border-zinc-200">
+                    Q{String(qIndex + 1).padStart(2, '0')}
                   </span>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 bg-zinc-50 rounded-lg p-1 border border-transparent focus-within:border-zinc-300 transition-colors">
                     <MathInput
                       value={q.questionText}
                       onChange={(e: any) => {
@@ -389,30 +557,32 @@ export default function CreateTest() {
                   </div>
                   <button
                     onClick={() => setQuestions(questions.filter((_, i) => i !== qIndex))}
-                    className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors mt-0.5"
+                    className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors mt-1"
                     title="O'chirish"
                   >
                     <Trash2 size={16} />
                   </button>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-9">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-12">
                   {q.options.map((opt: string, oIndex: number) => {
                     const isCorrect = q.correctOption === opt && opt !== '';
                     return (
-                      <div key={oIndex} className={`flex items-start gap-2.5 p-2 rounded border ${isCorrect ? 'border-zinc-900 bg-zinc-50/50' : 'border-transparent'}`}>
-                        <input
-                          type="radio"
-                          name={`correct-${qIndex}`}
-                          checked={isCorrect}
-                          onChange={() => {
-                            if (!opt.trim()) return toast.warning('Iltimos, avval variantni yozing.');
-                            const newQ = [...questions];
-                            newQ[qIndex].correctOption = opt;
-                            setQuestions(newQ);
-                          }}
-                          className="w-3.5 h-3.5 text-zinc-900 border-zinc-300 focus:ring-zinc-900 cursor-pointer mt-1"
-                        />
+                      <div key={oIndex} className={`flex items-start gap-3 p-2.5 rounded-lg border transition-all ${isCorrect ? 'border-emerald-500 bg-emerald-50/50 shadow-sm' : 'border-zinc-200 bg-white hover:border-zinc-300'}`}>
+                        <div className="mt-1.5 flex items-center justify-center relative">
+                          <input
+                            type="radio"
+                            name={`correct-${qIndex}`}
+                            checked={isCorrect}
+                            onChange={() => {
+                              if (!opt.trim()) return toast.warning('Iltimos, avval variantni yozing.');
+                              const newQ = [...questions];
+                              newQ[qIndex].correctOption = opt;
+                              setQuestions(newQ);
+                            }}
+                            className="w-4 h-4 text-emerald-600 border-zinc-300 focus:ring-emerald-500 cursor-pointer"
+                          />
+                        </div>
                         <div className="flex-1 min-w-0">
                           <MathInput
                             value={opt}
@@ -438,17 +608,6 @@ export default function CreateTest() {
           </div>
         )}
 
-        {/* Add Manual Button */}
-        {mode === 'manual' && (
-          <button
-            onClick={addManualQuestion}
-            className="w-full py-3 flex items-center justify-center gap-2 text-xs font-medium text-zinc-500 bg-white border border-dashed border-zinc-300 rounded-md hover:bg-zinc-50 hover:text-zinc-900 hover:border-zinc-400 transition-colors"
-          >
-            <Plus size={14} />
-            Yangi savol qo'shish
-          </button>
-        )}
-
       </main>
     </div>
   );
@@ -472,7 +631,7 @@ function MathInput({
     return (
       <div 
         onClick={() => setIsEditing(true)} 
-        className={`cursor-text border border-transparent hover:border-zinc-200 hover:bg-zinc-50 rounded px-2 py-1.5 transition-colors min-h-[32px] w-full flex items-center text-sm ${isTextarea ? 'items-start' : ''}`}
+        className={`cursor-text rounded-md px-3 py-2 transition-colors min-h-[36px] w-full flex items-center text-sm ${isTextarea ? 'items-start min-h-[50px]' : ''}`}
         title="Tahrirlash uchun bosing"
       >
         <FormattedText content={value} />
@@ -488,7 +647,7 @@ function MathInput({
         onBlur={() => setIsEditing(false)}
         autoFocus={isEditing}
         rows={2}
-        className="w-full px-2 py-1.5 bg-white border border-zinc-400 rounded text-sm focus:outline-none focus:border-zinc-900 resize-none"
+        className="w-full px-3 py-2 bg-white border border-zinc-300 rounded-md text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 resize-none shadow-sm"
         placeholder={placeholder}
       />
     );
@@ -501,7 +660,7 @@ function MathInput({
       onChange={onChange}
       onBlur={() => setIsEditing(false)}
       autoFocus={isEditing}
-      className="w-full bg-white border-b border-zinc-400 px-1 py-1 text-sm focus:outline-none focus:border-zinc-900 transition-colors"
+      className="w-full bg-white border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900 transition-colors shadow-sm"
       placeholder={placeholder}
     />
   );

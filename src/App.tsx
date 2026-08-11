@@ -16,6 +16,8 @@ const TakeTest = lazy(() => import('./pages/OnlineTests/TakeTest'));
 const TestResultView = lazy(() => import('./pages/OnlineTests/TestResultView'));
 const TestDetails = lazy(() => import('./pages/OnlineTests/TestDetails'));
 const TeacherAuth = lazy(() => import('./pages/OnlineTests/TeacherAuth'));
+const LiveHost = lazy(() => import('./pages/OnlineTests/LiveHost'));
+const LivePlayer = lazy(() => import('./pages/OnlineTests/LivePlayer'));
 
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 
@@ -49,6 +51,8 @@ function App() {
           <Route path="/online-tests/details/:testId" element={<TestDetails />} />
           <Route path="/online-tests/take/:testId" element={<TakeTest />} />
           <Route path="/online-tests/results/:resultId" element={<TestResultView />} />
+          <Route path="/online-tests/live/host/:testId" element={<LiveHost />} />
+          <Route path="/live" element={<LivePlayer />} />
           
           {/* Catch-all route to prevent blank screens */}
           <Route path="*" element={<Navigate to="/" replace />} />

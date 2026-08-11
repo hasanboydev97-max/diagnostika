@@ -15,6 +15,8 @@ import PDFDocument from 'pdfkit';
 import { Document, Paragraph, TextRun, Packer, HeadingLevel, AlignmentType, ImportedXmlComponent } from 'docx';
 import * as mml2ommlModule from 'mathml2omml';
 const { mml2omml } = mml2ommlModule;
+import { Server } from 'socket.io';
+import { createServer } from 'http';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -1231,6 +1233,75 @@ app.post('/api/telegram/send', async (req, res) => {
   }
 });
 
+app.post('/api/online-tests/:id/class-analysis', authMiddleware, async (req, res) => {
+  try {
+    const test = await OnlineTest.findOne({ id: req.params.id });
+    if (!test) return res.status(404).json({ error: 'Test topilmadi' });
+    
+    const teacher = await Teacher.findById(req.teacherId);
+    if (!teacher || teacher.plan === 'free') {
+      return res.status(403).json({ error: 'AI Sinf Tahlili faqat Standard yoki Premium tariflarda mavjud. Iltimos tarifni oshiring.' });
+    }
+
+    const results = await OnlineTestResult.find({ testId: test.id });
+    if (results.length === 0) {
+      return res.status(400).json({ error: 'Tahlil qilish uchun yetarlicha natijalar yo\'q' });
+    }
+
+    const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: 'Gemini API key is missing' });
+    
+    const { GoogleGenerativeAI } = require("@google/generative-ai");
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+    // Calculate stats per question
+    const stats = test.questions.map((q, i) => {
+      let correct = 0;
+      results.forEach(r => {
+        if (r.answers && r.answers[i] === q.correctOption) correct++;
+      });
+      return {
+        questionText: q.questionText,
+        correctOption: q.correctOption,
+        percentage: Math.round((correct / results.length) * 100)
+      };
+    });
+
+    const prompt = `Siz maktab o'qituvchilari uchun yordamchi sun'iy intellektsiz.
+Quyida "${test.title}" (${test.subject}) testi bo'yicha o'quvchilarning natijalari berilgan. Jami ${results.length} ta o'quvchi ishtirok etgan.
+
+Savollar va o'zlashtirish foizlari:
+${stats.map((s, i) => `${i+1}. ${s.questionText.substring(0, 50)}... - O'zlashtirish: ${s.percentage}%`).join('\n')}
+
+Iltimos, quyidagi JSON formatida qat'iy javob qaytaring (Boshqa matn yozmang!):
+{
+  "weakTopics": ["eng yomon o'zlashtirilgan 2 ta mavzu nomi"],
+  "recommendation": "O'qituvchiga qisqa, aniq maslahat (1 gap)",
+  "generatedQuestions": [
+    {
+      "questionText": "Yangi savol matni (faqat zaif mavzularga oid bo'lishi shart)",
+      "options": ["A variant", "B variant", "C variant", "D variant"],
+      "correctOption": "A variant",
+      "subtopic": "qaysi zaif mavzuga tegishliligi"
+    }
+  ]
+}
+"generatedQuestions" ichida aynan xato qilingan zaif mavzular bo'yicha jami 5 ta yepyangi savol (multiple_choice tipida) bo'lsin.
+`;
+
+    const aiRes = await model.generateContent(prompt);
+    let text = aiRes.response.text();
+    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const data = JSON.parse(text);
+    
+    res.json(data);
+  } catch (err) {
+    console.error('AI Analysis Error:', err);
+    res.status(500).json({ error: 'AI bilan bog\'lanishda xatolik: ' + err.message });
+  }
+});
+
 // 24/7 Long Polling Loop for Telegram Bot Commands
 let lastUpdateId = 0;
 async function startTelegramBotPolling() {
@@ -1288,7 +1359,121 @@ async function startTelegramBotPolling() {
   }
 }
 
-app.listen(PORT, () => {
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*', // Adjust in production
+    methods: ['GET', 'POST']
+  }
+});
+
+// Live Quiz State
+const liveRooms = new Map(); // pin -> { hostId, testId, currentQuestion, players: [{ socketId, name, score }], answers: [...] }
+
+io.on('connection', (socket) => {
+  console.log('Socket connected:', socket.id);
+
+  // Teacher creates a room
+  socket.on('host_room', ({ testId }) => {
+    // Generate 6-digit pin
+    const pin = Math.floor(100000 + Math.random() * 900000).toString();
+    liveRooms.set(pin, {
+      pin,
+      hostId: socket.id,
+      testId,
+      status: 'waiting', // waiting | active | finished
+      currentQuestion: -1,
+      players: [],
+      scores: {}
+    });
+    socket.join(pin);
+    socket.emit('room_created', { pin });
+  });
+
+  // Student joins a room
+  socket.on('join_room', ({ pin, name }) => {
+    const room = liveRooms.get(pin);
+    if (!room) {
+      return socket.emit('error', 'Xona topilmadi');
+    }
+    if (room.status !== 'waiting') {
+      return socket.emit('error', 'O\'yin allaqachon boshlangan');
+    }
+    
+    room.players.push({ id: socket.id, name, score: 0 });
+    room.scores[socket.id] = 0;
+    socket.join(pin);
+    
+    // Notify host
+    io.to(room.hostId).emit('player_joined', { players: room.players });
+    socket.emit('joined', { pin, name, testId: room.testId });
+  });
+
+  // Host starts the game
+  socket.on('start_game', ({ pin }) => {
+    const room = liveRooms.get(pin);
+    if (room && room.hostId === socket.id) {
+      room.status = 'active';
+      room.currentQuestion = 0;
+      io.to(pin).emit('game_started');
+      io.to(pin).emit('new_question', { questionIndex: room.currentQuestion });
+    }
+  });
+
+  // Host moves to next question
+  socket.on('next_question', ({ pin }) => {
+    const room = liveRooms.get(pin);
+    if (room && room.hostId === socket.id) {
+      room.currentQuestion++;
+      io.to(pin).emit('new_question', { questionIndex: room.currentQuestion });
+    }
+  });
+
+  // Student submits answer
+  socket.on('submit_answer', ({ pin, isCorrect }) => {
+    const room = liveRooms.get(pin);
+    if (room && room.status === 'active') {
+      if (isCorrect) {
+        // Simple scoring based on being correct, could add time-based scoring
+        room.scores[socket.id] += 100;
+        const player = room.players.find(p => p.id === socket.id);
+        if (player) player.score = room.scores[socket.id];
+      }
+      
+      // Notify host to update leaderboard
+      io.to(room.hostId).emit('leaderboard_update', { players: room.players });
+    }
+  });
+
+  socket.on('end_game', ({ pin }) => {
+    const room = liveRooms.get(pin);
+    if (room && room.hostId === socket.id) {
+      room.status = 'finished';
+      io.to(pin).emit('game_ended', { players: room.players });
+      liveRooms.delete(pin);
+    }
+  });
+
+  socket.on('disconnect', () => {
+    // Handle player disconnect
+    for (const [pin, room] of liveRooms.entries()) {
+      if (room.hostId === socket.id) {
+        // Host disconnected
+        io.to(pin).emit('error', 'O\'qituvchi aloqani uzdi.');
+        liveRooms.delete(pin);
+      } else {
+        // Player disconnected
+        const pIndex = room.players.findIndex(p => p.id === socket.id);
+        if (pIndex !== -1) {
+          room.players.splice(pIndex, 1);
+          io.to(room.hostId).emit('player_left', { players: room.players });
+        }
+      }
+    }
+  });
+});
+
+httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   // Start Telegram Bot polling service
   startTelegramBotPolling().catch(err => console.error('Bot polling start error:', err));
