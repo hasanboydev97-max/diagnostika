@@ -153,7 +153,7 @@ export default function LivePlayer() {
                 <button
                   key={i}
                   onClick={() => handleAnswer(i)}
-                  className={\`\${colors[i]} rounded-2xl p-6 flex items-center justify-center text-lg sm:text-2xl font-bold text-white shadow-sm border-b-8 active:border-b-0 active:translate-y-2 transition-all\`}
+                  className={`${colors[i]} rounded-2xl p-6 flex items-center justify-center text-lg sm:text-2xl font-bold text-white shadow-sm border-b-8 active:border-b-0 active:translate-y-2 transition-all`}
                 >
                   <FormattedText content={opt} />
                 </button>
@@ -164,7 +164,7 @@ export default function LivePlayer() {
       )}
 
       {status === 'active' && hasAnswered && (
-        <div className={\`flex-1 flex items-center justify-center p-6 relative z-10 \${isCorrectLast ? 'bg-emerald-500' : 'bg-red-500'}\`}>
+        <div className={`flex-1 flex items-center justify-center p-6 relative z-10 ${isCorrectLast ? 'bg-emerald-500' : 'bg-red-500'}`}>
           <div className="text-center text-white animate-in zoom-in duration-300">
             {isCorrectLast ? (
               <>

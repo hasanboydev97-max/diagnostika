@@ -113,7 +113,7 @@ export default function LiveHost() {
 
   const startGame = () => {
     if (players.length === 0) {
-      return toast.error('O\'yinni boshlash uchun kamida 1 ta o\'quvchi kerak');
+      return toast.error('O'yinni boshlash uchun kamida 1 ta o'quvchi kerak');
     }
     socket?.emit('start_game', { pin });
   };
@@ -192,7 +192,7 @@ export default function LiveHost() {
           <div className="h-2 bg-zinc-200 w-full">
             <div 
               className="h-full bg-indigo-600 transition-all duration-1000 ease-linear"
-              style={{ width: \`\${(timer / 30) * 100}%\` }}
+              style={{ width: `${(timer / 30) * 100}%` }}
             ></div>
           </div>
           
@@ -214,7 +214,7 @@ export default function LiveHost() {
                     'bg-emerald-500 border-emerald-600'
                   ];
                   return (
-                    <div key={i} className={\`\${colors[i]} rounded-2xl p-4 flex items-center justify-center text-xl font-bold text-white shadow-sm border-b-4\`}>
+                    <div key={i} className={`${colors[i]} rounded-2xl p-4 flex items-center justify-center text-xl font-bold text-white shadow-sm border-b-4`}>
                       <FormattedText content={opt} />
                     </div>
                   );
@@ -231,7 +231,7 @@ export default function LiveHost() {
                 {players.slice(0, 10).map((p, i) => (
                   <div key={i} className="flex items-center justify-between bg-zinc-50 p-3 rounded-xl">
                     <div className="flex items-center gap-3">
-                      <span className={\`font-black text-lg \${i === 0 ? 'text-yellow-500' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-700' : 'text-zinc-400'}\`}>#{i+1}</span>
+                      <span className={`font-black text-lg ${i === 0 ? 'text-yellow-500' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-700' : 'text-zinc-400'}`}>#{i+1}</span>
                       <span className="font-semibold">{p.name}</span>
                     </div>
                     <span className="font-mono font-bold bg-indigo-50 text-indigo-700 px-2 py-1 rounded">{p.score}</span>

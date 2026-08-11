@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, FileText, Download, X, Sparkles, Play } from 'lucide-react';
+import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, FileText, Download } from 'lucide-react';
 import { getAuthHeaders, getToken, getTeacher } from '../../lib/auth';
 import MeshGradient from '../../components/ui/MeshGradient';
 import { toast } from 'sonner';
@@ -25,9 +25,6 @@ export default function TestDetails() {
   const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
-  const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
 
   useEffect(() => {
     if (!getToken()) {
@@ -113,37 +110,6 @@ export default function TestDetails() {
     } finally {
       setIsDownloadingPdf(false);
     }
-  };
-
-  const handleClassAnalysis = async () => {
-    if (!test) return;
-    const teacher = getTeacher();
-    if (teacher?.plan === 'free') {
-      toast.error('AI Sinf Tahlili faqat Standard va Premium tariflarda mavjud! Tarifni oshiring.');
-      return;
-    }
-    
-    setIsAnalyzing(true);
-    setIsAnalysisModalOpen(true);
-    try {
-      const res = await fetch(`${API_URL}/online-tests/${testId}/class-analysis`, {
-        method: 'POST',
-        headers: getAuthHeaders()
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Xatolik yuz berdi');
-      setAnalysisResult(data);
-    } catch (error: any) {
-      toast.error(error.message);
-      setIsAnalysisModalOpen(false);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-  
-  const handleCreateNewTestFromAnalysis = () => {
-     if (!analysisResult?.generatedQuestions) return;
-     navigate('/online-tests/create', { state: { importedQuestions: analysisResult.generatedQuestions } });
   };
 
   if (loading) {
@@ -273,20 +239,6 @@ export default function TestDetails() {
                     }
                   </button>
                 </div>
-                
-                <button
-                  onClick={() => navigate(`/online-tests/live/host/${testId}`)}
-                  className="w-full mt-1.5 flex items-center justify-center gap-2 px-3 py-2.5 bg-[#46178f] text-white text-xs font-bold rounded-md hover:bg-[#381272] transition-colors shadow-sm"
-                >
-                  <Play size={14} fill="currentColor" /> Jonli Rejim (Kahoot)
-                </button>
-                
-                <button
-                  onClick={handleClassAnalysis}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-semibold rounded-md hover:from-violet-700 hover:to-indigo-700 transition-all shadow-md"
-                >
-                  <Sparkles size={14} /> AI Sinf Tahlili
-                </button>
               </div>
             </div>
 
@@ -375,76 +327,6 @@ export default function TestDetails() {
 
         </div>
       </div>
-
-      {/* AI Analysis Modal */}
-      {isAnalysisModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => !isAnalyzing && setIsAnalysisModalOpen(false)}></div>
-          <div className="bg-white rounded-2xl w-full max-w-2xl relative z-10 overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-            <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
-              <h3 className="font-semibold text-zinc-900 flex items-center gap-2">
-                <Sparkles size={18} className="text-violet-600" />
-                AI Sinf Tahlili
-              </h3>
-              {!isAnalyzing && (
-                <button onClick={() => setIsAnalysisModalOpen(false)} className="text-zinc-400 hover:text-zinc-700 transition-colors">
-                  <X size={20} />
-                </button>
-              )}
-            </div>
-            
-            <div className="p-6 overflow-y-auto flex-1">
-              {isAnalyzing ? (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <div className="relative mb-4">
-                    <div className="w-12 h-12 rounded-full border-4 border-violet-100"></div>
-                    <div className="w-12 h-12 rounded-full border-4 border-violet-600 border-t-transparent animate-spin absolute inset-0"></div>
-                  </div>
-                  <p className="text-sm font-medium text-zinc-900 mb-1">AI xulosalarni shakllantirmoqda...</p>
-                  <p className="text-xs text-zinc-500">Bu bir necha soniya vaqt olishi mumkin</p>
-                </div>
-              ) : analysisResult ? (
-                <div className="space-y-6">
-                  <div className="bg-red-50 border border-red-100 rounded-xl p-4">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-red-800 mb-3">Zaif o'zlashtirilgan mavzular</h4>
-                    <ul className="space-y-2">
-                      {analysisResult.weakTopics?.map((topic: string, i: number) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-red-900">
-                          <span className="text-red-500 mt-0.5">•</span>
-                          {topic}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">AI Maslahati</h4>
-                    <p className="text-sm text-blue-900 leading-relaxed">
-                      {analysisResult.recommendation}
-                    </p>
-                  </div>
-
-                  {analysisResult.generatedQuestions?.length > 0 && (
-                    <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 text-center">
-                      <BrainCircuit size={24} className="text-zinc-400 mx-auto mb-2" />
-                      <h4 className="text-sm font-bold text-zinc-900 mb-1">Qayta Test Tayyor!</h4>
-                      <p className="text-xs text-zinc-500 mb-4 max-w-sm mx-auto">
-                        Aynan yuqoridagi zaif mavzularni mustahkamlash uchun {analysisResult.generatedQuestions.length} ta yepyangi savol yaratildi.
-                      </p>
-                      <button
-                        onClick={handleCreateNewTestFromAnalysis}
-                        className="inline-flex items-center gap-2 bg-zinc-900 text-white px-5 py-2.5 rounded-lg text-xs font-semibold hover:bg-zinc-800 transition-colors shadow-sm"
-                      >
-                        <Sparkles size={14} /> Shu savollar bilan yangi test yaratish
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
