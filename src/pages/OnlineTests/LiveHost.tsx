@@ -113,7 +113,7 @@ export default function LiveHost() {
 
   const startGame = () => {
     if (players.length === 0) {
-      return toast.error('O'yinni boshlash uchun kamida 1 ta o'quvchi kerak');
+      return toast.error("O'yinni boshlash uchun kamida 1 ta o'quvchi kerak");
     }
     socket?.emit('start_game', { pin });
   };
