@@ -1261,23 +1261,37 @@ app.post('/api/online-tests/:id/class-analysis', authMiddleware, async (req, res
       results.forEach(r => {
         if (r.answers && r.answers[i] === q.correctOption) correct++;
       });
+      const perc = Math.round((correct / results.length) * 100);
       return {
         questionText: q.questionText,
         correctOption: q.correctOption,
-        percentage: Math.round((correct / results.length) * 100)
+        percentage: perc,
+        errorPercentage: 100 - perc
       };
     });
+
+    const weakStudentsList = results
+      .filter(r => (r.score / (r.totalScore || test.questions.length)) < 0.7)
+      .map(r => r.studentName)
+      .join(', ');
 
     const prompt = `Siz maktab o'qituvchilari uchun yordamchi sun'iy intellektsiz.
 Quyida "${test.title}" (${test.subject}) testi bo'yicha o'quvchilarning natijalari berilgan. Jami ${results.length} ta o'quvchi ishtirok etgan.
 
 Savollar va o'zlashtirish foizlari:
-${stats.map((s, i) => `${i+1}. ${s.questionText.substring(0, 50)}... - O'zlashtirish: ${s.percentage}%`).join('\n')}
+${stats.map((s, i) => `${i+1}. ${s.questionText.substring(0, 50)}... - Xato qilish ko'rsatkichi: ${s.errorPercentage}%`).join('\n')}
+
+Zaif natija ko'rsatgan o'quvchilar: ${weakStudentsList || 'Yo\\'q'}
 
 Iltimos, quyidagi JSON formatida qat'iy javob qaytaring (Boshqa matn yozmang!):
 {
-  "weakTopics": ["eng yomon o'zlashtirilgan 2 ta mavzu nomi"],
+  "weakTopics": [
+    { "topic": "Mavzu nomi (masalan: Diskriminant formulasi)", "errorPercentage": 68 }
+  ],
   "recommendation": "O'qituvchiga qisqa, aniq maslahat (1 gap)",
+  "studentPlans": [
+    { "studentName": "Ism", "plan": "O'quvchiga atalgan 1 ta shaxsiy maslahat gap" }
+  ],
   "generatedQuestions": [
     {
       "questionText": "Yangi savol matni (faqat zaif mavzularga oid bo'lishi shart)",
@@ -1287,7 +1301,10 @@ Iltimos, quyidagi JSON formatida qat'iy javob qaytaring (Boshqa matn yozmang!):
     }
   ]
 }
-"generatedQuestions" ichida aynan xato qilingan zaif mavzular bo'yicha jami 5 ta yepyangi savol (multiple_choice tipida) bo'lsin.
+Qoidalar:
+1. "weakTopics" ichida eng yuqori "Xato qilish ko'rsatkichi"ga ega bo'lgan 2-3 ta mavzuni foizi bilan yozing.
+2. "studentPlans" ro'yxatida faqatgina yuqorida nomi keltirilgan zaif o'quvchilarga (agar mavjud bo'lsa) nima qilishlari kerakligini aniq ko'rsating.
+3. "generatedQuestions" ichida aynan xato qilingan zaif mavzular bo'yicha jami 5 ta yepyangi savol bo'lsin.
 `;
 
     const aiRes = await model.generateContent(prompt);

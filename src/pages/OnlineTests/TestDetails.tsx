@@ -406,23 +406,39 @@ export default function TestDetails() {
               ) : analysisResult ? (
                 <div className="space-y-6">
                   <div className="bg-red-50 border border-red-100 rounded-xl p-4">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-red-800 mb-3">Zaif o'zlashtirilgan mavzular</h4>
-                    <ul className="space-y-2">
-                      {analysisResult.weakTopics?.map((topic: string, i: number) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-red-900">
-                          <span className="text-red-500 mt-0.5">•</span>
-                          {topic}
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-red-800 mb-3">Eng ko'p xato qilingan mavzular</h4>
+                    <ul className="space-y-3">
+                      {analysisResult.weakTopics?.map((item: any, i: number) => (
+                        <li key={i} className="flex items-center justify-between gap-4 text-sm bg-white p-3 rounded-lg border border-red-100">
+                          <span className="text-zinc-800 font-medium flex-1">{typeof item === 'string' ? item : item.topic}</span>
+                          <span className="text-red-600 font-bold bg-red-100 px-2 py-1 rounded text-xs whitespace-nowrap">
+                            {typeof item === 'string' ? '' : `${item.errorPercentage}% xato`}
+                          </span>
                         </li>
                       ))}
                     </ul>
                   </div>
 
                   <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">AI Maslahati</h4>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Umumiy Sinf bo'yicha Maslahat</h4>
                     <p className="text-sm text-blue-900 leading-relaxed">
                       {analysisResult.recommendation}
                     </p>
                   </div>
+
+                  {analysisResult.studentPlans && analysisResult.studentPlans.length > 0 && (
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-800 mb-3">O'quvchilar uchun shaxsiy reja</h4>
+                      <ul className="space-y-2 text-sm">
+                        {analysisResult.studentPlans.map((plan: any, i: number) => (
+                          <li key={i} className="flex items-start gap-2 text-emerald-900 bg-white p-3 rounded-lg border border-emerald-100">
+                            <span className="font-bold text-emerald-700 min-w-max">{plan.studentName}:</span>
+                            <span className="text-zinc-700">{plan.plan}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
                   {analysisResult.generatedQuestions?.length > 0 && (
                     <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 text-center">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
-import { Swords, Trophy, Loader2, Copy, Check, X, ShieldAlert } from 'lucide-react';
+import { Swords, Trophy, Loader2, Copy } from 'lucide-react';
 import MeshGradient from '../../components/ui/MeshGradient';
 import FormattedText from '../../components/FormattedText';
 import { toast } from 'sonner';
@@ -29,7 +29,6 @@ export default function DuelPlayer() {
   const [name, setName] = useState('');
   
   // Duel states
-  const [testId, setTestId] = useState<string | null>(null);
   const [test, setTest] = useState<any>(null);
   const [isCreator, setIsCreator] = useState(false);
   const [p1, setP1] = useState<PlayerState | null>(null);
@@ -48,7 +47,6 @@ export default function DuelPlayer() {
     if (state?.isCreator && state?.testId && state?.studentName) {
       setIsCreator(true);
       setName(state.studentName);
-      setTestId(state.testId);
       newSocket.emit('create_duel', { testId: state.testId, name: state.studentName });
     } else {
       setStatus('login');
@@ -65,11 +63,10 @@ export default function DuelPlayer() {
       fetchTest(testId);
     });
 
-    newSocket.on('duel_ready', ({ player1, player2, testId }) => {
+    newSocket.on('duel_ready', ({ player1, player2, testId: newTestId }) => {
       if (!isCreator) {
         setPin(pin);
-        setTestId(testId);
-        fetchTest(testId);
+        fetchTest(newTestId);
         setStatus('lobby');
       }
       setP1(prev => ({ ...prev, name: player1 } as any));
