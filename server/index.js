@@ -1251,7 +1251,7 @@ app.post('/api/online-tests/:id/class-analysis', authMiddleware, async (req, res
     const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
     if (!apiKey) return res.status(500).json({ error: 'Gemini API key is missing' });
     
-    const { GoogleGenerativeAI } = require("@google/generative-ai");
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
