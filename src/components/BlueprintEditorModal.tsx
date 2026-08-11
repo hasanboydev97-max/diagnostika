@@ -183,39 +183,44 @@ export default function BlueprintEditorModal({ grade, initialBlueprint, onSave, 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center p-4 md:p-6">
-      <div className="bg-[#fdfdfd] rounded-[24px] shadow-[0_16px_40px_rgb(0,0,0,0.12)] border border-black/10 w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 md:p-8">
+      <div className="bg-[#fdfdfd] border border-black/10 w-full max-w-7xl rounded-none md:rounded-2xl overflow-hidden flex flex-col max-h-[90vh] shadow-[0_20px_60px_rgba(0,0,0,0.1)] selection:bg-black selection:text-white">
         
         {/* Header */}
-        <div className="flex items-center justify-between p-6 md:p-8 border-b border-black/5 bg-transparent">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-medium tracking-tight text-black">{grade}-sinf uchun test qolipi</h2>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mt-2">Mavzu va parametrlarni tahrirlash</p>
+        <div className="flex items-center justify-between p-6 md:p-10 border-b border-black/10 bg-[#fdfdfd]">
+          <div className="flex items-center gap-4 md:gap-6">
+            <div className="w-10 h-10 md:w-12 md:h-12 border border-black/10 bg-[#111111] text-white flex items-center justify-center rounded-none">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-gray-500 block mb-1">Mavzu va Parametrlarni Tahrirlash</span>
+              <h2 className="text-xl md:text-3xl font-medium tracking-tight text-[#111111]">{grade}-sinf uchun test qolipi</h2>
+            </div>
           </div>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-black hover:bg-black/5 rounded-full transition-colors">
-            <X className="w-5 h-5" strokeWidth={1.5} />
+          <button onClick={onClose} className="p-2 md:p-3 text-gray-400 hover:text-black transition-colors border border-transparent hover:border-black/10 rounded-none">
+            <X className="w-6 h-6" strokeWidth={1.5} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-transparent">
-          <div className="space-y-2">
+        <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-[#fdfdfd]">
+          <div className="space-y-4">
             {blueprint.map((q, i) => (
-              <div key={q.id} className="group flex flex-col md:flex-row gap-4 md:gap-6 items-start md:items-end p-4 rounded-2xl hover:bg-black/[0.02] border border-transparent hover:border-black/5 transition-colors">
-                <div className="font-medium text-gray-300 w-6 pb-2">#{String(q.id).padStart(2, '0')}</div>
+              <div key={q.id} className="group flex flex-col md:flex-row gap-6 items-start md:items-end p-6 rounded-none bg-white border border-black/5 hover:border-black/20 transition-all shadow-sm hover:shadow-md">
+                <div className="font-mono text-gray-400 w-8 pb-2 text-lg">#{String(q.id).padStart(2, '0')}</div>
                 
                 <div className="flex-1 w-full">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1 block">Mavzu / Savol matni</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-2 block">Mavzu / Savol matni</label>
                   <input 
                     type="text" 
                     value={q.topic} 
                     onChange={e => handleChange(i, 'topic', e.target.value)}
-                    className="w-full border-b border-black/10 bg-transparent py-2 text-sm text-black focus:border-black outline-none transition-colors"
+                    className="w-full border-b border-black/20 bg-transparent py-2 text-base text-[#111111] focus:border-black outline-none transition-colors placeholder:text-gray-300"
                   />
                 </div>
 
                 <div className="w-full md:w-40">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1 block">Kategoriya</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-2 block">Kategoriya</label>
                   <CustomCombobox 
                     value={q.category} 
                     onChange={val => handleChange(i, 'category', val)}
@@ -226,11 +231,11 @@ export default function BlueprintEditorModal({ grade, initialBlueprint, onSave, 
                 </div>
 
                 <div className="w-full md:w-28">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1 block">Qiyinlik</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-2 block">Qiyinlik</label>
                   <select 
                     value={q.difficulty} 
                     onChange={e => handleChange(i, 'difficulty', e.target.value as Difficulty)}
-                    className="w-full border-b border-black/10 bg-transparent py-2 text-sm text-black focus:border-black outline-none transition-colors cursor-pointer"
+                    className="w-full border-b border-black/20 bg-transparent py-2 text-base text-[#111111] focus:border-black outline-none transition-colors cursor-pointer"
                   >
                     <option value="Oson">Oson</option>
                     <option value="O'rta">O'rta</option>
@@ -239,11 +244,11 @@ export default function BlueprintEditorModal({ grade, initialBlueprint, onSave, 
                 </div>
 
                 <div className="w-full md:w-32">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1 block">Ko'nikma</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-2 block">Ko'nikma</label>
                   <select 
                     value={q.skill} 
                     onChange={e => handleChange(i, 'skill', e.target.value as CognitiveSkill)}
-                    className="w-full border-b border-black/10 bg-transparent py-2 text-sm text-black focus:border-black outline-none transition-colors cursor-pointer"
+                    className="w-full border-b border-black/20 bg-transparent py-2 text-base text-[#111111] focus:border-black outline-none transition-colors cursor-pointer"
                   >
                     <option value="Tushunish">Tushunish</option>
                     <option value="Qo'llash">Qo'llash</option>
@@ -254,11 +259,11 @@ export default function BlueprintEditorModal({ grade, initialBlueprint, onSave, 
                 </div>
 
                 <div className="w-full md:w-32">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1 block">Fikrlash turi</label>
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-2 block">Fikrlash turi</label>
                   <select 
                     value={q.thinkingType} 
                     onChange={e => handleChange(i, 'thinkingType', e.target.value as ThinkingType)}
-                    className="w-full border-b border-black/10 bg-transparent py-2 text-sm text-black focus:border-black outline-none transition-colors cursor-pointer"
+                    className="w-full border-b border-black/20 bg-transparent py-2 text-base text-[#111111] focus:border-black outline-none transition-colors cursor-pointer"
                   >
                     <option value="Analitik">Analitik</option>
                     <option value="Induktiv">Induktiv</option>
@@ -273,18 +278,18 @@ export default function BlueprintEditorModal({ grade, initialBlueprint, onSave, 
         </div>
 
         {/* Footer */}
-        <div className="p-6 md:p-8 border-t border-black/5 bg-[#fdfdfd] flex flex-col md:flex-row justify-between gap-6 items-center">
+        <div className="p-6 md:p-10 border-t border-black/10 bg-white flex flex-col md:flex-row justify-between gap-6 items-center">
           <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
             <button 
               onClick={() => setBlueprint(GRADE_BLUEPRINTS[grade] || GRADE_BLUEPRINTS['5'])} 
-              className="px-4 py-2 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 hover:text-black transition-colors"
+              className="px-6 py-3 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 hover:text-black transition-colors border border-transparent hover:border-black/10"
             >
               <RotateCcw className="w-4 h-4" /> Qayta tiklash
             </button>
             <button 
               onClick={handleGenerateAI}
               disabled={isGenerating}
-              className={`px-6 py-3 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] rounded-full transition-all border ${isGenerating ? 'bg-black/5 border-black/5 text-gray-400 cursor-not-allowed' : 'bg-transparent border-black/10 text-black hover:border-black'}`}
+              className={`px-8 py-3 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] transition-all border ${isGenerating ? 'bg-black/5 border-black/5 text-gray-400 cursor-not-allowed' : 'bg-[#fdfdfd] border-black/20 text-[#111111] hover:border-black'}`}
             >
               {isGenerating ? (
                 <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
@@ -296,10 +301,10 @@ export default function BlueprintEditorModal({ grade, initialBlueprint, onSave, 
           </div>
           
           <div className="flex gap-4 w-full md:w-auto">
-            <button onClick={onClose} className="flex-1 md:flex-none px-6 py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 hover:text-black transition-colors">
+            <button onClick={onClose} className="flex-1 md:flex-none px-6 py-3 text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 hover:text-black transition-colors border border-black/10">
               Bekor qilish
             </button>
-            <button onClick={handleSave} className="flex-1 md:flex-none px-8 py-3 bg-black text-white rounded-full text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-black/80 shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
+            <button onClick={handleSave} className="flex-1 md:flex-none px-10 py-3 bg-[#111111] text-[#fdfdfd] text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-black/80 transition-all flex items-center justify-center gap-2">
               <Save className="w-4 h-4" /> Saqlash
             </button>
           </div>
