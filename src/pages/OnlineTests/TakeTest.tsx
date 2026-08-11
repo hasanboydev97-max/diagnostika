@@ -467,7 +467,13 @@ export default function TakeTest() {
                 Yolg'iz Boshlash
               </button>
               <button 
-                onClick={() => navigate('/duel', { state: { testId, title: test.title, isCreator: true, studentName } })}
+                onClick={() => {
+                  if (!studentName.trim()) {
+                    toast.error("Iltimos, avval ismingizni kiriting!");
+                    return;
+                  }
+                  navigate('/duel', { state: { testId, title: test.title, isCreator: true, studentName } });
+                }}
                 onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
                 className="flex-1 py-4 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl text-[10px] uppercase tracking-[0.2em] font-bold hover:from-red-700 hover:to-orange-700 shadow-md transition-colors focus:outline-none flex items-center justify-center gap-2"
               >
