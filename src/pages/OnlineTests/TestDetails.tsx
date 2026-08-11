@@ -70,7 +70,7 @@ export default function TestDetails() {
   const secureDownload = async (url: string, filename: string, loadingMsg: string) => {
     const toastId = toast.loading(loadingMsg);
     try {
-      const token = localStorage.getItem('token');
+      const token = getToken();
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`
