@@ -195,8 +195,7 @@ app.post('/api/telegram/send', async (req, res) => {
   }
 });
 
-app.post('/api/online-tests/:id/class-analysis', authMiddleware, async (req, res) => {
-  try {
+
 
 // 24/7 Long Polling Loop for Telegram Bot Commands
 let lastUpdateId = 0;

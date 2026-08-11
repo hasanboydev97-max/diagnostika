@@ -11,7 +11,6 @@ export const getTests = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 export const getTestById = async (req, res) => {
   try {
     const test = await OnlineTest.findOne({ id: req.params.id }).lean();
@@ -21,7 +20,6 @@ export const getTestById = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 export const getTestResults = async (req, res) => {
   try {
     const test = await OnlineTest.findOne({ id: req.params.id, teacherId: req.teacherId });
@@ -43,14 +41,13 @@ export const exportToDocx = async (req, res) => {
     const buffer = await buildDocxBuffer(test.title, test.subject, test.questions);
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-    res.setHeader('Content-Disposition', "attachment; filename="$(${encodeURIComponent(test.title || 'Test')}.docx)");
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(test.title || 'Test')}.docx"`);
     res.send(buffer);
   } catch (error) {
     console.error("DOCX Export Error:", error.message, error.stack);
     res.status(500).json({ error: 'Server error generating DOCX', detail: error.message });
   }
 };
-
 export const exportToExcel = async (req, res) => {
   try {
     const test = await OnlineTest.findOne({ id: req.params.id });
@@ -64,17 +61,16 @@ export const exportToExcel = async (req, res) => {
     results.forEach(r => {
       const percent = Math.round((r.score / (r.totalScore || 1)) * 100);
       const dateStr = r.createdAt ? new Date(r.createdAt).toLocaleString() : '';
-      csvContent += "$(${r.studentName || ''})",$(${r.score || 0}),$(${r.totalScore || 0}),$(${percent}%),$(${dateStr})\n;
+      csvContent += `"${r.studentName || ''}","${r.score || 0}","${r.totalScore || 0}","${percent}%","${dateStr}"\n`;
     });
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', "attachment; filename="$(${encodeURIComponent(test.title || 'Test')}_Natijalar.csv)");
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(test.title || 'Test')}_Natijalar.csv"`);
     res.send(csvContent);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
 export const exportToPdf = async (req, res) => {
   try {
     const test = await OnlineTest.findOne({ id: req.params.id });
@@ -120,17 +116,17 @@ export const exportToPdf = async (req, res) => {
     doc.font(boldFont).fontSize(18)
       .text(sanitizePdfText(test.title || 'Test'), { align: 'center' });
     doc.font(regularFont).fontSize(12)
-      .text(Fan: $(${sanitizePdfText(test.subject || '')}), { align: 'center' });
+      .text(`Fan: ${sanitizePdfText(test.subject || '')}`, { align: 'center' });
     doc.moveDown(1);
 
     (test.questions || []).forEach((q, i) => {
       doc.moveDown(0.4);
-      const qText = $(i + 1). $(${sanitizePdfText(q.questionText || '')});
+      const qText = `${i + 1}. ${sanitizePdfText(q.questionText || '')}`;
       if (doc.y > 720) doc.addPage();
       doc.font(boldFont).fontSize(11).text(qText, { lineGap: 2 });
       (q.options || []).forEach((opt, oi) => {
-        const letterLabel = optionLetters[oi] || $(oi + 1);
-        const optText =    $(${letterLabel}) $(${sanitizePdfText(opt || '')});
+        const letterLabel = optionLetters[oi] || `${oi + 1}`;
+        const optText = `   ${letterLabel}) ${sanitizePdfText(opt || '')}`;
         doc.font(regularFont).fontSize(11).text(optText, { lineGap: 1 });
       });
     });
@@ -144,7 +140,7 @@ export const exportToPdf = async (req, res) => {
     const answers = (test.questions || []).map((q, i) => {
       const correctIdx = (q.options || []).findIndex(o => o === q.correctOption);
       const letter = correctIdx >= 0 ? optionLetters[correctIdx] : (q.correctOption || '?');
-      return $(i + 1). $(${letter});
+      return `${i + 1}. ${letter}`;
     });
 
     for (let row = 0; row < Math.ceil(answers.length / answersPerRow); row++) {
@@ -158,14 +154,13 @@ export const exportToPdf = async (req, res) => {
     const pdfBuffer = Buffer.concat(chunks);
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', "attachment; filename="$(${encodeURIComponent(test.title)}.pdf)");
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(test.title)}.pdf"`);
     res.send(pdfBuffer);
   } catch (error) {
     console.error('PDF Export Error:', error);
     res.status(500).json({ error: 'Server error generating PDF: ' + error.message });
   }
 };
-
 export const createTest = async (req, res) => {
   try {
     const teacher = await Teacher.findById(req.teacherId);
@@ -185,8 +180,6 @@ export const createTest = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-
 export const submitTestResult = async (req, res) => {
   try {
     const data = req.body;
@@ -267,8 +260,7 @@ Ushbu natijalarga asosan o'quvchiga o'zbek tilida qisqa (2-3 ta gap) dalda beruv
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-});
-
+};
 export const deleteTest = async (req, res) => {
   try {
     const testId = req.params.id;
@@ -284,8 +276,7 @@ export const deleteTest = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-});
-
+};
 export const getTestResultById = async (req, res) => {
   try {
     const result = await OnlineTestResult.findOne({ id: req.params.id });
@@ -294,8 +285,7 @@ export const getTestResultById = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-});
-
+};
 export const generateAITest = async (req, res) => {
   try {
     const { topic, questionCount, subject } = req.body;
@@ -472,8 +462,7 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
     console.error('AI Gen Error:', error);
     res.status(500).json({ error: error.message });
   }
-});
-
+};
 export const classAnalysis = async (req, res) => {
   try {
     const test = await OnlineTest.findOne({ id: req.params.id });
@@ -558,4 +547,4 @@ Qoidalar:
     console.error('AI Analysis Error:', err);
     res.status(500).json({ error: 'AI bilan bog\'lanishda xatolik: ' + err.message });
   }
-});
+};

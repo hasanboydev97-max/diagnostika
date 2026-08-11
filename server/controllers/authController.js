@@ -8,13 +8,15 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
 
 export const register = async (req, res) => {
   try {
-    const { name, email, password, subject } = req.body;
+    const { name, password, subject } = req.body;
+    const email = req.body.email?.toLowerCase().trim();
+    
     const existing = await Teacher.findOne({ email });
     if (existing) return res.status(400).json({ error: 'Ushbu email allaqachon ro\'yxatdan o\'tgan.' });
     
     const hashedPassword = await bcrypt.hash(password, 10);
     // Hardcoded logic: Make admin@maktab.uz an admin automatically
-    const role = email.toLowerCase() === 'admin@maktab.uz' ? 'admin' : 'teacher';
+    const role = email === 'admin@maktab.uz' ? 'admin' : 'teacher';
     const teacher = new Teacher({ name, email, password: hashedPassword, subject, role, plan: 'free', planStatus: 'active' });
     await teacher.save();
     
@@ -27,7 +29,9 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = req.body.email?.toLowerCase().trim();
+    
     const teacher = await Teacher.findOne({ email });
     if (!teacher) return res.status(400).json({ error: 'Email yoki parol xato.' });
     
