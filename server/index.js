@@ -42,92 +42,11 @@ if (process.env.CLOUDINARY_CLOUD_NAME) {
 
 const upload = multer({ dest: 'uploads/' });
 
-// Mongoose Schema
-const ResultSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  pin: String,
-  studentName: String,
-  grade: String,
-  blueprintSnapshot: Array,
-  scores: Object,
-  totalScore: Number,
-  questionResults: Object,
-  aiSummaryText: String,
-  aiAdviceText: String,
-  createdAt: String
-}, { strict: false });
-
-const Result = mongoose.model('Result', ResultSchema);
-
-const OnlineTestSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  teacherId: { type: String, required: true },
-  title: String,
-  subject: String,
-  questions: Array,
-  startTime: String,
-  endTime: String,
-  durationMinutes: Number,
-  createdAt: String
-}, { strict: false });
-const OnlineTest = mongoose.model('OnlineTest', OnlineTestSchema);
-
-const OnlineTestResultSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  testId: String,
-  studentName: String,
-  answers: Object,
-  score: Number,
-  totalScore: Number,
-  aiFeedback: String,
-  createdAt: String
-}, { strict: false });
-const OnlineTestResult = mongoose.model('OnlineTestResult', OnlineTestResultSchema);
-
-// Teacher Schema for Auth
-const TeacherSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  subject: { type: String, required: true },
-  role: { type: String, enum: ['teacher', 'admin'], default: 'teacher' },
-  plan: { type: String, enum: ['free', 'standard', 'premium'], default: 'free' },
-  planStatus: { type: String, enum: ['active', 'pending', 'expired'], default: 'active' },
-  requestedPlan: { type: String, enum: ['standard', 'premium', null], default: null },
-  paymentNote: { type: String, default: '' },
-  planExpiresAt: { type: Date, default: null },
-  dailyAiCount: { type: Number, default: 0 },
-  lastAiGenDate: { type: String, default: '' },
-  schoolName: { type: String, default: '' },
-  schoolLogo: { type: String, default: '' },
-  avatar: { type: String, default: '' },
-  phone: { type: String, default: '' }
-}, { timestamps: true });
-const Teacher = mongoose.model('Teacher', TeacherSchema);
+import { Result, OnlineTest, OnlineTestResult, Teacher } from './models/index.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'maktab-test-super-secret-key';
 
-// Middleware for protecting routes
-const authMiddleware = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Ruxsat etilmadi (Token yo\'q)' });
-  
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.teacherId = decoded.id;
-    req.userRole = decoded.role || 'teacher';
-    next();
-  } catch (error) {
-    res.status(401).json({ error: 'Yaroqsiz token' });
-  }
-};
-
-const adminMiddleware = (req, res, next) => {
-  if (req.userRole !== 'admin') {
-    return res.status(403).json({ error: 'Ruxsat etilmadi. Faqat admin uchun.' });
-  }
-  next();
-};
+import { authMiddleware, adminMiddleware } from './middleware/auth.js';
 
 
 // Connect to MongoDB
@@ -199,99 +118,8 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 });
 
 // --- Auth Routes ---
-app.post('/api/auth/register', async (req, res) => {
-  try {
-    const { name, email, password, subject } = req.body;
-    const existing = await Teacher.findOne({ email });
-    if (existing) return res.status(400).json({ error: 'Ushbu email allaqachon ro\'yxatdan o\'tgan.' });
-    
-    const hashedPassword = await bcrypt.hash(password, 10);
-    // Hardcoded logic: Make admin@maktab.uz an admin automatically
-    const role = email.toLowerCase() === 'admin@maktab.uz' ? 'admin' : 'teacher';
-    const teacher = new Teacher({ name, email, password: hashedPassword, subject, role, plan: 'free', planStatus: 'active' });
-    await teacher.save();
-    
-    const token = jwt.sign({ id: teacher._id, role: teacher.role }, JWT_SECRET, { expiresIn: '7d' });
-    res.status(201).json({ token, teacher: { id: teacher._id, name, email, subject, role: teacher.role, plan: teacher.plan, planStatus: teacher.planStatus } });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const teacher = await Teacher.findOne({ email });
-    if (!teacher) return res.status(400).json({ error: 'Email yoki parol xato.' });
-    
-    const isMatch = await bcrypt.compare(password, teacher.password);
-    if (!isMatch) return res.status(400).json({ error: 'Email yoki parol xato.' });
-    
-    const token = jwt.sign({ id: teacher._id, role: teacher.role || 'teacher' }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, teacher: { id: teacher._id, name: teacher.name, email: teacher.email, subject: teacher.subject, role: teacher.role || 'teacher', plan: teacher.plan || 'free', planStatus: teacher.planStatus || 'active', requestedPlan: teacher.requestedPlan, paymentNote: teacher.paymentNote, planExpiresAt: teacher.planExpiresAt } });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get('/api/auth/me', authMiddleware, async (req, res) => {
-  try {
-    const teacher = await Teacher.findById(req.teacherId).select('-password');
-    if (!teacher) return res.status(404).json({ error: 'Topilmadi' });
-    res.json(teacher);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Update Teacher Profile Info
-app.put('/api/auth/profile', authMiddleware, async (req, res) => {
-  try {
-    const { name, subject, schoolName, schoolLogo, avatar, phone } = req.body;
-    const teacher = await Teacher.findByIdAndUpdate(
-      req.teacherId,
-      {
-        ...(name ? { name } : {}),
-        ...(subject ? { subject } : {}),
-        schoolName: schoolName !== undefined ? schoolName : '',
-        schoolLogo: schoolLogo !== undefined ? schoolLogo : '',
-        avatar: avatar !== undefined ? avatar : '',
-        phone: phone !== undefined ? phone : ''
-      },
-      { new: true }
-    ).select('-password');
-
-    res.json({ success: true, teacher });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Change Teacher Password
-app.put('/api/auth/change-password', authMiddleware, async (req, res) => {
-  try {
-    const { currentPassword, newPassword } = req.body;
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ error: 'Joriy va yangi parolni kiriting' });
-    }
-    if (newPassword.length < 6) {
-      return res.status(400).json({ error: 'Yangi parol kamida 6 ta belgidan iborat bo\'lishi kerak' });
-    }
-
-    const teacher = await Teacher.findById(req.teacherId);
-    if (!teacher) return res.status(404).json({ error: 'O\'qituvchi topilmadi' });
-
-    const isMatch = await bcrypt.compare(currentPassword, teacher.password);
-    if (!isMatch) return res.status(400).json({ error: 'Joriy parol xato kiritildi' });
-
-    teacher.password = await bcrypt.hash(newPassword, 10);
-    await teacher.save();
-
-    res.json({ success: true, message: 'Parol muvaffaqiyatli yangilandi' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+import authRoutes from './routes/authRoutes.js';
+app.use('/api/auth', authRoutes);
 
 // --- Subscription Endpoints ---
 app.post('/api/subscription/request', authMiddleware, async (req, res) => {
@@ -317,119 +145,8 @@ app.post('/api/subscription/request', authMiddleware, async (req, res) => {
   }
 });
 
-app.get('/api/admin/subscriptions', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const teachers = await Teacher.find().select('-password').sort({ updatedAt: -1 });
-    res.json(teachers);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/admin/subscriptions/update-plan', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const { teacherId, plan, status, durationDays } = req.body;
-    if (!teacherId || !['free', 'standard', 'premium'].includes(plan)) {
-      return res.status(400).json({ error: 'Ma\'lumotlar to\'liq emas' });
-    }
-
-    let planExpiresAt = null;
-    if (plan !== 'free') {
-      const days = parseInt(durationDays, 10) || 30;
-      const now = new Date();
-      now.setDate(now.getDate() + days);
-      planExpiresAt = now;
-    }
-
-    const updatedTeacher = await Teacher.findByIdAndUpdate(
-      teacherId,
-      {
-        plan,
-        planStatus: status || 'active',
-        requestedPlan: null,
-        planExpiresAt
-      },
-      { new: true }
-    ).select('-password');
-
-    res.json({ success: true, teacher: updatedTeacher });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// --- Admin Routes ---
-app.get('/api/admin/stats', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const totalTeachers = await Teacher.countDocuments();
-    const totalOnlineTests = await OnlineTest.countDocuments();
-    const totalOnlineResults = await OnlineTestResult.countDocuments();
-    const totalOfflineResults = await Result.countDocuments();
-    
-    res.json({
-      teachers: totalTeachers,
-      tests: totalOnlineTests,
-      results: totalOnlineResults + totalOfflineResults
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get('/api/admin/teachers', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const teachers = await Teacher.find().select('-password').sort({ _id: -1 });
-    
-    // Annotate with their test count
-    const teachersWithStats = await Promise.all(teachers.map(async (t) => {
-      const testCount = await OnlineTest.countDocuments({ teacherId: t._id });
-      return { ...t.toObject(), testCount };
-    }));
-    
-    res.json(teachersWithStats);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get('/api/admin/tests', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    // Populate teacher info manually since we don't have refs set up perfectly
-    const tests = await OnlineTest.find().sort({ createdAt: -1 }).lean();
-    
-    const testsWithTeachers = await Promise.all(tests.map(async (test) => {
-      let teacher = null;
-      if (test.teacherId) {
-        teacher = await Teacher.findById(test.teacherId).select('name email subject').lean();
-      }
-      return { ...test, teacher };
-    }));
-    
-    res.json(testsWithTeachers);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get('/api/admin/results', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    // Get recent online test results
-    const results = await OnlineTestResult.find().sort({ createdAt: -1 }).limit(100).lean();
-    
-    const resultsWithTestInfo = await Promise.all(results.map(async (res) => {
-      const test = await OnlineTest.findOne({ id: res.testId }).select('title subject teacherId').lean();
-      let teacher = null;
-      if (test && test.teacherId) {
-        teacher = await Teacher.findById(test.teacherId).select('name').lean();
-      }
-      return { ...res, test, teacher };
-    }));
-    
-    res.json(resultsWithTestInfo);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+import adminRoutes from './routes/adminRoutes.js';
+app.use('/api/admin', adminRoutes);
 
 // --- Online Tests Routes ---
 
@@ -1281,7 +998,7 @@ Quyida "${test.title}" (${test.subject}) testi bo'yicha o'quvchilarning natijala
 Savollar va o'zlashtirish foizlari:
 ${stats.map((s, i) => `${i+1}. ${s.questionText.substring(0, 50)}... - Xato qilish ko'rsatkichi: ${s.errorPercentage}%`).join('\n')}
 
-Zaif natija ko'rsatgan o'quvchilar: ${weakStudentsList || 'Yo\\'q'}
+Zaif natija ko'rsatgan o'quvchilar: ${weakStudentsList || "Yo'q"}
 
 Iltimos, quyidagi JSON formatida qat'iy javob qaytaring (Boshqa matn yozmang!):
 {
