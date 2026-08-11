@@ -175,8 +175,19 @@ export default function Admin() {
         <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-[15px] sm:p-8 md:p-12 rounded-2xl md:rounded-3xl">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 md:mb-8 gap-8 border-b border-black/10 pb-8">
           <div>
-            <h1 className="text-4xl md:text-5xl font-medium tracking-tight">Admin Panel</h1>
-            <p className="text-sm text-gray-500 mt-2">O'quvchi natijalarini boshqarish va diagnostika yaratish.</p>
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => navigate('/dashboard')}
+                className="p-2 border border-black/10 hover:border-black rounded-lg transition-colors group"
+                title="Dashboardga qaytish"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 group-hover:text-black transition-colors">
+                  <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <h1 className="text-4xl md:text-5xl font-medium tracking-tight">Admin Panel</h1>
+            </div>
+            <p className="text-sm text-gray-500 mt-2 ml-14">O'quvchi natijalarini boshqarish va diagnostika yaratish.</p>
           </div>
           
           <div className="flex w-full md:w-auto gap-2">
