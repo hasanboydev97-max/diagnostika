@@ -5,6 +5,7 @@ import { getAuthHeaders, getToken, getTeacher } from '../../lib/auth';
 import MeshGradient from '../../components/ui/MeshGradient';
 import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -385,90 +386,120 @@ export default function TestDetails() {
       </div>
 
       {/* AI Analysis Modal */}
-      {isAnalysisModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => !isAnalyzing && setIsAnalysisModalOpen(false)}></div>
-          <div className="bg-white rounded-2xl w-full max-w-2xl relative z-10 overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-            <div className="px-6 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
-              <h3 className="font-semibold text-zinc-900 flex items-center gap-2">
-                <Sparkles size={18} className="text-violet-600" />
-                AI Sinf Tahlili
-              </h3>
-              {!isAnalyzing && (
-                <button onClick={() => setIsAnalysisModalOpen(false)} className="text-zinc-400 hover:text-zinc-700 transition-colors">
-                  <X size={20} />
-                </button>
-              )}
-            </div>
-            
-            <div className="p-6 overflow-y-auto flex-1">
-              {isAnalyzing ? (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <div className="relative mb-4">
-                    <div className="w-12 h-12 rounded-full border-4 border-violet-100"></div>
-                    <div className="w-12 h-12 rounded-full border-4 border-violet-600 border-t-transparent animate-spin absolute inset-0"></div>
+      <AnimatePresence>
+        {isAnalysisModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 bg-black/40 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-transparent" 
+              onClick={() => !isAnalyzing && setIsAnalysisModalOpen(false)}
+            />
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+              className="bg-[#fdfdfd] border border-black/10 w-full max-w-6xl rounded-none md:rounded-2xl overflow-hidden flex flex-col max-h-[90vh] shadow-[0_20px_60px_rgba(0,0,0,0.1)] relative z-10 selection:bg-black selection:text-white"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 md:p-10 border-b border-black/10 bg-[#fdfdfd]">
+                <div className="flex items-center gap-4 md:gap-6">
+                  <div className="w-10 h-10 md:w-12 md:h-12 border border-black/10 bg-[#111111] text-white flex items-center justify-center rounded-none">
+                    <Sparkles className="w-5 h-5" />
                   </div>
-                  <p className="text-sm font-medium text-zinc-900 mb-1">AI xulosalarni shakllantirmoqda...</p>
-                  <p className="text-xs text-zinc-500">Bu bir necha soniya vaqt olishi mumkin</p>
+                  <div>
+                    <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-gray-500 block mb-1">AI Tahlilchi</span>
+                    <h2 className="text-xl md:text-3xl font-medium tracking-tight text-[#111111]">AI Sinf Tahlili</h2>
+                  </div>
                 </div>
-              ) : analysisResult ? (
-                <div className="space-y-6">
-                  <div className="bg-red-50 border border-red-100 rounded-xl p-4">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-red-800 mb-3">Eng ko'p xato qilingan mavzular</h4>
-                    <ul className="space-y-3">
-                      {analysisResult.weakTopics?.map((item: any, i: number) => (
-                        <li key={i} className="flex items-center justify-between gap-4 text-sm bg-white p-3 rounded-lg border border-red-100">
-                          <span className="text-zinc-800 font-medium flex-1">{typeof item === 'string' ? item : item.topic}</span>
-                          <span className="text-red-600 font-bold bg-red-100 px-2 py-1 rounded text-xs whitespace-nowrap">
-                            {typeof item === 'string' ? '' : `${item.errorPercentage}% xato`}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                {!isAnalyzing && (
+                  <button 
+                    onClick={() => setIsAnalysisModalOpen(false)} 
+                    className="p-2 md:p-3 text-gray-400 hover:text-black transition-colors border border-transparent hover:border-black/10 rounded-none"
+                  >
+                    <X className="w-6 h-6" strokeWidth={1.5} />
+                  </button>
+                )}
+              </div>
+              
+              <div className="p-6 md:p-10 overflow-y-auto flex-1 bg-[#fdfdfd]">
+                {isAnalyzing ? (
+                  <div className="flex flex-col items-center justify-center py-20">
+                    <div className="w-12 h-12 border-2 border-black/20 border-t-black rounded-full animate-spin mb-4"></div>
+                    <p className="text-sm font-medium text-black uppercase tracking-[0.1em] mb-1">AI xulosalarni shakllantirmoqda...</p>
+                    <p className="text-xs text-gray-400">Bu bir necha soniya vaqt olishi mumkin</p>
                   </div>
+                ) : analysisResult ? (
+                  <div className="space-y-12">
+                    
+                    {/* Grid for Weak Topics & Recommendation */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                      <div className="lg:col-span-5">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-4 block">Eng ko'p xato qilingan mavzular</span>
+                        <div className="border-t border-black/10 divide-y divide-black/5">
+                          {analysisResult.weakTopics?.map((item: any, i: number) => (
+                            <div key={i} className="py-4 flex items-center justify-between gap-4">
+                              <span className="text-sm text-[#111111] font-medium">{typeof item === 'string' ? item : item.topic}</span>
+                              <span className="text-xs font-mono font-bold border border-black/10 px-2 py-1 bg-white">
+                                {typeof item === 'string' ? '' : `${item.errorPercentage}% xato`}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
 
-                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">Umumiy Sinf bo'yicha Maslahat</h4>
-                    <p className="text-sm text-blue-900 leading-relaxed">
-                      {analysisResult.recommendation}
-                    </p>
+                      <div className="lg:col-span-7">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-4 block">Umumiy Sinf bo'yicha Maslahat</span>
+                        <div className="border border-black/5 p-8 bg-white">
+                          <p className="text-base text-gray-600 leading-relaxed font-normal">
+                            {analysisResult.recommendation}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Student Plans */}
+                    {analysisResult.studentPlans && analysisResult.studentPlans.length > 0 && (
+                      <div>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-6 block">O'quvchilar uchun shaxsiy reja</span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {analysisResult.studentPlans.map((plan: any, i: number) => (
+                            <div key={i} className="border border-black/5 p-6 bg-white flex flex-col justify-between hover:border-black/20 transition-colors shadow-sm">
+                              <div>
+                                <h4 className="text-sm font-bold text-black mb-2">{plan.studentName}</h4>
+                                <p className="text-sm text-gray-500 leading-relaxed">{plan.plan}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Re-generate Test Section */}
+                    {analysisResult.generatedQuestions?.length > 0 && (
+                      <div className="border border-black/10 p-8 md:p-12 text-center bg-white flex flex-col items-center justify-center max-w-3xl mx-auto">
+                        <BrainCircuit size={32} className="text-black mb-4" strokeWidth={1} />
+                        <h4 className="text-lg font-medium text-black mb-2">Qayta Test Tayyor!</h4>
+                        <p className="text-sm text-gray-500 mb-8 max-w-lg">
+                          Aynan yuqoridagi zaif mavzularni mustahkamlash uchun {analysisResult.generatedQuestions.length} ta yepyangi savol yaratildi.
+                        </p>
+                        <button
+                          onClick={handleCreateNewTestFromAnalysis}
+                          className="bg-[#111111] text-[#fdfdfd] px-8 py-4 text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-black transition-colors flex items-center gap-2"
+                        >
+                          <Sparkles size={14} /> Shu savollar bilan yangi test yaratish
+                        </button>
+                      </div>
+                    )}
                   </div>
-
-                  {analysisResult.studentPlans && analysisResult.studentPlans.length > 0 && (
-                    <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-800 mb-3">O'quvchilar uchun shaxsiy reja</h4>
-                      <ul className="space-y-2 text-sm">
-                        {analysisResult.studentPlans.map((plan: any, i: number) => (
-                          <li key={i} className="flex items-start gap-2 text-emerald-900 bg-white p-3 rounded-lg border border-emerald-100">
-                            <span className="font-bold text-emerald-700 min-w-max">{plan.studentName}:</span>
-                            <span className="text-zinc-700">{plan.plan}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {analysisResult.generatedQuestions?.length > 0 && (
-                    <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-4 text-center">
-                      <BrainCircuit size={24} className="text-zinc-400 mx-auto mb-2" />
-                      <h4 className="text-sm font-bold text-zinc-900 mb-1">Qayta Test Tayyor!</h4>
-                      <p className="text-xs text-zinc-500 mb-4 max-w-sm mx-auto">
-                        Aynan yuqoridagi zaif mavzularni mustahkamlash uchun {analysisResult.generatedQuestions.length} ta yepyangi savol yaratildi.
-                      </p>
-                      <button
-                        onClick={handleCreateNewTestFromAnalysis}
-                        className="inline-flex items-center gap-2 bg-zinc-900 text-white px-5 py-2.5 rounded-lg text-xs font-semibold hover:bg-zinc-800 transition-colors shadow-sm"
-                      >
-                        <Sparkles size={14} /> Shu savollar bilan yangi test yaratish
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : null}
-            </div>
+                ) : null}
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 }
