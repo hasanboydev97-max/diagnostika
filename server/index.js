@@ -689,7 +689,7 @@ async function buildDocxBuffer(title, subject, questions) {
 }
 
 // GET DOCX Export — Official docx package generator
-app.get('/api/online-tests/:id/export/docx', async (req, res) => {
+app.get('/api/online-tests/:id/export/docx', authMiddleware, async (req, res) => {
   try {
     const test = await OnlineTest.findOne({ id: req.params.id });
     if (!test) return res.status(404).json({ error: 'Test not found' });
@@ -707,7 +707,7 @@ app.get('/api/online-tests/:id/export/docx', async (req, res) => {
 
 
 // GET Excel/CSV Export — Available for Standard and Premium plans
-app.get('/api/online-tests/:id/export/excel', async (req, res) => {
+app.get('/api/online-tests/:id/export/excel', authMiddleware, async (req, res) => {
   try {
     const test = await OnlineTest.findOne({ id: req.params.id });
     if (!test) return res.status(404).json({ error: 'Test topilmadi' });
@@ -762,7 +762,7 @@ function sanitizePdfText(text) {
 }
 
 // GET PDF Export — pure JS pdfkit (works everywhere, no Chrome needed)
-app.get('/api/online-tests/:id/export/pdf', async (req, res) => {
+app.get('/api/online-tests/:id/export/pdf', authMiddleware, async (req, res) => {
   try {
     const test = await OnlineTest.findOne({ id: req.params.id });
     if (!test) return res.status(404).json({ error: 'Test not found' });

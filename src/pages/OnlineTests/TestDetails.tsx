@@ -67,52 +67,60 @@ export default function TestDetails() {
     toast.success('Test manzili nusxalandi! O\'quvchilarga yuborishingiz mumkin.');
   };
 
-  const handleExportWord = () => {
+  const secureDownload = async (url: string, filename: string, loadingMsg: string) => {
+    const toastId = toast.loading(loadingMsg);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Server xatosi');
+      }
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+      toast.success('Muvaffaqiyatli yuklandi!', { id: toastId });
+    } catch (error: any) {
+      console.error(error);
+      toast.error(`Xatolik: ${error.message}`, { id: toastId });
+    }
+  };
+
+  const handleExportWord = async () => {
     if (!test) return;
     const teacher = getTeacher();
     if (teacher?.plan === 'free') {
       toast.error('Word (DOCX) eksporti faqat Standard va Premium tariflarda mavjud! Tarifni oshiring.');
       return;
     }
-    window.open(`${API_URL}/online-tests/${testId}/export/docx`, '_blank');
+    await secureDownload(`${API_URL}/online-tests/${testId}/export/docx`, `${test.title}.docx`, 'Word fayl tayyorlanmoqda...');
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (!test) return;
     const teacher = getTeacher();
     if (teacher?.plan === 'free') {
       toast.error('Excel (CSV) eksporti faqat Standard va Premium tariflarda mavjud! Tarifni oshiring.');
       return;
     }
-    window.open(`${API_URL}/online-tests/${testId}/export/excel`, '_blank');
+    await secureDownload(`${API_URL}/online-tests/${testId}/export/excel`, `${test.title}_natijalar.xlsx`, 'Excel fayl tayyorlanmoqda...');
   };
 
   const handleDownloadPDF = async () => {
     if (!test || isDownloadingPdf) return;
     setIsDownloadingPdf(true);
-    const toastId = toast.loading('PDF tayyorlanmoqda...');
-    try {
-      const response = await fetch(`${API_URL}/online-tests/${testId}/export/pdf`);
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Server xatosi');
-      }
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${test.title}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast.success('PDF muvaffaqiyatli yuklandi!', { id: toastId });
-    } catch (error: any) {
-      console.error(error);
-      toast.error(`PDF tayyorlashda xatolik: ${error.message}`, { id: toastId });
-    } finally {
-      setIsDownloadingPdf(false);
-    }
+    await secureDownload(`${API_URL}/online-tests/${testId}/export/pdf`, `${test.title}.pdf`, 'PDF tayyorlanmoqda...');
+    setIsDownloadingPdf(false);
   };
 
   const handleClassAnalysis = async () => {
