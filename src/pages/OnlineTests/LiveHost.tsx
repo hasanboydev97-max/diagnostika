@@ -251,7 +251,7 @@ export default function LiveHost() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 flex-1">
               <div className="lg:col-span-8 flex flex-col">
                 <div className="mb-12">
-                  <h3 className="text-3xl md:text-4xl font-medium leading-relaxed">
+                  <h3 className="text-3xl md:text-4xl font-sans font-medium leading-relaxed">
                     <FormattedText content={test.questions[currentQuestionIndex].questionText} />
                   </h3>
                 </div>

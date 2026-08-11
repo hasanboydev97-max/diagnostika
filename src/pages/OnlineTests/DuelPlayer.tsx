@@ -39,6 +39,9 @@ export default function DuelPlayer() {
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [hasAnsweredCurrent, setHasAnsweredCurrent] = useState(false);
   const [myScore, setMyScore] = useState(0);
+  const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
+  const [isWaitingForOpponent, setIsWaitingForOpponent] = useState(false);
+  const [disqualificationMsg, setDisqualificationMsg] = useState<string | null>(null);
 
   // Refs to avoid stale closures in socket listener
   const pinRef = useRef(pin);
@@ -49,6 +52,10 @@ export default function DuelPlayer() {
   isCreatorRef.current = isCreator;
   const statusRef = useRef(status);
   statusRef.current = status;
+  const socketRef = useRef(socket);
+  socketRef.current = socket;
+  const isWaitingForOpponentRef = useRef(isWaitingForOpponent);
+  isWaitingForOpponentRef.current = isWaitingForOpponent;
 
   useEffect(() => {
     const newSocket = io(SOCKET_URL);
@@ -105,9 +112,16 @@ export default function DuelPlayer() {
       setP2(player2);
     });
 
-    newSocket.on('duel_ended', ({ player1, player2 }) => {
+    newSocket.on('duel_ended', ({ player1, player2, disqualifiedPlayer }) => {
       setP1(player1);
       setP2(player2);
+      if (disqualifiedPlayer) {
+        if (disqualifiedPlayer === nameRef.current) {
+          setDisqualificationMsg("Siz qoidabuzarlik qilganingiz (oynani tark etganingiz) sababli chetlashtirildingiz va mag'lub bo'ldingiz.");
+        } else {
+          setDisqualificationMsg(`Raqibingiz (${disqualifiedPlayer}) qoidabuzarlik qilgani (oynani tark etgani) sababli chetlashtirildi. Siz g'olib bo'ldingiz!`);
+        }
+      }
       setStatus('finished');
     });
 
@@ -125,6 +139,33 @@ export default function DuelPlayer() {
     }
   };
 
+  // Proctoring: strict rules in active duel
+  useEffect(() => {
+    if (status !== 'active' || isWaitingForOpponent) return;
+
+    const handleDuelViolation = () => {
+      if (socketRef.current) {
+        socketRef.current.emit('duel_disqualify', { pin: pinRef.current, name: nameRef.current });
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.hidden) handleDuelViolation();
+    };
+
+    const onWindowBlur = () => {
+      handleDuelViolation();
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('blur', onWindowBlur);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('blur', onWindowBlur);
+    };
+  }, [status, isWaitingForOpponent]);
+
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
     if (!pin.trim() || !name.trim()) return toast.error('PIN va Ismingizni kiriting');
@@ -139,6 +180,7 @@ export default function DuelPlayer() {
   const handleAnswer = (optionIndex: number) => {
     if (hasAnsweredCurrent || !test) return;
     setHasAnsweredCurrent(true);
+    setSelectedOptionIndex(optionIndex);
     
     const question = test.questions[currentQIndex];
     const selectedOption = question.options[optionIndex];
@@ -155,10 +197,12 @@ export default function DuelPlayer() {
 
     setTimeout(() => {
       if (currentQIndex + 1 >= test.questions.length) {
+        setIsWaitingForOpponent(true);
         socket?.emit('duel_finish', { pin });
       } else {
         setCurrentQIndex(prev => prev + 1);
         setHasAnsweredCurrent(false);
+        setSelectedOptionIndex(null);
       }
     }, 1000);
   };
@@ -305,8 +349,8 @@ export default function DuelPlayer() {
               </div>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs uppercase tracking-[0.2em]">{p2?.name}</span>
-                  <span className="text-xs font-mono">{p2?.score}/{test.questions.length}</span>
+                  <span className="text-xs uppercase tracking-[0.2em]">{p2?.name || 'Raqib'}</span>
+                  <span className="text-xs font-mono">{p2?.score || 0}/{test.questions.length}</span>
                 </div>
                 <div className="h-1 bg-black/5 w-full">
                   <div 
@@ -317,37 +361,79 @@ export default function DuelPlayer() {
               </div>
             </div>
 
-            {/* Question */}
-            <div className="mb-16">
-              <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4 text-center">Savol {currentQIndex + 1}</p>
-              <h2 className="text-3xl md:text-4xl font-medium leading-relaxed text-center max-w-3xl mx-auto">
-                <FormattedText content={test.questions[currentQIndex]?.questionText} />
-              </h2>
-            </div>
-            
-            {/* Options */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-auto">
-              {test.questions[currentQIndex]?.options.map((opt: string, i: number) => {
-                const colors = [
-                  'bg-gradient-to-br from-rose-50 to-rose-100/50 border-rose-200 text-rose-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)] hover:border-rose-400 hover:shadow-[inset_0_2px_15px_rgba(255,255,255,1)]',
-                  'bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200 text-blue-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)] hover:border-blue-400 hover:shadow-[inset_0_2px_15px_rgba(255,255,255,1)]',
-                  'bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200 text-amber-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)] hover:border-amber-400 hover:shadow-[inset_0_2px_15px_rgba(255,255,255,1)]',
-                  'bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200 text-emerald-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)] hover:border-emerald-400 hover:shadow-[inset_0_2px_15px_rgba(255,255,255,1)]'
-                ];
-                return (
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    key={i}
-                    onClick={() => handleAnswer(i)}
-                    disabled={hasAnsweredCurrent}
-                    className={`border p-8 md:p-12 text-center text-lg md:text-xl font-medium rounded-2xl transition-all flex items-center justify-center disabled:opacity-50 ${colors[i % 4]}`}
-                  >
-                    <FormattedText content={opt} />
-                  </motion.button>
-                );
-              })}
-            </div>
+            {isWaitingForOpponent ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
+                <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mb-6">
+                  <Loader2 className="animate-spin text-amber-600" size={32} />
+                </div>
+                <h3 className="text-2xl font-semibold mb-2">Siz barcha savollarga javob berdingiz!</h3>
+                <p className="text-sm text-zinc-500 max-w-md mb-8">
+                  Raqibingiz testni yakunlashini kuting. O'yin yakunlangach, natijalar e'lon qilinadi.
+                </p>
+                <div className="flex items-center gap-6 bg-zinc-50 border border-black/5 rounded-2xl p-6">
+                  <div className="text-left">
+                    <p className="text-xs uppercase text-zinc-400 font-medium">Sizning ballingiz</p>
+                    <p className="text-lg font-bold font-mono">{(isCreator ? p1?.score : p2?.score) ?? myScore} / {test.questions.length}</p>
+                  </div>
+                  <div className="w-[1px] h-8 bg-zinc-200" />
+                  <div className="text-left">
+                    <p className="text-xs uppercase text-zinc-400 font-medium">Raqibingiz</p>
+                    <p className="text-lg font-bold font-mono">{(isCreator ? p2?.name : p1?.name) || 'Raqib'}: {(isCreator ? p2?.score : p1?.score) ?? 0} / {test.questions.length}</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Question */}
+                <div className="mb-16">
+                  <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4 text-center">Savol {currentQIndex + 1}</p>
+                  <h2 className="text-3xl md:text-4xl font-sans font-medium leading-relaxed text-center max-w-3xl mx-auto">
+                    <FormattedText content={test.questions[currentQIndex]?.questionText} />
+                  </h2>
+                </div>
+                
+                {/* Options */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-auto">
+                  {test.questions[currentQIndex]?.options.map((opt: string, i: number) => {
+                    const isCorrect = opt === test.questions[currentQIndex]?.correctOption;
+                    const isSelected = selectedOptionIndex === i;
+                    
+                    let btnClass = "border p-8 md:p-12 text-center text-lg md:text-xl font-medium rounded-2xl transition-all flex items-center justify-center ";
+                    
+                    if (hasAnsweredCurrent) {
+                      if (isCorrect) {
+                        btnClass += "bg-emerald-500 border-emerald-600 text-white shadow-none";
+                      } else if (isSelected) {
+                        btnClass += "bg-rose-500 border-rose-600 text-white shadow-none";
+                      } else {
+                        btnClass += "opacity-30 border-black/5 bg-gray-50 text-gray-400";
+                      }
+                    } else {
+                      const colors = [
+                        'bg-gradient-to-br from-rose-50 to-rose-100/50 border-rose-200 text-rose-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)] hover:border-rose-400 hover:shadow-[inset_0_2px_15px_rgba(255,255,255,1)]',
+                        'bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200 text-blue-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)] hover:border-blue-400 hover:shadow-[inset_0_2px_15px_rgba(255,255,255,1)]',
+                        'bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200 text-amber-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)] hover:border-amber-400 hover:shadow-[inset_0_2px_15px_rgba(255,255,255,1)]',
+                        'bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200 text-emerald-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)] hover:border-emerald-400 hover:shadow-[inset_0_2px_15px_rgba(255,255,255,1)]'
+                      ];
+                      btnClass += colors[i % 4];
+                    }
+
+                    return (
+                      <motion.button
+                        whileHover={!hasAnsweredCurrent ? { scale: 1.02 } : {}}
+                        whileTap={!hasAnsweredCurrent ? { scale: 0.98 } : {}}
+                        key={i}
+                        onClick={() => handleAnswer(i)}
+                        disabled={hasAnsweredCurrent}
+                        className={btnClass}
+                      >
+                        <FormattedText content={opt} />
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </motion.div>
         )}
 
@@ -359,7 +445,14 @@ export default function DuelPlayer() {
             className="flex-1 flex flex-col items-center justify-center p-6 text-center"
           >
             <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4">Natija</p>
-            <h1 className="text-4xl md:text-6xl font-medium tracking-tight mb-20">Jang yakunlandi</h1>
+            <h1 className="text-4xl md:text-6xl font-medium tracking-tight mb-10">Jang yakunlandi</h1>
+            
+            {disqualificationMsg && (
+              <div className="mb-10 p-4 bg-rose-50 border border-rose-200 rounded-2xl max-w-xl mx-auto flex items-center gap-3">
+                <span className="text-xl">⚠️</span>
+                <p className="text-sm font-semibold text-rose-800 text-left">{disqualificationMsg}</p>
+              </div>
+            )}
             
             <div className="flex items-end justify-center gap-4 md:gap-16 border-b border-black/10 pb-0 w-full max-w-2xl h-72 mb-16">
               <motion.div 

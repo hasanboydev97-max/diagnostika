@@ -159,7 +159,7 @@ export default function LivePlayer() {
           >
             <div className="text-center mb-16 pt-12">
               <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4">Savol</p>
-              <h3 className="text-2xl md:text-4xl font-medium leading-relaxed">
+              <h3 className="text-2xl md:text-4xl font-sans font-medium leading-relaxed">
                 <FormattedText content={test.questions[currentQuestionIndex]?.questionText || ''} />
               </h3>
             </div>

@@ -200,18 +200,11 @@ export default function TakeTest() {
     const handleViolation = () => {
       if (submitting) return;
       violations.current += 1;
-      if (violations.current === 1) {
-        toast.error("QOIDABUZARLIK! Boshqa oynaga o'tmang. Yana bir marta takrorlansa test yopiladi!", {
-          duration: 10000,
-          position: 'top-center',
-          icon: <AlertTriangle className="text-red-500" />
-        });
-      } else if (violations.current >= 2) {
-        toast.error("QOIDABUZARLIK TAKRORLANDI! Test majburiy yakunlanmoqda...", {
-          duration: 5000, position: 'top-center'
-        });
-        handleSubmit(true);
-      }
+      toast.error("QOIDABUZARLIK DETEKTIV QILINDI! Oynani tark etganingiz sababli test majburiy yakunlandi.", {
+        duration: 5000,
+        position: 'top-center'
+      });
+      handleSubmit(true);
     };
 
     const onVisibility = () => { if (document.hidden) handleViolation(); };
@@ -568,7 +561,7 @@ export default function TakeTest() {
                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-3">
                   {currentQIndex + 1}-Savol
                 </div>
-                <h3 className="text-xl md:text-2xl lg:text-3xl font-medium text-black leading-snug tracking-tight">
+                <h3 className="text-xl md:text-2xl lg:text-3xl font-sans font-medium text-black leading-snug tracking-tight">
                   <FormattedText content={currentQ.questionText} />
                 </h3>
               </div>

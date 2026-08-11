@@ -210,6 +210,34 @@ export const setupSockets = (httpServer) => {
       }
     });
 
+    socket.on('duel_disqualify', ({ pin, name }) => {
+      const room = duelRooms.get(pin);
+      if (!room) return;
+
+      if (room.player1.id === socket.id) {
+        room.player1.cheated = true;
+        room.player1.finished = true;
+        room.player1.score = 0;
+      } else if (room.player2 && room.player2.id === socket.id) {
+        room.player2.cheated = true;
+        room.player2.finished = true;
+        room.player2.score = 0;
+      }
+
+      io.to(pin).emit('duel_update', {
+        player1: room.player1,
+        player2: room.player2
+      });
+
+      room.status = 'finished';
+      io.to(pin).emit('duel_ended', {
+        player1: room.player1,
+        player2: room.player2,
+        disqualifiedPlayer: name
+      });
+      duelRooms.delete(pin);
+    });
+
     socket.on('disconnect', () => {
       console.log('Client disconnected:', socket.id);
       for (const [pin, room] of liveRooms.entries()) {

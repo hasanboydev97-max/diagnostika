@@ -306,7 +306,7 @@ export default function TestResultView() {
                       <span className="text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-1 block">
                         {q.subtopic || 'Umumiy'}
                       </span>
-                      <h4 className="text-base font-medium text-gray-900 leading-snug">
+                      <h4 className="text-base font-sans font-medium text-gray-900 leading-snug">
                         {i + 1}. <FormattedText content={q.questionText} />
                       </h4>
                     </div>
