@@ -46,8 +46,8 @@ export default function OnlineTestsDashboard() {
         setTests(data);
       }
     } catch (error) {
-      console.error(error);
-      toast.error('Failed to fetch tests');
+      console.error('Failed to fetch tests', error);
+      toast.error('Testlarni yuklashda xatolik yuz berdi');
     } finally {
       setLoading(false);
     }
@@ -55,7 +55,7 @@ export default function OnlineTestsDashboard() {
 
   const handleDeleteTest = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (!window.confirm('Haqiqatan ham ushbu testni va uning barcha natijalarini o\'chirmoqchimisiz?')) return;
+    if (!confirm("Rostdan ham bu testni o'chirmoqchimisiz?")) return;
     
     try {
       const res = await fetch(`${API_URL}/online-tests/${id}`, {
@@ -63,24 +63,96 @@ export default function OnlineTestsDashboard() {
         headers: getAuthHeaders()
       });
       if (res.ok) {
-        toast.success('Test muvaffaqiyatli o\'chirildi');
         setTests(tests.filter(t => t.id !== id));
+        toast.success("Test muvaffaqiyatli o'chirildi");
       } else {
-        throw new Error('O\'chirishda xatolik');
+        toast.error("O'chirishda xatolik yuz berdi");
       }
     } catch (error) {
-      console.error(error);
-      toast.error('Testni o\'chirish imkonsiz');
+      toast.error("Tarmoq xatosi");
     }
   };
 
-  const filteredTests = tests.filter(
-    (t) =>
-      t.title.toLowerCase().includes(search.toLowerCase()) ||
-      t.subject.toLowerCase().includes(search.toLowerCase())
+  const filteredTests = tests.filter(test => 
+    test.title.toLowerCase().includes(search.toLowerCase()) ||
+    test.subject.toLowerCase().includes(search.toLowerCase())
   );
-
   return (
+    <div className="min-h-screen relative font-sans text-[#111111] overflow-x-hidden bg-[#fdfdfd]">
+      <MeshGradient />
+      
+      {/* Header */}
+      <header className="border-b border-white/50 bg-white/60 backdrop-blur-xl sticky top-0 z-20 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          {/* Portal Title */}
+          <div className="flex items-center gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm font-semibold text-zinc-900 leading-tight">O'qituvchi Portali</h1>
+                {/* Plan Badge */}
+                {teacher?.plan === 'premium' ? (
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 border border-amber-500/20 uppercase tracking-wider">
+                    Premium
+                  </span>
+                ) : teacher?.plan === 'standard' ? (
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-zinc-955 text-white uppercase tracking-wider">
+                    Standard
+                  </span>
+                ) : (
+                  <span className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-500 border border-zinc-200 uppercase tracking-wider">
+                    Free
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-zinc-500 font-medium">{teacher?.name}</p>
+            </div>
+          </div>
+          
+          {/* Right Header Actions: Admin link & Profile Avatar */}
+          <div className="flex items-center gap-3">
+            {teacher?.role === 'admin' && (
+              <button
+                onClick={() => navigate('/superadmin')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-zinc-200 hover:border-zinc-400 hover:bg-zinc-50 text-xs font-medium text-zinc-700 transition-colors"
+              >
+                <ShieldAlert size={14} />
+                <span className="hidden sm:inline">Admin Panel</span>
+              </button>
+            )}
+
+            {/* Premium Gold Ring & Crown Badge Avatar */}
+            <button
+              onClick={() => setIsProfileOpen(true)}
+              className={`relative p-[2px] rounded-full transition-all group focus:outline-none ${
+                teacher?.plan === 'premium'
+                  ? 'bg-gradient-to-tr from-amber-400 via-amber-500 to-yellow-600 shadow-sm hover:scale-105'
+                  : 'border-2 border-black/20 hover:border-black'
+              }`}
+              title="Profil Sozlamalari & Hisob"
+            >
+              <div className={`w-9 h-9 rounded-full bg-[#111111] text-white overflow-hidden flex items-center justify-center font-bold text-sm transition-transform shadow-xs ${
+                teacher?.plan === 'premium' ? 'border-2 border-white' : ''
+              }`}>
+                {teacher?.avatar ? (
+                  <img src={teacher.avatar} alt={teacher.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span>{teacher?.name?.charAt(0)?.toUpperCase() || 'M'}</span>
+                )}
+              </div>
+              
+              {teacher?.plan === 'premium' ? (
+                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white p-0.5 rounded-full border border-white shadow-xs flex items-center justify-center">
+                  <Crown size={8} className="fill-current text-white" />
+                </span>
+              ) : (
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
+              )}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-6 py-8 relative z-10">
         {/* Pending Subscription Request Banner */}
         {teacher?.planStatus === 'pending' && (
           <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-4">
@@ -95,25 +167,22 @@ export default function OnlineTestsDashboard() {
             </div>
           </div>
         )}
-        
-        {/* Search Bar & Create Test Action Area */}
-        <div className="mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative flex-1 w-full">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
-              <Search className="h-4 w-4" />
-            </div>
-            <input
-              type="text"
-              placeholder="Testlarni qidirish..."
+
+        {/* Controls */}
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-8">
+          <div className="relative w-full md:w-96">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input 
+              type="text" 
+              placeholder="Test nomini qidirish..." 
+              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all shadow-sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white/80 backdrop-blur-md border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-900 transition-colors shadow-xs"
             />
           </div>
-
-          <button
+          <button 
             onClick={() => navigate('/online-tests/create')}
-            className="w-full sm:w-auto px-6 py-2.5 bg-[#111111] hover:bg-black text-white rounded-xl text-xs font-bold uppercase tracking-[0.15em] flex items-center justify-center gap-2 shadow-sm transition-all hover:scale-105 active:scale-95 group shrink-0"
+            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-[#111111] hover:bg-[#333] text-white rounded-2xl font-bold transition-all shadow-lg shadow-[#111111]/20"
           >
             <Plus size={16} />
             <span>Yangi Test Yaratish</span>
