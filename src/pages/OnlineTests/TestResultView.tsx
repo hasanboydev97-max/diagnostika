@@ -1,64 +1,93 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Loader2, ArrowLeft, BrainCircuit, CheckCircle2, XCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { motion } from 'framer-motion';
 import FormattedText from '../../components/FormattedText';
 import MeshGradient from '../../components/ui/MeshGradient';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+function getScoreLabel(pct: number) {
+  if (pct >= 90) return { text: 'MUKAMMAL! 🎉', color: 'text-green-600' };
+  if (pct >= 70) return { text: "A'lo natija! ✨", color: 'text-blue-600' };
+  if (pct >= 50) return { text: 'Yaxshi! 👍', color: 'text-yellow-600' };
+  return { text: "Harakat qiling! 💪", color: 'text-orange-500' };
+}
+
+function formatStudentName(name: string) {
+  if (!name) return "O'quvchi";
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
 
 export default function TestResultView() {
   const { resultId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const [result, setResult] = useState<any>(() => {
-    // 1. Initial State from navigation
     if (location.state?.resultData) return location.state.resultData;
-    // 2. Initial State from sessionStorage
     if (resultId) {
       const cached = sessionStorage.getItem(`result_${resultId}`);
-      if (cached) {
-        try { return JSON.parse(cached); } catch (e) {}
-      }
+      if (cached) { try { return JSON.parse(cached); } catch {} }
     }
     return null;
   });
 
   const [test, setTest] = useState<any>(() => {
     if (location.state?.resultData?.questions) {
-      return {
-        title: location.state.resultData.testTitle || 'Onlayn Test',
-        questions: location.state.resultData.questions
-      };
+      return { title: location.state.resultData.testTitle || 'Onlayn Test', questions: location.state.resultData.questions };
     }
     if (resultId) {
       const cached = sessionStorage.getItem(`result_${resultId}`);
       if (cached) {
         try {
-          const parsed = JSON.parse(cached);
-          if (parsed.questions) return { title: parsed.testTitle || 'Onlayn Test', questions: parsed.questions };
-        } catch (e) {}
+          const p = JSON.parse(cached);
+          if (p.questions) return { title: p.testTitle || 'Onlayn Test', questions: p.questions };
+        } catch {}
       }
     }
     return null;
   });
 
   const [loading, setLoading] = useState(!result);
+  const [displayedScore, setDisplayedScore] = useState(0);
+  const confettiFired = useRef(false);
 
+  useEffect(() => { fetchResult(); }, [resultId]);
+
+  // ── Animated score counter (0 → target in ~1.2s) ─────────────────────────
   useEffect(() => {
-    fetchResult();
-  }, [resultId]);
+    if (!result) return;
+    const target = Math.round((result.score / (result.totalScore || 1)) * 100);
+    let current = 0;
+    const totalFrames = 60;
+    const inc = target / totalFrames;
+    const timer = setInterval(() => {
+      current += inc;
+      if (current >= target) { setDisplayedScore(target); clearInterval(timer); }
+      else setDisplayedScore(Math.floor(current));
+    }, 20);
+    return () => clearInterval(timer);
+  }, [result]);
+
+  // ── Score-based confetti ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (!result || confettiFired.current) return;
+    confettiFired.current = true;
+    const pct = Math.round((result.score / (result.totalScore || 1)) * 100);
+    if (pct >= 90) {
+      confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 }, colors: ['#000', '#333', '#666'] });
+      setTimeout(() => confetti({ particleCount: 80, spread: 120, origin: { y: 0.4, x: 0.15 }, colors: ['#000', '#555'] }), 500);
+      setTimeout(() => confetti({ particleCount: 80, spread: 120, origin: { y: 0.4, x: 0.85 }, colors: ['#000', '#555'] }), 900);
+    } else if (pct >= 70) {
+      confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#000', '#333', '#666'] });
+    }
+  }, [result]);
 
   const fetchResult = async (retryCount = 0) => {
     try {
@@ -66,40 +95,18 @@ export default function TestResultView() {
       if (res.ok) {
         const data = await res.json();
         setResult(data);
-        
         let testData = null;
         if (data.testId) {
           try {
-            const testRes = await fetch(`${API_URL}/online-tests/${data.testId}`);
-            if (testRes.ok) {
-              testData = await testRes.json();
-            }
-          } catch (e) {
-            console.warn("Test meta-data fetch failed, using result embedded questions fallback", e);
-          }
+            const tr = await fetch(`${API_URL}/online-tests/${data.testId}`);
+            if (tr.ok) testData = await tr.json();
+          } catch (e) { console.warn("Test fetch failed", e); }
         }
-
-        // Fallback test object if test endpoint didn't respond
         if (!testData && data.questions) {
-          testData = {
-            title: data.testTitle || 'Onlayn Test',
-            questions: data.questions
-          };
+          testData = { title: data.testTitle || 'Onlayn Test', questions: data.questions };
         }
-
         setTest(testData);
-        
-        const percentage = Math.round((data.score / (data.totalScore || 1)) * 100);
-        if (percentage >= 70) {
-          confetti({
-            particleCount: 150,
-            spread: 70,
-            origin: { y: 0.6 },
-            colors: ['#000', '#333', '#666']
-          });
-        }
       } else if (retryCount < 2) {
-        // Retry fetch after 800ms to handle race condition with backend indexing
         setTimeout(() => fetchResult(retryCount + 1), 800);
         return;
       }
@@ -117,7 +124,6 @@ export default function TestResultView() {
     </div>
   );
 
-  // Fallback test object if result exists but test state is still null
   const activeTest = test || (result?.questions ? { title: result.testTitle || 'Onlayn Test', questions: result.questions } : null);
 
   if (!result || !activeTest) return (
@@ -133,76 +139,84 @@ export default function TestResultView() {
   );
 
   const percentage = Math.round((result.score / (result.totalScore || 1)) * 100);
+  const scoreLabel = getScoreLabel(percentage);
 
-  // Group by subtopics for Recharts
-  const topicStats: Record<string, { total: number, correct: number }> = {};
-  
+  // Chart data
+  const topicStats: Record<string, { total: number; correct: number }> = {};
   (activeTest?.questions || []).forEach((q: any, i: number) => {
     const topic = q.subtopic || 'Umumiy';
     if (!topicStats[topic]) topicStats[topic] = { total: 0, correct: 0 };
-    
     topicStats[topic].total += 1;
-    const studentAnswers = result.answers || {};
-    if (studentAnswers[i] === q.correctOption) {
-      topicStats[topic].correct += 1;
-    }
+    if ((result.answers || {})[i] === q.correctOption) topicStats[topic].correct += 1;
   });
+  const chartData = Object.keys(topicStats).map(topic => ({
+    subject: topic,
+    Olashtirish: Math.round((topicStats[topic].correct / (topicStats[topic].total || 1)) * 100),
+    fullMark: 100,
+  }));
 
-  const chartData = Object.keys(topicStats).map(topic => {
-    const stat = topicStats[topic];
-    const percentage = Math.round((stat.correct / (stat.total || 1)) * 100);
-    return {
-      subject: topic,
-      Olashtirish: percentage,
-      fullMark: 100,
-    };
-  });
-
-  // Custom tooltip for chart
   const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white/90 backdrop-blur p-3 rounded-lg shadow-lg border border-white/50 text-sm">
-          <p className="font-semibold text-gray-900 mb-1">{label}</p>
-          <p className="text-gray-600">O'zlashtirish: <span className="font-bold text-black">{payload[0].value}%</span></p>
-        </div>
-      );
-    }
-    return null;
+    if (!active || !payload?.length) return null;
+    return (
+      <div className="bg-white/90 backdrop-blur p-3 rounded-lg shadow-lg border border-white/50 text-sm">
+        <p className="font-semibold text-gray-900 mb-1">{label}</p>
+        <p className="text-gray-600">O'zlashtirish: <span className="font-bold text-black">{payload[0].value}%</span></p>
+      </div>
+    );
   };
 
   return (
     <div className="min-h-screen relative overflow-x-hidden font-sans pb-20 bg-[#fdfdfd] text-[#111111]">
       <MeshGradient />
       <div className="max-w-7xl mx-auto px-6 py-12 relative z-10">
-        <button 
-          onClick={() => navigate('/online-tests')} 
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-10"
-        >
+
+        <button onClick={() => navigate('/online-tests')} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-10">
           <ArrowLeft size={16} /> Dashboard
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          
-          {/* Main Info Card */}
-          <div className="lg:col-span-2 bg-white/60 backdrop-blur-xl rounded-[2rem] border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 flex flex-col h-full">
+
+          {/* ── Main Info Card ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="lg:col-span-2 bg-white/60 backdrop-blur-xl rounded-[2rem] border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 flex flex-col h-full"
+          >
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 border-b border-black/10 pb-8 mb-8">
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-500 mb-1">{activeTest?.title || 'Onlayn Test'}</p>
                 <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-gray-900 mb-2">
                   {formatStudentName(result.studentName)} Natijalari
                 </h1>
+                {/* Score label — appears after counter finishes */}
+                <motion.p
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.4, duration: 0.4 }}
+                  className={`text-lg font-bold ${scoreLabel.color}`}
+                >
+                  {scoreLabel.text}
+                </motion.p>
               </div>
-              
+
+              {/* Animated Score Badge */}
               <div className="flex items-center gap-4 bg-white/50 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/50 shadow-sm">
                 <div className="text-center">
-                  <span className="block text-3xl font-bold text-black">{percentage}%</span>
+                  <motion.span
+                    className="block text-3xl font-bold text-black tabular-nums"
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+                  >
+                    {displayedScore}%
+                  </motion.span>
                   <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Foiz</span>
                 </div>
                 <div className="w-px h-10 bg-gray-200 mx-2"></div>
                 <div className="text-center">
                   <span className="block text-xl font-semibold text-gray-700">{result.score} / {result.totalScore}</span>
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Tog'ri</span>
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">To'g'ri</span>
                 </div>
               </div>
             </div>
@@ -210,69 +224,84 @@ export default function TestResultView() {
             {/* AI Feedback */}
             <div className="flex-1 flex flex-col justify-end">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-3">
-                <BrainCircuit size={16} className="text-gray-500" /> 
-                AI Xulosasi
+                <BrainCircuit size={16} className="text-gray-500" /> AI Xulosasi
               </h3>
               <p className="text-gray-600 text-sm md:text-base leading-relaxed whitespace-pre-wrap bg-blue-50/50 p-5 rounded-xl border border-blue-100 h-full">
                 {result.aiFeedback || "Natijangiz saqlandi! AI batafsil tavsiyalarni shakllantirmoqda..."}
               </p>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Diagnostic Chart */}
-          <div className="lg:col-span-1 bg-white rounded-2xl border border-gray-200 shadow-sm p-8 flex flex-col h-full min-h-[400px]">
-             <h3 className="text-lg font-semibold text-gray-900 mb-2">Mavzular Tahlili</h3>
-             <p className="text-xs text-gray-500 mb-6">Qaysi sohalarda kamchiliklar borligini aniqlang</p>
-             
-             <div className="flex-1 w-full relative">
-               <ResponsiveContainer width="100%" height="100%">
-                 <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
-                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                   <XAxis type="number" domain={[0, 100]} hide />
-                   <YAxis 
-                     type="category" 
-                     dataKey="subject" 
-                     axisLine={false} 
-                     tickLine={false} 
-                     tick={{ fill: '#64748b', fontSize: 12 }} 
-                     width={80}
-                   />
-                   <Tooltip cursor={{fill: '#f8fafc'}} content={<CustomTooltip />} />
-                   <Bar dataKey="Olashtirish" radius={[0, 4, 4, 0]} barSize={24}>
-                     {chartData.map((entry, index) => (
-                       <Cell key={`cell-${index}`} fill={entry.Olashtirish < 50 ? '#ef4444' : entry.Olashtirish < 80 ? '#eab308' : '#10b981'} />
-                     ))}
-                   </Bar>
-                 </BarChart>
-               </ResponsiveContainer>
-             </div>
-             <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500"></span> Yomon</div>
-                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-yellow-500"></span> O'rtacha</div>
-                <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-500"></span> Yaxshi</div>
-             </div>
-          </div>
+          {/* ── Chart Card ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+            className="lg:col-span-1 bg-white rounded-2xl border border-gray-200 shadow-sm p-8 flex flex-col h-full min-h-[400px]"
+          >
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Mavzular Tahlili</h3>
+            <p className="text-xs text-gray-500 mb-6">Qaysi sohalarda kamchiliklar borligini aniqlang</p>
+            <div className="flex-1 w-full relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                  <XAxis type="number" domain={[0, 100]} hide />
+                  <YAxis type="category" dataKey="subject" axisLine={false} tickLine={false}
+                    tick={{ fill: '#64748b', fontSize: 12 }} width={80} />
+                  <Tooltip cursor={{ fill: '#f8fafc' }} content={<CustomTooltip />} />
+                  <Bar dataKey="Olashtirish" radius={[0, 4, 4, 0]} barSize={24}>
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`}
+                        fill={entry.Olashtirish < 50 ? '#ef4444' : entry.Olashtirish < 80 ? '#eab308' : '#10b981'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500"></span> Yomon</div>
+              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-yellow-500"></span> O'rtacha</div>
+              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-500"></span> Yaxshi</div>
+            </div>
+          </motion.div>
         </div>
 
-        {/* Detailed Answers */}
+        {/* ── Staggered Question Results ── */}
         <div className="mt-12">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">Savollar Bo'yicha Natijalar</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            initial="hidden"
+            animate="visible"
+            variants={{ visible: { transition: { staggerChildren: 0.045, delayChildren: 0.25 } } }}
+          >
             {(activeTest?.questions || []).map((q: any, i: number) => {
-              const studentAnswers = result.answers || {};
-              const studentAns = studentAnswers[i];
+              const studentAns = (result.answers || {})[i];
               const isCorrect = studentAns === q.correctOption;
-              
+
               return (
-                <div key={i} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
+                <motion.div
+                  key={i}
+                  variants={{
+                    hidden: { opacity: 0, y: 18 },
+                    visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 130, damping: 22 } }
+                  }}
+                  className={`bg-white p-6 rounded-xl border shadow-sm flex flex-col ${
+                    isCorrect ? 'border-green-100' : 'border-red-100'
+                  }`}
+                >
                   <div className="flex gap-4 items-start mb-4">
-                    <div className="mt-0.5 shrink-0">
-                      {isCorrect ? (
-                        <CheckCircle2 className="text-green-500" size={20} />
-                      ) : (
-                        <XCircle className="text-red-500" size={20} />
-                      )}
-                    </div>
+                    <motion.div
+                      className="mt-0.5 shrink-0"
+                      initial={{ scale: 0, rotate: -30 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: "spring", stiffness: 350, damping: 18, delay: 0.1 + i * 0.04 }}
+                    >
+                      {isCorrect
+                        ? <CheckCircle2 className="text-green-500" size={20} />
+                        : <XCircle className="text-red-500" size={20} />
+                      }
+                    </motion.div>
                     <div>
                       <span className="text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-1 block">
                         {q.subtopic || 'Umumiy'}
@@ -282,39 +311,28 @@ export default function TestResultView() {
                       </h4>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-auto pl-9">
                     {(q.options || []).map((opt: string, oIndex: number) => {
                       const isStudentChoice = studentAns === opt;
                       const isActuallyCorrect = opt === q.correctOption;
-                      
-                      let cardClass = "px-3 py-2 rounded-md border text-sm transition-colors ";
-                      if (isActuallyCorrect) {
-                        cardClass += "bg-green-50 border-green-200 text-green-800 font-medium";
-                      } else if (isStudentChoice && !isCorrect) {
-                        cardClass += "bg-red-50 border-red-200 text-red-800 font-medium";
-                      } else {
-                        cardClass += "bg-white border-gray-100 text-gray-500";
-                      }
-                      
+                      let cls = "px-3 py-2 rounded-md border text-sm transition-colors ";
+                      if (isActuallyCorrect) cls += "bg-green-50 border-green-200 text-green-800 font-medium";
+                      else if (isStudentChoice && !isCorrect) cls += "bg-red-50 border-red-200 text-red-800 font-medium";
+                      else cls += "bg-white border-gray-100 text-gray-500";
                       return (
-                        <div key={oIndex} className={cardClass}>
+                        <div key={oIndex} className={cls}>
                           <FormattedText content={opt} />
                         </div>
                       );
                     })}
                   </div>
-                </div>
-              )
+                </motion.div>
+              );
             })}
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>
   );
-}
-
-function formatStudentName(name: string) {
-  if (!name) return 'O\'quvchi';
-  return name.charAt(0).toUpperCase() + name.slice(1);
 }
