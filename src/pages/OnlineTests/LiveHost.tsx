@@ -315,20 +315,18 @@ export default function LiveHost() {
             <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4">Natijalar</p>
             <h1 className="text-4xl md:text-6xl font-medium tracking-tight mb-16">G'oliblar</h1>
             
-            <div className="flex items-end justify-center gap-2 md:gap-8 mb-20 w-full h-64 border-b border-black/10 pb-0">
+            <div className="flex items-end justify-center gap-2 md:gap-6 mb-20 w-full h-72 border-b border-black/10 pb-0">
               {/* 2nd Place */}
               {players[1] && (
                 <motion.div 
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: '60%', opacity: 1 }}
                   transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
-                  className="flex-1 flex flex-col items-center bg-gray-50 border-t border-l border-r border-black/10"
+                  className="flex-1 flex flex-col items-center bg-gradient-to-t from-zinc-200 to-zinc-50 border-t border-l border-r border-zinc-200 shadow-[inset_0_2px_15px_rgba(255,255,255,1)] rounded-t-3xl pt-6 relative overflow-hidden"
                 >
-                  <div className="flex flex-col items-center -mt-16 mb-4">
-                    <span className="text-sm font-medium mb-1">{players[1].name}</span>
-                    <span className="text-xs font-mono text-gray-500">{players[1].score} pt</span>
-                  </div>
-                  <span className="text-2xl font-light text-gray-300 mt-auto mb-6">2</span>
+                  <span className="text-sm md:text-lg font-medium mb-1 text-zinc-900 truncate w-full text-center px-2">{players[1].name}</span>
+                  <span className="text-xs font-mono text-zinc-500 mb-auto">{players[1].score} pt</span>
+                  <span className="text-4xl font-light text-zinc-300 mb-6 relative z-10">2</span>
                 </motion.div>
               )}
 
@@ -338,13 +336,11 @@ export default function LiveHost() {
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: '100%', opacity: 1 }}
                   transition={{ duration: 1, delay: 0.8, ease: "easeOut" }}
-                  className="flex-1 flex flex-col items-center bg-[#111111] text-white"
+                  className="flex-1 flex flex-col items-center bg-gradient-to-t from-amber-200 to-amber-50 border-t border-l border-r border-amber-200 shadow-[inset_0_2px_15px_rgba(255,255,255,1)] rounded-t-3xl pt-8 relative overflow-hidden"
                 >
-                  <div className="flex flex-col items-center -mt-20 mb-4">
-                    <span className="text-lg font-medium mb-1">{players[0].name}</span>
-                    <span className="text-sm font-mono text-gray-400">{players[0].score} pt</span>
-                  </div>
-                  <span className="text-4xl font-light text-gray-600 mt-auto mb-8">1</span>
+                  <span className="text-lg md:text-2xl font-medium mb-1 text-amber-950 truncate w-full text-center px-2">{players[0].name}</span>
+                  <span className="text-sm font-mono text-amber-700/80 mb-auto">{players[0].score} pt</span>
+                  <span className="text-6xl font-light text-amber-900/20 mb-8 relative z-10">1</span>
                 </motion.div>
               )}
 
@@ -354,13 +350,11 @@ export default function LiveHost() {
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: '40%', opacity: 1 }}
                   transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
-                  className="flex-1 flex flex-col items-center bg-gray-50 border-t border-l border-r border-black/10"
+                  className="flex-1 flex flex-col items-center bg-gradient-to-t from-orange-200 to-orange-50 border-t border-l border-r border-orange-200 shadow-[inset_0_2px_15px_rgba(255,255,255,1)] rounded-t-3xl pt-4 relative overflow-hidden"
                 >
-                  <div className="flex flex-col items-center -mt-14 mb-4">
-                    <span className="text-sm font-medium mb-1">{players[2].name}</span>
-                    <span className="text-xs font-mono text-gray-500">{players[2].score} pt</span>
-                  </div>
-                  <span className="text-xl font-light text-gray-300 mt-auto mb-4">3</span>
+                  <span className="text-sm md:text-base font-medium mb-1 text-orange-950 truncate w-full text-center px-2">{players[2].name}</span>
+                  <span className="text-xs font-mono text-orange-700/80 mb-auto">{players[2].score} pt</span>
+                  <span className="text-3xl font-light text-orange-900/20 mb-4 relative z-10">3</span>
                 </motion.div>
               )}
             </div>
