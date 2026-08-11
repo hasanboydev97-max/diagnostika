@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hb-diagnostika-v1';
+const CACHE_NAME = 'hb-diagnostika-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -30,22 +30,31 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  // HTML va sahifa so'rovlari uchun "Network First" (avval tarmoqdan yuklash) usulidan foydalanamiz.
+  // Bu orqali eski JS fayllarni qidirib MIME type xatosi chiqishining oldi olinadi.
+  if (event.request.mode === 'navigate' || (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html'))) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request).then((cached) => cached || caches.match('/index.html'));
+        })
+    );
+    return;
+  }
+
+  // Boshqa resurslar (Rasm, JS, CSS) uchun "Cache First" (avval keshdan qidirish) usuli.
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        // Return cached asset & update cache in background
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
-          }
-        }).catch(() => {});
         return cachedResponse;
       }
-      return fetch(event.request).catch(() => {
-        if (event.request.headers.get('accept')?.includes('text/html')) {
-          return caches.match('/index.html');
-        }
-      });
+      return fetch(event.request);
     })
   );
 });
