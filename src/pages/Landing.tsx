@@ -236,7 +236,7 @@ export default function Landing() {
               transition={{ duration: 0.8 }}
               onClick={() => {
                 if (token) navigate('/online-tests');
-                else navigate('/login');
+                else navigate('/teacher/login');
               }}
               className="relative group cursor-pointer border border-black/10 hover:border-black/30 rounded-3xl p-8 transition-all duration-500 overflow-hidden bg-white/50 backdrop-blur-md"
             >
@@ -292,7 +292,7 @@ export default function Landing() {
               onClick={() => {
                 if (!token) {
                   toast.info("Tarifni tanlash uchun avval tizimga kiring!");
-                  navigate('/login');
+                  navigate('/teacher/login');
                 } else {
                   setSelectedPlanForPayment('standard');
                 }
@@ -360,7 +360,7 @@ export default function Landing() {
               onClick={() => {
                 if (!token) {
                   toast.info("Tarifni tanlash uchun avval tizimga kiring!");
-                  navigate('/login');
+                  navigate('/teacher/login');
                 } else {
                   setSelectedPlanForPayment('premium');
                 }

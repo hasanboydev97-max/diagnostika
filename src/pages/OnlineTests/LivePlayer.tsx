@@ -108,7 +108,10 @@ export default function LivePlayer() {
           duration: 5000,
           position: 'top-center'
         });
-        if (socket) socket.disconnect();
+        if (socket) {
+          socket.emit('live_disqualify', { pin });
+          socket.disconnect();
+        }
         navigate('/');
       }
     };

@@ -97,6 +97,18 @@ export const setupSockets = (httpServer) => {
       liveRooms.delete(pin);
     });
 
+    socket.on('live_disqualify', ({ pin }) => {
+      const room = liveRooms.get(pin);
+      if (room) {
+        const player = room.players.find(p => p.id === socket.id);
+        if (player) {
+          player.score = 0;
+          room.scores[socket.id] = 0;
+          io.to(room.hostId).emit('leaderboard_update', { players: room.players });
+        }
+      }
+    });
+
     // ==========================================
     // 1v1 DUEL SOCKET LOGIC
     // ==========================================
@@ -218,11 +230,9 @@ export const setupSockets = (httpServer) => {
       if (room.player1.id === socket.id) {
         room.player1.cheated = true;
         room.player1.finished = true;
-        room.player1.score = 0;
       } else if (room.player2 && room.player2.id === socket.id) {
         room.player2.cheated = true;
         room.player2.finished = true;
-        room.player2.score = 0;
       }
 
       io.to(pin).emit('duel_update', {
