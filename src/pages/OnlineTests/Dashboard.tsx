@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { getAuthHeaders, getToken, getTeacher, fetchCurrentTeacher } from '../../lib/auth';
 import MeshGradient from '../../components/ui/MeshGradient';
 import TeacherProfileModal from '../../components/TeacherProfileModal';
+import MagicButton from '../../components/MagicButton';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -180,13 +181,13 @@ export default function OnlineTestsDashboard() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <button 
-            onClick={() => navigate('/online-tests/create')}
-            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-[#111111] hover:bg-[#333] text-white rounded-2xl font-bold transition-all shadow-lg shadow-[#111111]/20"
-          >
-            <Plus size={16} />
-            <span>Yangi Test Yaratish</span>
-          </button>
+          <div className="w-full md:w-auto">
+            <MagicButton
+              onClick={() => navigate('/online-tests/create')}
+              label="Yangi Test Yaratish"
+              icon={<Plus />}
+            />
+          </div>
         </div>
 
         {/* List Section */}
@@ -218,13 +219,13 @@ export default function OnlineTestsDashboard() {
               <h3 className="text-xl font-semibold text-black mb-2">Ma'lumot topilmadi</h3>
               <p className="text-gray-500 mb-8 max-w-md">Hali hech qanday test yaratmagansiz. O'quvchilaringiz uchun birinchi onlayn testingizni yarating.</p>
               {!search && (
-                <button 
-                  onClick={() => navigate('/online-tests/create')}
-                  className="px-6 py-2.5 bg-white border border-gray-200 text-black hover:bg-gray-50 text-sm font-bold tracking-wide rounded-xl transition-all shadow-sm flex items-center gap-2"
-                >
-                  <Plus size={16} strokeWidth={2} />
-                  Test yaratish
-                </button>
+                <div className="mt-2">
+                  <MagicButton
+                    onClick={() => navigate('/online-tests/create')}
+                    label="Test Yaratish"
+                    icon={<Plus />}
+                  />
+                </div>
               )}
             </div>
           ) : (
