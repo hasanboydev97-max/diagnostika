@@ -5,10 +5,6 @@ import confetti from 'canvas-confetti';
 import { motion } from 'framer-motion';
 import FormattedText from '../../components/FormattedText';
 import MeshGradient from '../../components/ui/MeshGradient';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Cell
-} from 'recharts';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -141,7 +137,7 @@ export default function TestResultView() {
   const percentage = Math.round((result.score / (result.totalScore || 1)) * 100);
   const scoreLabel = getScoreLabel(percentage);
 
-  // Chart data
+  // Topic data
   const topicStats: Record<string, { total: number; correct: number }> = {};
   (activeTest?.questions || []).forEach((q: any, i: number) => {
     const topic = q.subtopic || 'Umumiy';
@@ -149,21 +145,12 @@ export default function TestResultView() {
     topicStats[topic].total += 1;
     if ((result.answers || {})[i] === q.correctOption) topicStats[topic].correct += 1;
   });
-  const chartData = Object.keys(topicStats).map(topic => ({
-    subject: topic,
-    Olashtirish: Math.round((topicStats[topic].correct / (topicStats[topic].total || 1)) * 100),
-    fullMark: 100,
-  }));
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (!active || !payload?.length) return null;
-    return (
-      <div className="bg-white/90 backdrop-blur p-3 rounded-lg shadow-lg border border-white/50 text-sm">
-        <p className="font-semibold text-gray-900 mb-1">{label}</p>
-        <p className="text-gray-600">O'zlashtirish: <span className="font-bold text-black">{payload[0].value}%</span></p>
-      </div>
-    );
-  };
+  const chartData = Object.keys(topicStats)
+    .map(topic => ({
+      subject: topic,
+      Olashtirish: Math.round((topicStats[topic].correct / (topicStats[topic].total || 1)) * 100),
+    }))
+    .sort((a, b) => b.Olashtirish - a.Olashtirish);
 
   return (
     <div className="min-h-screen relative overflow-x-hidden font-sans pb-20 bg-[#fdfdfd] text-[#111111]">
@@ -237,27 +224,35 @@ export default function TestResultView() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:col-span-1 bg-white rounded-2xl border border-gray-200 shadow-sm p-8 flex flex-col h-full"
-            style={{ minHeight: `${Math.max(400, chartData.length * 70)}px` }}
+            className="lg:col-span-1 bg-white rounded-2xl border border-gray-200 shadow-sm p-8 flex flex-col h-[500px]"
           >
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Mavzular Tahlili</h3>
-            <p className="text-xs text-gray-500 mb-6">Qaysi sohalarda kamchiliklar borligini aniqlang</p>
-            <div className="flex-1 w-full relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                  <XAxis type="number" domain={[0, 100]} hide />
-                  <YAxis type="category" dataKey="subject" axisLine={false} tickLine={false}
-                    tick={{ fill: '#64748b', fontSize: 12 }} width={140} />
-                  <Tooltip cursor={{ fill: '#f8fafc' }} content={<CustomTooltip />} />
-                  <Bar dataKey="Olashtirish" radius={[0, 4, 4, 0]} barSize={24}>
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`}
-                        fill={entry.Olashtirish < 50 ? '#ef4444' : entry.Olashtirish < 80 ? '#eab308' : '#10b981'} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+            <p className="text-xs text-gray-500 mb-6 shrink-0">Qaysi sohalarda kamchiliklar borligini aniqlang</p>
+            
+            <div className="flex-1 w-full overflow-y-auto pr-2 space-y-6 custom-scrollbar">
+              {chartData.length === 0 ? (
+                <p className="text-sm text-gray-400 italic">Ma'lumot yo'q</p>
+              ) : (
+                chartData.map((entry, index) => {
+                  const color = entry.Olashtirish < 50 ? 'bg-red-500' : entry.Olashtirish < 80 ? 'bg-yellow-500' : 'bg-green-500';
+                  return (
+                    <div key={index} className="flex flex-col gap-2">
+                      <div className="flex justify-between items-end gap-4">
+                        <span className="text-sm font-medium text-gray-700 leading-tight">{entry.subject}</span>
+                        <span className="text-xs font-bold text-gray-900">{entry.Olashtirish}%</span>
+                      </div>
+                      <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${entry.Olashtirish}%` }}
+                          transition={{ duration: 1, delay: 0.2 + index * 0.05, ease: "easeOut" }}
+                          className={`h-full rounded-full ${color}`}
+                        />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
             <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
               <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500"></span> Yomon</div>
