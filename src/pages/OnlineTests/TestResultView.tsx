@@ -20,6 +20,21 @@ function formatStudentName(name: string) {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
+function isAnswerCorrect(userAns: string | undefined, correctOpt: string | undefined, options: string[] = []): boolean {
+  if (!userAns || !correctOpt) return false;
+  const u = String(userAns).trim().toLowerCase();
+  const c = String(correctOpt).trim().toLowerCase();
+  if (u === c) return true;
+  const lm: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
+  if (lm[c] !== undefined && options[lm[c]]) {
+    if (String(options[lm[c]]).trim().toLowerCase() === u) return true;
+  }
+  if (lm[u] !== undefined && options[lm[u]]) {
+    if (String(options[lm[u]]).trim().toLowerCase() === c) return true;
+  }
+  return false;
+}
+
 export default function TestResultView() {
   const { resultId } = useParams();
   const navigate = useNavigate();
@@ -92,14 +107,13 @@ export default function TestResultView() {
         const data = await res.json();
         setResult(data);
         let testData = null;
-        if (data.testId) {
+        if (data.questions && data.questions.length > 0) {
+          testData = { title: data.testTitle || 'Onlayn Test', questions: data.questions };
+        } else if (data.testId) {
           try {
             const tr = await fetch(`${API_URL}/online-tests/${data.testId}`);
             if (tr.ok) testData = await tr.json();
           } catch (e) { console.warn("Test fetch failed", e); }
-        }
-        if (!testData && data.questions) {
-          testData = { title: data.testTitle || 'Onlayn Test', questions: data.questions };
         }
         setTest(testData);
       } else if (retryCount < 2) {
@@ -143,7 +157,7 @@ export default function TestResultView() {
     const topic = q.subtopic || 'Umumiy';
     if (!topicStats[topic]) topicStats[topic] = { total: 0, correct: 0 };
     topicStats[topic].total += 1;
-    if ((result.answers || {})[i] === q.correctOption) topicStats[topic].correct += 1;
+    if (isAnswerCorrect((result.answers || {})[i], q.correctOption, q.options || [])) topicStats[topic].correct += 1;
   });
   const chartData = Object.keys(topicStats)
     .map(topic => ({
@@ -273,7 +287,7 @@ export default function TestResultView() {
           >
             {(activeTest?.questions || []).map((q: any, i: number) => {
               const studentAns = (result.answers || {})[i];
-              const isCorrect = studentAns === q.correctOption;
+              const isCorrect = isAnswerCorrect(studentAns, q.correctOption, q.options || []);
 
               return (
                 <motion.div
@@ -310,8 +324,8 @@ export default function TestResultView() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-auto pl-9">
                     {(q.options || []).map((opt: string, oIndex: number) => {
-                      const isStudentChoice = studentAns === opt;
-                      const isActuallyCorrect = opt === q.correctOption;
+                      const isStudentChoice = studentAns !== undefined && String(studentAns).trim().toLowerCase() === String(opt).trim().toLowerCase();
+                      const isActuallyCorrect = isAnswerCorrect(opt, q.correctOption, q.options || []);
                       let cls = "px-3 py-2 rounded-md border text-sm transition-colors ";
                       if (isActuallyCorrect) cls += "bg-green-50 border-green-200 text-green-800 font-medium";
                       else if (isStudentChoice && !isCorrect) cls += "bg-red-50 border-red-200 text-red-800 font-medium";
