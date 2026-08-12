@@ -6,21 +6,14 @@ import React from 'react';
 // -----------------------------------------------------------
 
 interface MagicButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  /** Text label shown on button */
   label: string;
-  /** Icon shown to the left (optional SVG/lucide element) */
   icon?: React.ReactNode;
-  /** "primary" = dark, "danger" = red, "ghost" = light border-only */
   variant?: 'primary' | 'danger' | 'ghost';
-  /** Loading state — disables button and shows spinner */
   loading?: boolean;
-  /** Loading label text */
   loadingLabel?: string;
-  /** Extra className to merge */
   className?: string;
 }
 
-/** Split a string into individually animated <span> letters */
 function AnimatedLetters({ text }: { text: string }) {
   return (
     <>
@@ -51,6 +44,8 @@ export default function MagicButton({
   const hue =
     variant === 'danger' ? '0deg' : variant === 'ghost' ? '220deg' : '210deg';
 
+  const displayText = loading && loadingLabel ? loadingLabel : label;
+
   return (
     <div className="magic-btn-wrapper">
       <button
@@ -68,17 +63,10 @@ export default function MagicButton({
           </span>
         ) : null}
 
-        {/* Animated text wrapper */}
-        <div className="magic-btn-txt-wrapper">
-          {/* txt-1: normal state */}
-          <div className="magic-btn-txt-1">
-            <AnimatedLetters text={loading && loadingLabel ? loadingLabel : label} />
-          </div>
-          {/* txt-2: focused state (same text) */}
-          <div className="magic-btn-txt-2">
-            <AnimatedLetters text={loading && loadingLabel ? loadingLabel : label} />
-          </div>
-        </div>
+        {/* Simple label — always visible */}
+        <span className="magic-btn-label">
+          <AnimatedLetters text={displayText} />
+        </span>
 
         {children}
       </button>
