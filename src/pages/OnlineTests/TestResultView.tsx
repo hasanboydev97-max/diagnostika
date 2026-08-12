@@ -237,7 +237,8 @@ export default function TestResultView() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:col-span-1 bg-white rounded-2xl border border-gray-200 shadow-sm p-8 flex flex-col h-full min-h-[400px]"
+            className="lg:col-span-1 bg-white rounded-2xl border border-gray-200 shadow-sm p-8 flex flex-col h-full"
+            style={{ minHeight: `${Math.max(400, chartData.length * 70)}px` }}
           >
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Mavzular Tahlili</h3>
             <p className="text-xs text-gray-500 mb-6">Qaysi sohalarda kamchiliklar borligini aniqlang</p>
@@ -247,7 +248,7 @@ export default function TestResultView() {
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                   <XAxis type="number" domain={[0, 100]} hide />
                   <YAxis type="category" dataKey="subject" axisLine={false} tickLine={false}
-                    tick={{ fill: '#64748b', fontSize: 12 }} width={80} />
+                    tick={{ fill: '#64748b', fontSize: 12 }} width={140} />
                   <Tooltip cursor={{ fill: '#f8fafc' }} content={<CustomTooltip />} />
                   <Bar dataKey="Olashtirish" radius={[0, 4, 4, 0]} barSize={24}>
                     {chartData.map((entry, index) => (
