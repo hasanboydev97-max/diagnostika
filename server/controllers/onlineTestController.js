@@ -25,9 +25,22 @@ export const getTestResults = async (req, res) => {
     const test = await OnlineTest.findOne({ id: req.params.id, teacherId: req.teacherId });
     if (!test) return res.status(403).json({ error: 'Forbidden' });
     
-    const results = await OnlineTestResult.find({ testId: req.params.id }).sort({ createdAt: -1 });
-    res.json(results);
+    // 1. Fetch from new architecture
+    const newResults = await OnlineTestResult.find({ testId: req.params.id }).lean();
+    
+    // 2. Fetch from old legacy architecture (in case student used old cached frontend)
+    const { Result } = await import('../models/index.js');
+    const oldResults = await Result.find({ testId: req.params.id }).lean();
+    
+    // Merge, deduplicate by ID just in case, and sort by date descending
+    const merged = [...newResults, ...oldResults];
+    const uniqueMap = new Map();
+    merged.forEach(r => uniqueMap.set(r.id || r._id.toString(), r));
+    const allResults = Array.from(uniqueMap.values()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    res.json(allResults);
   } catch (error) {
+    console.error("TestResults Fetch Error:", error);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -53,7 +66,13 @@ export const exportToExcel = async (req, res) => {
     const test = await OnlineTest.findOne({ id: req.params.id });
     if (!test) return res.status(404).json({ error: 'Test topilmadi' });
 
-    const results = await OnlineTestResult.find({ testId: req.params.id }).sort({ createdAt: -1 });
+    const newResults = await OnlineTestResult.find({ testId: req.params.id }).lean();
+    const { Result } = await import('../models/index.js');
+    const oldResults = await Result.find({ testId: req.params.id }).lean();
+    const merged = [...newResults, ...oldResults];
+    const uniqueMap = new Map();
+    merged.forEach(r => uniqueMap.set(r.id || r._id.toString(), r));
+    const results = Array.from(uniqueMap.values()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     let csvContent = '\uFEFF'; // UTF-8 BOM for Excel Uzbek characters
     csvContent += 'O\'quvchi F.I.SH,Ball,Maksimal Ball,Foiz,Sana\n';
