@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
 import { getAuthHeaders, getToken, getTeacher } from '../../lib/auth';
 import MeshGradient from '../../components/ui/MeshGradient';
+import MagicButton from '../../components/MagicButton';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -502,14 +503,14 @@ export default function CreateTest() {
               placeholder="Masalan: 1. O'zbekiston poytaxti qayer? A) Toshkent B) Samarqand C) Buxoro..."
               className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm placeholder-zinc-400 focus:outline-none focus:border-zinc-400 focus:bg-white transition-all mb-4 font-sans"
             />
-            <button
+            <MagicButton
               onClick={handleGenerateOcr}
               disabled={generating || !ocrText.trim()}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-black text-white text-xs font-semibold uppercase tracking-wider rounded-xl hover:bg-neutral-800 disabled:opacity-50 transition-colors shadow-md"
-            >
-              {generating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-              {generating ? 'Hujjat Tahlil Qilinmoqda...' : 'Hujjatdan Savollarni Ajratib Olish'}
-            </button>
+              label="Hujjatdan Savollarni Ajratib Olish"
+              loading={generating}
+              loadingLabel="Hujjat Tahlil Qilinmoqda..."
+              icon={<Sparkles />}
+            />
           </div>
         )}
 

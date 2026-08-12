@@ -5,6 +5,7 @@ import { Search, Lock, ArrowRight, Activity, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../lib/db';
 import MeshGradient from '../components/ui/MeshGradient';
+import MagicButton from '../components/MagicButton';
 
 export default function Login() {
   const { t } = useTranslation();
@@ -210,23 +211,15 @@ export default function Login() {
               </div>
             )}
 
-            <div>
-              <button
+            <div className="flex justify-center">
+              <MagicButton
                 type="submit"
                 disabled={isLoading}
-                className="group relative flex w-full justify-center items-center rounded-none bg-accent px-3 py-3.5 text-sm font-semibold text-white hover:bg-accent-hover hover:shadow-accent-glow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50 disabled:cursor-not-allowed transition-premium"
-              >
-                {isLoading ? (
-                  <div className="w-5 h-5 border-[1.5px] border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  <>
-                    {t('login.continue')}
-                    <span className="absolute right-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
-                      <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
-                    </span>
-                  </>
-                )}
-              </button>
+                label={t('login.continue')}
+                loading={isLoading}
+                loadingLabel="Kirilmoqda..."
+                icon={<ArrowRight />}
+              />
             </div>
           </form>
 

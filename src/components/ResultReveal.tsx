@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { Trophy, ArrowRight, BookOpen } from 'lucide-react';
+import MagicButton from './MagicButton';
 
 interface ResultRevealProps {
   score: number;
@@ -114,16 +115,13 @@ export default function ResultReveal({ score, threshold = 65, onClose }: ResultR
                 </p>
               </div>
 
-              <button
-                onClick={handleClose}
-                className={`group relative w-full inline-flex items-center justify-center gap-3 px-8 py-4.5 text-white font-bold text-lg rounded-2xl overflow-hidden transition-all shadow-lg hover:shadow-2xl hover:-translate-y-1 ${isPassed ? 'bg-primary hover:bg-blue-800' : 'bg-neutral-main hover:bg-slate-800'}`}
-              >
-                <span className="relative z-10 tracking-wider">Tafsilotlarni ko'rish</span>
-                <ArrowRight size={22} className="relative z-10 group-hover:translate-x-1.5 transition-transform" />
-                
-                {/* Button shimmer effect */}
-                <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite]"></div>
-              </button>
+              <div className="flex justify-center">
+                <MagicButton
+                  onClick={handleClose}
+                  label="Tafsilotlarni ko'rish"
+                  icon={<ArrowRight />}
+                />
+              </div>
             </motion.div>
           </motion.div>
         </motion.div>

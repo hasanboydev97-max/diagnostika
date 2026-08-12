@@ -4,6 +4,7 @@ import { sendTelegramNotification, getSavedChatId } from '../lib/telegram';
 import { Send, X, ExternalLink, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import MagicButton from './MagicButton';
 
 interface Props {
   result: StudentResult;
@@ -119,31 +120,22 @@ export default function TelegramSendModal({ result, onClose }: Props) {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-2">
-            <button
+          <div className="flex gap-3 pt-2 items-center">
+            <MagicButton
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors"
-            >
-              Bekor qilish
-            </button>
-            <button
+              label="Bekor qilish"
+              variant="ghost"
+            />
+            <MagicButton
               type="button"
               disabled={isSending}
               onClick={handleSend}
-              className={`flex-1 py-3 bg-sky-500 text-white hover:bg-sky-600 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md shadow-sky-500/20 transition-all flex items-center justify-center gap-2 ${
-                isSending ? 'opacity-50 cursor-wait' : ''
-              }`}
-            >
-              {isSending ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              ) : (
-                <>
-                  <Send className="w-4 h-4 ml-0.5" />
-                  <span>Yuborish</span>
-                </>
-              )}
-            </button>
+              label="Yuborish"
+              loading={isSending}
+              loadingLabel="Yuborilmoqda..."
+              icon={<Send />}
+            />
           </div>
         </motion.div>
       </div>

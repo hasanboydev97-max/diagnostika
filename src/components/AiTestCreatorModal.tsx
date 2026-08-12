@@ -6,6 +6,7 @@ import { db } from '../lib/db';
 import { generateCustomTestQuestions, generateDiagnosticTest, generateMatrixTestQuestions } from '../lib/gemini';
 import type { QuestionBlueprint } from '../lib/blueprint';
 import { useNavigate } from 'react-router-dom';
+import MagicButton from './MagicButton';
 
 interface Props {
   initialGrade: string;
@@ -279,20 +280,19 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose }:
                 </div>
 
                 <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
-                  <button
+                  <MagicButton
                     type="button"
                     onClick={() => navigate(`/online-tests/take/${createdTestId}`)}
-                    className="px-8 py-4 bg-black text-white border border-black text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-black/80 transition-colors flex items-center justify-center gap-2"
-                  >
-                    Testni ochish (O'quvchi ko'rinishida) <ExternalLink className="w-3.5 h-3.5" />
-                  </button>
-                  <button
+                    label="Testni ochish"
+                    icon={<ExternalLink />}
+                  />
+                  <MagicButton
                     type="button"
                     onClick={() => setCreatedTestId(null)}
-                    className="px-8 py-4 bg-transparent text-black border border-black/20 text-[10px] font-bold uppercase tracking-[0.2em] hover:border-black transition-colors"
-                  >
-                    Yangi test yaratish
-                  </button>
+                    label="Yangi test yaratish"
+                    variant="ghost"
+                    icon={<Plus />}
+                  />
                 </div>
               </div>
             ) : activeMode === 'matrix' ? (
@@ -610,25 +610,22 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose }:
                   <span>Jami: <strong className="text-black font-mono">{simpleQuestionCount} ta</strong> savol</span>
                 )}
               </div>
-              <div className="flex gap-2 sm:gap-4">
-                <button
+              <div className="flex gap-2 sm:gap-4 items-center">
+                <MagicButton
                   type="button"
                   onClick={onClose}
-                  className="flex-1 sm:flex-none px-4 py-3 sm:px-6 sm:py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 hover:text-black transition-colors border border-black/10 sm:border-transparent rounded-lg"
-                >
-                  Bekor qilish
-                </button>
-                <button
+                  label="Bekor qilish"
+                  variant="ghost"
+                />
+                <MagicButton
                   type="button"
                   disabled={isGenerating}
                   onClick={handleGenerate}
-                  className={`flex-1 sm:flex-none px-5 py-3.5 sm:px-8 sm:py-4 bg-black text-white text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em] border border-black transition-all flex items-center justify-center gap-2 sm:gap-3 rounded-lg ${
-                    isGenerating ? 'bg-black/50 cursor-wait' : 'hover:bg-black/80'
-                  }`}
-                >
-                  {isGenerating && <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>}
-                  {isGenerating ? 'Yaratilmoqda...' : 'AI Testni Yaratish'}
-                </button>
+                  label="AI Testni Yaratish"
+                  loading={isGenerating}
+                  loadingLabel="Yaratilmoqda..."
+                  icon={<Sparkles />}
+                />
               </div>
             </div>
           )}

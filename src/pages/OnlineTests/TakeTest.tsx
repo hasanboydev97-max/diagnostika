@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, ArrowLeft, AlertTriangle, Swords } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import MagicButton from '../../components/MagicButton';
 import confetti from 'canvas-confetti';
 import FormattedText from '../../components/FormattedText';
 import MeshGradient from '../../components/ui/MeshGradient';
@@ -454,12 +455,12 @@ export default function TakeTest() {
                 className="w-full px-5 py-4 bg-white/50 border border-white/50 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:bg-white/80 focus:border-black/20 transition-colors shadow-sm"
                 placeholder="Masalan: Aliyev Vali" autoFocus />
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button onClick={handleStart} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
-                className="flex-1 py-4 bg-black text-white rounded-xl text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-gray-900 shadow-md transition-colors focus:outline-none">
-                Yolg'iz Boshlash
-              </button>
-              <button 
+            <div className="flex flex-col sm:flex-row gap-3 items-center justify-center">
+              <MagicButton
+                onClick={handleStart}
+                label="Yolg'iz Boshlash"
+              />
+              <MagicButton
                 onClick={() => {
                   if (!studentName.trim()) {
                     toast.error("Iltimos, avval ismingizni kiriting!");
@@ -467,11 +468,10 @@ export default function TakeTest() {
                   }
                   navigate('/duel', { state: { testId, title: test.title, isCreator: true, studentName } });
                 }}
-                onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
-                className="flex-1 py-4 bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-xl text-[10px] uppercase tracking-[0.2em] font-bold hover:from-red-700 hover:to-orange-700 shadow-md transition-colors focus:outline-none flex items-center justify-center gap-2"
-              >
-                <Swords size={14} /> Duyel Yaratish (1v1)
-              </button>
+                label="Duyel Yaratish (1v1)"
+                icon={<Swords />}
+                variant="danger"
+              />
             </div>
           </div>
         </div>

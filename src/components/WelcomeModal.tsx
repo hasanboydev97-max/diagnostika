@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { ArrowRight, CheckCircle, XCircle } from 'lucide-react';
+import MagicButton from './MagicButton';
 
 interface WelcomeModalProps {
   score: number;
@@ -202,14 +203,12 @@ export default function WelcomeModal({
 
             {/* Premium Ghost Button */}
             <motion.div variants={itemVariants} className="mt-5 md:mt-10 mb-2 md:mb-0 flex-shrink-0">
-              <button 
+              <MagicButton
                 onClick={handleClose}
-                className="group relative px-7 py-3 md:px-8 md:py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full flex items-center gap-2 md:gap-3 overflow-hidden transition-all duration-500 hover:shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:border-white/20 backdrop-blur-sm"
-              >
-                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-out"></span>
-                <span className="relative z-10 text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-white">Batafsil Hisobot</span>
-                <ArrowRight className="relative z-10 text-white group-hover:translate-x-1 transition-transform w-3.5 h-3.5 md:w-4 md:h-4" />
-              </button>
+                label="Batafsil Hisobot"
+                icon={<ArrowRight />}
+                variant="ghost"
+              />
             </motion.div>
 
           </motion.div>

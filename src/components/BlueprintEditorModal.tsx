@@ -4,6 +4,7 @@ import { GRADE_BLUEPRINTS } from '../lib/gradeBlueprints';
 import { X, Save, RotateCcw, Sparkles, ChevronDown, Plus } from 'lucide-react';
 import { generateGradeBlueprint } from '../lib/gemini';
 import { db } from '../lib/db';
+import MagicButton from './MagicButton';
 
 const DEFAULT_SUBJECT_LIST = [
   'Matematika', 
@@ -279,34 +280,34 @@ export default function BlueprintEditorModal({ grade, initialBlueprint, onSave, 
 
         {/* Footer */}
         <div className="p-6 md:p-10 border-t border-black/10 bg-white flex flex-col md:flex-row justify-between gap-6 items-center">
-          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-            <button 
-              onClick={() => setBlueprint(GRADE_BLUEPRINTS[grade] || GRADE_BLUEPRINTS['5'])} 
-              className="px-6 py-3 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 hover:text-black transition-colors border border-transparent hover:border-black/10"
-            >
-              <RotateCcw className="w-4 h-4" /> Qayta tiklash
-            </button>
-            <button 
+          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto items-center">
+            <MagicButton
+              onClick={() => setBlueprint(GRADE_BLUEPRINTS[grade] || GRADE_BLUEPRINTS['5'])}
+              label="Qayta tiklash"
+              variant="ghost"
+              icon={<RotateCcw />}
+            />
+            <MagicButton
               onClick={handleGenerateAI}
               disabled={isGenerating}
-              className={`px-8 py-3 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] transition-all border ${isGenerating ? 'bg-black/5 border-black/5 text-gray-400 cursor-not-allowed' : 'bg-[#fdfdfd] border-black/20 text-[#111111] hover:border-black'}`}
-            >
-              {isGenerating ? (
-                <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
-              ) : (
-                <Sparkles className="w-4 h-4" />
-              )}
-              {isGenerating ? 'Yaratilmoqda...' : `AI orqali yaratish`}
-            </button>
+              label="AI orqali yaratish"
+              loading={isGenerating}
+              loadingLabel="Yaratilmoqda..."
+              icon={<Sparkles />}
+            />
           </div>
           
-          <div className="flex gap-4 w-full md:w-auto">
-            <button onClick={onClose} className="flex-1 md:flex-none px-6 py-3 text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500 hover:text-black transition-colors border border-black/10">
-              Bekor qilish
-            </button>
-            <button onClick={handleSave} className="flex-1 md:flex-none px-10 py-3 bg-[#111111] text-[#fdfdfd] text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-black/80 transition-all flex items-center justify-center gap-2">
-              <Save className="w-4 h-4" /> Saqlash
-            </button>
+          <div className="flex gap-4 w-full md:w-auto items-center">
+            <MagicButton
+              onClick={onClose}
+              label="Bekor qilish"
+              variant="ghost"
+            />
+            <MagicButton
+              onClick={handleSave}
+              label="Saqlash"
+              icon={<Save />}
+            />
           </div>
         </div>
       </div>
