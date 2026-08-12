@@ -442,7 +442,11 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
             });
             const result = await model.generateContent(prompt);
             const raw = result.response.text().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
-            const questions = JSON.parse(raw);
+            
+            // Fix unescaped backslashes (e.g. \frac -> \\frac) so JSON.parse doesn't fail or create \f (form-feed)
+            const safeRaw = raw.replace(/(?<!\\)\\([^nrtb"\\])/g, '\\\\$1');
+            
+            const questions = JSON.parse(safeRaw);
             if (!Array.isArray(questions) || questions.length === 0) {
               console.warn(`  ↩ Bo'sh array, qayta urinilmoqda...`);
               continue;
