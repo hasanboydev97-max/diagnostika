@@ -31,7 +31,7 @@ export default function CreateTest() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [topic, setTopic] = useState('');
-  const [questionCount, setQuestionCount] = useState(5);
+  const [questionCount, setQuestionCount] = useState<number | string>(0);
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   
@@ -466,7 +466,10 @@ export default function CreateTest() {
                   type="number" 
                   min="1" max="20"
                   value={questionCount}
-                  onChange={e => setQuestionCount(Number(e.target.value))}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setQuestionCount(val === '' ? '' : Number(val));
+                  }}
                   className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-400 focus:bg-white transition-colors"
                 />
               </div>

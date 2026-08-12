@@ -235,11 +235,20 @@ export default function TakeTest() {
     const handleViolation = () => {
       if (submitting) return;
       violations.current += 1;
-      toast.error("QOIDABUZARLIK DETEKTIV QILINDI! Oynani tark etganingiz sababli test majburiy yakunlandi.", {
-        duration: 5000,
-        position: 'top-center'
-      });
-      handleSubmit(true);
+      
+      if (violations.current === 1) {
+        toast.error("OGOHLANTIRISH: Iltimos, test vaqtida boshqa oynaga o'tmang! Yana bir marta takrorlansa test yakunlanadi.", {
+          duration: 6000,
+          position: 'top-center',
+          style: { background: '#f59e0b', color: '#fff', border: 'none' } // warning color
+        });
+      } else {
+        toast.error("QOIDABUZARLIK! Oynani qayta tark etganingiz sababli test majburiy yakunlandi.", {
+          duration: 5000,
+          position: 'top-center'
+        });
+        handleSubmit(true);
+      }
     };
 
     const onVisibility = () => { if (document.hidden) handleViolation(); };
@@ -611,7 +620,9 @@ export default function TakeTest() {
                       key={i}
                       onClick={() => handleSelectOption(opt)}
                       whileTap={{ scale: 0.99 }}
-                      className="w-full text-left py-4 md:py-5 border-b border-black/10 transition-colors duration-300 flex items-start md:items-center gap-5 group"
+                      onMouseEnter={() => setIsHovering(true)}
+                      onMouseLeave={() => setIsHovering(false)}
+                      className="w-full text-left py-4 md:py-5 border-b border-black/10 transition-colors duration-300 flex items-start md:items-center gap-5 group cursor-pointer"
                     >
                       {/* Animated radio circle */}
                       <div className="w-5 h-5 mt-0.5 md:mt-0 shrink-0 rounded-full border flex items-center justify-center transition-colors border-black/20 group-hover:border-black">
@@ -643,7 +654,9 @@ export default function TakeTest() {
               onClick={() => setCurrentQIndex(prev => Math.max(0, prev - 1))}
               disabled={currentQIndex === 0}
               whileTap={{ scale: 0.95 }}
-              className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 disabled:opacity-30 hover:text-black transition-colors"
+              onMouseEnter={() => setIsHovering(true)}
+              onMouseLeave={() => setIsHovering(false)}
+              className="text-xs md:text-sm px-2 py-1 font-bold uppercase tracking-[0.2em] text-gray-400 disabled:opacity-30 hover:text-black transition-colors"
             >
               Oldingi
             </motion.button>
@@ -652,7 +665,9 @@ export default function TakeTest() {
               <motion.button
                 onClick={() => setCurrentQIndex(prev => prev + 1)}
                 whileTap={{ scale: 0.95 }}
-                className="text-[10px] font-bold uppercase tracking-[0.2em] text-black border-b border-black pb-1 hover:text-gray-500 hover:border-gray-500 transition-all"
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}
+                className="text-xs md:text-sm px-4 py-2 font-bold uppercase tracking-[0.2em] text-white bg-black rounded-lg hover:bg-black/80 hover:scale-105 transition-all shadow-md"
               >
                 Keyingi
               </motion.button>
@@ -661,9 +676,11 @@ export default function TakeTest() {
                 onClick={() => handleSubmit(false)}
                 disabled={submitting}
                 whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-black border-b border-black pb-1 hover:text-gray-500 hover:border-gray-500 transition-all disabled:opacity-30"
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}
+                className="inline-flex items-center justify-center gap-3 text-xs md:text-sm px-5 py-2 font-bold uppercase tracking-[0.2em] text-white bg-black rounded-lg hover:bg-black/80 hover:scale-105 transition-all shadow-md disabled:opacity-50"
               >
-                {submitting && <Loader2 size={12} className="animate-spin" />}
+                {submitting && <Loader2 size={16} className="animate-spin" />}
                 {submitting ? 'Yuborilmoqda...' : 'Yakunlash'}
               </motion.button>
             )}

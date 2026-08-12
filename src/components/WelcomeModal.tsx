@@ -207,7 +207,7 @@ export default function WelcomeModal({
                 onClick={handleClose}
                 label="Batafsil Hisobot"
                 icon={<ArrowRight />}
-                variant="ghost"
+                variant="ghost-dark"
               />
             </motion.div>
 

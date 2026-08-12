@@ -420,35 +420,33 @@ export default function DuelPlayer() {
                 </div>
                 
                 {/* Options */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-auto flex-1 w-full max-h-[65vh]">
                   {test.questions[currentQIndex]?.options.map((opt: string, i: number) => {
                     const isCorrect = opt === test.questions[currentQIndex]?.correctOption;
                     const isSelected = selectedOptionIndex === i;
                     
-                    let btnClass = "border p-8 md:p-12 text-center text-lg md:text-xl font-medium rounded-2xl transition-all flex items-center justify-center ";
+                    let btnClass = "border p-6 md:p-8 text-center text-xl md:text-2xl font-bold rounded-xl transition-all duration-150 flex items-center justify-center w-full h-full min-h-[120px] ";
                     
                     if (hasAnsweredCurrent) {
                       if (isCorrect) {
-                        btnClass += "bg-emerald-500 border-emerald-600 text-white shadow-none";
+                        btnClass += "bg-emerald-500 border-emerald-600 text-white shadow-[0_4px_0_0_#047857]";
                       } else if (isSelected) {
-                        btnClass += "bg-rose-500 border-rose-600 text-white shadow-none";
+                        btnClass += "bg-rose-500 border-rose-600 text-white shadow-[0_4px_0_0_#be123c]";
                       } else {
-                        btnClass += "opacity-30 border-black/5 bg-gray-50 text-gray-400";
+                        btnClass += "opacity-30 border-black/5 bg-gray-50 text-gray-400 shadow-none";
                       }
                     } else {
                       const colors = [
-                        'bg-gradient-to-br from-rose-50 to-rose-100/50 border-rose-200 text-rose-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)] hover:border-rose-400 hover:shadow-[inset_0_2px_15px_rgba(255,255,255,1)]',
-                        'bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200 text-blue-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)] hover:border-blue-400 hover:shadow-[inset_0_2px_15px_rgba(255,255,255,1)]',
-                        'bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200 text-amber-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)] hover:border-amber-400 hover:shadow-[inset_0_2px_15px_rgba(255,255,255,1)]',
-                        'bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200 text-emerald-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)] hover:border-emerald-400 hover:shadow-[inset_0_2px_15px_rgba(255,255,255,1)]'
+                        'bg-[#e21b3c] border-[#b0132c] text-white shadow-[0_8px_0_0_#b0132c,0_15px_20px_rgba(0,0,0,0.2),inset_0_2px_0_rgba(255,255,255,0.3)] hover:bg-[#eb2b4c] hover:-translate-y-1 hover:shadow-[0_12px_0_0_#b0132c,0_20px_25px_rgba(0,0,0,0.2),inset_0_2px_0_rgba(255,255,255,0.3)] active:translate-y-[8px] active:shadow-[0_0px_0_0_#b0132c,0_0px_0px_rgba(0,0,0,0.2)]',
+                        'bg-[#1368ce] border-[#0e4e9a] text-white shadow-[0_8px_0_0_#0e4e9a,0_15px_20px_rgba(0,0,0,0.2),inset_0_2px_0_rgba(255,255,255,0.3)] hover:bg-[#1f7ae5] hover:-translate-y-1 hover:shadow-[0_12px_0_0_#0e4e9a,0_20px_25px_rgba(0,0,0,0.2),inset_0_2px_0_rgba(255,255,255,0.3)] active:translate-y-[8px] active:shadow-[0_0px_0_0_#0e4e9a,0_0px_0px_rgba(0,0,0,0.2)]',
+                        'bg-[#d89e00] border-[#a57a00] text-white shadow-[0_8px_0_0_#a57a00,0_15px_20px_rgba(0,0,0,0.2),inset_0_2px_0_rgba(255,255,255,0.3)] hover:bg-[#ebaf0a] hover:-translate-y-1 hover:shadow-[0_12px_0_0_#a57a00,0_20px_25px_rgba(0,0,0,0.2),inset_0_2px_0_rgba(255,255,255,0.3)] active:translate-y-[8px] active:shadow-[0_0px_0_0_#a57a00,0_0px_0px_rgba(0,0,0,0.2)]',
+                        'bg-[#26890c] border-[#1b6308] text-white shadow-[0_8px_0_0_#1b6308,0_15px_20px_rgba(0,0,0,0.2),inset_0_2px_0_rgba(255,255,255,0.3)] hover:bg-[#32a215] hover:-translate-y-1 hover:shadow-[0_12px_0_0_#1b6308,0_20px_25px_rgba(0,0,0,0.2),inset_0_2px_0_rgba(255,255,255,0.3)] active:translate-y-[8px] active:shadow-[0_0px_0_0_#1b6308,0_0px_0px_rgba(0,0,0,0.2)]'
                       ];
                       btnClass += colors[i % 4];
                     }
 
                     return (
                       <motion.button
-                        whileHover={!hasAnsweredCurrent ? { scale: 1.02 } : {}}
-                        whileTap={!hasAnsweredCurrent ? { scale: 0.98 } : {}}
                         key={i}
                         onClick={() => handleAnswer(i)}
                         disabled={hasAnsweredCurrent}

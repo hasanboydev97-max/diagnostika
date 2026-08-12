@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 @import "katex/dist/katex.min.css";
 
 @theme {
@@ -331,6 +331,45 @@
 .magic-btn--ghost:active {
   background: rgba(0,0,0,0.08);
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.10);
+}
+
+/* Ghost Dark — for secondary actions on DARK backgrounds */
+.magic-btn--ghost-dark {
+  --mbg: transparent;
+  --mtxt: rgba(255,255,255,0.70);
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.20);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    inset 0 -1px 0 rgba(0,0,0,0.20);
+}
+.magic-btn--ghost-dark::before { display: none; }
+.magic-btn--ghost-dark .magic-btn-letter {
+  animation: mb-ghost-dark-pulse 3s ease-in-out infinite;
+}
+@keyframes mb-ghost-dark-pulse {
+  0%,100% { color: rgba(255,255,255,0.70); }
+  50%      { color: rgba(255,255,255,1); }
+}
+.magic-btn--ghost-dark .magic-btn-icon,
+.magic-btn--ghost-dark .magic-btn-icon-right {
+  color: rgba(255,255,255,0.55);
+  animation: none;
+}
+.magic-btn--ghost-dark:hover {
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.30);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.20),
+    inset 0 -1px 0 rgba(0,0,0,0.30);
+}
+.magic-btn--ghost-dark:hover .magic-btn-letter { color:rgba(255,255,255,1); text-shadow:none; }
+.magic-btn--ghost-dark:hover .magic-btn-icon,
+.magic-btn--ghost-dark:hover .magic-btn-icon-right { color:rgba(255,255,255,0.90); }
+.magic-btn--ghost-dark:hover::after { opacity:0; }
+.magic-btn--ghost-dark:active {
+  background: rgba(255,255,255,0.15);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.30);
 }
 
 /* Danger — deep crimson */
