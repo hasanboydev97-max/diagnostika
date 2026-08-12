@@ -80,11 +80,12 @@ export default function DuelPlayer() {
       // Clear location state so refresh doesn't recreate the duel
       navigate(location.pathname + location.search, { replace: true, state: {} });
     } else {
+      const urlPin = new URLSearchParams(location.search).get('pin');
       const saved = localStorage.getItem('duel_state');
       let p = null;
       try { if (saved) p = JSON.parse(saved); } catch(e){}
       
-      if (p && p.pin && p.name && p.status === 'lobby') {
+      if (p && p.pin && p.name && p.status === 'lobby' && (!urlPin || urlPin === p.pin)) {
         setPin(p.pin);
         setName(p.name);
         setIsCreator(p.isCreator);
@@ -95,6 +96,9 @@ export default function DuelPlayer() {
         isCreatorRef.current = p.isCreator;
         statusRef.current = 'lobby';
       } else {
+        if (urlPin && urlPin !== p?.pin) {
+          setPin(urlPin);
+        }
         setStatus('login');
       }
     }

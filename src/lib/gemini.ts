@@ -358,14 +358,19 @@ FAN BO'YICHA MAXSUS KO'RSATMA (MATEMATIKA):
 - ${topicInstruction}
 ${subjectSpecificRules}
 
-Har bir savolda:
-- Savol matni (aniq, tushunarli, ${grade}-sinf standartlariga mos)
+QAT'IY SIFAT MEZONLARI (100% AMAL QILING):
+1. QAT'IY SHART: Savollar juda chuqur mantiqiy asoslangan, mukammal va oliy darajadagi sintaksis bilan yozilsin. Hech qanday imlo, grammatik yoki sintaksis xatolarga yo'l qo'yilmasin!
+2. QAT'IY SHART: Savollar yuzaki bo'lmasin. Noto'g'ri variantlar o'ta chalg'ituvchi va haqiqatga juda yaqin (mantiqiy) bo'lsin.
+3. Barcha faktlar, formulalar va ma'lumotlar 100% ilmiy to'g'ri va aniq bo'lishi KAFOLATLANSIN. Umuman xato qilmang!
+
+Har bir savolda quyidagilar bo'lishi shart:
+- Savol matni (aniq, tushunarli, chuqur ma'noli va mutlaqo xatosiz)
 - 4 ta javob varianti (A, B, C, D)
 - To'g'ri javob ko'rsatkichi (faqat "A", "B", "C" yoki "D")
 - Kategoriya (fan nomi)
 - Qiyinchilik: "Oson", "O'rta" yoki "Qiyin"
 - Kognitiv ko'nikma: "Tushunish", "Qo'llash", "Tahlil qilish", "Baholash" yoki "Sintezlash"
-- Qisqa tushuntirish
+- Qisqa tushuntirish (javob nima uchun to'g'riligini isbotlovchi, xatosiz matn)
 
 Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh qo'shmang:
 [

@@ -403,13 +403,13 @@ QIYINLIK DARAJASI: ${difficulty} (aralash bo'lsa — oson/o'rta/qiyin taxminan t
 
 ${formatRules}
 
-SIFAT MEZONLARI (har bir savolni yaratishdan oldin o'zingizni shu bo'yicha tekshiring):
-1. Savol matni to'liq va mustaqil tushunarli bo'lsin — tashqi kontekstga muhtoj bo'lmasin.
-2. 4 ta variant: 1 ta to'g'ri, 3 ta noto'g'ri. Noto'g'ri variantlar mantiqiy yaqin, lekin aniq xato bo'lsin.
-3. To'g'ri javob pozitsiyasi savoldan savolga tasodifiy taqsimlansin.
-4. Bir xil savol yoki bir xil variantlar takrorlanmasin.
-5. Har bir savol aniq bitta subtopic'ga tegishli bo'lsin, subtopic'lar xilma-xil bo'lsin.
-6. Faktik yoki grammatik xatolar bo'lmasin.
+SIFAT MEZONLARI (har bir savolni yaratishdan oldin o'zingizni shu bo'yicha tekshiring va 100% amal qiling):
+1. QAT'IY SHART: Savollar juda chuqur mantiqiy asoslangan, mukammal va oliy darajadagi sintaksis bilan yozilsin. Hech qanday imlo, grammatik yoki sintaksis xatolarga yo'l qo'yilmasin! Savol matni to'liq va mustaqil tushunarli bo'lsin.
+2. QAT'IY SHART: Savollar yuzaki bo'lmasin. 4 ta variant: 1 ta to'g'ri, 3 ta noto'g'ri. Noto'g'ri variantlar o'ta chalg'ituvchi va haqiqatga juda yaqin (mantiqiy) bo'lsin.
+3. QAT'IY SHART: Barcha faktlar, formulalar va ma'lumotlar 100% ilmiy to'g'ri va aniq bo'lishi KAFOLATLANSIN. Umuman xato qilmang!
+4. To'g'ri javob pozitsiyasi savoldan savolga tasodifiy taqsimlansin.
+5. Bir xil savol yoki bir xil variantlar takrorlanmasin. Har bir savol aniq bitta subtopic'ga tegishli bo'lsin, subtopic'lar xilma-xil bo'lsin.
+6. UMUMAN XATO QILMANG. Mutlaqo mukammal test bazasi yarating.
 
 TO'G'RI FORMATLANGAN NAMUNALAR (aynan shu uslub va aniqlikda yozing):
 ${examples}
