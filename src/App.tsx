@@ -3,6 +3,7 @@ import { useState, Suspense, lazy } from 'react';
 import CustomCursor from './components/CustomCursor';
 import InitialLoader from './components/InitialLoader';
 import { Toaster } from 'sonner';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Code Splitting for routes
 const Landing = lazy(() => import('./pages/Landing'));
@@ -35,31 +36,33 @@ function App() {
     <BrowserRouter>
       <CustomCursor />
       <PwaInstallPrompt />
-      <Suspense fallback={<RouteLoader />}>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/summary/:resultId" element={<Summary />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/superadmin" element={<SuperAdmin />} />
-          
-          {/* Teacher Auth */}
-          <Route path="/teacher/login" element={<TeacherAuth />} />
-          
-          {/* Online Tests Routes */}
-          <Route path="/online-tests" element={<OnlineTestsDashboard />} />
-          <Route path="/online-tests/create" element={<CreateTest />} />
-          <Route path="/online-tests/details/:testId" element={<TestDetails />} />
-          <Route path="/online-tests/take/:testId" element={<TakeTest />} />
-          <Route path="/online-tests/results/:resultId" element={<TestResultView />} />
-          <Route path="/online-tests/live/host/:testId" element={<LiveHost />} />
-          <Route path="/live" element={<LivePlayer />} />
-          <Route path="/duel" element={<DuelPlayer />} />
-          
-          {/* Catch-all route to prevent blank screens */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<RouteLoader />}>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/summary/:resultId" element={<Summary />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/superadmin" element={<SuperAdmin />} />
+            
+            {/* Teacher Auth */}
+            <Route path="/teacher/login" element={<TeacherAuth />} />
+            
+            {/* Online Tests Routes */}
+            <Route path="/online-tests" element={<OnlineTestsDashboard />} />
+            <Route path="/online-tests/create" element={<CreateTest />} />
+            <Route path="/online-tests/details/:testId" element={<TestDetails />} />
+            <Route path="/online-tests/take/:testId" element={<TakeTest />} />
+            <Route path="/online-tests/results/:resultId" element={<TestResultView />} />
+            <Route path="/online-tests/live/host/:testId" element={<LiveHost />} />
+            <Route path="/live" element={<LivePlayer />} />
+            <Route path="/duel" element={<DuelPlayer />} />
+            
+            {/* Catch-all route to prevent blank screens */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
       <InitialLoader onComplete={() => setAppReady(true)} />
       {appReady && <Toaster position="top-right" richColors />}
     </BrowserRouter>
