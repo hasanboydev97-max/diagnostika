@@ -517,7 +517,12 @@ export const classAnalysis = async (req, res) => {
     
     const { GoogleGenerativeAI } = await import("@google/generative-ai");
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-2.5-flash',
+      generationConfig: {
+        responseMimeType: "application/json"
+      }
+    });
 
     // Calculate stats per question
     const stats = test.questions.map((q, i) => {
