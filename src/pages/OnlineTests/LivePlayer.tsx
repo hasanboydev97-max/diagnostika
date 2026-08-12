@@ -79,6 +79,14 @@ export default function LivePlayer() {
     
     setIsCorrectLast(isCorrect);
     socket?.emit('submit_answer', { pin, isCorrect });
+
+    // Asynchronous progression
+    setTimeout(() => {
+      if (currentQuestionIndex + 1 < test.questions.length) {
+        setCurrentQuestionIndex(prev => prev + 1);
+        setHasAnswered(false);
+      }
+    }, 2500);
   };
 
   const fadeUp = {
@@ -206,7 +214,9 @@ export default function LivePlayer() {
               {isCorrectLast ? '+100 ball' : 'Keyingi safar!'}
             </h2>
             <div className="border border-white/20 px-6 py-3">
-              <span className="text-xs uppercase tracking-[0.2em] text-white/60">Keyingi savolni kuting</span>
+              <span className="text-xs uppercase tracking-[0.2em] text-white/60">
+                {currentQuestionIndex + 1 >= (test?.questions?.length || 0) ? 'Test yakunlandi, natijalarni kuting...' : 'Keyingi savolga o\'tilmoqda...'}
+              </span>
             </div>
           </motion.div>
         )}

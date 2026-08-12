@@ -1,10 +1,10 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, ChevronRight, Trophy, ArrowLeft, Loader2, StopCircle } from 'lucide-react';
+import { Play, Trophy, ArrowLeft, Loader2, StopCircle } from 'lucide-react';
 import { getAuthHeaders, getToken } from '../../lib/auth';
-import FormattedText from '../../components/FormattedText';
+// Removed unused FormattedText import
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 
@@ -20,10 +20,6 @@ export default function LiveHost() {
   const [pin, setPin] = useState('');
   const [players, setPlayers] = useState<any[]>([]);
   const [status, setStatus] = useState<'waiting' | 'active' | 'finished'>('waiting');
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1);
-  const [timer, setTimer] = useState(30);
-  
-  const timerRef = useRef<any>(null);
 
   useEffect(() => {
     if (!getToken()) {
@@ -70,10 +66,8 @@ export default function LiveHost() {
       setPlayers(players);
     });
 
-    newSocket.on('new_question', ({ questionIndex }) => {
-      setCurrentQuestionIndex(questionIndex);
+    newSocket.on('game_started', () => {
       setStatus('active');
-      startTimer();
     });
 
     newSocket.on('leaderboard_update', ({ players }) => {
@@ -88,24 +82,6 @@ export default function LiveHost() {
 
     return () => newSocket.disconnect();
   };
-
-  const startTimer = () => {
-    clearInterval(timerRef.current);
-    setTimer(30);
-    timerRef.current = setInterval(() => {
-      setTimer((prev) => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  useEffect(() => {
-    return () => clearInterval(timerRef.current);
-  }, []);
 
   useEffect(() => {
     return () => {
@@ -122,18 +98,6 @@ export default function LiveHost() {
       return toast.error("O'yinni boshlash uchun kamida 1 ta o'quvchi kerak");
     }
     socket?.emit('start_game', { pin });
-  };
-
-  const nextQuestion = () => {
-    if (!test) return;
-    setCurrentQuestionIndex((prev) => {
-      if (prev + 1 >= test.questions.length) {
-        socket?.emit('end_game', { pin });
-      } else {
-        socket?.emit('next_question', { pin });
-      }
-      return prev;
-    });
   };
 
   const endGame = () => {
@@ -231,85 +195,56 @@ export default function LiveHost() {
           </motion.div>
         )}
 
-        {/* ACTIVE GAME */}
-        {status === 'active' && test.questions[currentQuestionIndex] && (
+        {/* ACTIVE GAME - ASYNCHRONOUS LEADERBOARD */}
+        {status === 'active' && (
           <motion.div 
             key="active"
             initial="initial" animate="animate" exit="exit" variants={fadeUp}
-            className="flex-1 flex flex-col container mx-auto max-w-7xl py-12 px-6"
+            className="flex-1 flex flex-col container mx-auto max-w-5xl py-12 px-6"
           >
             {/* Top Bar */}
             <div className="flex items-center justify-between pb-6 border-b border-black/10 mb-12">
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-2">Savol {currentQuestionIndex + 1} / {test.questions.length}</p>
-                <h2 className="text-2xl font-medium">Jonli Test</h2>
+                <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-2">Musobaqa qizg'in pallada</p>
+                <h2 className="text-2xl font-medium">Jonli Reyting</h2>
               </div>
               <div className="text-right">
-                <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-2">Vaqt</p>
-                <p className="text-2xl font-mono">{timer}s</p>
+                <button 
+                  onClick={endGame}
+                  className="bg-[#111111] text-white py-4 px-8 hover:bg-black transition-colors flex items-center gap-2"
+                >
+                  <span className="text-xs uppercase tracking-[0.2em]">O'yinni Tugatish</span>
+                  <StopCircle size={16} />
+                </button>
               </div>
             </div>
 
-            {/* Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 flex-1">
-              <div className="lg:col-span-8 flex flex-col">
-                <div className="mb-12">
-                  <h3 className="text-3xl md:text-4xl font-sans font-medium leading-relaxed">
-                    <FormattedText content={test.questions[currentQuestionIndex].questionText} />
-                  </h3>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-auto">
-                  {test.questions[currentQuestionIndex].options.map((opt: string, i: number) => {
-                    const colors = [
-                      'bg-gradient-to-br from-rose-50 to-rose-100/50 border-rose-200 text-rose-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)]',
-                      'bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200 text-blue-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)]',
-                      'bg-gradient-to-br from-amber-50 to-amber-100/50 border-amber-200 text-amber-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)]',
-                      'bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200 text-emerald-950 shadow-[inset_0_2px_10px_rgba(255,255,255,1)]'
-                    ];
-                    return (
-                      <div key={i} className={`border p-6 flex items-center justify-center text-lg rounded-2xl ${colors[i % 4]}`}>
-                        <FormattedText content={opt} />
+            {/* Leaderboard */}
+            <div className="flex-1 overflow-y-auto space-y-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-8 flex items-center gap-2">
+                <Trophy size={14} /> Eng yuqori natijalar
+              </p>
+              {players.length === 0 ? (
+                <p className="text-gray-400 italic">Hozircha natijalar yo'q...</p>
+              ) : (
+                players.map((p, i) => (
+                  <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    key={i} 
+                    className="flex items-center justify-between py-6 px-8 border border-black/10 bg-white shadow-sm rounded-lg"
+                  >
+                    <div className="flex items-center gap-6">
+                      <div className={`w-12 h-12 flex items-center justify-center rounded-full font-mono text-xl ${i === 0 ? 'bg-amber-100 text-amber-700' : i === 1 ? 'bg-zinc-200 text-zinc-700' : i === 2 ? 'bg-orange-100 text-orange-700' : 'bg-gray-50 text-gray-400'}`}>
+                        #{i+1}
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Leaderboard Sidebar */}
-              <div className="lg:col-span-4 border-l border-black/10 pl-12 flex flex-col">
-                <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-8 flex items-center gap-2">
-                  <Trophy size={14} /> Leaderboard
-                </p>
-                <div className="flex-1 overflow-y-auto space-y-4">
-                  {players.slice(0, 10).map((p, i) => (
-                    <div key={i} className="flex items-center justify-between py-2 border-b border-black/5 last:border-0">
-                      <div className="flex items-center gap-4">
-                        <span className="text-xs uppercase tracking-[0.2em] text-gray-400">#{i+1}</span>
-                        <span className="font-medium text-sm">{p.name}</span>
-                      </div>
-                      <span className="font-mono text-sm">{p.score}</span>
+                      <span className="font-medium text-2xl">{p.name}</span>
                     </div>
-                  ))}
-                </div>
-                
-                <div className="mt-8 space-y-4 pt-8 border-t border-black/10">
-                  <button 
-                    onClick={nextQuestion}
-                    className="w-full border border-[#111111] text-[#111111] py-4 px-6 flex items-center justify-between hover:bg-[#111111] hover:text-white transition-colors"
-                  >
-                    <span className="text-xs uppercase tracking-[0.2em]">Keyingi Savol</span>
-                    <ChevronRight size={16} />
-                  </button>
-                  <button 
-                    onClick={endGame}
-                    className="w-full text-gray-400 py-4 px-6 flex items-center justify-between hover:text-black transition-colors"
-                  >
-                    <span className="text-xs uppercase tracking-[0.2em]">Tugatish</span>
-                    <StopCircle size={16} />
-                  </button>
-                </div>
-              </div>
+                    <span className="font-mono text-2xl font-semibold">{p.score} pt</span>
+                  </motion.div>
+                ))
+              )}
             </div>
           </motion.div>
         )}
