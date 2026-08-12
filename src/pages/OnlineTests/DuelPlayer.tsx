@@ -439,7 +439,7 @@ export default function DuelPlayer() {
                 </div>
                 
                 {/* Options */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-auto flex-1 w-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-auto flex-1 w-full auto-rows-fr pb-4 md:pb-8">
                   {test.questions[currentQIndex]?.options.map((opt: string, i: number) => {
                     const isCorrect = opt === test.questions[currentQIndex]?.correctOption;
                     const isSelected = selectedOptionIndex === i;
