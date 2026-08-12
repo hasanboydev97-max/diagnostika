@@ -126,11 +126,14 @@ export default function LiveHost() {
 
   const nextQuestion = () => {
     if (!test) return;
-    if (currentQuestionIndex + 1 >= test.questions.length) {
-      socket?.emit('end_game', { pin });
-    } else {
-      socket?.emit('next_question', { pin });
-    }
+    setCurrentQuestionIndex((prev) => {
+      if (prev + 1 >= test.questions.length) {
+        socket?.emit('end_game', { pin });
+      } else {
+        socket?.emit('next_question', { pin });
+      }
+      return prev;
+    });
   };
 
   const endGame = () => {

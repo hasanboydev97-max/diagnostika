@@ -79,6 +79,7 @@ export const setupSockets = (httpServer) => {
       if (room && room.status === 'active') {
         if (isCorrect) {
           // Simple scoring based on being correct, could add time-based scoring
+          if (room.scores[socket.id] === undefined) room.scores[socket.id] = 0;
           room.scores[socket.id] += 100;
           const player = room.players.find(p => p.id === socket.id);
           if (player) player.score = room.scores[socket.id];

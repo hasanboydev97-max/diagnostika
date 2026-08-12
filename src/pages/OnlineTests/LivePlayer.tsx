@@ -49,7 +49,6 @@ export default function LivePlayer() {
     newSocket.on('new_question', ({ questionIndex }) => {
       setCurrentQuestionIndex(questionIndex);
       setHasAnswered(false);
-      setIsCorrectLast(null);
     });
 
     newSocket.on('game_ended', ({ players }) => {

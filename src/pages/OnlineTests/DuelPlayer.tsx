@@ -338,7 +338,7 @@ export default function DuelPlayer() {
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs uppercase tracking-[0.2em]">{p1?.name}</span>
-                  <span className="text-xs font-mono">{p1?.score}/{test.questions.length}</span>
+                  <span className="text-xs font-mono">{p1?.currentQuestion || 0}/{test.questions.length} savol | {p1?.score} pt</span>
                 </div>
                 <div className="h-1 bg-black/5 w-full">
                   <div 
@@ -350,7 +350,7 @@ export default function DuelPlayer() {
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs uppercase tracking-[0.2em]">{p2?.name || 'Raqib'}</span>
-                  <span className="text-xs font-mono">{p2?.score || 0}/{test.questions.length}</span>
+                  <span className="text-xs font-mono">{p2?.currentQuestion || 0}/{test.questions.length} savol | {p2?.score || 0} pt</span>
                 </div>
                 <div className="h-1 bg-black/5 w-full">
                   <div 
@@ -457,27 +457,27 @@ export default function DuelPlayer() {
             <div className="flex items-end justify-center gap-4 md:gap-16 border-b border-black/10 pb-0 w-full max-w-2xl h-72 mb-16">
               <motion.div 
                 initial={{ height: 0, opacity: 0 }}
-                animate={{ height: '70%', opacity: 1 }}
+                animate={{ height: p1.score > p2.score ? '100%' : p1.score < p2.score ? '70%' : '85%', opacity: 1 }}
                 transition={{ duration: 1, delay: 0.4 }}
                 className={`flex-1 flex flex-col items-center border-t border-l border-r rounded-t-3xl pt-8 relative overflow-hidden ${p1.score < p2.score ? 'bg-gradient-to-t from-zinc-200 to-zinc-50 border-zinc-200 shadow-[inset_0_2px_15px_rgba(255,255,255,1)] text-zinc-900' : 'bg-gradient-to-t from-amber-200 to-amber-50 border-amber-200 shadow-[inset_0_2px_15px_rgba(255,255,255,1)] text-amber-950'}`}
               >
                 <span className={`text-lg md:text-2xl font-medium mb-1 truncate w-full text-center px-2 ${p1.score >= p2.score ? 'text-amber-950' : 'text-zinc-900'}`}>{p1.name}</span>
-                <span className={`text-sm font-mono mb-auto ${p1.score >= p2.score ? 'text-amber-700/80' : 'text-zinc-500'}`}>{p1.score} pt</span>
-                <span className={`text-6xl font-light mb-8 relative z-10 ${p1.score >= p2.score ? 'text-amber-900/20' : 'text-zinc-300'}`}>
-                  {p1.score >= p2.score ? '1' : '2'}
+                <span className={`text-sm font-mono mb-auto ${p1.score >= p2.score ? 'text-amber-700' : 'text-zinc-600'}`}>{p1.score} pt</span>
+                <span className={`text-6xl font-bold mb-8 relative z-10 ${p1.score >= p2.score ? 'text-amber-700/80' : 'text-zinc-500/80'}`}>
+                  {p1.score > p2.score ? '1' : p1.score < p2.score ? '2' : '1'}
                 </span>
               </motion.div>
 
               <motion.div 
                 initial={{ height: 0, opacity: 0 }}
-                animate={{ height: '70%', opacity: 1 }}
+                animate={{ height: p2.score > p1.score ? '100%' : p2.score < p1.score ? '70%' : '85%', opacity: 1 }}
                 transition={{ duration: 1, delay: 0.6 }}
-                className={`flex-1 flex flex-col items-center border-t border-l border-r rounded-t-3xl pt-8 relative overflow-hidden ${p2.score <= p1.score ? 'bg-gradient-to-t from-zinc-200 to-zinc-50 border-zinc-200 shadow-[inset_0_2px_15px_rgba(255,255,255,1)] text-zinc-900' : 'bg-gradient-to-t from-amber-200 to-amber-50 border-amber-200 shadow-[inset_0_2px_15px_rgba(255,255,255,1)] text-amber-950'}`}
+                className={`flex-1 flex flex-col items-center border-t border-l border-r rounded-t-3xl pt-8 relative overflow-hidden ${p2.score < p1.score ? 'bg-gradient-to-t from-zinc-200 to-zinc-50 border-zinc-200 shadow-[inset_0_2px_15px_rgba(255,255,255,1)] text-zinc-900' : 'bg-gradient-to-t from-amber-200 to-amber-50 border-amber-200 shadow-[inset_0_2px_15px_rgba(255,255,255,1)] text-amber-950'}`}
               >
-                <span className={`text-lg md:text-2xl font-medium mb-1 truncate w-full text-center px-2 ${p2.score > p1.score ? 'text-amber-950' : 'text-zinc-900'}`}>{p2.name}</span>
-                <span className={`text-sm font-mono mb-auto ${p2.score > p1.score ? 'text-amber-700/80' : 'text-zinc-500'}`}>{p2.score} pt</span>
-                <span className={`text-6xl font-light mb-8 relative z-10 ${p2.score > p1.score ? 'text-amber-900/20' : 'text-zinc-300'}`}>
-                  {p2.score > p1.score ? '1' : '2'}
+                <span className={`text-lg md:text-2xl font-medium mb-1 truncate w-full text-center px-2 ${p2.score >= p1.score ? 'text-amber-950' : 'text-zinc-900'}`}>{p2.name}</span>
+                <span className={`text-sm font-mono mb-auto ${p2.score >= p1.score ? 'text-amber-700' : 'text-zinc-600'}`}>{p2.score} pt</span>
+                <span className={`text-6xl font-bold mb-8 relative z-10 ${p2.score >= p1.score ? 'text-amber-700/80' : 'text-zinc-500/80'}`}>
+                  {p2.score > p1.score ? '1' : p2.score < p1.score ? '2' : '1'}
                 </span>
               </motion.div>
             </div>
