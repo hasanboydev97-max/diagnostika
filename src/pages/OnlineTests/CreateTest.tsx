@@ -262,14 +262,15 @@ export default function CreateTest() {
             Orqaga
           </button>
           <div className="text-sm font-semibold tracking-tight">Yangi Test Yaratish</div>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-1.5 bg-zinc-900 text-white px-3 py-1.5 rounded-md text-xs font-medium hover:bg-zinc-800 disabled:opacity-50 transition-colors"
-          >
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            Saqlash
-          </button>
+          <div className="scale-[0.85] origin-right">
+            <MagicButton
+              onClick={handleSave}
+              disabled={saving}
+              loading={saving}
+              label="Saqlash"
+              icon={<Save />}
+            />
+          </div>
         </div>
       </header>
 
