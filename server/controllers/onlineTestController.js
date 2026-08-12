@@ -469,7 +469,18 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
     }
 
     // Removed sanitizeQuestions. The robust generation handles quality now.
-    const sanitizedQuestions = rawQuestions;
+    // Shuffle options to ensure the correct answer is randomly distributed among options (A, B, C, D)
+    const sanitizedQuestions = rawQuestions.map(q => {
+      if (Array.isArray(q.options)) {
+        const shuffled = [...q.options];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        q.options = shuffled;
+      }
+      return q;
+    });
 
     // Increment daily AI count for teacher
     teacher.lastAiGenDate = todayStr;

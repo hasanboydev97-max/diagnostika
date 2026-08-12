@@ -109,33 +109,67 @@ export default function TakeTest() {
 
   // Auto-save to localStorage
   useEffect(() => {
-    if (started) {
+    if (started && test?.questions) {
       localStorage.setItem(SAVE_KEY, JSON.stringify({
-        studentName, answers, timeLeft, started, currentQIndex
+        studentName, answers, timeLeft, started, currentQIndex, shuffledQuestions: test.questions
       }));
     }
-  }, [answers, timeLeft, started, studentName, currentQIndex]);
+  }, [answers, timeLeft, started, studentName, currentQIndex, test?.questions]);
 
   const fetchTest = async () => {
     try {
+      let fetchedTest = null;
       if (testId) {
         const localTest = await db.getDiagnosticTest(testId);
         if (localTest) {
-          setTest({
+          fetchedTest = {
             ...localTest,
             isDiagnostic: true,
             title: `${localTest.grade}-sinf Diagnostika Testi`,
             subject: 'Diagnostika'
-          });
-          setLoading(false);
-          return;
+          };
         }
       }
-      const res = await fetch(`${API_URL}/online-tests/${testId}`);
-      if (!res.ok) throw new Error('Test not found');
-      const data = await res.json();
-      setTest(data);
-      checkTimeLimit(data);
+      
+      if (!fetchedTest) {
+        const res = await fetch(`${API_URL}/online-tests/${testId}`);
+        if (!res.ok) throw new Error('Test not found');
+        fetchedTest = await res.json();
+      }
+
+      // Check localStorage for previously shuffled questions
+      const saved = localStorage.getItem(SAVE_KEY);
+      let previouslyShuffled = null;
+      if (saved) {
+        try {
+          const p = JSON.parse(saved);
+          if (p.shuffledQuestions) {
+            previouslyShuffled = p.shuffledQuestions;
+          }
+        } catch (e) {}
+      }
+
+      if (previouslyShuffled) {
+        fetchedTest.questions = previouslyShuffled;
+      } else if (fetchedTest.questions) {
+        // Shuffle questions and their options for new test taker
+        const shuffleArray = (arr: any[]) => {
+          const shuffled = [...arr];
+          for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+          }
+          return shuffled;
+        };
+        
+        fetchedTest.questions = shuffleArray(fetchedTest.questions).map((q: any) => ({
+          ...q,
+          options: Array.isArray(q.options) ? shuffleArray(q.options) : q.options
+        }));
+      }
+
+      setTest(fetchedTest);
+      checkTimeLimit(fetchedTest);
     } catch (error) {
       console.error(error);
       toast.error('Test topilmadi');
