@@ -219,7 +219,7 @@ export default function TestDetails() {
     return (
       <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex flex-col items-center justify-center font-sans text-[#111111]">
         <MeshGradient />
-        <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 rounded-2xl relative z-10 text-center">
+        <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 md:p-8 rounded-2xl relative z-10 text-center">
           <h2 className="text-lg font-medium mb-4">Test topilmadi</h2>
           <button onClick={() => navigate('/online-tests')} className="text-xs font-semibold uppercase tracking-wider text-gray-500 hover:text-black transition-colors">
             Dashboard'ga qaytish
@@ -239,7 +239,7 @@ export default function TestDetails() {
       
       {/* Header */}
       <header className="border-b border-white/50 bg-white/60 backdrop-blur-xl sticky top-0 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-3 md:px-6 h-14 flex items-center justify-between">
           <button 
             onClick={() => navigate('/online-tests')}
             className="flex items-center gap-2 text-xs font-medium text-zinc-500 hover:text-zinc-900 transition-colors"
@@ -252,7 +252,7 @@ export default function TestDetails() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 relative z-20">
+      <div className="max-w-7xl mx-auto px-3 md:px-6 py-6 md:py-8 relative z-20">
 
         {/* Print-only View (Hidden on screen) */}
         <div id="print-view" className="hidden print:block mb-8 bg-white p-8">

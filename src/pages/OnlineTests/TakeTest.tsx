@@ -465,7 +465,7 @@ export default function TakeTest() {
           animate={{ x: mousePosition.x - 32, y: mousePosition.y - 32, scale: isHovering ? 1.5 : 1 }}
           transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
         />
-        <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-10 md:p-12 rounded-[2rem] max-w-lg w-full relative z-10">
+        <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-12 rounded-[2rem] max-w-lg w-full relative z-10">
           <button onClick={() => navigate('/online-tests')} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
             className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 hover:text-black transition-colors mb-10">
             <ArrowLeft size={14} /> Ortga
@@ -536,7 +536,7 @@ export default function TakeTest() {
       </div>
 
       {/* ── Header ── */}
-      <header className="border-b border-black/5 px-6 md:px-12 h-16 flex items-center justify-between sticky top-0 bg-[#fdfdfd] z-20">
+      <header className="border-b border-black/5 px-3 md:px-12 h-16 flex items-center justify-between sticky top-0 bg-[#fdfdfd] z-20">
         <div className="flex flex-col">
           <h2 className="text-sm font-medium text-black tracking-tight">{test.title}</h2>
           <p className="text-[9px] font-bold text-gray-600 uppercase tracking-[0.2em] mt-1">{studentName}</p>
@@ -553,7 +553,7 @@ export default function TakeTest() {
       </header>
 
       {/* ── Main ── */}
-      <main className="flex-1 w-full max-w-6xl mx-auto px-6 md:px-12 py-8 relative z-10 flex flex-col lg:flex-row gap-12 lg:gap-24 h-full">
+      <main className="flex-1 w-full max-w-6xl mx-auto px-3 md:px-12 py-6 md:py-8 relative z-10 flex flex-col lg:flex-row gap-8 lg:gap-24 h-full">
 
         {/* Question Palette */}
         <div className="lg:w-64 shrink-0 order-2 lg:order-1">

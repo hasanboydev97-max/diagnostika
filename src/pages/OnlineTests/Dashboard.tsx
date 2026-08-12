@@ -84,7 +84,7 @@ export default function OnlineTestsDashboard() {
       
       {/* Header */}
       <header className="border-b border-white/50 bg-white/60 backdrop-blur-xl sticky top-0 z-20 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-2.5 md:px-6 h-16 flex items-center justify-between">
           {/* Portal Title */}
           <div className="flex items-center gap-3">
             <div>
@@ -153,7 +153,7 @@ export default function OnlineTestsDashboard() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8 relative z-10">
+      <main className="max-w-7xl mx-auto px-2.5 md:px-6 py-6 md:py-8 relative z-10">
         {/* Pending Subscription Request Banner */}
         {teacher?.planStatus === 'pending' && (
           <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-4">
@@ -246,7 +246,7 @@ export default function OnlineTestsDashboard() {
                   }}
                   key={test.id}
                   onClick={() => navigate(`/online-tests/details/${test.id}`)}
-                  className="bg-white/80 backdrop-blur-xl border border-black/5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-6 hover:bg-white hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:border-black/10 transition-all cursor-pointer group relative flex flex-col h-full overflow-hidden"
+                  className="bg-white/80 backdrop-blur-xl border border-black/5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-4 md:p-6 hover:bg-white hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:border-black/10 transition-all cursor-pointer group relative flex flex-col h-full overflow-hidden"
                 >
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#111111]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   

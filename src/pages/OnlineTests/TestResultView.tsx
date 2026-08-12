@@ -139,7 +139,7 @@ export default function TestResultView() {
   if (!result || !activeTest) return (
     <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex flex-col items-center justify-center text-[#111111]">
       <MeshGradient />
-      <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 rounded-2xl relative z-10 text-center">
+      <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 md:p-8 rounded-2xl relative z-10 text-center">
         <h2 className="text-xl font-medium mb-4 text-black">Natija topilmadi</h2>
         <button onClick={() => navigate('/online-tests')} className="text-sm font-medium hover:underline text-gray-500 hover:text-black">
           Dashboard'ga qaytish
@@ -169,7 +169,7 @@ export default function TestResultView() {
   return (
     <div className="min-h-screen relative overflow-x-hidden font-sans pb-20 bg-[#fdfdfd] text-[#111111]">
       <MeshGradient />
-      <div className="max-w-7xl mx-auto px-6 py-12 relative z-10">
+      <div className="max-w-7xl mx-auto px-3 md:px-6 py-6 md:py-12 relative z-10">
 
         <button onClick={() => navigate('/online-tests')} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors mb-10">
           <ArrowLeft size={16} /> Dashboard
@@ -182,7 +182,7 @@ export default function TestResultView() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:col-span-2 bg-white/60 backdrop-blur-xl rounded-[2rem] border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 flex flex-col h-full"
+            className="lg:col-span-2 bg-white/60 backdrop-blur-xl rounded-[2rem] border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 md:p-8 flex flex-col h-full"
           >
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 border-b border-black/10 pb-8 mb-8">
               <div className="flex-1">
@@ -238,7 +238,7 @@ export default function TestResultView() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:col-span-1 bg-white rounded-2xl border border-gray-200 shadow-sm p-8 flex flex-col h-[500px]"
+            className="lg:col-span-1 bg-white rounded-2xl border border-gray-200 shadow-sm p-5 md:p-8 flex flex-col h-[500px]"
           >
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Mavzular Tahlili</h3>
             <p className="text-xs text-gray-500 mb-6 shrink-0">Qaysi sohalarda kamchiliklar borligini aniqlang</p>

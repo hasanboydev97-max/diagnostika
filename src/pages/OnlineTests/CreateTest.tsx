@@ -253,7 +253,7 @@ export default function CreateTest() {
       
       {/* Header */}
       <header className="border-b border-white/50 bg-white/60 backdrop-blur-xl sticky top-0 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-3 md:px-6 h-14 flex items-center justify-between">
           <button 
             onClick={() => navigate('/online-tests')}
             className="flex items-center gap-2 text-xs font-medium text-zinc-500 hover:text-zinc-900 transition-colors"
@@ -274,10 +274,10 @@ export default function CreateTest() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8 relative z-20">
+      <main className="max-w-7xl mx-auto px-3 md:px-6 py-6 md:py-8 relative z-20">
         
         {/* Settings Section */}
-        <section className="mb-10 bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-6 md:p-8">
+        <section className="mb-10 bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-4 md:p-8">
           <div className="flex items-center gap-2 mb-6 border-b border-white/50 pb-4">
             <Settings2 size={18} className="text-zinc-600" />
             <h2 className="text-base font-semibold">Test Sozlamalari</h2>
