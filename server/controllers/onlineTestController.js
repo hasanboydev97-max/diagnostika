@@ -548,12 +548,14 @@ Iltimos, quyidagi JSON formatida qat'iy javob qaytaring (Boshqa matn yozmang!):
       "correctOption": "A variant",
       "subtopic": "qaysi zaif mavzuga tegishliligi"
     }
-  ]
+  ],
+  "studentGuide": "Markdown formatidagi batafsil umumiy o'quv qo'llanma matni..."
 }
 Qoidalar:
 1. "weakTopics" ichida eng yuqori "Xato qilish ko'rsatkichi"ga ega bo'lgan 2-3 ta mavzuni foizi bilan yozing.
 2. "studentPlans" ro'yxatida faqatgina yuqorida nomi keltirilgan zaif o'quvchilarga (agar mavjud bo'lsa) nima qilishlari kerakligini aniq ko'rsating.
 3. "generatedQuestions" ichida aynan xato qilingan zaif mavzular bo'yicha jami 5 ta yepyangi savol bo'lsin.
+4. "studentGuide" ichida ushbu testdagi eng muhim mavzular, o'quvchilar eng ko'p xato qilgan joylar tahlili, qisqacha nazariy tushuntirishlar va o'rganish bo'yicha amaliy maslahatlarni qamrab oluvchi Mukammal (Senior level) kengaytirilgan qo'llanmani Markdown formatida yozing. Kamida 300 so'zdan iborat bo'lsin.
 `;
 
     const aiRes = await model.generateContent(prompt);

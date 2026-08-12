@@ -6,6 +6,7 @@ import MeshGradient from '../../components/ui/MeshGradient';
 import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -153,6 +154,55 @@ export default function TestDetails() {
   const handleCreateNewTestFromAnalysis = () => {
      if (!analysisResult?.generatedQuestions) return;
      navigate('/online-tests/create', { state: { importedQuestions: analysisResult.generatedQuestions } });
+  };
+
+  const handleExportGuideToWord = async () => {
+    if (!analysisResult?.studentGuide || !test) return;
+    try {
+      const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import('docx');
+      
+      const lines = analysisResult.studentGuide.split('\n');
+      const children = [
+        new Paragraph({
+          text: `${test.title} - Kengaytirilgan O'quv Qo'llanmasi`,
+          heading: HeadingLevel.HEADING_1,
+          spacing: { after: 400 }
+        })
+      ];
+
+      lines.forEach((line: string) => {
+        const tLine = line.trim();
+        if (tLine.startsWith('# ')) {
+          children.push(new Paragraph({ text: tLine.replace('# ', ''), heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 }}));
+        } else if (tLine.startsWith('## ')) {
+          children.push(new Paragraph({ text: tLine.replace('## ', ''), heading: HeadingLevel.HEADING_2, spacing: { before: 300, after: 150 }}));
+        } else if (tLine.startsWith('### ')) {
+          children.push(new Paragraph({ text: tLine.replace('### ', ''), heading: HeadingLevel.HEADING_3, spacing: { before: 200, after: 100 }}));
+        } else if (tLine.startsWith('- ')) {
+          children.push(new Paragraph({ text: tLine, bullet: { level: 0 }, spacing: { after: 100 }}));
+        } else if (tLine !== '') {
+          children.push(new Paragraph({ children: [new TextRun({ text: tLine })], spacing: { after: 120 } }));
+        }
+      });
+
+      const doc = new Document({
+        sections: [{ properties: {}, children }]
+      });
+
+      const blob = await Packer.toBlob(doc);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${test.title}_Qollanma.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Qo'llanma Word formatida yuklandi!");
+    } catch (error) {
+      console.error(error);
+      toast.error('Word hujjatni yaratishda xatolik yuz berdi');
+    }
   };
 
   if (loading) {
@@ -473,6 +523,24 @@ export default function TestDetails() {
                               </div>
                             </div>
                           ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Comprehensive Student Guide */}
+                    {analysisResult.studentGuide && (
+                      <div className="border-t border-black/10 pt-12 mt-12">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] block">O'quvchilar uchun Umumiy Qo'llanma</span>
+                          <button
+                            onClick={handleExportGuideToWord}
+                            className="bg-[#111111] text-[#fdfdfd] px-6 py-2 text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-black transition-colors flex items-center gap-2"
+                          >
+                            <Download size={14} /> Word qilib yuklab olish
+                          </button>
+                        </div>
+                        <div className="prose prose-sm max-w-none text-[#111111]">
+                          <ReactMarkdown>{analysisResult.studentGuide}</ReactMarkdown>
                         </div>
                       </div>
                     )}
