@@ -204,7 +204,7 @@ export default function LivePlayer() {
           <motion.div 
             key="active"
             initial="initial" animate="animate" exit="exit" variants={fadeUp}
-            className="flex-1 flex flex-col container mx-auto max-w-4xl p-6"
+            className="flex-1 flex flex-col w-full mx-auto max-w-[95%] p-4 md:p-6"
           >
             <div className="text-center mb-10 md:mb-12 pt-8 md:pt-12">
               <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4">Savol</p>

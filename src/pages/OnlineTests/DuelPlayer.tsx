@@ -377,7 +377,7 @@ export default function DuelPlayer() {
           <motion.div 
             key="active"
             initial="initial" animate="animate" exit="exit" variants={fadeUp}
-            className="flex-1 flex flex-col container mx-auto max-w-5xl py-8 px-6"
+            className="flex-1 flex flex-col w-full mx-auto max-w-[95%] py-8 px-4 md:px-6"
           >
             {/* Progress Header */}
             <div className="grid grid-cols-2 gap-12 border-b border-black/10 pb-8 mb-12">
