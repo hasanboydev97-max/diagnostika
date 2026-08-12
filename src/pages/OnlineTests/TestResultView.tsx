@@ -296,7 +296,7 @@ export default function TestResultView() {
                     hidden: { opacity: 0, y: 18 },
                     visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 130, damping: 22 } }
                   }}
-                  className={`bg-white p-6 rounded-xl border shadow-sm flex flex-col ${
+                  className={`bg-white p-4 md:p-6 rounded-xl border shadow-sm flex flex-col ${
                     isCorrect ? 'border-green-100' : 'border-red-100'
                   }`}
                 >

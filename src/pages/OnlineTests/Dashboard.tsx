@@ -193,9 +193,9 @@ export default function OnlineTestsDashboard() {
         {/* List Section */}
         <div>
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-6 h-[160px] flex flex-col justify-between animate-pulse">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-4 md:p-6 h-[160px] flex flex-col justify-between animate-pulse">
                   <div className="space-y-3 w-full">
                     <div className="flex justify-between">
                        <div className="h-5 bg-zinc-100 rounded-lg w-16"></div>
@@ -236,7 +236,7 @@ export default function OnlineTestsDashboard() {
                 hidden: { opacity: 0 },
                 show: { opacity: 1, transition: { staggerChildren: 0.05 } }
               }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
             >
               {filteredTests.map((test) => (
                 <motion.div

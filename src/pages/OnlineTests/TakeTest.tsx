@@ -425,7 +425,7 @@ export default function TakeTest() {
 
   if (timeStatus === 'early') {
     return (
-      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-6 text-[#111111] cursor-none">
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-3 md:p-6 text-[#111111] cursor-none">
         <MeshGradient />
         <div className="bg-[#fdfdfd] shadow-2xl rounded-[2.5rem] p-12 max-w-sm w-full text-center relative z-10">
           <h1 className="text-xl font-medium text-black mb-2 tracking-tight">Test hali ochilmagan</h1>
@@ -442,7 +442,7 @@ export default function TakeTest() {
 
   if (timeStatus === 'closed') {
     return (
-      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-6 text-[#111111] cursor-none">
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-3 md:p-6 text-[#111111] cursor-none">
         <MeshGradient />
         <div className="bg-[#fdfdfd] shadow-2xl rounded-[2.5rem] p-12 max-w-sm w-full text-center relative z-10">
           <AlertTriangle className="mx-auto text-black mb-6" size={40} strokeWidth={1.5} />
@@ -458,14 +458,14 @@ export default function TakeTest() {
 
   if (!started) {
     return (
-      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-6 font-sans text-[#111111] selection:bg-black selection:text-white cursor-none">
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-3 md:p-6 font-sans text-[#111111] selection:bg-black selection:text-white cursor-none">
         <MeshGradient />
         <motion.div
           className="hidden md:block fixed top-0 left-0 w-16 h-16 rounded-full bg-white mix-blend-difference pointer-events-none z-[9999]"
           animate={{ x: mousePosition.x - 32, y: mousePosition.y - 32, scale: isHovering ? 1.5 : 1 }}
           transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
         />
-        <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-12 rounded-[2rem] max-w-lg w-full relative z-10">
+        <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 md:p-10 rounded-2xl md:rounded-[2rem] max-w-lg w-full relative z-10">
           <button onClick={() => navigate('/online-tests')} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
             className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 hover:text-black transition-colors mb-10">
             <ArrowLeft size={14} /> Ortga

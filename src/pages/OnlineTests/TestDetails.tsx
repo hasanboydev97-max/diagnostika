@@ -275,11 +275,11 @@ export default function TestDetails() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 print:hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 print:hidden">
           
           {/* Sidebar Info */}
-          <div className="lg:col-span-4 flex flex-col gap-5">
-            <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 rounded-2xl">
+          <div className="lg:col-span-4 flex flex-col gap-4 md:gap-6">
+            <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 md:p-6 rounded-2xl">
               <span className="inline-block px-2 py-0.5 bg-zinc-100 text-zinc-600 text-[10px] font-bold uppercase tracking-wider rounded-sm mb-3">
                 {test.subject}
               </span>
@@ -454,7 +454,7 @@ export default function TestDetails() {
               className="bg-[#fdfdfd] border border-black/10 w-full max-w-6xl rounded-none md:rounded-2xl overflow-hidden flex flex-col max-h-[90vh] shadow-[0_20px_60px_rgba(0,0,0,0.1)] relative z-10 selection:bg-black selection:text-white"
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-6 md:p-10 border-b border-black/10 bg-[#fdfdfd]">
+              <div className="flex items-center justify-between p-4 md:p-10 border-b border-black/10 bg-[#fdfdfd]">
                 <div className="flex items-center gap-4 md:gap-6">
                   <div className="w-10 h-10 md:w-12 md:h-12 border border-black/10 bg-[#111111] text-white flex items-center justify-center rounded-none">
                     <Sparkles className="w-5 h-5" />
@@ -474,7 +474,7 @@ export default function TestDetails() {
                 )}
               </div>
               
-              <div className="p-6 md:p-10 overflow-y-auto flex-1 bg-[#fdfdfd]">
+              <div className="p-4 md:p-10 overflow-y-auto flex-1 bg-[#fdfdfd]">
                 {isAnalyzing ? (
                   <div className="flex flex-col items-center justify-center py-20">
                     <div className="w-12 h-12 border-2 border-black/20 border-t-black rounded-full animate-spin mb-4"></div>
@@ -514,9 +514,9 @@ export default function TestDetails() {
                     {analysisResult.studentPlans && analysisResult.studentPlans.length > 0 && (
                       <div>
                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-6 block">O'quvchilar uchun shaxsiy reja</span>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                           {analysisResult.studentPlans.map((plan: any, i: number) => (
-                            <div key={i} className="border border-black/5 p-6 bg-white flex flex-col justify-between hover:border-black/20 transition-colors shadow-sm">
+                            <div key={i} className="border border-black/5 p-4 md:p-6 bg-white flex flex-col justify-between hover:border-black/20 transition-colors shadow-sm">
                               <div>
                                 <h4 className="text-sm font-bold text-black mb-2">{plan.studentName}</h4>
                                 <p className="text-sm text-gray-500 leading-relaxed">{plan.plan}</p>
