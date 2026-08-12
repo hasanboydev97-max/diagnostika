@@ -85,7 +85,10 @@ async function executeResilientAiPrompt(prompt: string): Promise<string> {
     for (const modelName of GEMINI_MODELS) {
       try {
         console.log(`Gemini AI modeli orqali so'rov yuborilmoqda: ${modelName}...`);
-        const model = genAI.getGenerativeModel({ model: modelName });
+        const model = genAI.getGenerativeModel({ 
+          model: modelName,
+          generationConfig: { responseMimeType: "application/json" }
+        });
         const result = await model.generateContent(prompt);
         const text = (await result.response).text();
         if (text && text.trim()) {

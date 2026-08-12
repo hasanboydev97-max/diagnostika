@@ -524,11 +524,34 @@ export const classAnalysis = async (req, res) => {
       }
     });
 
+    function isAnswerCorrect(userAns, correctOpt, options = []) {
+      if (!userAns || !correctOpt) return false;
+      const u = String(userAns).trim().toLowerCase();
+      const c = String(correctOpt).trim().toLowerCase();
+      if (u === c) return true;
+      const lm = { a: 0, b: 1, c: 2, d: 3 };
+      if (lm[c] !== undefined && options[lm[c]]) {
+        if (String(options[lm[c]]).trim().toLowerCase() === u) return true;
+      }
+      if (lm[u] !== undefined && options[lm[u]]) {
+        if (String(options[lm[u]]).trim().toLowerCase() === c) return true;
+      }
+      return false;
+    }
+
     // Calculate stats per question
     const stats = test.questions.map((q, i) => {
       let correct = 0;
       results.forEach(r => {
-        if (r.answers && r.answers[i] === q.correctOption) correct++;
+        if (!r.questions) return;
+        const shuffledIndex = r.questions.findIndex(rq => rq.questionText === q.questionText);
+        if (shuffledIndex !== -1) {
+          const studentAns = (r.answers || {})[shuffledIndex];
+          const rq = r.questions[shuffledIndex];
+          if (isAnswerCorrect(studentAns, rq.correctOption, rq.options || [])) {
+            correct++;
+          }
+        }
       });
       const perc = Math.round((correct / results.length) * 100);
       return {
