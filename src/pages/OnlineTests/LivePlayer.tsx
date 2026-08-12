@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -89,6 +89,48 @@ export default function LivePlayer() {
     }, 2500);
   };
 
+  const violationsRef = useRef(0);
+
+  // Proctoring: strict rules in active live test
+  useEffect(() => {
+    if (status !== 'active') return;
+
+    const handleViolation = () => {
+      violationsRef.current += 1;
+      if (violationsRef.current === 1) {
+        toast.error("OGOHLANTIRISH: Iltimos, test vaqtida oynani tark etmang! Takrorlansa chetlashtirilasiz.", {
+          duration: 6000,
+          position: 'top-center',
+          style: { background: '#f59e0b', color: '#fff', border: 'none' }
+        });
+      } else {
+        toast.error("QOIDABUZARLIK! Oynani tark etganingiz sababli chetlashtirildingiz.", {
+          duration: 5000,
+          position: 'top-center'
+        });
+        if (socket) socket.disconnect();
+        navigate('/');
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.hidden) handleViolation();
+    };
+
+    const onWindowBlur = () => {
+      handleViolation();
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('blur', onWindowBlur);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('blur', onWindowBlur);
+    };
+  }, [status, socket, navigate]);
+
+
   const fadeUp = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
@@ -164,14 +206,14 @@ export default function LivePlayer() {
             initial="initial" animate="animate" exit="exit" variants={fadeUp}
             className="flex-1 flex flex-col container mx-auto max-w-4xl p-6"
           >
-            <div className="text-center mb-16 pt-12">
+            <div className="text-center mb-10 md:mb-12 pt-8 md:pt-12">
               <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4">Savol</p>
-              <h3 className="text-2xl md:text-4xl font-sans font-medium leading-relaxed">
+              <h3 className="text-xl md:text-2xl font-sans font-medium leading-relaxed max-w-4xl mx-auto">
                 <FormattedText content={test.questions[currentQuestionIndex]?.questionText || ''} />
               </h3>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-auto flex-1 w-full max-h-[65vh]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-auto flex-1 w-full">
               {test.questions[currentQuestionIndex]?.options.map((opt: string, i: number) => {
                 const colors = [
                   'bg-[#e21b3c] border-[#b0132c] text-white shadow-[0_8px_0_0_#b0132c,0_15px_20px_rgba(0,0,0,0.2),inset_0_2px_0_rgba(255,255,255,0.3)] hover:bg-[#eb2b4c] hover:-translate-y-1 hover:shadow-[0_12px_0_0_#b0132c,0_20px_25px_rgba(0,0,0,0.2),inset_0_2px_0_rgba(255,255,255,0.3)] active:translate-y-[8px] active:shadow-[0_0px_0_0_#b0132c,0_0px_0px_rgba(0,0,0,0.2)]',

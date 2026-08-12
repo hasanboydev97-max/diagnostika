@@ -166,13 +166,28 @@ export default function DuelPlayer() {
     }
   };
 
+  const violationsRef = useRef(0);
+
   // Proctoring: strict rules in active duel
   useEffect(() => {
     if (status !== 'active' || isWaitingForOpponent) return;
 
     const handleDuelViolation = () => {
-      if (socketRef.current) {
-        socketRef.current.emit('duel_disqualify', { pin: pinRef.current, name: nameRef.current });
+      violationsRef.current += 1;
+      if (violationsRef.current === 1) {
+        toast.error("OGOHLANTIRISH: Iltimos, test vaqtida oynani tark etmang! Takrorlansa chetlashtirilasiz.", {
+          duration: 6000,
+          position: 'top-center',
+          style: { background: '#f59e0b', color: '#fff', border: 'none' }
+        });
+      } else {
+        toast.error("QOIDABUZARLIK! Oynani tark etganingiz sababli chetlashtirildingiz.", {
+          duration: 5000,
+          position: 'top-center'
+        });
+        if (socketRef.current) {
+          socketRef.current.emit('duel_disqualify', { pin: pinRef.current, name: nameRef.current });
+        }
       }
     };
 
@@ -412,15 +427,15 @@ export default function DuelPlayer() {
             ) : (
               <>
                 {/* Question */}
-                <div className="mb-16">
+                <div className="mb-10 md:mb-12">
                   <p className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-4 text-center">Savol {currentQIndex + 1}</p>
-                  <h2 className="text-3xl md:text-4xl font-sans font-medium leading-relaxed text-center max-w-3xl mx-auto">
+                  <h2 className="text-xl md:text-2xl font-sans font-medium leading-relaxed text-center max-w-4xl mx-auto">
                     <FormattedText content={test.questions[currentQIndex]?.questionText} />
                   </h2>
                 </div>
                 
                 {/* Options */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-auto flex-1 w-full max-h-[65vh]">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-auto flex-1 w-full">
                   {test.questions[currentQIndex]?.options.map((opt: string, i: number) => {
                     const isCorrect = opt === test.questions[currentQIndex]?.correctOption;
                     const isSelected = selectedOptionIndex === i;
