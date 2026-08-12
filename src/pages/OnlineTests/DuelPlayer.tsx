@@ -77,8 +77,26 @@ export default function DuelPlayer() {
       setIsCreator(true);
       setName(state.studentName);
       newSocket.emit('create_duel', { testId: state.testId, name: state.studentName });
+      // Clear location state so refresh doesn't recreate the duel
+      navigate(location.pathname + location.search, { replace: true, state: {} });
     } else {
-      setStatus('login');
+      const saved = localStorage.getItem('duel_state');
+      let p = null;
+      try { if (saved) p = JSON.parse(saved); } catch(e){}
+      
+      if (p && p.pin && p.name && p.status === 'lobby') {
+        setPin(p.pin);
+        setName(p.name);
+        setIsCreator(p.isCreator);
+        setStatus('lobby');
+        // Update refs immediately for the connect event
+        pinRef.current = p.pin;
+        nameRef.current = p.name;
+        isCreatorRef.current = p.isCreator;
+        statusRef.current = 'lobby';
+      } else {
+        setStatus('login');
+      }
     }
 
     newSocket.on('error', (msg) => {
@@ -129,6 +147,15 @@ export default function DuelPlayer() {
       newSocket.disconnect();
     };
   }, []);
+
+  // Save to localStorage when in lobby to allow rejoining on refresh
+  useEffect(() => {
+    if (status === 'lobby') {
+      localStorage.setItem('duel_state', JSON.stringify({ pin, name, isCreator, status }));
+    } else if (status === 'finished' || status === 'login') {
+      localStorage.removeItem('duel_state');
+    }
+  }, [pin, name, isCreator, status]);
 
   const fetchTest = async (id: string) => {
     try {

@@ -255,6 +255,33 @@ export const setupSockets = (httpServer) => {
           }
         }
       }
+
+      // Duel disconnect handling
+      for (const [pin, room] of duelRooms.entries()) {
+        if (room.status === 'active') {
+          if (room.player1.id === socket.id) {
+            room.player1.cheated = true;
+            room.player1.finished = true;
+            room.player1.score = 0;
+            io.to(pin).emit('duel_ended', {
+              player1: room.player1,
+              player2: room.player2,
+              disqualifiedPlayer: room.player1.name
+            });
+            duelRooms.delete(pin);
+          } else if (room.player2 && room.player2.id === socket.id) {
+            room.player2.cheated = true;
+            room.player2.finished = true;
+            room.player2.score = 0;
+            io.to(pin).emit('duel_ended', {
+              player1: room.player1,
+              player2: room.player2,
+              disqualifiedPlayer: room.player2.name
+            });
+            duelRooms.delete(pin);
+          }
+        }
+      }
     });
   });
 };

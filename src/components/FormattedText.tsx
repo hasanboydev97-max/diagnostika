@@ -14,7 +14,22 @@ export default function FormattedText({ content, className = '' }: FormattedText
   // AI-dan kelgan ba'zi xom qochirilgan (escaped) HTML elementlarni tozalash (agar kerak bo'lsa)
   // Ammo odatda react-markdown buni o'zi xavfsiz bajara oladi. 
   // Shunchaki o'zbek alifbosidagi o' va g' uchun qo'shimcha xavfsizlik (ixtiyoriy).
-  const safeContent = String(content);
+  let safeContent = String(content);
+
+  // --- Senior Level: AI tomonidan generatsiya qilingan noto'g'ri matematik ifodalarni to'g'irlash ---
+  // 1. Noto'g'ri kasr vergulini to'g'irlash: ,frac{...} -> \frac{...}
+  safeContent = safeContent.replace(/,frac\{/g, '\\frac{');
+
+  // 2. Chala qolib ketgan blok ifodalarni yopish: $$ ... $ -> $$ ... $$
+  safeContent = safeContent.replace(/\$\$([^$]+?)\$(?!\$)/g, '$$$$$1$$$$');
+
+  // 3. Ochiq dollar belgisi unutilgan qismlarni yopish: masalan 42\text{ da}$ yoki 2\frac{1}{2}$
+  // (\d+...) orqali raqam bilan boshlanib, $ bilan tugaydigan so'zlarni $...$ ichiga olamiz.
+  safeContent = safeContent.replace(/(?<!\$)(?<!\d)(\d+(?:,\d+)?(?:\\frac\{[^}]*\}\{[^}]*\})?(?:\s*\\text\{[^}]*\})?)\$(?!\$)/g, '$$$1$$');
+  
+  // 4. Huddi shunday, agar $$ bilan tugasa: 12\text{ da}$$ -> $$12\text{ da}$$
+  safeContent = safeContent.replace(/(?<!\$)(?<!\d)(\d+(?:,\d+)?(?:\\frac\{[^}]*\}\{[^}]*\})?(?:\s*\\text\{[^}]*\})?)\$\$/g, '$$$$$1$$$$');
+  // --------------------------------------------------------------------------------------------------
 
   return (
     <div className={`math-rendered ${className}`}>
