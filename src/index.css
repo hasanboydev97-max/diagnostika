@@ -4,15 +4,11 @@
 @theme {
   --color-accent: #111111;
   --color-accent-hover: #000000;
-  
   --color-neutral-main: #111111;
   --color-neutral-secondary: #777777;
-  
   --color-background-main: #FDFDFD;
   --color-background-card: #FFFFFF;
-  
   --color-border: #E5E5E5;
-  
   --font-sans: 'Space Grotesk', system-ui, sans-serif;
   --font-display: 'Clash Display', 'IgraSans', system-ui, sans-serif;
 }
@@ -32,7 +28,6 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
     font-weight: 600;
@@ -43,7 +38,6 @@
 .transition-premium {
   transition: all 400ms cubic-bezier(0.87, 0, 0.13, 1);
 }
-
 .hover-scale-premium {
   transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -53,318 +47,295 @@
 .premium-gradient {
   background: linear-gradient(135deg, #222222 0%, #000000 100%);
 }
-
 .premium-card-shadow {
   box-shadow: 0 4px 20px -2px rgba(0,0,0,0.05);
-  transition: box-shadow 400ms cubic-bezier(0.87,0,0.13,1), transform 400ms cubic-bezier(0.87,0,0.13,1);
+  transition: box-shadow 400ms cubic-bezier(0.87,0,0.13,1),
+              transform  400ms cubic-bezier(0.87,0,0.13,1);
 }
 .premium-card-shadow:hover {
   box-shadow: 0 8px 30px -4px rgba(0,0,0,0.10);
   transform: translateY(-2px);
 }
 
-::-webkit-scrollbar       { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #E5E5E5; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #BBBBBB; }
+::-webkit-scrollbar       { width:6px; height:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:#E5E5E5; border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:#BBBBBB; }
 
-@media (min-width: 768px) {
-  * { cursor: none !important; }
-}
+@media (min-width:768px) { * { cursor: none !important; } }
 
 /* ================================================================
-   MAGIC BUTTON  -  Senior-level premium pill button
-   Variants: primary (dark)  |  ghost (light bg)  |  danger (red)
+   MAGIC BUTTON  —  premium flat-dark button
+   Inspired by the app original: w-full bg-[#111] uppercase tracking-widest
    ================================================================ */
 
-.magic-btn-wrapper {
-  display: inline-flex;
-  position: relative;
-}
-
 .magic-btn {
-  --mr: 100px;
-  --mt: 0.26s;
-  --me: cubic-bezier(0.4, 0, 0.2, 1);
-  --mhue: 210deg;
-  --mbg: #111111;
-  --mbd: rgba(255,255,255,0.14);
-  --mtxt: rgba(255,255,255,0.78);
-
+  /* layout — matches original app button pattern */
   position: relative;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 0.6em 1.5em 0.6em 1.1em;
-  border-radius: var(--mr);
-  border: 1px solid var(--mbd);
-  background: var(--mbg);
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9em 1.4em;
+  border-radius: 0px;        /* sharp corners — original app style */
+  border: none;
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
-  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
-  font-size: 0.875rem;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  text-decoration: none;
-  isolation: isolate;
   overflow: hidden;
 
+  /* typography — small caps, very wide tracking */
+  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+
+  /* tokens */
+  --mbg: #111111;
+  --mtxt: rgba(255,255,255,0.80);
+  --mt: 0.22s;
+  --me: cubic-bezier(0.4, 0, 0.2, 1);
+
+  background: var(--mbg);
+
+  /* inner highlight — top edge sheen for depth */
   box-shadow:
-    inset 0  1px 0   rgba(255,255,255,0.22),
-    inset 0  2px 5px rgba(255,255,255,0.08),
-    inset 0 -1px 0   rgba(0,0,0,0.16),
-    0 2px  6px rgba(0,0,0,0.26),
-    0 6px 16px rgba(0,0,0,0.18),
-    0 1px  2px rgba(0,0,0,0.30);
+    inset 0  1px 0   rgba(255,255,255,0.16),
+    inset 0  2px 4px rgba(255,255,255,0.06),
+    inset 0 -1px 0   rgba(0,0,0,0.20);
 
   transition:
-    background   var(--mt) var(--me),
-    border-color var(--mt) var(--me),
-    box-shadow   var(--mt) var(--me),
-    transform    var(--mt) var(--me),
-    opacity      var(--mt) var(--me);
+    background  var(--mt) var(--me),
+    box-shadow  var(--mt) var(--me),
+    opacity     var(--mt) var(--me);
 }
 
-/* inner top-glass sheen */
+/* Glass sheen overlay */
 .magic-btn::before {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: inherit;
   background: linear-gradient(to bottom,
-    rgba(255,255,255,0.18) 0%,
-    rgba(255,255,255,0.04) 40%,
-    transparent 100%);
+    rgba(255,255,255,0.10) 0%,
+    transparent 60%);
   pointer-events: none;
-  z-index: 0;
+  transition: opacity var(--mt) var(--me);
 }
 
-/* hover shimmer sweep */
+/* Shimmer on hover */
 .magic-btn::after {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(135deg,
-    transparent 0%,
-    rgba(255,255,255,0.11) 50%,
-    transparent 100%);
+  background: linear-gradient(105deg,
+    transparent 30%,
+    rgba(255,255,255,0.07) 50%,
+    transparent 70%);
   background-size: 200% 100%;
   background-position: -100% 0;
   pointer-events: none;
-  z-index: 0;
   opacity: 0;
-  transition: background-position 0.55s var(--me), opacity var(--mt) var(--me);
+  transition: background-position 0.5s var(--me), opacity var(--mt) var(--me);
 }
 
-/* Icon */
+/* Left group: icon + text */
+.magic-btn-left {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Label */
+.magic-btn-label {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Animated letters */
+.magic-btn-letter {
+  display: inline-block;
+  color: var(--mtxt);
+  animation: mb-letter-pulse 3s ease-in-out infinite;
+  transition: color var(--mt) var(--me), text-shadow var(--mt) var(--me);
+}
+@keyframes mb-letter-pulse {
+  0%,100% { color: rgba(255,255,255,0.75); text-shadow: none; }
+  50%      { color: rgba(255,255,255,0.98); text-shadow: 0 0 6px rgba(255,255,255,0.55); }
+}
+.magic-btn-letter:nth-child(1)  { animation-delay: 0.00s }
+.magic-btn-letter:nth-child(2)  { animation-delay: 0.06s }
+.magic-btn-letter:nth-child(3)  { animation-delay: 0.12s }
+.magic-btn-letter:nth-child(4)  { animation-delay: 0.18s }
+.magic-btn-letter:nth-child(5)  { animation-delay: 0.24s }
+.magic-btn-letter:nth-child(6)  { animation-delay: 0.30s }
+.magic-btn-letter:nth-child(7)  { animation-delay: 0.36s }
+.magic-btn-letter:nth-child(8)  { animation-delay: 0.42s }
+.magic-btn-letter:nth-child(9)  { animation-delay: 0.48s }
+.magic-btn-letter:nth-child(10) { animation-delay: 0.54s }
+.magic-btn-letter:nth-child(11) { animation-delay: 0.60s }
+.magic-btn-letter:nth-child(12) { animation-delay: 0.66s }
+.magic-btn-letter:nth-child(13) { animation-delay: 0.72s }
+.magic-btn-letter:nth-child(14) { animation-delay: 0.78s }
+.magic-btn-letter:nth-child(15) { animation-delay: 0.84s }
+.magic-btn-letter:nth-child(16) { animation-delay: 0.90s }
+.magic-btn-letter:nth-child(17) { animation-delay: 0.96s }
+.magic-btn-letter:nth-child(18) { animation-delay: 1.02s }
+.magic-btn-letter:nth-child(19) { animation-delay: 1.08s }
+.magic-btn-letter:nth-child(20) { animation-delay: 1.14s }
+.magic-btn-letter:nth-child(21) { animation-delay: 1.20s }
+.magic-btn-letter:nth-child(22) { animation-delay: 1.26s }
+.magic-btn-letter:nth-child(23) { animation-delay: 1.32s }
+.magic-btn-letter:nth-child(24) { animation-delay: 1.38s }
+
+/* Left icon (before label) */
 .magic-btn-icon {
   position: relative;
   z-index: 2;
   display: flex;
   align-items: center;
-  margin-right: 0.44rem;
   flex-shrink: 0;
-  color: rgba(255,255,255,0.82);
-  animation: mbflicker 2.6s ease-in-out infinite;
-  animation-delay: 0.4s;
-  filter: drop-shadow(0 0 4px rgba(255,255,255,0.42));
-  transition: color var(--mt) var(--me), filter var(--mt) var(--me);
+  color: rgba(255,255,255,0.75);
+  animation: mb-icon-flicker 2.8s ease-in-out infinite;
+  transition: color var(--mt) var(--me), transform var(--mt) var(--me);
 }
-.magic-btn-icon svg {
-  width: 16px; height: 16px;
-  fill: none; stroke: currentColor;
-  stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
-}
-@keyframes mbflicker {
+.magic-btn-icon svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; }
+@keyframes mb-icon-flicker {
   0%,100% { opacity:1; }
-  48%,52% { opacity:0.48; }
+  45%,55% { opacity:0.45; }
 }
+
+/* Right icon */
+.magic-btn-icon-right {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: rgba(255,255,255,0.65);
+  transition: color var(--mt) var(--me), transform var(--mt) var(--me);
+}
+.magic-btn-icon-right svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; }
 
 /* Spinner */
 .magic-btn-spinner {
   position: relative;
   z-index: 2;
   display: inline-block;
-  width: 13px; height: 13px;
-  margin-right: 0.5rem;
+  width: 12px; height: 12px;
   flex-shrink: 0;
   border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.18);
+  border: 1.5px solid rgba(255,255,255,0.18);
   border-top-color: rgba(255,255,255,0.90);
-  animation: mbspin 0.65s linear infinite;
+  animation: mb-spin 0.65s linear infinite;
 }
-@keyframes mbspin { to { transform: rotate(360deg); } }
+@keyframes mb-spin { to { transform:rotate(360deg); } }
 
-/* Label */
-.magic-btn-label {
-  position: relative;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
+/* Full-width modifier */
+.magic-btn--full {
+  width: 100%;
 }
 
-/* Letters */
-.magic-btn-letter {
-  display: inline-block;
-  color: var(--mtxt);
-  animation: mbglow 2.6s ease-in-out infinite;
-  transition: color var(--mt) var(--me);
-}
-@keyframes mbglow {
-  0%,100% { color: rgba(255,255,255,0.72); text-shadow: none; }
-  50%      { color: rgba(255,255,255,1.00); text-shadow: 0 0 7px rgba(255,255,255,0.75); }
-}
-
-.magic-btn-letter:nth-child(1)  { animation-delay: 0.00s }
-.magic-btn-letter:nth-child(2)  { animation-delay: 0.07s }
-.magic-btn-letter:nth-child(3)  { animation-delay: 0.14s }
-.magic-btn-letter:nth-child(4)  { animation-delay: 0.21s }
-.magic-btn-letter:nth-child(5)  { animation-delay: 0.28s }
-.magic-btn-letter:nth-child(6)  { animation-delay: 0.35s }
-.magic-btn-letter:nth-child(7)  { animation-delay: 0.42s }
-.magic-btn-letter:nth-child(8)  { animation-delay: 0.49s }
-.magic-btn-letter:nth-child(9)  { animation-delay: 0.56s }
-.magic-btn-letter:nth-child(10) { animation-delay: 0.63s }
-.magic-btn-letter:nth-child(11) { animation-delay: 0.70s }
-.magic-btn-letter:nth-child(12) { animation-delay: 0.77s }
-.magic-btn-letter:nth-child(13) { animation-delay: 0.84s }
-.magic-btn-letter:nth-child(14) { animation-delay: 0.91s }
-.magic-btn-letter:nth-child(15) { animation-delay: 0.98s }
-.magic-btn-letter:nth-child(16) { animation-delay: 1.05s }
-.magic-btn-letter:nth-child(17) { animation-delay: 1.12s }
-.magic-btn-letter:nth-child(18) { animation-delay: 1.19s }
-.magic-btn-letter:nth-child(19) { animation-delay: 1.26s }
-.magic-btn-letter:nth-child(20) { animation-delay: 1.33s }
-.magic-btn-letter:nth-child(21) { animation-delay: 1.40s }
-.magic-btn-letter:nth-child(22) { animation-delay: 1.47s }
-.magic-btn-letter:nth-child(23) { animation-delay: 1.54s }
-.magic-btn-letter:nth-child(24) { animation-delay: 1.61s }
-
-/* HOVER */
+/* ── HOVER ── */
 .magic-btn:hover {
-  border-color: rgba(255,255,255,0.28);
-  transform: translateY(-1px);
+  background: #000000;
   box-shadow:
-    inset 0  1px 0   rgba(255,255,255,0.30),
-    inset 0  2px 5px rgba(255,255,255,0.10),
-    inset 0 -1px 0   rgba(0,0,0,0.10),
-    0  4px 12px rgba(0,0,0,0.30),
-    0 10px 28px rgba(0,0,0,0.22),
-    0  2px  4px rgba(0,0,0,0.28);
+    inset 0  1px 0   rgba(255,255,255,0.22),
+    inset 0  2px 4px rgba(255,255,255,0.08),
+    inset 0 -1px 0   rgba(0,0,0,0.25);
 }
 .magic-btn:hover::after {
   opacity: 1;
-  background-position: 100% 0;
-}
-.magic-btn:hover .magic-btn-icon {
-  color: #fff;
-  filter: drop-shadow(0 0 5px hsl(var(--mhue),90%,72%)) drop-shadow(0 0 2px rgba(255,255,255,0.9));
-  animation: none;
+  background-position: 200% 0;
 }
 .magic-btn:hover .magic-btn-letter {
   color: #fff;
-  text-shadow: 0 0 10px rgba(255,255,255,0.85);
+  text-shadow: 0 0 8px rgba(255,255,255,0.70);
+}
+.magic-btn:hover .magic-btn-icon,
+.magic-btn:hover .magic-btn-icon-right {
+  color: #fff;
+  transform: translateX(2px);
+}
+.magic-btn:hover .magic-btn-icon-right {
+  transform: translateX(3px);
 }
 
-/* FOCUS */
-.magic-btn:focus-visible {
-  outline: none;
-  box-shadow:
-    inset 0 1px 0   rgba(255,255,255,0.22),
-    inset 0 2px 5px rgba(255,255,255,0.08),
-    0 0 0 3px rgba(255,255,255,0.20),
-    0 0 0 1px rgba(255,255,255,0.50),
-    0 4px 12px rgba(0,0,0,0.28);
-}
-
-/* ACTIVE */
+/* ── ACTIVE ── */
 .magic-btn:active {
-  transform: translateY(0) scale(0.984);
+  background: #0a0a0a;
   box-shadow:
-    inset 0 2px 7px rgba(0,0,0,0.22),
-    inset 0 1px 0   rgba(255,255,255,0.10),
-    0 1px 3px rgba(0,0,0,0.20);
+    inset 0 2px 6px rgba(0,0,0,0.30),
+    inset 0 1px 0   rgba(255,255,255,0.08);
 }
-.magic-btn:active .magic-btn-letter {
-  color: rgba(255,255,255,0.95);
-  text-shadow: none;
-  animation: none;
+.magic-btn:active .magic-btn-letter { color: rgba(255,255,255,0.95); animation:none; }
+
+/* ── FOCUS ── */
+.magic-btn:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.40);
+  outline-offset: 2px;
 }
 
-/* DISABLED */
+/* ── DISABLED ── */
 .magic-btn:disabled {
-  opacity: 0.40;
+  opacity: 0.38;
   cursor: not-allowed;
   pointer-events: none;
-  transform: none !important;
 }
 
-/* ── VARIANTS ──────────────────────────────────────────────── */
+/* ================================================================
+   VARIANTS
+   ================================================================ */
 
-/* Primary (default) */
+/* Primary — jet black (default) */
 .magic-btn--primary {
-  --mbg:  #111111;
-  --mbd:  rgba(255,255,255,0.14);
-  --mtxt: rgba(255,255,255,0.78);
+  --mbg: #111111;
 }
 
-/* Ghost — on light backgrounds */
+/* Ghost — for secondary actions on LIGHT backgrounds */
 .magic-btn--ghost {
-  --mbg:  transparent;
-  --mbd:  rgba(0,0,0,0.16);
+  --mbg: transparent;
   --mtxt: rgba(0,0,0,0.60);
   background: transparent;
+  border: 1px solid rgba(0,0,0,0.14);
   box-shadow:
-    inset 0  1px 0  rgba(255,255,255,0.85),
-    inset 0 -1px 0  rgba(0,0,0,0.06),
-    0 1px 3px rgba(0,0,0,0.07),
-    0 2px 6px rgba(0,0,0,0.04);
+    inset 0 1px 0 rgba(255,255,255,0.70),
+    inset 0 -1px 0 rgba(0,0,0,0.06);
 }
-.magic-btn--ghost::before {
-  background: linear-gradient(to bottom,
-    rgba(255,255,255,0.60) 0%,
-    rgba(255,255,255,0.08) 50%,
-    transparent 100%);
-}
-.magic-btn--ghost .magic-btn-icon  { color: rgba(0,0,0,0.50); filter: none; animation: none; }
+.magic-btn--ghost::before { display: none; }
 .magic-btn--ghost .magic-btn-letter {
-  color: rgba(0,0,0,0.58);
-  animation: mbghostglow 2.6s ease-in-out infinite;
+  animation: mb-ghost-pulse 3s ease-in-out infinite;
 }
-@keyframes mbghostglow {
-  0%,100% { color: rgba(0,0,0,0.55); text-shadow: none; }
-  50%      { color: rgba(0,0,0,0.88); text-shadow: none; }
+@keyframes mb-ghost-pulse {
+  0%,100% { color: rgba(0,0,0,0.58); }
+  50%      { color: rgba(0,0,0,0.85); }
+}
+.magic-btn--ghost .magic-btn-icon,
+.magic-btn--ghost .magic-btn-icon-right {
+  color: rgba(0,0,0,0.45);
+  animation: none;
 }
 .magic-btn--ghost:hover {
-  border-color: rgba(0,0,0,0.28);
-  background: rgba(0,0,0,0.03);
-  transform: translateY(-1px);
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.26);
   box-shadow:
-    inset 0 1px 0  rgba(255,255,255,0.92),
-    inset 0 -1px 0 rgba(0,0,0,0.08),
-    0 2px  8px rgba(0,0,0,0.10),
-    0 6px 16px rgba(0,0,0,0.07);
+    inset 0 1px 0 rgba(255,255,255,0.90),
+    inset 0 -1px 0 rgba(0,0,0,0.08);
 }
-.magic-btn--ghost:hover .magic-btn-letter { color: rgba(0,0,0,0.88); text-shadow: none; }
-.magic-btn--ghost:hover .magic-btn-icon   { color: rgba(0,0,0,0.75); }
-.magic-btn--ghost:hover::after { opacity: 0; }
+.magic-btn--ghost:hover .magic-btn-letter { color:rgba(0,0,0,0.88); text-shadow:none; }
+.magic-btn--ghost:hover .magic-btn-icon,
+.magic-btn--ghost:hover .magic-btn-icon-right { color:rgba(0,0,0,0.75); }
+.magic-btn--ghost:hover::after { opacity:0; }
 .magic-btn--ghost:active {
-  background: rgba(0,0,0,0.06);
-  transform: translateY(0) scale(0.984);
-  box-shadow:
-    inset 0 2px 5px rgba(0,0,0,0.10),
-    inset 0 1px 0   rgba(255,255,255,0.75),
-    0 1px 2px rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.08);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.10);
 }
-.magic-btn--ghost:active .magic-btn-letter { color: rgba(0,0,0,0.85); animation: none; }
 
-/* Danger — crimson */
+/* Danger — deep crimson */
 .magic-btn--danger {
-  --mbg:  #180303;
-  --mbd:  rgba(255,100,100,0.24);
+  --mbg: #180303;
   --mtxt: rgba(255,200,200,0.82);
-  --mhue: 0deg;
 }
-.magic-btn--danger:hover { border-color: rgba(255,100,100,0.42); }
+.magic-btn--danger:hover { background: #200404; }

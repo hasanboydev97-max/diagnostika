@@ -1,17 +1,14 @@
 import React from 'react';
 
-// -----------------------------------------------------------
-// MagicButton — animated premium button (uiverse.io inspired)
-// Variants: 'primary' (dark), 'danger' (red-tinted), 'ghost' (light)
-// -----------------------------------------------------------
-
 interface MagicButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   label: string;
+  /** Icon shown on the RIGHT side (like the app's original → Play icon) */
   icon?: React.ReactNode;
   variant?: 'primary' | 'danger' | 'ghost';
   loading?: boolean;
   loadingLabel?: string;
-  className?: string;
+  /** Make the button full-width */
+  fullWidth?: boolean;
 }
 
 function AnimatedLetters({ text }: { text: string }) {
@@ -21,7 +18,7 @@ function AnimatedLetters({ text }: { text: string }) {
         <span
           key={i}
           className="magic-btn-letter"
-          style={{ animationDelay: `${i * 0.08}s` }}
+          style={{ animationDelay: `${i * 0.06}s` }}
         >
           {char === ' ' ? '\u00A0' : char}
         </span>
@@ -36,40 +33,32 @@ export default function MagicButton({
   variant = 'primary',
   loading = false,
   loadingLabel,
-  className = '',
+  fullWidth = false,
   disabled,
-  children,
+  className = '',
   ...rest
 }: MagicButtonProps) {
-  const hue =
-    variant === 'danger' ? '0deg' : variant === 'ghost' ? '220deg' : '210deg';
-
   const displayText = loading && loadingLabel ? loadingLabel : label;
 
   return (
-    <div className="magic-btn-wrapper">
-      <button
-        {...rest}
-        disabled={disabled || loading}
-        className={`magic-btn magic-btn--${variant} ${className}`}
-        style={{ '--highlight-color-hue': hue } as React.CSSProperties}
-      >
-        {/* Icon / Spinner */}
-        {loading ? (
-          <span className="magic-btn-spinner" aria-hidden="true" />
-        ) : icon ? (
-          <span className="magic-btn-icon" aria-hidden="true">
-            {icon}
-          </span>
-        ) : null}
+    <button
+      {...rest}
+      disabled={disabled || loading}
+      className={`magic-btn magic-btn--${variant}${fullWidth ? ' magic-btn--full' : ''} ${className}`}
+    >
+      {/* Left: label */}
+      <span className="magic-btn-label">
+        <AnimatedLetters text={displayText} />
+      </span>
 
-        {/* Simple label — always visible */}
-        <span className="magic-btn-label">
-          <AnimatedLetters text={displayText} />
+      {/* Right: spinner or icon */}
+      {loading ? (
+        <span className="magic-btn-spinner" aria-hidden="true" />
+      ) : icon ? (
+        <span className="magic-btn-icon-right" aria-hidden="true">
+          {icon}
         </span>
-
-        {children}
-      </button>
-    </div>
+      ) : null}
+    </button>
   );
 }
