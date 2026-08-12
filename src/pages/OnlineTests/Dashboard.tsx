@@ -186,6 +186,7 @@ export default function OnlineTestsDashboard() {
               onClick={() => navigate('/online-tests/create')}
               label="Yangi Test Yaratish"
               icon={<Plus />}
+              className="w-full sm:w-auto"
             />
           </div>
         </div>

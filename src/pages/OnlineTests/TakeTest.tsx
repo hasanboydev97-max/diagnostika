@@ -489,10 +489,11 @@ export default function TakeTest() {
                 className="w-full px-5 py-4 bg-white/50 border border-white/50 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:bg-white/80 focus:border-black/20 transition-colors shadow-sm"
                 placeholder="Masalan: Aliyev Vali" autoFocus />
             </div>
-            <div className="flex flex-col sm:flex-row gap-3 items-center justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 items-center justify-center w-full">
               <MagicButton
                 onClick={handleStart}
                 label="Yolg'iz Boshlash"
+                className="w-full sm:w-auto"
               />
               <MagicButton
                 onClick={() => {
@@ -505,6 +506,7 @@ export default function TakeTest() {
                 label="Duyel Yaratish (1v1)"
                 icon={<Swords />}
                 variant="danger"
+                className="w-full sm:w-auto"
               />
             </div>
           </div>
