@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchCurrentTeacher, getToken } from '../../lib/auth';
 import { Zap, Crown, ArrowLeft, Gamepad2, Brain, Flame } from 'lucide-react';
-import { motion } from 'framer-motion';
 import MeshGradient from '../../components/ui/MeshGradient';
 
 const GamesList = () => {
@@ -51,9 +50,9 @@ const GamesList = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 py-12">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-6">
         {!isPremium ? (
-          <div className="max-w-xl mx-auto text-center mt-12 bg-white/60 backdrop-blur-md border border-amber-200 p-10 rounded-3xl shadow-xl">
+          <div className="max-w-xl mx-auto text-center mt-8 bg-white/60 backdrop-blur-md border border-amber-200 p-10 rounded-3xl shadow-xl">
             <div className="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6">
               <Crown className="w-10 h-10" />
             </div>
@@ -70,22 +69,19 @@ const GamesList = () => {
           </div>
         ) : (
           <div>
-            <div className="mb-10 text-center">
-              <h2 className="text-4xl font-bold tracking-tight mb-3">Mini O'yinlar</h2>
-              <p className="text-neutral-500 max-w-xl mx-auto">
+            <div className="mb-6 text-center">
+              <h2 className="text-3xl font-bold tracking-tight mb-2">Mini O'yinlar</h2>
+              <p className="text-sm text-neutral-500 max-w-xl mx-auto">
                 O'quvchilar e'tiborini tortish va darsni interaktiv qilish uchun mo'ljallangan maxsus o'yinlar to'plami.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileHover={{ y: -4, scale: 1.02 }}
-                className="bg-white rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 block group border-b-[6px] border-slate-200 hover:border-indigo-500 shadow-sm hover:shadow-xl"
+              <div 
+                className="bg-white rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-300 flex flex-col group border-b-[6px] border-slate-200 hover:border-indigo-500 shadow-sm hover:shadow-xl hover:-translate-y-2 h-full"
                 onClick={() => navigate('/games/math-ninja')}
               >
-                <div className="h-40 bg-gradient-to-br from-[#3B82F6] via-[#6366F1] to-[#8B5CF6] relative overflow-hidden flex items-center justify-center p-4">
+                <div className="h-40 bg-gradient-to-br from-[#3B82F6] via-[#6366F1] to-[#8B5CF6] relative overflow-hidden flex items-center justify-center p-4 shrink-0">
                   {/* Decorative background circles */}
                   <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-xl group-hover:scale-125 transition-transform duration-700"></div>
                   <div className="absolute bottom-[-20%] left-[-10%] w-24 h-24 bg-indigo-900/20 rounded-full blur-lg group-hover:scale-125 transition-transform duration-700 delay-100"></div>
@@ -97,7 +93,7 @@ const GamesList = () => {
                   </div>
                 </div>
                 
-                <div className="p-6 bg-white block">
+                <div className="p-6 flex-1 flex flex-col bg-white">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-[10px] uppercase tracking-widest font-black bg-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg">
                       Matematika
@@ -108,17 +104,17 @@ const GamesList = () => {
                   </div>
                   
                   <h3 className="text-2xl font-black mb-2 text-slate-800">Tezkor Hisob</h3>
-                  <p className="text-sm text-slate-500 mb-6 font-medium leading-relaxed">
+                  <p className="text-sm text-slate-500 mb-6 font-medium leading-relaxed flex-1">
                     Qisqa vaqt ichida eng ko'p matematik misollarni yeching. Tezlik va aniqlik — g'alaba kaliti! 🏆
                   </p>
                   
-                  <div className="mt-2">
+                  <div className="mt-auto">
                     <div className="bg-[#10B981] group-hover:bg-[#059669] text-white w-full py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-colors shadow-md border-b-[4px] border-[#059669] active:border-b-0 active:translate-y-[4px]">
                       Hozir O'ynash <Zap className="w-5 h-5 fill-white" />
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </div>
           </div>
         )}
