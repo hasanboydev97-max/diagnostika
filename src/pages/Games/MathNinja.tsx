@@ -86,39 +86,71 @@ const MathNinja = () => {
     }
   }, [fetchLeaderboard]);
 
-  // ── Question generator ─────────────────────────────────────────────────
+  // ── Question generator (bulletproof) ───────────────────────────────────
+  // Rules:
+  //   • No trivial operands (b ≠ 0, b ≠ 1 for multiplication)
+  //   • Subtraction: always a > b > 0, result ≥ 1
+  //   • All 4 options are POSITIVE, UNIQUE, and distinct enough (≥2 apart)
+  //   • Options never go below 1 for addition/multiplication
   const generateQuestion = useCallback((currentScore: number) => {
     const operators = ['+', '-', '×'];
-    const operator = operators[Math.floor(Math.random() * operators.length)];
-    const maxNum = Math.min(10 + Math.floor(currentScore / 50) * 5, 50);
+    const operator  = operators[Math.floor(Math.random() * operators.length)];
+    const level     = Math.min(Math.floor(currentScore / 50), 8);
+    const maxNum    = 10 + level * 5; // 10 … 50
+
     let a: number, b: number, answer: number;
 
-    if (operator === '+') {
-      a = Math.floor(Math.random() * maxNum) + 1;
-      b = Math.floor(Math.random() * maxNum) + 1;
-      answer = a + b;
-    } else if (operator === '-') {
-      a = Math.floor(Math.random() * maxNum) + 10;
-      b = Math.floor(Math.random() * a);
-      answer = a - b;
-    } else {
-      a = Math.floor(Math.random() * 12) + 1;
-      b = Math.floor(Math.random() * 12) + 1;
-      answer = a * b;
-    }
+    // Generate operands until a non-trivial question is formed
+    let attempts = 0;
+    do {
+      if (operator === '+') {
+        a      = Math.floor(Math.random() * maxNum) + 2;           // 2..maxNum+1
+        b      = Math.floor(Math.random() * maxNum) + 2;
+        answer = a + b;
+      } else if (operator === '-') {
+        // Ensure b ≥ 1 and answer ≥ 1
+        a      = Math.floor(Math.random() * maxNum) + 4;           // 4..maxNum+3
+        b      = Math.floor(Math.random() * (a - 2)) + 1;         // 1..a-2 → answer ≥ 2
+        answer = a - b;
+      } else {
+        // Multiplication: avoid 1× and ×1 trivials
+        a      = Math.floor(Math.random() * 11) + 2;              // 2..12
+        b      = Math.floor(Math.random() * 11) + 2;
+        answer = a * b;
+      }
+      attempts++;
+    } while (answer <= 0 && attempts < 20);
 
     setCurrentQuestion({ text: `${a} ${operator} ${b}`, answer });
 
-    const pool = new Set<number>();
-    pool.add(answer);
-    while (pool.size < 4) {
-      let offset = Math.floor(Math.random() * 20) - 10;
-      if (offset === 0) offset = 1;
-      let wrong = answer + offset;
-      if (wrong < 0 && operator !== '-') wrong = Math.abs(wrong) + 1;
-      pool.add(wrong);
+    // Build 3 unique wrong answers:
+    //   • Spread: use ±[2,3,5,7,10,15,20] range so they look plausible but not equal
+    //   • Always positive (≥ 1)
+    //   • Never equal to the correct answer
+    const OFFSETS = [2, 3, 5, 7, 10, 15, 20, 25, 30];
+    const wrongPool = new Set<number>();
+    const shuffledOffsets = [...OFFSETS].sort(() => Math.random() - 0.5);
+
+    for (const base of shuffledOffsets) {
+      if (wrongPool.size >= 3) break;
+      // Alternate sign based on index to spread evenly around the answer
+      const sign  = wrongPool.size % 2 === 0 ? 1 : -1;
+      const wrong = answer + sign * base;
+      if (wrong !== answer && wrong >= 1 && !wrongPool.has(wrong)) {
+        wrongPool.add(wrong);
+      }
     }
-    setOptions(Array.from(pool).sort(() => Math.random() - 0.5));
+    // Fallback: if still not 3 unique wrongs, fill with sequential positives
+    let fallback = answer + 1;
+    while (wrongPool.size < 3) {
+      if (fallback !== answer) wrongPool.add(fallback);
+      fallback++;
+    }
+
+    const allOptions = [answer, ...Array.from(wrongPool)]
+      .sort(() => Math.random() - 0.5);
+
+    setOptions(allOptions);
   }, []);
 
   // ── Timer end ──────────────────────────────────────────────────────────
