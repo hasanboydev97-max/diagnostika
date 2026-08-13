@@ -101,9 +101,10 @@ const GamesList = () => {
                   <p className="text-sm text-neutral-500 mb-6 flex-1">
                     Qisqa vaqt ichida qancha ko'p matematik misollarni yechishingizni sinab ko'ring. Tezlik va aniqlik - g'alaba kaliti!
                   </p>
-                  <div className="flex items-center justify-between text-sm font-semibold">
-                    <span className="text-neutral-400 group-hover:text-black transition-colors">O'ynash</span>
-                    <Zap className="w-4 h-4 text-amber-500" />
+                  <div className="mt-auto">
+                    <div className="bg-neutral-900 group-hover:bg-indigo-600 text-white w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-md">
+                      O'ynash <Zap className="w-5 h-5 text-amber-400" />
+                    </div>
                   </div>
                 </div>
               </motion.div>

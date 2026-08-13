@@ -54,12 +54,11 @@ const MathNinja = () => {
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
   const [currentQuestion, setCurrentQuestion] = useState({ text: '', answer: 0 });
-  const [userAnswer, setUserAnswer] = useState('');
+  const [options, setOptions] = useState<number[]>([]);
   const [leaderboard, setLeaderboard] = useState<GameRecord[]>([]);
   const [combo, setCombo] = useState(0);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
 
-  const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<any>(null);
 
   const generateQuestion = () => {
@@ -84,8 +83,24 @@ const MathNinja = () => {
     }
 
     setCurrentQuestion({ text: `${a} ${operator} ${b}`, answer });
-    setUserAnswer('');
-    if (inputRef.current) inputRef.current.focus();
+    
+    // Generate 3 plausible wrong answers
+    const newOptions = new Set<number>();
+    newOptions.add(answer);
+    
+    while (newOptions.size < 4) {
+      let offset = Math.floor(Math.random() * 20) - 10;
+      if (offset === 0) offset = 1;
+      let wrongAnswer = answer + offset;
+      
+      // Avoid negative answers unless it's subtraction
+      if (wrongAnswer < 0 && operator !== '-') wrongAnswer = Math.abs(wrongAnswer) + 1;
+      
+      newOptions.add(wrongAnswer);
+    }
+    
+    // Shuffle options
+    setOptions(Array.from(newOptions).sort(() => Math.random() - 0.5));
   };
 
   const startGame = () => {
@@ -142,12 +157,8 @@ const MathNinja = () => {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [gameState]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userAnswer) return;
-
-    const parsedAnswer = parseInt(userAnswer, 10);
-    if (parsedAnswer === currentQuestion.answer) {
+  const handleOptionClick = (selectedAnswer: number) => {
+    if (selectedAnswer === currentQuestion.answer) {
       const points = 10 + (combo * 2);
       setScore(prev => prev + points);
       setCombo(prev => prev + 1);
@@ -158,7 +169,6 @@ const MathNinja = () => {
       setCombo(0);
       setFeedback('wrong');
       setTimeout(() => setFeedback(null), 300);
-      setUserAnswer(''); 
     }
   };
 
@@ -168,7 +178,7 @@ const MathNinja = () => {
   const timerColor = timeLeft > 30 ? 'bg-emerald-500' : timeLeft > 10 ? 'bg-amber-500' : 'bg-rose-500';
 
   return (
-    <div className={`min-h-screen relative font-sans overflow-hidden transition-colors duration-300 ${
+    <div className={`min-h-screen relative font-sans overflow-hidden transition-colors duration-300 flex flex-col ${
       feedback === 'correct' ? 'bg-emerald-950' : 
       feedback === 'wrong' ? 'bg-rose-950' : 
       isOnFire ? 'bg-[#1a0b00]' : 'bg-[#050505]'
@@ -213,7 +223,7 @@ const MathNinja = () => {
       </header>
 
       {/* Main Content */}
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 relative z-10">
+      <div className="flex flex-col items-center justify-center flex-1 w-full p-4 relative z-10">
         <AnimatePresence mode="wait">
           
           {/* START SCREEN */}
@@ -282,9 +292,9 @@ const MathNinja = () => {
             <motion.div 
               key="playing"
               initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }}
-              className="w-full max-w-2xl flex flex-col items-center"
+              className="w-full max-w-4xl flex flex-col items-center justify-center flex-1 h-full pb-10"
             >
-              <div className="h-20 flex items-end justify-center mb-8">
+              <div className="h-20 flex items-end justify-center mb-4">
                 <AnimatePresence>
                   {combo >= 3 && (
                     <motion.div 
@@ -303,38 +313,47 @@ const MathNinja = () => {
               <motion.div 
                 animate={feedback === 'wrong' ? { x: [-15, 15, -15, 15, 0] } : {}}
                 transition={{ duration: 0.3 }}
-                className={`w-full relative`}
+                className={`w-full relative flex flex-col items-center justify-center flex-1`}
               >
                 {/* Glow behind the text */}
-                <div className={`absolute inset-0 blur-3xl opacity-20 ${isOnFire ? 'bg-orange-500' : 'bg-indigo-500'}`}></div>
+                <div className={`absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] aspect-square rounded-full blur-3xl opacity-20 pointer-events-none ${isOnFire ? 'bg-orange-500' : 'bg-indigo-500'}`}></div>
 
-                <div className="relative z-10 text-center font-mono text-[5rem] md:text-[8rem] font-black text-white mb-8 tracking-tighter drop-shadow-2xl flex justify-center items-center gap-4">
+                {/* Question */}
+                <div className="relative z-10 text-center font-mono text-[4rem] md:text-[8rem] font-black text-white mb-16 tracking-tighter drop-shadow-2xl flex justify-center items-center gap-4 whitespace-nowrap">
                   <motion.span 
                     key={currentQuestion.text}
                     initial={{ y: -50, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ type: 'spring', damping: 12 }}
                   >
-                    {currentQuestion.text}
+                    {currentQuestion.text} = ?
                   </motion.span>
                 </div>
                 
-                <form onSubmit={handleSubmit} className="relative z-10 max-w-sm mx-auto">
-                  <input
-                    ref={inputRef}
-                    type="number"
-                    value={userAnswer}
-                    onChange={(e) => setUserAnswer(e.target.value)}
-                    className={`w-full text-center bg-white/10 backdrop-blur-xl border-b-4 rounded-3xl text-5xl font-black text-white py-6 outline-none transition-all ${
-                      feedback === 'wrong' ? 'border-rose-500 bg-rose-500/20 text-rose-200' : 
-                      isOnFire ? 'border-orange-500 focus:bg-orange-500/20 focus:shadow-[0_0_50px_rgba(249,115,22,0.3)]' : 
-                      'border-indigo-500 focus:bg-white/20 focus:shadow-[0_0_50px_rgba(99,102,241,0.3)]'
-                    }`}
-                    placeholder="?"
-                    autoFocus
-                  />
-                  <button type="submit" className="hidden">Submit</button>
-                </form>
+                {/* Multiple Choice Options */}
+                <div className="grid grid-cols-2 gap-4 md:gap-6 w-full max-w-3xl px-4 relative z-20 mt-auto md:mt-0">
+                  {options.map((opt, idx) => (
+                    <motion.button
+                      key={`${currentQuestion.text}-${idx}`}
+                      initial={{ opacity: 0, y: 50 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05, type: 'spring', damping: 15 }}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleOptionClick(opt)}
+                      className={`
+                        w-full py-6 md:py-8 rounded-3xl text-4xl md:text-5xl font-black font-mono tracking-widest transition-all
+                        border-2 backdrop-blur-xl shadow-lg
+                        ${isOnFire 
+                          ? 'bg-orange-500/10 border-orange-500/30 text-orange-100 hover:bg-orange-500/30 hover:border-orange-400 hover:shadow-[0_0_30px_rgba(249,115,22,0.4)]'
+                          : 'bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-indigo-400 hover:shadow-[0_0_30px_rgba(99,102,241,0.4)]'
+                        }
+                      `}
+                    >
+                      {opt}
+                    </motion.button>
+                  ))}
+                </div>
               </motion.div>
             </motion.div>
           )}
