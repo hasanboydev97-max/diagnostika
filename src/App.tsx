@@ -22,6 +22,8 @@ const LivePlayer = lazy(() => import('./pages/OnlineTests/LivePlayer'));
 const DuelPlayer = lazy(() => import('./pages/OnlineTests/DuelPlayer'));
 const GamesList = lazy(() => import('./pages/Games/GamesList'));
 const MathNinja = lazy(() => import('./pages/Games/MathNinja'));
+const EnglishWords = lazy(() => import('./pages/Games/EnglishWords'));
+const RussianWords = lazy(() => import('./pages/Games/RussianWords'));
 
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 
@@ -63,6 +65,8 @@ function App() {
             {/* Games Module */}
             <Route path="/games" element={<GamesList />} />
             <Route path="/games/math-ninja" element={<MathNinja />} />
+            <Route path="/games/english-words" element={<EnglishWords />} />
+            <Route path="/games/russian-words" element={<RussianWords />} />
             
             {/* Catch-all route to prevent blank screens */}
             <Route path="*" element={<Navigate to="/" replace />} />
