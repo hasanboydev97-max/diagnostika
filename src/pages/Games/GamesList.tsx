@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { fetchCurrentTeacher, getToken } from '../../lib/auth';
 import { Zap, Crown, ArrowLeft, Gamepad2, Brain } from 'lucide-react';
 import { motion } from 'framer-motion';
-import MeshGradient from '../../components/MeshGradient';
-import { API_URL } from '../../config';
+import MeshGradient from '../../components/ui/MeshGradient';
 
 const GamesList = () => {
   const navigate = useNavigate();

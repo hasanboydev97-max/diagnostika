@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Trophy, Clock, X, Check, Activity } from 'lucide-react';
-import { API_URL } from '../../config';
+import { ArrowLeft, Trophy, Clock, Zap, Target, Flame } from 'lucide-react';
 import { toast } from 'sonner';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 interface GameRecord {
   _id: string;
@@ -11,6 +12,40 @@ interface GameRecord {
   score: number;
   createdAt: string;
 }
+
+// Background Particles
+const FloatingSymbols = () => {
+  const symbols = ['+', '-', '×', '÷', '=', '∞', '%'];
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+      {[...Array(20)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute text-white font-black text-4xl md:text-6xl select-none"
+          initial={{ 
+            x: Math.random() * window.innerWidth, 
+            y: window.innerHeight + 100,
+            opacity: 0.1 + Math.random() * 0.3,
+            rotate: 0
+          }}
+          animate={{ 
+            y: -100,
+            rotate: 360,
+            x: `calc(${Math.random() * 100}vw)`
+          }}
+          transition={{ 
+            duration: 10 + Math.random() * 20, 
+            repeat: Infinity,
+            ease: "linear",
+            delay: Math.random() * -20 // random start time
+          }}
+        >
+          {symbols[Math.floor(Math.random() * symbols.length)]}
+        </motion.div>
+      ))}
+    </div>
+  );
+};
 
 const MathNinja = () => {
   const navigate = useNavigate();
@@ -27,13 +62,11 @@ const MathNinja = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<any>(null);
 
-  // Generate a random math question
   const generateQuestion = () => {
-    const operators = ['+', '-', '*'];
+    const operators = ['+', '-', '×'];
     const operator = operators[Math.floor(Math.random() * operators.length)];
     let a, b, answer;
 
-    // Difficulty scales slightly with score
     const maxNum = Math.min(10 + Math.floor(score / 50) * 5, 50);
 
     if (operator === '+') {
@@ -42,7 +75,7 @@ const MathNinja = () => {
       answer = a + b;
     } else if (operator === '-') {
       a = Math.floor(Math.random() * maxNum) + 10;
-      b = Math.floor(Math.random() * a); // ensure positive answer
+      b = Math.floor(Math.random() * a); 
       answer = a - b;
     } else {
       a = Math.floor(Math.random() * 12) + 1;
@@ -50,14 +83,14 @@ const MathNinja = () => {
       answer = a * b;
     }
 
-    setCurrentQuestion({ text: `${a} ${operator === '*' ? '×' : operator} ${b}`, answer });
+    setCurrentQuestion({ text: `${a} ${operator} ${b}`, answer });
     setUserAnswer('');
     if (inputRef.current) inputRef.current.focus();
   };
 
   const startGame = () => {
     if (!playerName.trim()) {
-      toast.error('Iltimos ismingizni kiriting!');
+      toast.error('Jangchini ismini kiriting!', { style: { background: '#000', color: '#fff', border: '1px solid #333' }});
       return;
     }
     setScore(0);
@@ -87,16 +120,10 @@ const MathNinja = () => {
         await fetch(`${API_URL}/games/score`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            playerName,
-            gameId: 'math-ninja',
-            score
-          })
+          body: JSON.stringify({ playerName, gameId: 'math-ninja', score })
         });
         fetchLeaderboard();
-      } catch (err) {
-        console.error('Failed to submit score');
-      }
+      } catch (err) {}
     }
   };
 
@@ -107,18 +134,12 @@ const MathNinja = () => {
         const data = await res.json();
         setLeaderboard(data);
       }
-    } catch (err) {
-      console.error('Failed to fetch leaderboard');
-    }
+    } catch (err) {}
   };
 
   useEffect(() => {
-    if (gameState === 'start') {
-      fetchLeaderboard();
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    if (gameState === 'start') fetchLeaderboard();
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [gameState]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -127,96 +148,127 @@ const MathNinja = () => {
 
     const parsedAnswer = parseInt(userAnswer, 10);
     if (parsedAnswer === currentQuestion.answer) {
-      // Correct
       const points = 10 + (combo * 2);
       setScore(prev => prev + points);
       setCombo(prev => prev + 1);
       setFeedback('correct');
-      setTimeout(() => setFeedback(null), 300);
+      setTimeout(() => setFeedback(null), 150);
       generateQuestion();
     } else {
-      // Wrong
       setCombo(0);
       setFeedback('wrong');
       setTimeout(() => setFeedback(null), 300);
-      setUserAnswer(''); // clear input to try again
+      setUserAnswer(''); 
     }
   };
 
+  // Dynamic calculations for visuals
+  const isOnFire = combo >= 5;
+  const timerPercentage = (timeLeft / 60) * 100;
+  const timerColor = timeLeft > 30 ? 'bg-emerald-500' : timeLeft > 10 ? 'bg-amber-500' : 'bg-rose-500';
+
   return (
-    <div className={`min-h-screen relative font-sans overflow-x-hidden transition-colors duration-300 ${feedback === 'correct' ? 'bg-emerald-50' : feedback === 'wrong' ? 'bg-rose-50' : 'bg-slate-50'}`}>
+    <div className={`min-h-screen relative font-sans overflow-hidden transition-colors duration-300 ${
+      feedback === 'correct' ? 'bg-emerald-950' : 
+      feedback === 'wrong' ? 'bg-rose-950' : 
+      isOnFire ? 'bg-[#1a0b00]' : 'bg-[#050505]'
+    }`}>
+      <FloatingSymbols />
+      
+      {/* Dynamic Timer Bar (Top edge) */}
+      {gameState === 'playing' && (
+        <div className="absolute top-0 left-0 w-full h-2 bg-neutral-900 z-50">
+          <motion.div 
+            className={`h-full ${timerColor} shadow-[0_0_15px_rgba(255,255,255,0.5)]`}
+            initial={{ width: '100%' }}
+            animate={{ width: `${timerPercentage}%` }}
+            transition={{ duration: 1, ease: "linear" }}
+          />
+        </div>
+      )}
+
       {/* Header */}
-      <header className="absolute top-0 left-0 w-full p-4 md:p-6 z-20 flex justify-between items-center">
+      <header className="absolute top-0 left-0 w-full p-6 z-20 flex justify-between items-center mt-2">
         <button 
           onClick={() => navigate('/games')}
-          className="w-10 h-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center shadow-sm hover:scale-105 transition-transform"
+          className="w-12 h-12 bg-white/5 border border-white/10 text-white rounded-full flex items-center justify-center hover:bg-white/10 hover:scale-105 transition-all backdrop-blur-md"
         >
-          <ArrowLeft className="w-5 h-5 text-slate-800" />
+          <ArrowLeft className="w-5 h-5" />
         </button>
         {gameState === 'playing' && (
           <div className="flex gap-4">
-            <div className="bg-white/80 backdrop-blur px-4 py-2 rounded-full font-bold text-slate-800 flex items-center gap-2 shadow-sm">
-              <Clock className="w-4 h-4 text-amber-500" />
-              00:{timeLeft.toString().padStart(2, '0')}
-            </div>
-            <div className="bg-white/80 backdrop-blur px-4 py-2 rounded-full font-bold text-slate-800 flex items-center gap-2 shadow-sm">
-              <Trophy className="w-4 h-4 text-amber-500" />
-              {score} pt
+            <div className="bg-white/5 border border-white/10 backdrop-blur-md px-6 py-3 rounded-full font-mono text-xl font-bold text-white flex items-center gap-3 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+              <Trophy className={`w-5 h-5 ${isOnFire ? 'text-orange-500' : 'text-amber-400'}`} />
+              <motion.span
+                key={score}
+                initial={{ scale: 1.5, color: '#4ade80' }}
+                animate={{ scale: 1, color: '#ffffff' }}
+                className="inline-block"
+              >
+                {score}
+              </motion.span>
             </div>
           </div>
         )}
       </header>
 
       {/* Main Content */}
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 relative z-10">
         <AnimatePresence mode="wait">
+          
           {/* START SCREEN */}
           {gameState === 'start' && (
             <motion.div 
               key="start"
-              initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, y: -20 }}
-              className="w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl border border-slate-100"
+              initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, filter: 'blur(10px)' }}
+              className="w-full max-w-md bg-neutral-900/80 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center relative overflow-hidden"
             >
-              <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner">
-                <Activity className="w-10 h-10" />
-              </div>
-              <h1 className="text-3xl font-bold text-center mb-2">Tezkor Hisob</h1>
-              <p className="text-slate-500 text-center text-sm mb-8">60 soniya ichida iloji boricha ko'proq matematik misollarni yeching. Raqobatchilarni ortda qoldiring!</p>
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600"></div>
               
-              <div className="mb-6">
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">O'yinchi ismi</label>
+              <div className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-3xl flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(99,102,241,0.4)] rotate-3">
+                <Zap className="w-12 h-12" fill="currentColor" />
+              </div>
+              
+              <h1 className="text-4xl font-black text-white text-center mb-2 tracking-tight">MATH NINJA</h1>
+              <p className="text-neutral-400 text-center text-sm mb-8 font-medium">
+                60 soniya. Faqat to'g'ri javoblar. <br/> Eng kuchli miya sohibi kimligini isbotlang!
+              </p>
+              
+              <div className="w-full mb-8">
                 <input 
                   type="text" 
                   value={playerName}
-                  onChange={(e) => setPlayerName(e.target.value)}
-                  placeholder="Ismingizni kiriting..."
-                  className="w-full bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3 text-lg font-medium outline-none focus:border-blue-500 transition-colors"
+                  onChange={(e) => setPlayerName(e.target.value.toUpperCase())}
+                  placeholder="TAXALLUS KIRITING..."
+                  className="w-full bg-black/50 border-2 border-white/10 rounded-2xl px-6 py-4 text-xl font-black text-white text-center tracking-widest outline-none focus:border-indigo-500 transition-colors uppercase placeholder:text-neutral-700"
                   autoFocus
                 />
               </div>
               
               <button 
                 onClick={startGame}
-                className="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-xl shadow-[0_4px_0_0_#1e3a8a] hover:bg-blue-700 hover:translate-y-[2px] hover:shadow-[0_2px_0_0_#1e3a8a] active:translate-y-[4px] active:shadow-none transition-all"
+                className="w-full bg-white text-black font-black text-xl py-5 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)]"
               >
-                BOSHLA
+                JANGNI BOSHLA
               </button>
 
-              {/* Mini Leaderboard */}
+              {/* Leaderboard Preview */}
               {leaderboard.length > 0 && (
-                <div className="mt-8 pt-8 border-t border-slate-100">
-                  <h3 className="font-bold text-slate-800 mb-4 flex items-center justify-center gap-2">
-                    <Trophy className="w-4 h-4 text-amber-500" />
-                    Top Rekordlar
-                  </h3>
+                <div className="w-full mt-8 pt-6 border-t border-white/5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-neutral-300 text-sm uppercase tracking-widest flex items-center gap-2">
+                      <Target className="w-4 h-4 text-rose-500" />
+                      Elita (Top 3)
+                    </h3>
+                  </div>
                   <div className="space-y-2">
                     {leaderboard.slice(0, 3).map((record, idx) => (
-                      <div key={record._id} className="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-lg text-sm">
-                        <div className="flex items-center gap-3">
-                          <span className={`font-bold ${idx === 0 ? 'text-amber-500' : idx === 1 ? 'text-slate-400' : 'text-amber-700'}`}>#{idx + 1}</span>
-                          <span className="font-medium truncate max-w-[150px]">{record.playerName}</span>
+                      <div key={record._id} className="flex items-center justify-between bg-black/40 px-4 py-3 rounded-xl border border-white/5">
+                        <div className="flex items-center gap-4">
+                          <span className={`font-black text-lg ${idx === 0 ? 'text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]' : idx === 1 ? 'text-neutral-300' : 'text-amber-700'}`}>#{idx + 1}</span>
+                          <span className="font-bold text-white tracking-wide">{record.playerName}</span>
                         </div>
-                        <span className="font-bold">{record.score}</span>
+                        <span className="font-mono font-bold text-indigo-400">{record.score}</span>
                       </div>
                     ))}
                   </div>
@@ -229,34 +281,55 @@ const MathNinja = () => {
           {gameState === 'playing' && (
             <motion.div 
               key="playing"
-              initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-              className="w-full max-w-lg flex flex-col items-center"
+              initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }}
+              className="w-full max-w-2xl flex flex-col items-center"
             >
-              {combo > 1 && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                  className="mb-4 text-orange-500 font-bold text-xl drop-shadow-sm flex items-center gap-1"
-                >
-                  🔥 {combo}x COMBO
-                </motion.div>
-              )}
+              <div className="h-20 flex items-end justify-center mb-8">
+                <AnimatePresence>
+                  {combo >= 3 && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20, scale: 0.5 }} 
+                      animate={{ opacity: 1, y: 0, scale: 1 }} 
+                      exit={{ opacity: 0, scale: 1.5, filter: 'blur(10px)' }}
+                      className="text-orange-500 font-black text-3xl md:text-5xl flex items-center gap-2 drop-shadow-[0_0_30px_rgba(249,115,22,0.8)]"
+                    >
+                      <Flame className="w-10 h-10 md:w-12 md:h-12" fill="currentColor" /> 
+                      {combo}x COMBO
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
               
               <motion.div 
-                animate={feedback === 'wrong' ? { x: [-10, 10, -10, 10, 0] } : {}}
-                transition={{ duration: 0.4 }}
-                className={`w-full bg-white rounded-[2rem] p-10 shadow-2xl border-4 ${feedback === 'correct' ? 'border-emerald-400' : feedback === 'wrong' ? 'border-rose-400' : 'border-transparent'}`}
+                animate={feedback === 'wrong' ? { x: [-15, 15, -15, 15, 0] } : {}}
+                transition={{ duration: 0.3 }}
+                className={`w-full relative`}
               >
-                <div className="text-center font-mono text-6xl md:text-8xl font-black text-slate-800 mb-10 tracking-tighter">
-                  {currentQuestion.text}
+                {/* Glow behind the text */}
+                <div className={`absolute inset-0 blur-3xl opacity-20 ${isOnFire ? 'bg-orange-500' : 'bg-indigo-500'}`}></div>
+
+                <div className="relative z-10 text-center font-mono text-[5rem] md:text-[8rem] font-black text-white mb-8 tracking-tighter drop-shadow-2xl flex justify-center items-center gap-4">
+                  <motion.span 
+                    key={currentQuestion.text}
+                    initial={{ y: -50, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ type: 'spring', damping: 12 }}
+                  >
+                    {currentQuestion.text}
+                  </motion.span>
                 </div>
                 
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} className="relative z-10 max-w-sm mx-auto">
                   <input
                     ref={inputRef}
                     type="number"
                     value={userAnswer}
                     onChange={(e) => setUserAnswer(e.target.value)}
-                    className="w-full text-center bg-slate-100 rounded-2xl text-4xl font-bold py-6 outline-none focus:ring-4 focus:ring-blue-500/20 transition-all"
+                    className={`w-full text-center bg-white/10 backdrop-blur-xl border-b-4 rounded-3xl text-5xl font-black text-white py-6 outline-none transition-all ${
+                      feedback === 'wrong' ? 'border-rose-500 bg-rose-500/20 text-rose-200' : 
+                      isOnFire ? 'border-orange-500 focus:bg-orange-500/20 focus:shadow-[0_0_50px_rgba(249,115,22,0.3)]' : 
+                      'border-indigo-500 focus:bg-white/20 focus:shadow-[0_0_50px_rgba(99,102,241,0.3)]'
+                    }`}
                     placeholder="?"
                     autoFocus
                   />
@@ -271,46 +344,55 @@ const MathNinja = () => {
             <motion.div 
               key="gameover"
               initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-              className="w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl border border-slate-100 text-center flex flex-col"
+              className="w-full max-w-2xl bg-neutral-900/80 backdrop-blur-xl rounded-[3rem] p-8 md:p-12 border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)] text-center relative overflow-hidden"
             >
-              <h1 className="text-4xl font-black text-slate-800 mb-2">Vaqt tugadi!</h1>
-              <p className="text-slate-500 mb-6">Sizning natijangiz</p>
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 via-transparent to-transparent"></div>
               
-              <div className="text-7xl font-black text-blue-600 mb-8 drop-shadow-sm">
-                {score}
-              </div>
-              
-              <button 
-                onClick={startGame}
-                className="w-full bg-blue-600 text-white font-bold text-lg py-4 rounded-xl shadow-[0_4px_0_0_#1e3a8a] hover:bg-blue-700 hover:translate-y-[2px] hover:shadow-[0_2px_0_0_#1e3a8a] active:translate-y-[4px] active:shadow-none transition-all mb-4"
-              >
-                QAYTA O'YNASH
-              </button>
-              
-              <button 
-                onClick={() => navigate('/games')}
-                className="w-full bg-slate-100 text-slate-700 font-bold text-lg py-4 rounded-xl hover:bg-slate-200 transition-colors"
-              >
-                O'yinlar Ro'yxatiga Qaytish
-              </button>
+              <div className="relative z-10">
+                <h1 className="text-5xl font-black text-white mb-2 uppercase tracking-widest">Natija</h1>
+                <p className="text-indigo-300 font-medium tracking-widest uppercase mb-10">Jang Yakunlandi</p>
+                
+                <div className="text-[8rem] leading-none font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-500 mb-12 drop-shadow-2xl">
+                  {score}
+                </div>
+                
+                <div className="flex flex-col md:flex-row gap-4 justify-center mb-12">
+                  <button 
+                    onClick={startGame}
+                    className="bg-white text-black font-black px-10 py-5 rounded-2xl hover:scale-105 active:scale-95 transition-all uppercase tracking-widest flex items-center justify-center gap-2"
+                  >
+                    <Zap className="w-6 h-6 fill-black" />
+                    Qayta O'ynash
+                  </button>
+                  <button 
+                    onClick={() => navigate('/games')}
+                    className="bg-white/10 text-white font-bold px-10 py-5 rounded-2xl hover:bg-white/20 transition-all uppercase tracking-widest border border-white/10"
+                  >
+                    Chiqish
+                  </button>
+                </div>
 
-              <div className="mt-8 pt-6 border-t border-slate-100 text-left h-64 overflow-y-auto custom-scrollbar">
-                <h3 className="font-bold text-slate-800 mb-4 sticky top-0 bg-white pb-2 flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-amber-500" />
-                  Global Reyting (Top 100)
-                </h3>
-                <div className="space-y-2">
-                  {leaderboard.map((record, idx) => (
-                    <div key={record._id} className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm ${record.playerName === playerName && record.score === score ? 'bg-blue-50 border border-blue-200' : 'bg-slate-50'}`}>
-                      <div className="flex items-center gap-4">
-                        <span className={`font-bold w-6 text-center ${idx === 0 ? 'text-amber-500 text-lg' : idx === 1 ? 'text-slate-400 text-base' : idx === 2 ? 'text-amber-700 text-base' : 'text-slate-400'}`}>
-                          {idx + 1}
-                        </span>
-                        <span className="font-medium truncate max-w-[150px] md:max-w-[200px]">{record.playerName}</span>
-                      </div>
-                      <span className="font-bold">{record.score}</span>
-                    </div>
-                  ))}
+                <div className="text-left bg-black/50 rounded-3xl p-6 border border-white/5">
+                  <h3 className="font-black text-white text-xl mb-6 flex items-center gap-3">
+                    <Trophy className="w-6 h-6 text-amber-500" />
+                    GLOBAL REYTING
+                  </h3>
+                  <div className="space-y-3 h-64 overflow-y-auto custom-scrollbar pr-2">
+                    {leaderboard.map((record, idx) => {
+                      const isMe = record.playerName === playerName && record.score === score;
+                      return (
+                        <div key={record._id} className={`flex items-center justify-between px-6 py-4 rounded-2xl transition-all ${isMe ? 'bg-indigo-600 border border-indigo-400 scale-[1.02] shadow-[0_0_30px_rgba(79,70,229,0.5)] z-10 relative' : 'bg-white/5 border border-white/5'}`}>
+                          <div className="flex items-center gap-4">
+                            <span className={`font-black w-8 text-xl ${idx === 0 ? 'text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]' : idx === 1 ? 'text-neutral-300' : idx === 2 ? 'text-amber-700' : 'text-neutral-600'}`}>
+                              #{idx + 1}
+                            </span>
+                            <span className={`font-bold tracking-wider uppercase ${isMe ? 'text-white' : 'text-neutral-300'}`}>{record.playerName}</span>
+                          </div>
+                          <span className={`font-black text-xl ${isMe ? 'text-white' : 'text-indigo-400'}`}>{record.score}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </motion.div>
