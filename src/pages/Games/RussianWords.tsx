@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Trophy, Clock, X, Check, Flame, Languages, Heart } from 'lucide-react';
@@ -154,11 +154,18 @@ const RussianWords = () => {
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [clickedOption, setClickedOption] = useState<string | null>(null);
   const [currentWord, setCurrentWord] = useState<WordPair & { displayOptions: string[] } | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scoreRef = useRef(0);
+  const livesRef = useRef(3);
+  const nameRef = useRef('');
   const usedIndices = useRef<Set<number>>(new Set());
 
-  const pickNextWord = () => {
+  const syncScore = (v: number) => { scoreRef.current = v; setScore(v); };
+  const syncLives = (v: number) => { livesRef.current = v; setLives(v); };
+
+  const pickNextWord = useCallback(() => {
     if (usedIndices.current.size >= WORD_BANK.length) usedIndices.current.clear();
     let idx: number;
     do { idx = Math.floor(Math.random() * WORD_BANK.length); }
@@ -166,76 +173,115 @@ const RussianWords = () => {
     usedIndices.current.add(idx);
     const word = WORD_BANK[idx];
     setCurrentWord({ ...word, displayOptions: shuffle([word.russian, ...word.options]) });
-  };
+  }, []);
 
-  const startGame = () => {
+  const fetchLeaderboard = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_URL}/games/leaderboard/${GAME_ID}`);
+      if (res.ok) setLeaderboard(await res.json());
+    } catch (_) {}
+  }, []);
+
+  useEffect(() => {
+    fetchLeaderboard();
+  }, [fetchLeaderboard]);
+
+  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
+
+  const saveScore = useCallback(async (finalScore: number, name: string) => {
+    if (finalScore <= 0) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/games/score`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          playerName: name.trim().toUpperCase(),
+          gameId: GAME_ID,
+          score: finalScore,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error('[RussianWords] saveScore failed:', err);
+        toast.error('Natija saqlanmadi. Internet aloqasini tekshiring.', { duration: 4000 });
+      } else {
+        await fetchLeaderboard();
+      }
+    } catch (e) {
+      console.error('[RussianWords] saveScore network error:', e);
+      toast.error('Server bilan aloqa yo\'q. Natija saqlanmadi.', { duration: 4000 });
+    } finally {
+      setSaving(false);
+    }
+  }, [fetchLeaderboard]);
+
+  const endGame = useCallback((finalScore?: number, name?: string) => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    const s = finalScore ?? scoreRef.current;
+    const n = name ?? nameRef.current;
+    setGameState('gameover');
+    fetchLeaderboard();
+    saveScore(s, n);
+  }, [fetchLeaderboard, saveScore]);
+
+  const startGame = useCallback(() => {
     if (!playerName.trim()) {
       toast.error('Ismingizni kiriting!', {
         style: { background: '#0D9488', color: '#fff', border: 'none', borderRadius: '16px', padding: '16px', fontWeight: 'bold' }
       });
       return;
     }
-    setScore(0);
+    nameRef.current = playerName;
+    syncScore(0);
+    syncLives(3);
     setCombo(0);
     setTimeLeft(GAME_DURATION);
-    setLives(3);
+    setFeedback(null);
+    setClickedOption(null);
     usedIndices.current.clear();
     setGameState('playing');
     pickNextWord();
 
+    if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
-        if (prev <= 1) { clearInterval(timerRef.current!); endGame(); return 0; }
+        if (prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          endGame(scoreRef.current, nameRef.current);
+          return 0;
+        }
         return prev - 1;
       });
     }, 1000);
-  };
-
-  const endGame = async () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    setGameState('gameover');
-    fetchLeaderboard();
-    if (score > 0) {
-      try {
-        await fetch(`${API_URL}/games/score`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ playerName: playerName.trim(), gameId: GAME_ID, score }),
-        });
-        fetchLeaderboard();
-      } catch (_) {}
-    }
-  };
-
-  const fetchLeaderboard = async () => {
-    try {
-      const res = await fetch(`${API_URL}/games/leaderboard/${GAME_ID}`);
-      if (res.ok) setLeaderboard(await res.json());
-    } catch (_) {}
-  };
-
-  useEffect(() => {
-    fetchLeaderboard();
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, []);
+  }, [playerName, pickNextWord, endGame]);
 
   const handleOptionClick = (option: string) => {
     if (feedback !== null || !currentWord) return;
     setClickedOption(option);
     if (option === currentWord.russian) {
       const points = 10 + combo * 2;
-      setScore(prev => prev + points);
+      const newScore = scoreRef.current + points;
+      syncScore(newScore);
       setCombo(prev => prev + 1);
       setFeedback('correct');
       setTimeout(() => { setFeedback(null); setClickedOption(null); pickNextWord(); }, 350);
     } else {
-      const newLives = lives - 1;
+      const newLives = livesRef.current - 1;
       setCombo(0);
-      setLives(newLives);
+      syncLives(newLives);
       setFeedback('wrong');
       setTimeout(() => {
-        setFeedback(null); setClickedOption(null);
-        if (newLives <= 0) endGame(); else pickNextWord();
+        setFeedback(null);
+        setClickedOption(null);
+        if (newLives <= 0) {
+          endGame(scoreRef.current, nameRef.current);
+        } else {
+          pickNextWord();
+        }
       }, 600);
     }
   };
@@ -453,6 +499,12 @@ const RussianWords = () => {
                     <Trophy className="w-14 h-14 fill-teal-500" />
                     {score}
                   </div>
+                  {saving && (
+                    <div className='mt-3 text-sm text-slate-400 flex items-center justify-center gap-2'>
+                      <div className='w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin' />
+                      Natija saqlanmoqda...
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3 w-full">
@@ -475,8 +527,11 @@ const RussianWords = () => {
                   <Flame className="w-6 h-6 text-orange-500 fill-orange-500" /> TOP REKORDLAR
                 </h3>
                 <div className="space-y-2">
+                  {leaderboard.length === 0 && (
+                    <p className='text-center text-slate-400 py-4 text-sm'>Hali rekordlar yo'q. Birinchi bo'ling!</p>
+                  )}
                   {leaderboard.slice(0, 5).map((record, idx) => {
-                    const isMe = record.playerName === playerName.trim() && record.score === score;
+                    const isMe = record.playerName === playerName.trim().toUpperCase() && record.score === score;
                     return (
                       <div key={record._id} className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 ${isMe ? 'bg-teal-50 border-teal-400' : 'bg-slate-50 border-slate-100'}`}>
                         <div className="flex items-center gap-4">

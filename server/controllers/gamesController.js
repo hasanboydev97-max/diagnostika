@@ -1,55 +1,83 @@
 import GameRecord from '../models/GameRecord.js';
 
-// @desc    Submit a new game score
-// @route   POST /api/games/score
-// @access  Public (or protected if we want, but kids play it so public is fine)
+// ─── POST /api/games/score ─────────────────────────────────────────────────
+// Submit a score. Uses findOneAndUpdate with upsert so a player's personal
+// best is always stored as a single document — no duplicates possible even
+// under race conditions.
 export const submitScore = async (req, res) => {
   try {
     const { playerName, gameId, score } = req.body;
 
-    if (!playerName || !gameId || score === undefined) {
-      return res.status(400).json({ message: 'Barcha maydonlarni to\\'ldiring' });
+    // Input validation
+    if (!playerName || typeof playerName !== 'string' || !playerName.trim()) {
+      return res.status(400).json({ message: 'playerName kiritilmagan' });
+    }
+    if (!gameId || typeof gameId !== 'string' || !gameId.trim()) {
+      return res.status(400).json({ message: 'gameId kiritilmagan' });
+    }
+    if (score === undefined || score === null || typeof score !== 'number' || score < 0) {
+      return res.status(400).json({ message: 'score noto\'g\'ri' });
     }
 
-    // Check if player already has a higher score for this game
-    const existingRecord = await GameRecord.findOne({ playerName, gameId });
+    const name = playerName.trim().toUpperCase();
+    const gid  = gameId.trim();
 
-    if (existingRecord) {
-      if (score > existingRecord.score) {
-        existingRecord.score = score;
-        await existingRecord.save();
-        return res.status(200).json({ message: 'Yangi rekord o\\'rnatildi!', record: existingRecord });
-      } else {
-        return res.status(200).json({ message: 'Natija saqlandi, lekin oldingi rekordingiz balandroq.', record: existingRecord });
+    // Atomic upsert: create if not exists, update only if new score is higher.
+    // $max operator guarantees we never overwrite a higher existing score.
+    const record = await GameRecord.findOneAndUpdate(
+      { playerName: name, gameId: gid },
+      {
+        $max: { score },
+        $setOnInsert: { playerName: name, gameId: gid },
+      },
+      {
+        upsert: true,
+        new: true,
+        setDefaultsOnInsert: true,
+        runValidators: true,
       }
-    } else {
-      const newRecord = await GameRecord.create({
-        playerName,
-        gameId,
-        score
-      });
-      return res.status(201).json({ message: 'Natija saqlandi', record: newRecord });
-    }
+    );
+
+    const isNewRecord = record.score === score;
+    return res.status(200).json({
+      message: isNewRecord ? 'Yangi rekord o\'rnatildi!' : 'Natija saqlandi.',
+      record,
+    });
+
   } catch (error) {
-    res.status(500).json({ message: 'Server xatosi', error: error.message });
+    // Duplicate key on upsert is a race condition — harmless, just re-fetch
+    if (error.code === 11000) {
+      const { playerName, gameId } = req.body;
+      const existing = await GameRecord.findOne({
+        playerName: playerName?.trim().toUpperCase(),
+        gameId: gameId?.trim(),
+      });
+      return res.status(200).json({ message: 'Natija saqlandi.', record: existing });
+    }
+    console.error('[Games] submitScore error:', error);
+    return res.status(500).json({ message: 'Server xatosi', error: error.message });
   }
 };
 
-// @desc    Get leaderboard for a specific game
-// @route   GET /api/games/leaderboard/:gameId
-// @access  Public
+// ─── GET /api/games/leaderboard/:gameId ───────────────────────────────────
+// Return top 100 players for the given game, sorted by score desc.
 export const getLeaderboard = async (req, res) => {
   try {
     const { gameId } = req.params;
-    
-    // Get top 100 players
-    const leaderboard = await GameRecord.find({ gameId })
+
+    if (!gameId || !gameId.trim()) {
+      return res.status(400).json({ message: 'gameId kiritilmagan' });
+    }
+
+    const leaderboard = await GameRecord
+      .find({ gameId: gameId.trim() })
       .sort({ score: -1 })
       .limit(100)
-      .select('playerName score createdAt');
+      .select('playerName score createdAt updatedAt');
 
-    res.status(200).json(leaderboard);
+    return res.status(200).json(leaderboard);
   } catch (error) {
-    res.status(500).json({ message: 'Server xatosi', error: error.message });
+    console.error('[Games] getLeaderboard error:', error);
+    return res.status(500).json({ message: 'Server xatosi', error: error.message });
   }
 };
