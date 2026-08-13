@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Trophy, Zap, Target, Flame } from 'lucide-react';
+import { ArrowLeft, Trophy, Clock, X, Check, Flame, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -13,39 +13,13 @@ interface GameRecord {
   createdAt: string;
 }
 
-// Background Particles
-const FloatingSymbols = () => {
-  const symbols = ['+', '-', '×', '÷', '=', '∞', '%'];
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
-      {[...Array(20)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute text-white font-black text-4xl md:text-6xl select-none"
-          initial={{ 
-            x: Math.random() * window.innerWidth, 
-            y: window.innerHeight + 100,
-            opacity: 0.1 + Math.random() * 0.3,
-            rotate: 0
-          }}
-          animate={{ 
-            y: -100,
-            rotate: 360,
-            x: `calc(${Math.random() * 100}vw)`
-          }}
-          transition={{ 
-            duration: 10 + Math.random() * 20, 
-            repeat: Infinity,
-            ease: "linear",
-            delay: Math.random() * -20 // random start time
-          }}
-        >
-          {symbols[Math.floor(Math.random() * symbols.length)]}
-        </motion.div>
-      ))}
-    </div>
-  );
-};
+// Vibrant colors for the 4 options
+const OPTION_COLORS = [
+  { bg: 'bg-[#FF4B4B]', border: 'border-[#CC3C3C]', text: 'text-white', shadow: 'shadow-[0_8px_0_#CC3C3C]' },
+  { bg: 'bg-[#3B82F6]', border: 'border-[#2563EB]', text: 'text-white', shadow: 'shadow-[0_8px_0_#2563EB]' },
+  { bg: 'bg-[#F59E0B]', border: 'border-[#D97706]', text: 'text-white', shadow: 'shadow-[0_8px_0_#D97706]' },
+  { bg: 'bg-[#10B981]', border: 'border-[#059669]', text: 'text-white', shadow: 'shadow-[0_8px_0_#059669]' }
+];
 
 const MathNinja = () => {
   const navigate = useNavigate();
@@ -58,6 +32,7 @@ const MathNinja = () => {
   const [leaderboard, setLeaderboard] = useState<GameRecord[]>([]);
   const [combo, setCombo] = useState(0);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const [clickedOption, setClickedOption] = useState<number | null>(null);
 
   const timerRef = useRef<any>(null);
 
@@ -93,19 +68,17 @@ const MathNinja = () => {
       if (offset === 0) offset = 1;
       let wrongAnswer = answer + offset;
       
-      // Avoid negative answers unless it's subtraction
       if (wrongAnswer < 0 && operator !== '-') wrongAnswer = Math.abs(wrongAnswer) + 1;
       
       newOptions.add(wrongAnswer);
     }
     
-    // Shuffle options
     setOptions(Array.from(newOptions).sort(() => Math.random() - 0.5));
   };
 
   const startGame = () => {
     if (!playerName.trim()) {
-      toast.error('Jangchini ismini kiriting!', { style: { background: '#000', color: '#fff', border: '1px solid #333' }});
+      toast.error('Ismingizni kiriting!', { style: { background: '#FF4B4B', color: '#fff', border: 'none', borderRadius: '16px', padding: '16px', fontWeight: 'bold' }});
       return;
     }
     setScore(0);
@@ -158,132 +131,104 @@ const MathNinja = () => {
   }, [gameState]);
 
   const handleOptionClick = (selectedAnswer: number) => {
+    if (feedback !== null) return; // Prevent multiple clicks
+    setClickedOption(selectedAnswer);
+    
     if (selectedAnswer === currentQuestion.answer) {
       const points = 10 + (combo * 2);
       setScore(prev => prev + points);
       setCombo(prev => prev + 1);
       setFeedback('correct');
-      setTimeout(() => setFeedback(null), 150);
-      generateQuestion();
+      setTimeout(() => {
+        setFeedback(null);
+        setClickedOption(null);
+        generateQuestion();
+      }, 400);
     } else {
       setCombo(0);
       setFeedback('wrong');
-      setTimeout(() => setFeedback(null), 300);
+      setTimeout(() => {
+        setFeedback(null);
+        setClickedOption(null);
+        generateQuestion(); // Move to next question even if wrong, or we could let them retry. Kahoot style moves on.
+      }, 600);
     }
   };
 
-  // Dynamic calculations for visuals
-  const isOnFire = combo >= 5;
   const timerPercentage = (timeLeft / 60) * 100;
-  const timerColor = timeLeft > 30 ? 'bg-emerald-500' : timeLeft > 10 ? 'bg-amber-500' : 'bg-rose-500';
-
+  
   return (
-    <div className={`min-h-screen relative font-sans overflow-hidden transition-colors duration-300 flex flex-col ${
-      feedback === 'correct' ? 'bg-emerald-950' : 
-      feedback === 'wrong' ? 'bg-rose-950' : 
-      isOnFire ? 'bg-[#1a0b00]' : 'bg-[#050505]'
-    }`}>
-      <FloatingSymbols />
+    <div className={`min-h-screen relative font-sans overflow-hidden transition-all duration-300 flex flex-col
+      ${gameState === 'playing' ? 'bg-[#F0FDF4]' : 'bg-[#F8FAFC]'}`}>
       
-      {/* Dynamic Timer Bar (Top edge) */}
-      {gameState === 'playing' && (
-        <div className="absolute top-0 left-0 w-full h-2 bg-neutral-900 z-50">
-          <motion.div 
-            className={`h-full ${timerColor} shadow-[0_0_15px_rgba(255,255,255,0.5)]`}
-            initial={{ width: '100%' }}
-            animate={{ width: `${timerPercentage}%` }}
-            transition={{ duration: 1, ease: "linear" }}
-          />
-        </div>
-      )}
+      {/* Dynamic Background Pattern */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #334155 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
 
       {/* Header */}
-      <header className="absolute top-0 left-0 w-full p-6 z-20 flex justify-between items-center mt-2">
+      <header className="relative z-20 flex justify-between items-center p-4 md:p-6">
         <button 
           onClick={() => navigate('/games')}
-          className="w-12 h-12 bg-white/5 border border-white/10 text-white rounded-full flex items-center justify-center hover:bg-white/10 hover:scale-105 transition-all backdrop-blur-md"
+          className="w-14 h-14 bg-white border-b-[4px] border-slate-200 text-slate-700 rounded-2xl flex items-center justify-center hover:bg-slate-50 active:border-b-0 active:translate-y-[4px] transition-all"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-7 h-7" />
         </button>
         {gameState === 'playing' && (
           <div className="flex gap-4">
-            <div className="bg-white/5 border border-white/10 backdrop-blur-md px-6 py-3 rounded-full font-mono text-xl font-bold text-white flex items-center gap-3 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
-              <Trophy className={`w-5 h-5 ${isOnFire ? 'text-orange-500' : 'text-amber-400'}`} />
-              <motion.span
-                key={score}
-                initial={{ scale: 1.5, color: '#4ade80' }}
-                animate={{ scale: 1, color: '#ffffff' }}
-                className="inline-block"
-              >
-                {score}
-              </motion.span>
+            <div className="bg-white border-b-[4px] border-slate-200 px-6 py-3 rounded-2xl font-black text-2xl text-slate-700 flex items-center gap-3">
+              <Trophy className="w-7 h-7 text-amber-400 fill-amber-400" />
+              {score}
             </div>
           </div>
         )}
       </header>
 
       {/* Main Content */}
-      <div className="flex flex-col items-center justify-center flex-1 w-full p-4 relative z-10">
+      <div className="flex flex-col items-center justify-center flex-1 w-full max-w-5xl mx-auto p-4 relative z-10">
         <AnimatePresence mode="wait">
           
           {/* START SCREEN */}
           {gameState === 'start' && (
             <motion.div 
               key="start"
-              initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, filter: 'blur(10px)' }}
-              className="w-full max-w-md bg-neutral-900/80 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col items-center relative overflow-hidden"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 1.1 }}
+              className="w-full flex flex-col items-center text-center"
             >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600"></div>
-              
-              <div className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-3xl flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(99,102,241,0.4)] rotate-3">
-                <Zap className="w-12 h-12" fill="currentColor" />
+              <div className="relative mb-8">
+                <motion.div
+                  animate={{ y: [0, -15, 0], rotate: [0, 5, -5, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  className="w-40 h-40 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[2.5rem] shadow-[0_15px_0_#4338ca] flex items-center justify-center"
+                >
+                  <Zap className="w-24 h-24 text-white fill-white" />
+                </motion.div>
+                {/* Sparkles */}
+                <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity }} className="absolute -top-4 -right-4 text-3xl">✨</motion.div>
+                <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity, delay: 1 }} className="absolute -bottom-4 -left-4 text-3xl">⭐</motion.div>
               </div>
               
-              <h1 className="text-4xl font-black text-white text-center mb-2 tracking-tight">MATH NINJA</h1>
-              <p className="text-neutral-400 text-center text-sm mb-8 font-medium">
-                60 soniya. Faqat to'g'ri javoblar. <br/> Eng kuchli miya sohibi kimligini isbotlang!
+              <h1 className="text-5xl md:text-7xl font-black text-slate-800 mb-4 tracking-tight drop-shadow-sm">
+                Tezkor Hisob
+              </h1>
+              <p className="text-slate-500 text-lg md:text-xl mb-12 font-bold max-w-md">
+                1 daqiqa vaqt. Faqat to'g'ri javoblar. Miya tezligingizni sinab ko'ring!
               </p>
               
-              <div className="w-full mb-8">
+              <div className="w-full max-w-md space-y-4">
                 <input 
                   type="text" 
                   value={playerName}
-                  onChange={(e) => setPlayerName(e.target.value.toUpperCase())}
-                  placeholder="TAXALLUS KIRITING..."
-                  className="w-full bg-black/50 border-2 border-white/10 rounded-2xl px-6 py-4 text-xl font-black text-white text-center tracking-widest outline-none focus:border-indigo-500 transition-colors uppercase placeholder:text-neutral-700"
-                  autoFocus
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  placeholder="Ismingiz kim?"
+                  className="w-full bg-white border-2 border-slate-200 rounded-2xl px-6 py-5 text-2xl font-bold text-center text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all placeholder:text-slate-300 shadow-sm"
                 />
+                
+                <button 
+                  onClick={startGame}
+                  className="w-full bg-[#10B981] border-b-[8px] border-[#059669] text-white font-black text-3xl py-6 rounded-2xl active:border-b-0 active:translate-y-[8px] transition-all shadow-lg"
+                >
+                  BOSHLA!
+                </button>
               </div>
-              
-              <button 
-                onClick={startGame}
-                className="w-full bg-white text-black font-black text-xl py-5 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)]"
-              >
-                JANGNI BOSHLA
-              </button>
-
-              {/* Leaderboard Preview */}
-              {leaderboard.length > 0 && (
-                <div className="w-full mt-8 pt-6 border-t border-white/5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-neutral-300 text-sm uppercase tracking-widest flex items-center gap-2">
-                      <Target className="w-4 h-4 text-rose-500" />
-                      Elita (Top 3)
-                    </h3>
-                  </div>
-                  <div className="space-y-2">
-                    {leaderboard.slice(0, 3).map((record, idx) => (
-                      <div key={record._id} className="flex items-center justify-between bg-black/40 px-4 py-3 rounded-xl border border-white/5">
-                        <div className="flex items-center gap-4">
-                          <span className={`font-black text-lg ${idx === 0 ? 'text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]' : idx === 1 ? 'text-neutral-300' : 'text-amber-700'}`}>#{idx + 1}</span>
-                          <span className="font-bold text-white tracking-wide">{record.playerName}</span>
-                        </div>
-                        <span className="font-mono font-bold text-indigo-400">{record.score}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </motion.div>
           )}
 
@@ -291,70 +236,106 @@ const MathNinja = () => {
           {gameState === 'playing' && (
             <motion.div 
               key="playing"
-              initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }}
-              className="w-full max-w-4xl flex flex-col items-center justify-center flex-1 h-full pb-10"
+              initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+              className="w-full flex flex-col h-full items-center justify-between py-4"
             >
-              <div className="h-20 flex items-end justify-center mb-4">
+              {/* Timer & Combo Bar */}
+              <div className="w-full max-w-2xl mb-8">
+                <div className="flex justify-between items-end mb-2 px-2">
+                  <div className="font-bold text-slate-500 flex items-center gap-2">
+                    <Clock className="w-5 h-5" /> {timeLeft}s
+                  </div>
+                  <AnimatePresence>
+                    {combo >= 2 && (
+                      <motion.div 
+                        initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }}
+                        className="text-orange-500 font-black text-xl flex items-center gap-1"
+                      >
+                        <Flame className="w-6 h-6 fill-orange-500" /> {combo}x COMBO
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                <div className="w-full h-4 bg-slate-200 rounded-full overflow-hidden">
+                  <motion.div 
+                    className={`h-full ${timeLeft > 15 ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`}
+                    initial={{ width: '100%' }}
+                    animate={{ width: `${timerPercentage}%` }}
+                    transition={{ duration: 1, ease: "linear" }}
+                  />
+                </div>
+              </div>
+
+              {/* Question Card */}
+              <motion.div 
+                animate={feedback === 'wrong' ? { x: [-10, 10, -10, 10, 0] } : {}}
+                transition={{ duration: 0.3 }}
+                className={`w-full max-w-4xl bg-white rounded-[3rem] p-8 md:p-16 mb-8 flex items-center justify-center border-b-[8px] shadow-sm relative overflow-hidden transition-colors ${
+                  feedback === 'correct' ? 'border-[#10B981] bg-[#ECFDF5]' : 
+                  feedback === 'wrong' ? 'border-[#EF4444] bg-[#FEF2F2]' : 
+                  'border-slate-200'
+                }`}
+              >
+                {/* Large Background Icon for aesthetics */}
+                <div className="absolute right-[-10%] top-[-10%] opacity-[0.03] rotate-12 pointer-events-none">
+                  <BrainIcon size={400} />
+                </div>
+                
+                <AnimatePresence mode="wait">
+                  <motion.div 
+                    key={currentQuestion.text}
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 1.5, opacity: 0 }}
+                    transition={{ type: 'spring', damping: 15 }}
+                    className={`text-[5rem] md:text-[8rem] font-black tracking-tighter z-10 ${
+                      feedback === 'correct' ? 'text-[#10B981]' : 
+                      feedback === 'wrong' ? 'text-[#EF4444]' : 
+                      'text-slate-800'
+                    }`}
+                  >
+                    {currentQuestion.text}
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Feedback Icons overlay */}
                 <AnimatePresence>
-                  {combo >= 3 && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 20, scale: 0.5 }} 
-                      animate={{ opacity: 1, y: 0, scale: 1 }} 
-                      exit={{ opacity: 0, scale: 1.5, filter: 'blur(10px)' }}
-                      className="text-orange-500 font-black text-3xl md:text-5xl flex items-center gap-2 drop-shadow-[0_0_30px_rgba(249,115,22,0.8)]"
-                    >
-                      <Flame className="w-10 h-10 md:w-12 md:h-12" fill="currentColor" /> 
-                      {combo}x COMBO
+                  {feedback === 'correct' && (
+                    <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 2, opacity: 0 }} className="absolute text-[#10B981]">
+                      <Check className="w-48 h-48" strokeWidth={4} />
+                    </motion.div>
+                  )}
+                  {feedback === 'wrong' && (
+                    <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 2, opacity: 0 }} className="absolute text-[#EF4444]">
+                      <X className="w-48 h-48" strokeWidth={4} />
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
+              </motion.div>
               
-              <motion.div 
-                animate={feedback === 'wrong' ? { x: [-15, 15, -15, 15, 0] } : {}}
-                transition={{ duration: 0.3 }}
-                className={`w-full relative flex flex-col items-center justify-center flex-1`}
-              >
-                {/* Glow behind the text */}
-                <div className={`absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] aspect-square rounded-full blur-3xl opacity-20 pointer-events-none ${isOnFire ? 'bg-orange-500' : 'bg-indigo-500'}`}></div>
-
-                {/* Question */}
-                <div className="relative z-10 text-center font-mono text-[4rem] md:text-[8rem] font-black text-white mb-16 tracking-tighter drop-shadow-2xl flex justify-center items-center gap-4 whitespace-nowrap">
-                  <motion.span 
-                    key={currentQuestion.text}
-                    initial={{ y: -50, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ type: 'spring', damping: 12 }}
-                  >
-                    {currentQuestion.text} = ?
-                  </motion.span>
-                </div>
-                
-                {/* Multiple Choice Options */}
-                <div className="grid grid-cols-2 gap-4 md:gap-6 w-full max-w-3xl px-4 relative z-20 mt-auto md:mt-0">
-                  {options.map((opt, idx) => (
-                    <motion.button
-                      key={`${currentQuestion.text}-${idx}`}
-                      initial={{ opacity: 0, y: 50 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05, type: 'spring', damping: 15 }}
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.95 }}
+              {/* Massive Answer Buttons Grid */}
+              <div className="grid grid-cols-2 gap-4 md:gap-6 w-full max-w-4xl">
+                {options.map((opt, idx) => {
+                  const style = OPTION_COLORS[idx % 4];
+                  const isClicked = clickedOption === opt;
+                  
+                  return (
+                    <button
+                      key={idx}
+                      disabled={feedback !== null}
                       onClick={() => handleOptionClick(opt)}
                       className={`
-                        w-full py-6 md:py-8 rounded-3xl text-4xl md:text-5xl font-black font-mono tracking-widest transition-all
-                        border-2 backdrop-blur-xl shadow-lg
-                        ${isOnFire 
-                          ? 'bg-orange-500/10 border-orange-500/30 text-orange-100 hover:bg-orange-500/30 hover:border-orange-400 hover:shadow-[0_0_30px_rgba(249,115,22,0.4)]'
-                          : 'bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-indigo-400 hover:shadow-[0_0_30px_rgba(99,102,241,0.4)]'
-                        }
+                        w-full py-8 md:py-12 rounded-3xl text-4xl md:text-6xl font-black transition-all transform
+                        ${style.bg} ${style.text} ${style.border} border-b-[8px]
+                        ${feedback === null ? 'hover:brightness-110 active:border-b-0 active:translate-y-[8px]' : ''}
+                        ${isClicked ? 'border-b-0 translate-y-[8px] brightness-110' : ''}
                       `}
                     >
                       {opt}
-                    </motion.button>
-                  ))}
-                </div>
-              </motion.div>
+                    </button>
+                  );
+                })}
+              </div>
             </motion.div>
           )}
 
@@ -362,58 +343,72 @@ const MathNinja = () => {
           {gameState === 'gameover' && (
             <motion.div 
               key="gameover"
-              initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-              className="w-full max-w-2xl bg-neutral-900/80 backdrop-blur-xl rounded-[3rem] p-8 md:p-12 border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)] text-center relative overflow-hidden"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+              className="w-full max-w-3xl flex flex-col items-center"
             >
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 via-transparent to-transparent"></div>
-              
-              <div className="relative z-10">
-                <h1 className="text-5xl font-black text-white mb-2 uppercase tracking-widest">Natija</h1>
-                <p className="text-indigo-300 font-medium tracking-widest uppercase mb-10">Jang Yakunlandi</p>
+              <div className="bg-white rounded-[3rem] p-10 md:p-14 w-full border-b-[12px] border-slate-200 shadow-xl flex flex-col items-center text-center relative overflow-hidden mb-8">
                 
-                <div className="text-[8rem] leading-none font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-500 mb-12 drop-shadow-2xl">
-                  {score}
+                <h2 className="text-4xl md:text-5xl font-black text-slate-800 mb-2">Vaqt Tugadi!</h2>
+                <p className="text-xl font-bold text-slate-500 mb-8 uppercase tracking-widest">Ajoyib o'yin</p>
+                
+                <div className="w-full bg-[#F8FAFC] border-4 border-slate-100 rounded-[2rem] py-10 mb-8">
+                  <div className="text-slate-400 font-bold text-lg mb-2 uppercase">Sizning Natijangiz</div>
+                  <div className="text-[6rem] md:text-[8rem] font-black text-amber-500 leading-none drop-shadow-sm flex items-center justify-center gap-4">
+                    <Trophy className="w-20 h-20 fill-amber-500" />
+                    {score}
+                  </div>
                 </div>
-                
-                <div className="flex flex-col md:flex-row gap-4 justify-center mb-12">
+
+                <div className="flex flex-col sm:flex-row gap-4 w-full">
                   <button 
                     onClick={startGame}
-                    className="bg-white text-black font-black px-10 py-5 rounded-2xl hover:scale-105 active:scale-95 transition-all uppercase tracking-widest flex items-center justify-center gap-2"
+                    className="flex-1 bg-[#3B82F6] border-b-[8px] border-[#2563EB] text-white font-black text-2xl py-6 rounded-2xl active:border-b-0 active:translate-y-[8px] transition-all shadow-lg flex justify-center items-center gap-3"
                   >
-                    <Zap className="w-6 h-6 fill-black" />
-                    Qayta O'ynash
+                    QAYTA O'YNASH
                   </button>
                   <button 
                     onClick={() => navigate('/games')}
-                    className="bg-white/10 text-white font-bold px-10 py-5 rounded-2xl hover:bg-white/20 transition-all uppercase tracking-widest border border-white/10"
+                    className="flex-1 bg-white border-4 border-slate-200 text-slate-700 font-black text-2xl py-6 rounded-2xl hover:bg-slate-50 active:translate-y-[4px] transition-all"
                   >
-                    Chiqish
+                    CHIQISH
                   </button>
                 </div>
+              </div>
 
-                <div className="text-left bg-black/50 rounded-3xl p-6 border border-white/5">
-                  <h3 className="font-black text-white text-xl mb-6 flex items-center gap-3">
-                    <Trophy className="w-6 h-6 text-amber-500" />
-                    GLOBAL REYTING
-                  </h3>
-                  <div className="space-y-3 h-64 overflow-y-auto custom-scrollbar pr-2">
-                    {leaderboard.map((record, idx) => {
-                      const isMe = record.playerName === playerName && record.score === score;
-                      return (
-                        <div key={record._id} className={`flex items-center justify-between px-6 py-4 rounded-2xl transition-all ${isMe ? 'bg-indigo-600 border border-indigo-400 scale-[1.02] shadow-[0_0_30px_rgba(79,70,229,0.5)] z-10 relative' : 'bg-white/5 border border-white/5'}`}>
-                          <div className="flex items-center gap-4">
-                            <span className={`font-black w-8 text-xl ${idx === 0 ? 'text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]' : idx === 1 ? 'text-neutral-300' : idx === 2 ? 'text-amber-700' : 'text-neutral-600'}`}>
-                              #{idx + 1}
-                            </span>
-                            <span className={`font-bold tracking-wider uppercase ${isMe ? 'text-white' : 'text-neutral-300'}`}>{record.playerName}</span>
+              {/* Leaderboard Table (Kahoot style) */}
+              <div className="w-full bg-white rounded-3xl p-6 border-b-[6px] border-slate-200 shadow-md">
+                <h3 className="font-black text-2xl text-slate-800 mb-6 flex items-center justify-center gap-3">
+                  <Flame className="w-8 h-8 text-orange-500 fill-orange-500" /> TOP REKORDLAR
+                </h3>
+                <div className="space-y-3">
+                  {leaderboard.slice(0, 5).map((record, idx) => {
+                    const isMe = record.playerName === playerName && record.score === score;
+                    return (
+                      <div key={record._id} className={`flex items-center justify-between px-6 py-4 rounded-2xl border-2 ${
+                        isMe ? 'bg-amber-50 border-amber-400' : 'bg-slate-50 border-slate-100'
+                      }`}>
+                        <div className="flex items-center gap-6">
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-xl ${
+                            idx === 0 ? 'bg-amber-400 text-white shadow-lg' : 
+                            idx === 1 ? 'bg-slate-300 text-white shadow-md' : 
+                            idx === 2 ? 'bg-amber-700 text-white shadow-md' : 
+                            'bg-slate-200 text-slate-500'
+                          }`}>
+                            {idx + 1}
                           </div>
-                          <span className={`font-black text-xl ${isMe ? 'text-white' : 'text-indigo-400'}`}>{record.score}</span>
+                          <span className={`font-bold text-2xl uppercase ${isMe ? 'text-amber-600' : 'text-slate-700'}`}>
+                            {record.playerName}
+                          </span>
                         </div>
-                      );
-                    })}
-                  </div>
+                        <span className={`font-black text-3xl ${isMe ? 'text-amber-600' : 'text-slate-800'}`}>
+                          {record.score}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
+
             </motion.div>
           )}
         </AnimatePresence>
@@ -421,5 +416,15 @@ const MathNinja = () => {
     </div>
   );
 };
+
+// Simple Brain SVG for background decoration
+const BrainIcon = ({ size = 24 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/>
+    <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/>
+    <path d="M12 5v13"/>
+    <path d="M9 13h6"/>
+  </svg>
+);
 
 export default MathNinja;

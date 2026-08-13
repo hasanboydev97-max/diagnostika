@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchCurrentTeacher, getToken } from '../../lib/auth';
-import { Zap, Crown, ArrowLeft, Gamepad2, Brain } from 'lucide-react';
+import { Zap, Crown, ArrowLeft, Gamepad2, Brain, Flame } from 'lucide-react';
 import { motion } from 'framer-motion';
 import MeshGradient from '../../components/ui/MeshGradient';
 
@@ -78,32 +78,43 @@ const GamesList = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Math Ninja Game Card */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                whileHover={{ y: -5 }}
-                className="bg-white border-2 border-black/10 hover:border-black/30 rounded-3xl overflow-hidden shadow-lg cursor-pointer transition-all duration-300 flex flex-col group"
+                whileHover={{ y: -8, scale: 1.02 }}
+                className="bg-white rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-300 flex flex-col group border-b-[8px] border-slate-200 hover:border-indigo-500 shadow-sm hover:shadow-2xl"
                 onClick={() => navigate('/games/math-ninja')}
               >
-                <div className="h-48 bg-gradient-to-br from-blue-500 to-indigo-600 relative overflow-hidden flex items-center justify-center">
-                  <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
-                  <Brain className="w-24 h-24 text-white opacity-20 absolute -right-4 -bottom-4" />
-                  <div className="relative z-10 text-white font-mono text-4xl font-bold drop-shadow-md">
+                <div className="h-56 bg-gradient-to-br from-[#3B82F6] via-[#6366F1] to-[#8B5CF6] relative overflow-hidden flex items-center justify-center p-6">
+                  {/* Decorative background circles */}
+                  <div className="absolute top-[-20%] right-[-10%] w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+                  <div className="absolute bottom-[-20%] left-[-10%] w-32 h-32 bg-indigo-900/20 rounded-full blur-xl group-hover:scale-150 transition-transform duration-700 delay-100"></div>
+                  
+                  <Brain className="w-48 h-48 text-white opacity-[0.07] absolute -right-8 -bottom-8 rotate-12 group-hover:rotate-0 transition-transform duration-500" />
+                  
+                  <div className="relative z-10 bg-white/20 backdrop-blur-md border border-white/30 px-8 py-4 rounded-3xl text-white font-mono text-5xl font-black drop-shadow-xl transform group-hover:scale-110 transition-transform duration-300 shadow-[0_10px_30px_rgba(0,0,0,0.1)]">
                     12 × 4 = ?
                   </div>
                 </div>
-                <div className="p-6 flex-1 flex flex-col">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[10px] uppercase tracking-wider font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded">Matematika</span>
+                
+                <div className="p-8 flex-1 flex flex-col bg-white">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-xs uppercase tracking-widest font-black bg-indigo-100 text-indigo-600 px-3 py-1.5 rounded-xl">
+                      Matematika
+                    </span>
+                    <span className="text-xs uppercase tracking-widest font-black bg-orange-100 text-orange-600 px-3 py-1.5 rounded-xl flex items-center gap-1">
+                      <Flame className="w-3 h-3" /> QIZIQARLI
+                    </span>
                   </div>
-                  <h3 className="text-2xl font-bold mb-2">Tezkor Hisob</h3>
-                  <p className="text-sm text-neutral-500 mb-6 flex-1">
-                    Qisqa vaqt ichida qancha ko'p matematik misollarni yechishingizni sinab ko'ring. Tezlik va aniqlik - g'alaba kaliti!
+                  
+                  <h3 className="text-3xl font-black mb-3 text-slate-800">Tezkor Hisob</h3>
+                  <p className="text-base text-slate-500 mb-8 font-medium leading-relaxed flex-1">
+                    Qisqa vaqt ichida eng ko'p matematik misollarni yeching. Tezlik va aniqlik — g'alaba kaliti! 🏆
                   </p>
+                  
                   <div className="mt-auto">
-                    <div className="bg-neutral-900 group-hover:bg-indigo-600 text-white w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-md">
-                      O'ynash <Zap className="w-5 h-5 text-amber-400" />
+                    <div className="bg-[#10B981] group-hover:bg-[#059669] text-white w-full py-5 rounded-2xl font-black text-xl flex items-center justify-center gap-3 transition-colors shadow-lg border-b-[6px] border-[#059669] active:border-b-0 active:translate-y-[6px]">
+                      Hozir O'ynash <Zap className="w-6 h-6 fill-white" />
                     </div>
                   </div>
                 </div>
