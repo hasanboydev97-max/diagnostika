@@ -82,7 +82,7 @@ const GamesList = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 whileHover={{ y: -4, scale: 1.02 }}
-                className="bg-white rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 flex flex-col group border-b-[6px] border-slate-200 hover:border-indigo-500 shadow-sm hover:shadow-xl"
+                className="bg-white rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 block group border-b-[6px] border-slate-200 hover:border-indigo-500 shadow-sm hover:shadow-xl"
                 onClick={() => navigate('/games/math-ninja')}
               >
                 <div className="h-40 bg-gradient-to-br from-[#3B82F6] via-[#6366F1] to-[#8B5CF6] relative overflow-hidden flex items-center justify-center p-4">
@@ -97,7 +97,7 @@ const GamesList = () => {
                   </div>
                 </div>
                 
-                <div className="p-6 flex-1 flex flex-col bg-white">
+                <div className="p-6 bg-white block">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-[10px] uppercase tracking-widest font-black bg-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg">
                       Matematika
@@ -108,11 +108,11 @@ const GamesList = () => {
                   </div>
                   
                   <h3 className="text-2xl font-black mb-2 text-slate-800">Tezkor Hisob</h3>
-                  <p className="text-sm text-slate-500 mb-6 font-medium leading-relaxed flex-1">
+                  <p className="text-sm text-slate-500 mb-6 font-medium leading-relaxed">
                     Qisqa vaqt ichida eng ko'p matematik misollarni yeching. Tezlik va aniqlik — g'alaba kaliti! 🏆
                   </p>
                   
-                  <div className="mt-auto">
+                  <div className="mt-2">
                     <div className="bg-[#10B981] group-hover:bg-[#059669] text-white w-full py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-colors shadow-md border-b-[4px] border-[#059669] active:border-b-0 active:translate-y-[4px]">
                       Hozir O'ynash <Zap className="w-5 h-5 fill-white" />
                     </div>
