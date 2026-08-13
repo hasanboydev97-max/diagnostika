@@ -81,61 +81,44 @@ const GamesList = () => {
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                whileHover={{ y: -8, scale: 1.02 }}
-                className="bg-white rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-300 flex flex-col group border-b-[8px] border-slate-200 hover:border-indigo-500 shadow-sm hover:shadow-2xl"
+                whileHover={{ y: -4, scale: 1.02 }}
+                className="bg-white rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 flex flex-col group border-b-[6px] border-slate-200 hover:border-indigo-500 shadow-sm hover:shadow-xl"
                 onClick={() => navigate('/games/math-ninja')}
               >
-                <div className="h-56 bg-gradient-to-br from-[#3B82F6] via-[#6366F1] to-[#8B5CF6] relative overflow-hidden flex items-center justify-center p-6">
+                <div className="h-40 bg-gradient-to-br from-[#3B82F6] via-[#6366F1] to-[#8B5CF6] relative overflow-hidden flex items-center justify-center p-4">
                   {/* Decorative background circles */}
-                  <div className="absolute top-[-20%] right-[-10%] w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-                  <div className="absolute bottom-[-20%] left-[-10%] w-32 h-32 bg-indigo-900/20 rounded-full blur-xl group-hover:scale-150 transition-transform duration-700 delay-100"></div>
+                  <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-white/10 rounded-full blur-xl group-hover:scale-125 transition-transform duration-700"></div>
+                  <div className="absolute bottom-[-20%] left-[-10%] w-24 h-24 bg-indigo-900/20 rounded-full blur-lg group-hover:scale-125 transition-transform duration-700 delay-100"></div>
                   
-                  <Brain className="w-48 h-48 text-white opacity-[0.07] absolute -right-8 -bottom-8 rotate-12 group-hover:rotate-0 transition-transform duration-500" />
+                  <Brain className="w-32 h-32 text-white opacity-[0.07] absolute -right-6 -bottom-6 rotate-12 group-hover:rotate-0 transition-transform duration-500" />
                   
-                  <div className="relative z-10 bg-white/20 backdrop-blur-md border border-white/30 px-8 py-4 rounded-3xl text-white font-mono text-5xl font-black drop-shadow-xl transform group-hover:scale-110 transition-transform duration-300 shadow-[0_10px_30px_rgba(0,0,0,0.1)]">
+                  <div className="relative z-10 bg-white/20 backdrop-blur-md border border-white/30 px-6 py-3 rounded-2xl text-white font-mono text-3xl font-black drop-shadow-lg transform group-hover:scale-105 transition-transform duration-300">
                     12 × 4 = ?
                   </div>
                 </div>
                 
-                <div className="p-8 flex-1 flex flex-col bg-white">
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-xs uppercase tracking-widest font-black bg-indigo-100 text-indigo-600 px-3 py-1.5 rounded-xl">
+                <div className="p-6 flex-1 flex flex-col bg-white">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-[10px] uppercase tracking-widest font-black bg-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg">
                       Matematika
                     </span>
-                    <span className="text-xs uppercase tracking-widest font-black bg-orange-100 text-orange-600 px-3 py-1.5 rounded-xl flex items-center gap-1">
+                    <span className="text-[10px] uppercase tracking-widest font-black bg-orange-100 text-orange-600 px-2.5 py-1 rounded-lg flex items-center gap-1">
                       <Flame className="w-3 h-3" /> QIZIQARLI
                     </span>
                   </div>
                   
-                  <h3 className="text-3xl font-black mb-3 text-slate-800">Tezkor Hisob</h3>
-                  <p className="text-base text-slate-500 mb-8 font-medium leading-relaxed flex-1">
+                  <h3 className="text-2xl font-black mb-2 text-slate-800">Tezkor Hisob</h3>
+                  <p className="text-sm text-slate-500 mb-6 font-medium leading-relaxed flex-1">
                     Qisqa vaqt ichida eng ko'p matematik misollarni yeching. Tezlik va aniqlik — g'alaba kaliti! 🏆
                   </p>
                   
                   <div className="mt-auto">
-                    <div className="bg-[#10B981] group-hover:bg-[#059669] text-white w-full py-5 rounded-2xl font-black text-xl flex items-center justify-center gap-3 transition-colors shadow-lg border-b-[6px] border-[#059669] active:border-b-0 active:translate-y-[6px]">
-                      Hozir O'ynash <Zap className="w-6 h-6 fill-white" />
+                    <div className="bg-[#10B981] group-hover:bg-[#059669] text-white w-full py-4 rounded-xl font-black text-lg flex items-center justify-center gap-2 transition-colors shadow-md border-b-[4px] border-[#059669] active:border-b-0 active:translate-y-[4px]">
+                      Hozir O'ynash <Zap className="w-5 h-5 fill-white" />
                     </div>
                   </div>
                 </div>
               </motion.div>
-
-              {/* Placeholder for future games */}
-              <div className="bg-neutral-50 border-2 border-dashed border-neutral-200 rounded-3xl p-8 flex flex-col items-center justify-center text-center opacity-70">
-                <div className="w-16 h-16 bg-neutral-200 text-neutral-400 rounded-2xl flex items-center justify-center mb-4">
-                  <Gamepad2 className="w-8 h-8" />
-                </div>
-                <h3 className="text-lg font-bold mb-2 text-neutral-600">So'z Ustasi (Tez kunda)</h3>
-                <p className="text-xs text-neutral-400 max-w-[200px]">Ingliz va Rus tillaridagi so'zlarni moslashtirish o'yini.</p>
-              </div>
-
-              <div className="bg-neutral-50 border-2 border-dashed border-neutral-200 rounded-3xl p-8 flex flex-col items-center justify-center text-center opacity-70">
-                <div className="w-16 h-16 bg-neutral-200 text-neutral-400 rounded-2xl flex items-center justify-center mb-4">
-                  <Gamepad2 className="w-8 h-8" />
-                </div>
-                <h3 className="text-lg font-bold mb-2 text-neutral-600">Harf Teruvchi (Tez kunda)</h3>
-                <p className="text-xs text-neutral-400 max-w-[200px]">Tushirib qoldirilgan harflarni topish orqali so'z yasash.</p>
-              </div>
             </div>
           </div>
         )}

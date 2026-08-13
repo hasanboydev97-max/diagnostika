@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Trophy, Clock, X, Check, Flame, Zap } from 'lucide-react';
+import { ArrowLeft, Trophy, Clock, X, Check, Flame, Zap, Heart } from 'lucide-react';
 import { toast } from 'sonner';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -13,12 +13,11 @@ interface GameRecord {
   createdAt: string;
 }
 
-// Vibrant colors for the 4 options
 const OPTION_COLORS = [
-  { bg: 'bg-[#FF4B4B]', border: 'border-[#CC3C3C]', text: 'text-white', shadow: 'shadow-[0_8px_0_#CC3C3C]' },
-  { bg: 'bg-[#3B82F6]', border: 'border-[#2563EB]', text: 'text-white', shadow: 'shadow-[0_8px_0_#2563EB]' },
-  { bg: 'bg-[#F59E0B]', border: 'border-[#D97706]', text: 'text-white', shadow: 'shadow-[0_8px_0_#D97706]' },
-  { bg: 'bg-[#10B981]', border: 'border-[#059669]', text: 'text-white', shadow: 'shadow-[0_8px_0_#059669]' }
+  { bg: 'bg-[#FF4B4B]', border: 'border-[#CC3C3C]', text: 'text-white' },
+  { bg: 'bg-[#3B82F6]', border: 'border-[#2563EB]', text: 'text-white' },
+  { bg: 'bg-[#F59E0B]', border: 'border-[#D97706]', text: 'text-white' },
+  { bg: 'bg-[#10B981]', border: 'border-[#059669]', text: 'text-white' }
 ];
 
 const MathNinja = () => {
@@ -27,6 +26,7 @@ const MathNinja = () => {
   const [playerName, setPlayerName] = useState('');
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
+  const [lives, setLives] = useState(3);
   const [currentQuestion, setCurrentQuestion] = useState({ text: '', answer: 0 });
   const [options, setOptions] = useState<number[]>([]);
   const [leaderboard, setLeaderboard] = useState<GameRecord[]>([]);
@@ -59,7 +59,6 @@ const MathNinja = () => {
 
     setCurrentQuestion({ text: `${a} ${operator} ${b}`, answer });
     
-    // Generate 3 plausible wrong answers
     const newOptions = new Set<number>();
     newOptions.add(answer);
     
@@ -84,6 +83,7 @@ const MathNinja = () => {
     setScore(0);
     setCombo(0);
     setTimeLeft(60);
+    setLives(3);
     setGameState('playing');
     generateQuestion();
     
@@ -100,6 +100,7 @@ const MathNinja = () => {
   };
 
   const endGame = async () => {
+    if (timerRef.current) clearInterval(timerRef.current);
     setGameState('gameover');
     fetchLeaderboard();
     
@@ -131,7 +132,7 @@ const MathNinja = () => {
   }, [gameState]);
 
   const handleOptionClick = (selectedAnswer: number) => {
-    if (feedback !== null) return; // Prevent multiple clicks
+    if (feedback !== null) return;
     setClickedOption(selectedAnswer);
     
     if (selectedAnswer === currentQuestion.answer) {
@@ -143,39 +144,46 @@ const MathNinja = () => {
         setFeedback(null);
         setClickedOption(null);
         generateQuestion();
-      }, 400);
+      }, 300);
     } else {
       setCombo(0);
       setFeedback('wrong');
+      const newLives = lives - 1;
+      setLives(newLives);
+      
       setTimeout(() => {
         setFeedback(null);
         setClickedOption(null);
-        generateQuestion(); // Move to next question even if wrong, or we could let them retry. Kahoot style moves on.
-      }, 600);
+        if (newLives <= 0) {
+          endGame();
+        } else {
+          generateQuestion();
+        }
+      }, 500);
     }
   };
 
   const timerPercentage = (timeLeft / 60) * 100;
+  const highestRecord = leaderboard.length > 0 ? leaderboard[0].score : 0;
   
   return (
     <div className={`min-h-screen relative font-sans overflow-hidden transition-all duration-300 flex flex-col
       ${gameState === 'playing' ? 'bg-[#F0FDF4]' : 'bg-[#F8FAFC]'}`}>
       
-      {/* Dynamic Background Pattern */}
       <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #334155 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
 
       {/* Header */}
-      <header className="relative z-20 flex justify-between items-center p-4 md:p-6">
+      <header className="relative z-20 flex justify-between items-center p-4">
         <button 
           onClick={() => navigate('/games')}
-          className="w-14 h-14 bg-white border-b-[4px] border-slate-200 text-slate-700 rounded-2xl flex items-center justify-center hover:bg-slate-50 active:border-b-0 active:translate-y-[4px] transition-all"
+          className="w-12 h-12 bg-white border-b-[4px] border-slate-200 text-slate-700 rounded-2xl flex items-center justify-center hover:bg-slate-50 active:border-b-0 active:translate-y-[4px] transition-all"
         >
-          <ArrowLeft className="w-7 h-7" />
+          <ArrowLeft className="w-6 h-6" />
         </button>
         {gameState === 'playing' && (
           <div className="flex gap-4">
-            <div className="bg-white border-b-[4px] border-slate-200 px-6 py-3 rounded-2xl font-black text-2xl text-slate-700 flex items-center gap-3">
-              <Trophy className="w-7 h-7 text-amber-400 fill-amber-400" />
+            <div className="bg-white border-b-[4px] border-slate-200 px-5 py-2 rounded-2xl font-black text-xl text-slate-700 flex items-center gap-2">
+              <Trophy className="w-6 h-6 text-amber-400 fill-amber-400" />
               {score}
             </div>
           </div>
@@ -183,7 +191,7 @@ const MathNinja = () => {
       </header>
 
       {/* Main Content */}
-      <div className="flex flex-col items-center justify-center flex-1 w-full max-w-5xl mx-auto p-4 relative z-10">
+      <div className="flex flex-col items-center justify-center flex-1 w-full max-w-4xl mx-auto p-4 relative z-10">
         <AnimatePresence mode="wait">
           
           {/* START SCREEN */}
@@ -193,38 +201,43 @@ const MathNinja = () => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 1.1 }}
               className="w-full flex flex-col items-center text-center"
             >
-              <div className="relative mb-8">
+              <div className="relative mb-6">
                 <motion.div
-                  animate={{ y: [0, -15, 0], rotate: [0, 5, -5, 0] }}
+                  animate={{ y: [0, -10, 0], rotate: [0, 5, -5, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-40 h-40 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[2.5rem] shadow-[0_15px_0_#4338ca] flex items-center justify-center"
+                  className="w-32 h-32 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[2rem] shadow-[0_10px_0_#4338ca] flex items-center justify-center"
                 >
-                  <Zap className="w-24 h-24 text-white fill-white" />
+                  <Zap className="w-16 h-16 text-white fill-white" />
                 </motion.div>
-                {/* Sparkles */}
-                <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity }} className="absolute -top-4 -right-4 text-3xl">✨</motion.div>
-                <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity, delay: 1 }} className="absolute -bottom-4 -left-4 text-3xl">⭐</motion.div>
+                <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity }} className="absolute -top-3 -right-3 text-2xl">✨</motion.div>
+                <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity, delay: 1 }} className="absolute -bottom-3 -left-3 text-2xl">⭐</motion.div>
               </div>
               
-              <h1 className="text-5xl md:text-7xl font-black text-slate-800 mb-4 tracking-tight drop-shadow-sm">
+              <h1 className="text-4xl md:text-6xl font-black text-slate-800 mb-2 tracking-tight">
                 Tezkor Hisob
               </h1>
-              <p className="text-slate-500 text-lg md:text-xl mb-12 font-bold max-w-md">
-                1 daqiqa vaqt. Faqat to'g'ri javoblar. Miya tezligingizni sinab ko'ring!
+              <p className="text-slate-500 text-base md:text-lg mb-8 font-bold max-w-sm">
+                1 daqiqa vaqt. 3 ta xato qilish imkoni. Eng zo'r ekaningizni isbotlang!
               </p>
+
+              {highestRecord > 0 && (
+                <div className="bg-amber-100 border border-amber-300 text-amber-700 font-bold px-4 py-2 rounded-xl mb-8 flex items-center gap-2 shadow-sm">
+                  <Trophy className="w-5 h-5 fill-amber-500 text-amber-500" /> TOP REKORD: {highestRecord}
+                </div>
+              )}
               
-              <div className="w-full max-w-md space-y-4">
+              <div className="w-full max-w-sm space-y-4">
                 <input 
                   type="text" 
                   value={playerName}
                   onChange={(e) => setPlayerName(e.target.value)}
                   placeholder="Ismingiz kim?"
-                  className="w-full bg-white border-2 border-slate-200 rounded-2xl px-6 py-5 text-2xl font-bold text-center text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all placeholder:text-slate-300 shadow-sm"
+                  className="w-full bg-white border-2 border-slate-200 rounded-2xl px-5 py-4 text-xl font-bold text-center text-slate-800 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all placeholder:text-slate-300 shadow-sm"
                 />
                 
                 <button 
                   onClick={startGame}
-                  className="w-full bg-[#10B981] border-b-[8px] border-[#059669] text-white font-black text-3xl py-6 rounded-2xl active:border-b-0 active:translate-y-[8px] transition-all shadow-lg"
+                  className="w-full bg-[#10B981] border-b-[6px] border-[#059669] text-white font-black text-2xl py-5 rounded-2xl active:border-b-0 active:translate-y-[6px] transition-all shadow-md"
                 >
                   BOSHLA!
                 </button>
@@ -237,26 +250,43 @@ const MathNinja = () => {
             <motion.div 
               key="playing"
               initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-              className="w-full flex flex-col h-full items-center justify-between py-4"
+              className="w-full flex flex-col h-full items-center justify-between py-2"
             >
-              {/* Timer & Combo Bar */}
-              <div className="w-full max-w-2xl mb-8">
-                <div className="flex justify-between items-end mb-2 px-2">
-                  <div className="font-bold text-slate-500 flex items-center gap-2">
-                    <Clock className="w-5 h-5" /> {timeLeft}s
+              {/* Top Stats Area (Timer, Combo, Record, Lives) */}
+              <div className="w-full max-w-3xl mb-4">
+                <div className="flex justify-between items-end mb-2 px-1">
+                  <div className="flex flex-col">
+                    <div className="font-bold text-slate-500 flex items-center gap-1.5 text-sm mb-1">
+                      <Clock className="w-4 h-4" /> {timeLeft}s
+                    </div>
+                    {/* Lives (Hearts) */}
+                    <div className="flex gap-1">
+                      {[...Array(3)].map((_, i) => (
+                        <Heart 
+                          key={i} 
+                          className={`w-5 h-5 ${i < lives ? 'fill-rose-500 text-rose-500' : 'fill-slate-200 text-slate-200'}`} 
+                        />
+                      ))}
+                    </div>
                   </div>
-                  <AnimatePresence>
-                    {combo >= 2 && (
-                      <motion.div 
-                        initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }}
-                        className="text-orange-500 font-black text-xl flex items-center gap-1"
-                      >
-                        <Flame className="w-6 h-6 fill-orange-500" /> {combo}x COMBO
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  
+                  <div className="flex flex-col items-end">
+                    <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">
+                      Top Rekord: {Math.max(highestRecord, score)}
+                    </div>
+                    <AnimatePresence>
+                      {combo >= 2 && (
+                        <motion.div 
+                          initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }}
+                          className="text-orange-500 font-black text-lg flex items-center gap-1"
+                        >
+                          <Flame className="w-5 h-5 fill-orange-500" /> {combo}x COMBO
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
-                <div className="w-full h-4 bg-slate-200 rounded-full overflow-hidden">
+                <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
                   <motion.div 
                     className={`h-full ${timeLeft > 15 ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`}
                     initial={{ width: '100%' }}
@@ -270,25 +300,24 @@ const MathNinja = () => {
               <motion.div 
                 animate={feedback === 'wrong' ? { x: [-10, 10, -10, 10, 0] } : {}}
                 transition={{ duration: 0.3 }}
-                className={`w-full max-w-4xl bg-white rounded-[3rem] p-8 md:p-16 mb-8 flex items-center justify-center border-b-[8px] shadow-sm relative overflow-hidden transition-colors ${
+                className={`w-full max-w-3xl bg-white rounded-[2rem] p-6 md:p-10 mb-6 flex items-center justify-center border-b-[6px] shadow-sm relative overflow-hidden transition-colors ${
                   feedback === 'correct' ? 'border-[#10B981] bg-[#ECFDF5]' : 
                   feedback === 'wrong' ? 'border-[#EF4444] bg-[#FEF2F2]' : 
                   'border-slate-200'
                 }`}
               >
-                {/* Large Background Icon for aesthetics */}
-                <div className="absolute right-[-10%] top-[-10%] opacity-[0.03] rotate-12 pointer-events-none">
-                  <BrainIcon size={400} />
+                <div className="absolute right-[-5%] top-[-10%] opacity-[0.03] rotate-12 pointer-events-none">
+                  <BrainIcon size={300} />
                 </div>
                 
                 <AnimatePresence mode="wait">
                   <motion.div 
                     key={currentQuestion.text}
-                    initial={{ scale: 0.5, opacity: 0 }}
+                    initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 1.5, opacity: 0 }}
+                    exit={{ scale: 1.2, opacity: 0 }}
                     transition={{ type: 'spring', damping: 15 }}
-                    className={`text-[5rem] md:text-[8rem] font-black tracking-tighter z-10 ${
+                    className={`text-[4rem] md:text-[6rem] font-black tracking-tighter z-10 ${
                       feedback === 'correct' ? 'text-[#10B981]' : 
                       feedback === 'wrong' ? 'text-[#EF4444]' : 
                       'text-slate-800'
@@ -302,19 +331,19 @@ const MathNinja = () => {
                 <AnimatePresence>
                   {feedback === 'correct' && (
                     <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 2, opacity: 0 }} className="absolute text-[#10B981]">
-                      <Check className="w-48 h-48" strokeWidth={4} />
+                      <Check className="w-32 h-32" strokeWidth={4} />
                     </motion.div>
                   )}
                   {feedback === 'wrong' && (
                     <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 2, opacity: 0 }} className="absolute text-[#EF4444]">
-                      <X className="w-48 h-48" strokeWidth={4} />
+                      <X className="w-32 h-32" strokeWidth={4} />
                     </motion.div>
                   )}
                 </AnimatePresence>
               </motion.div>
               
-              {/* Massive Answer Buttons Grid */}
-              <div className="grid grid-cols-2 gap-4 md:gap-6 w-full max-w-4xl">
+              {/* Answer Buttons Grid */}
+              <div className="grid grid-cols-2 gap-3 md:gap-5 w-full max-w-3xl">
                 {options.map((opt, idx) => {
                   const style = OPTION_COLORS[idx % 4];
                   const isClicked = clickedOption === opt;
@@ -325,10 +354,10 @@ const MathNinja = () => {
                       disabled={feedback !== null}
                       onClick={() => handleOptionClick(opt)}
                       className={`
-                        w-full py-8 md:py-12 rounded-3xl text-4xl md:text-6xl font-black transition-all transform
-                        ${style.bg} ${style.text} ${style.border} border-b-[8px]
-                        ${feedback === null ? 'hover:brightness-110 active:border-b-0 active:translate-y-[8px]' : ''}
-                        ${isClicked ? 'border-b-0 translate-y-[8px] brightness-110' : ''}
+                        w-full py-6 md:py-8 rounded-2xl text-3xl md:text-5xl font-black transition-all transform
+                        ${style.bg} ${style.text} ${style.border} border-b-[6px]
+                        ${feedback === null ? 'hover:brightness-110 active:border-b-0 active:translate-y-[6px]' : ''}
+                        ${isClicked ? 'border-b-0 translate-y-[6px] brightness-110' : ''}
                       `}
                     >
                       {opt}
@@ -344,63 +373,70 @@ const MathNinja = () => {
             <motion.div 
               key="gameover"
               initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-              className="w-full max-w-3xl flex flex-col items-center"
+              className="w-full max-w-2xl flex flex-col items-center"
             >
-              <div className="bg-white rounded-[3rem] p-10 md:p-14 w-full border-b-[12px] border-slate-200 shadow-xl flex flex-col items-center text-center relative overflow-hidden mb-8">
+              <div className="bg-white rounded-[2.5rem] p-8 md:p-10 w-full border-b-[8px] border-slate-200 shadow-xl flex flex-col items-center text-center relative overflow-hidden mb-6">
                 
-                <h2 className="text-4xl md:text-5xl font-black text-slate-800 mb-2">Vaqt Tugadi!</h2>
-                <p className="text-xl font-bold text-slate-500 mb-8 uppercase tracking-widest">Ajoyib o'yin</p>
+                <h2 className="text-3xl md:text-4xl font-black text-slate-800 mb-2">
+                  {lives <= 0 ? 'Imkoniyat Tugadi!' : 'Vaqt Tugadi!'}
+                </h2>
+                <p className="text-lg font-bold text-slate-500 mb-6 uppercase tracking-widest">Ajoyib o'yin</p>
                 
-                <div className="w-full bg-[#F8FAFC] border-4 border-slate-100 rounded-[2rem] py-10 mb-8">
-                  <div className="text-slate-400 font-bold text-lg mb-2 uppercase">Sizning Natijangiz</div>
-                  <div className="text-[6rem] md:text-[8rem] font-black text-amber-500 leading-none drop-shadow-sm flex items-center justify-center gap-4">
-                    <Trophy className="w-20 h-20 fill-amber-500" />
+                <div className="w-full bg-[#F8FAFC] border-4 border-slate-100 rounded-[1.5rem] py-8 mb-6 relative">
+                  {score > highestRecord && score > 0 && (
+                     <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-rose-500 text-white px-3 py-1 rounded-full text-xs font-black animate-bounce">
+                       YANGI REKORD!
+                     </div>
+                  )}
+                  <div className="text-slate-400 font-bold text-base mb-2 uppercase">Sizning Natijangiz</div>
+                  <div className="text-[5rem] md:text-[6rem] font-black text-amber-500 leading-none drop-shadow-sm flex items-center justify-center gap-3">
+                    <Trophy className="w-16 h-16 fill-amber-500" />
                     {score}
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 w-full">
+                <div className="flex flex-col sm:flex-row gap-3 w-full">
                   <button 
                     onClick={startGame}
-                    className="flex-1 bg-[#3B82F6] border-b-[8px] border-[#2563EB] text-white font-black text-2xl py-6 rounded-2xl active:border-b-0 active:translate-y-[8px] transition-all shadow-lg flex justify-center items-center gap-3"
+                    className="flex-1 bg-[#3B82F6] border-b-[6px] border-[#2563EB] text-white font-black text-xl py-4 rounded-xl active:border-b-0 active:translate-y-[6px] transition-all shadow-md flex justify-center items-center gap-2"
                   >
                     QAYTA O'YNASH
                   </button>
                   <button 
                     onClick={() => navigate('/games')}
-                    className="flex-1 bg-white border-4 border-slate-200 text-slate-700 font-black text-2xl py-6 rounded-2xl hover:bg-slate-50 active:translate-y-[4px] transition-all"
+                    className="flex-1 bg-white border-4 border-slate-200 text-slate-700 font-black text-xl py-4 rounded-xl hover:bg-slate-50 active:translate-y-[4px] transition-all"
                   >
                     CHIQISH
                   </button>
                 </div>
               </div>
 
-              {/* Leaderboard Table (Kahoot style) */}
-              <div className="w-full bg-white rounded-3xl p-6 border-b-[6px] border-slate-200 shadow-md">
-                <h3 className="font-black text-2xl text-slate-800 mb-6 flex items-center justify-center gap-3">
-                  <Flame className="w-8 h-8 text-orange-500 fill-orange-500" /> TOP REKORDLAR
+              {/* Leaderboard */}
+              <div className="w-full bg-white rounded-3xl p-5 border-b-[4px] border-slate-200 shadow-sm">
+                <h3 className="font-black text-xl text-slate-800 mb-4 flex items-center justify-center gap-2">
+                  <Flame className="w-6 h-6 text-orange-500 fill-orange-500" /> TOP REKORDLAR
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {leaderboard.slice(0, 5).map((record, idx) => {
                     const isMe = record.playerName === playerName && record.score === score;
                     return (
-                      <div key={record._id} className={`flex items-center justify-between px-6 py-4 rounded-2xl border-2 ${
+                      <div key={record._id} className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 ${
                         isMe ? 'bg-amber-50 border-amber-400' : 'bg-slate-50 border-slate-100'
                       }`}>
-                        <div className="flex items-center gap-6">
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-xl ${
-                            idx === 0 ? 'bg-amber-400 text-white shadow-lg' : 
-                            idx === 1 ? 'bg-slate-300 text-white shadow-md' : 
-                            idx === 2 ? 'bg-amber-700 text-white shadow-md' : 
+                        <div className="flex items-center gap-4">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${
+                            idx === 0 ? 'bg-amber-400 text-white shadow-sm' : 
+                            idx === 1 ? 'bg-slate-300 text-white' : 
+                            idx === 2 ? 'bg-amber-700 text-white' : 
                             'bg-slate-200 text-slate-500'
                           }`}>
                             {idx + 1}
                           </div>
-                          <span className={`font-bold text-2xl uppercase ${isMe ? 'text-amber-600' : 'text-slate-700'}`}>
+                          <span className={`font-bold text-lg uppercase ${isMe ? 'text-amber-600' : 'text-slate-700'}`}>
                             {record.playerName}
                           </span>
                         </div>
-                        <span className={`font-black text-3xl ${isMe ? 'text-amber-600' : 'text-slate-800'}`}>
+                        <span className={`font-black text-xl ${isMe ? 'text-amber-600' : 'text-slate-800'}`}>
                           {record.score}
                         </span>
                       </div>
@@ -417,7 +453,6 @@ const MathNinja = () => {
   );
 };
 
-// Simple Brain SVG for background decoration
 const BrainIcon = ({ size = 24 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/>
