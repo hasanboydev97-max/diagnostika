@@ -13,6 +13,7 @@ import { authMiddleware, adminMiddleware } from './middleware/auth.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import { onlineTestRoutes, onlineTestResultRoutes } from './routes/onlineTestRoutes.js';
+import gamesRoutes from './routes/gamesRoutes.js';
 import { setupSockets } from './sockets/socketManager.js';
 
 
@@ -139,6 +140,7 @@ app.use('/api/admin', adminRoutes);
 // --- New Online Tests MVC Routes ---
 app.use('/api/online-tests', onlineTestRoutes);
 app.use('/api/online-test-results', onlineTestResultRoutes);
+app.use('/api/games', gamesRoutes);
 
 // --- Telegram Bot Logic ---
 // 🤖 TELEGRAM BOT 24/7 SERVER ENGINE (Render.com)

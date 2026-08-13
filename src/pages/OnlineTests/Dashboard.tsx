@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChevronRight, FileText, Search, Trash2, ShieldAlert, Crown } from 'lucide-react';
+import { Plus, ChevronRight, FileText, Search, Trash2, ShieldAlert, Crown, Gamepad2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { getAuthHeaders, getToken, getTeacher, fetchCurrentTeacher } from '../../lib/auth';
@@ -181,7 +181,14 @@ export default function OnlineTestsDashboard() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="w-full md:w-auto">
+          <div className="w-full md:w-auto flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => navigate('/games')}
+              className="bg-indigo-50 border border-indigo-200 text-indigo-700 px-6 py-3 rounded-2xl font-semibold flex items-center justify-center gap-2 hover:bg-indigo-100 transition-colors shadow-sm"
+            >
+              <Gamepad2 size={18} />
+              Mini O'yinlar
+            </button>
             <MagicButton
               onClick={() => navigate('/online-tests/create')}
               label="Yangi Test Yaratish"

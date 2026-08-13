@@ -20,6 +20,8 @@ const TeacherAuth = lazy(() => import('./pages/OnlineTests/TeacherAuth'));
 const LiveHost = lazy(() => import('./pages/OnlineTests/LiveHost'));
 const LivePlayer = lazy(() => import('./pages/OnlineTests/LivePlayer'));
 const DuelPlayer = lazy(() => import('./pages/OnlineTests/DuelPlayer'));
+const GamesList = lazy(() => import('./pages/Games/GamesList'));
+const MathNinja = lazy(() => import('./pages/Games/MathNinja'));
 
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 
@@ -57,6 +59,10 @@ function App() {
             <Route path="/online-tests/live/host/:testId" element={<LiveHost />} />
             <Route path="/live" element={<LivePlayer />} />
             <Route path="/duel" element={<DuelPlayer />} />
+            
+            {/* Games Module */}
+            <Route path="/games" element={<GamesList />} />
+            <Route path="/games/math-ninja" element={<MathNinja />} />
             
             {/* Catch-all route to prevent blank screens */}
             <Route path="*" element={<Navigate to="/" replace />} />
