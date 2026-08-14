@@ -1,94 +1,95 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchCurrentTeacher, getToken } from '../../lib/auth';
-import { Crown, ArrowLeft, Gamepad2, Brain, Flame, BookOpen, Languages, Play } from 'lucide-react';
+import { Crown, ArrowLeft, Gamepad2, Brain, Flame, BookOpen, Languages, ChevronRight } from 'lucide-react';
 
-// ─── Color Palettes for the 3D Cards ──────────────────────────────────────
+// ─── Premium Color Themes ──────────────────────────────────────────────────
 const COLORS = {
   blue: {
-    bg: 'bg-[#3B82F6]',
-    border: 'border-[#3B82F6]',
-    shadow: 'shadow-[#1D4ED8]',
+    gradient: 'from-[#2563EB] via-[#4F46E5] to-[#4338CA]',
+    text: 'text-indigo-600',
+    hoverText: 'group-hover:text-indigo-700',
   },
   purple: {
-    bg: 'bg-[#8B5CF6]',
-    border: 'border-[#8B5CF6]',
-    shadow: 'shadow-[#5B21B6]',
+    gradient: 'from-[#8B5CF6] via-[#D946EF] to-[#C026D3]',
+    text: 'text-fuchsia-600',
+    hoverText: 'group-hover:text-fuchsia-700',
   },
   teal: {
-    bg: 'bg-[#0D9488]',
-    border: 'border-[#0D9488]',
-    shadow: 'shadow-[#0F766E]',
+    gradient: 'from-[#14B8A6] via-[#10B981] to-[#059669]',
+    text: 'text-emerald-600',
+    hoverText: 'group-hover:text-emerald-700',
   }
 };
 
-// ─── Reusable 3D Game Card ──────────────────────────────────────────────────
+// ─── Elegant Game Card ──────────────────────────────────────────────────────
 interface GameCardProps {
   onClick: () => void;
   colorObj: typeof COLORS.blue;
   tag: string;
   title: string;
   description: string;
-  emoji: string;
   icon: React.ElementType;
 }
 
-const GameCard = ({
-  onClick, colorObj, tag, title, description, emoji, icon: Icon
-}: GameCardProps) => {
+const GameCard = ({ onClick, colorObj, tag, title, description, icon: Icon }: GameCardProps) => {
   return (
     <div 
       onClick={onClick}
-      className={`relative flex flex-col rounded-[32px] cursor-pointer group hover:-translate-y-1 active:translate-y-1 active:scale-[0.98] transition-all duration-200 bg-white border-[3px] ${colorObj.border} shadow-[0_8px_0_0] hover:shadow-[0_12px_0_0] active:shadow-[0_0px_0_0] ${colorObj.shadow} h-full`}
+      className="group relative flex flex-col bg-white rounded-3xl border border-slate-200/80 cursor-pointer overflow-hidden transition-all duration-500 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-1.5 h-full"
+      style={{ WebkitTapHighlightColor: 'transparent' }}
     >
-      {/* Header section (Graphic Area) */}
-      <div className={`relative overflow-hidden rounded-t-[28px] p-8 flex flex-col items-center justify-center shrink-0 ${colorObj.bg}`}>
-        {/* Badge & Emoji */}
-        <div className="absolute top-5 left-5 z-10">
-          <div className="bg-white/25 text-white text-[11px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl backdrop-blur-md shadow-sm">
+      {/* Top Graphic Section (Glassmorphism & Gradient) */}
+      <div className={`relative h-48 w-full bg-gradient-to-br ${colorObj.gradient} overflow-hidden shrink-0 flex items-center justify-center`}>
+        {/* Abstract Background Shapes */}
+        <div className="absolute top-[-30%] left-[-10%] w-[70%] h-[140%] bg-white/10 rounded-full blur-[40px] transform group-hover:rotate-12 group-hover:scale-110 transition-transform duration-700" />
+        <div className="absolute bottom-[-30%] right-[-10%] w-[70%] h-[140%] bg-black/10 rounded-full blur-[40px] transform group-hover:-rotate-12 group-hover:scale-110 transition-transform duration-700" />
+        
+        {/* Elegant Category Badge */}
+        <div className="absolute top-4 left-5 z-10">
+          <div className="px-3.5 py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-[11px] font-semibold tracking-wider uppercase shadow-sm">
             {tag}
           </div>
         </div>
-        <div className="absolute top-5 right-5 text-3xl z-10 drop-shadow-md">
-          {emoji}
+
+        {/* Large Centered Icon */}
+        <div className="relative z-10 text-white transform group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-500 drop-shadow-xl mt-4">
+          <Icon size={76} strokeWidth={1.5} />
         </div>
-        
-        {/* Giant icon */}
-        <div className="text-white transform group-hover:scale-110 group-hover:rotate-[5deg] transition-transform duration-500 drop-shadow-2xl mt-4 mb-2 relative z-10">
-          <Icon size={90} strokeWidth={2.5} />
-        </div>
-        
-        {/* Decorative Glossy Elements */}
-        <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-white/20 rounded-full blur-[30px]" />
-        <div className="absolute -top-12 -left-12 w-40 h-40 bg-black/10 rounded-full blur-[30px]" />
-        <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent" />
       </div>
 
-      {/* Body section (Text & Action) */}
-      <div className="p-7 flex-1 flex flex-col bg-white rounded-b-[28px]">
+      {/* Content Section */}
+      <div className="p-7 flex-1 flex flex-col bg-white">
         <div className="flex items-center gap-2 mb-3">
-           <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest bg-orange-100 text-orange-600 px-2.5 py-1 rounded-lg">
-             <Flame className="w-3 h-3" /> QIZIQARLI
-           </span>
+          <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-orange-600 bg-orange-50 px-2 py-1 rounded border border-orange-100">
+             <Flame className="w-3.5 h-3.5" /> Qiziqarli
+          </span>
         </div>
         
-        <h3 className="text-[24px] font-black text-slate-800 mb-2 tracking-tight">
+        {/* Title explicitly uses font-sans to override any heavy custom fonts */}
+        <h3 className="text-2xl font-bold text-slate-900 mb-2.5 font-sans tracking-tight">
           {title}
         </h3>
-        <p className="text-slate-500 font-bold text-[15px] leading-relaxed mb-8 flex-1">
+        
+        <p className="text-slate-500 text-[15px] leading-relaxed mb-8 flex-1 font-sans">
           {description}
         </p>
 
-        {/* Action Button - Syncs with card color */}
-        <div className={`w-full py-4 rounded-[18px] text-white font-black text-lg flex items-center justify-center gap-2 transition-colors ${colorObj.bg}`}>
-          Hozir O'ynash <Play className="w-5 h-5" fill="currentColor" />
+        {/* Minimalist Action Footer */}
+        <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+          <span className={`font-semibold text-[15px] font-sans transition-colors text-slate-500 ${colorObj.hoverText}`}>
+            O'ynashni boshlash
+          </span>
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-slate-50 group-hover:bg-slate-100 transition-colors text-slate-400 ${colorObj.hoverText}`}>
+            <ChevronRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-// ──────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────
 
 const GamesList = () => {
   const navigate = useNavigate();
@@ -102,8 +103,8 @@ const GamesList = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F4F6F8]">
-        <div className="w-10 h-10 border-[4px] border-slate-200 border-t-indigo-600 rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="w-10 h-10 border-[3px] border-slate-200 border-t-indigo-600 rounded-full animate-spin" />
       </div>
     );
   }
@@ -111,90 +112,91 @@ const GamesList = () => {
   const isPremium = teacher?.plan === 'premium';
 
   return (
-    <div className="min-h-screen relative font-sans text-slate-900 bg-[#F4F6F8] overflow-x-hidden selection:bg-indigo-200">
-      {/* Subtle Premium Background Elements */}
-      <div className="absolute top-0 inset-x-0 h-[500px] bg-gradient-to-b from-slate-200/40 to-transparent pointer-events-none" />
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-400/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute top-[10%] right-[-5%] w-[30%] h-[30%] bg-purple-400/10 rounded-full blur-[100px] pointer-events-none" />
+    <div className="min-h-screen relative font-sans text-slate-900 bg-slate-50 overflow-x-hidden selection:bg-indigo-100">
+      
+      {/* Ultra-subtle Background Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-indigo-500/5 rounded-full blur-[120px] pointer-events-none" />
 
-      {/* Header */}
-      <header className="relative z-20 bg-white/70 backdrop-blur-2xl border-b border-slate-200/70 sticky top-0">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center gap-4">
+      {/* Premium Header */}
+      <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-2xl border-b border-slate-200/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-4">
           <button
             onClick={() => navigate('/online-tests')}
-            className="w-10 h-10 flex items-center justify-center rounded-[12px] bg-white border-[2px] border-slate-200 shadow-sm hover:border-slate-300 hover:bg-slate-50 active:scale-95 transition-all text-slate-600"
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100 active:scale-95 transition-all text-slate-500 hover:text-slate-900"
           >
-            <ArrowLeft className="w-5 h-5" strokeWidth={3} />
+            <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-[10px] bg-indigo-100 flex items-center justify-center border border-indigo-200 shadow-sm">
-               <Gamepad2 className="w-4 h-4 text-indigo-600" strokeWidth={3} />
+            <div className="w-8 h-8 rounded-[10px] bg-indigo-50 flex items-center justify-center border border-indigo-100 shadow-sm">
+               <Gamepad2 className="w-4 h-4 text-indigo-600" strokeWidth={2.5} />
             </div>
-            <h1 className="text-[17px] font-black text-slate-800 tracking-tight uppercase">Mini O'yinlar</h1>
+            <h1 className="text-[16px] font-bold text-slate-800 tracking-tight font-sans">
+              Mini O'yinlar
+            </h1>
           </div>
         </div>
       </header>
 
-      <main className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-12">
+      {/* Main Content */}
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         {!isPremium ? (
-          <div className="max-w-xl mx-auto text-center mt-12 bg-white border-[3px] border-amber-200 p-10 rounded-[32px] shadow-[0_12px_0_0_rgba(251,191,36,0.3)]">
-            <div className="w-24 h-24 bg-amber-100 text-amber-600 rounded-[24px] flex items-center justify-center mx-auto mb-6 shadow-inner border border-amber-200">
-              <Crown className="w-12 h-12" strokeWidth={2.5} />
+          <div className="max-w-xl mx-auto text-center mt-12 bg-white border border-amber-200/60 p-10 rounded-3xl shadow-xl shadow-amber-500/5">
+            <div className="w-20 h-20 bg-amber-50 text-amber-500 rounded-[20px] flex items-center justify-center mx-auto mb-6 border border-amber-100">
+              <Crown className="w-10 h-10" strokeWidth={2} />
             </div>
-            <h2 className="text-3xl font-black mb-4 text-slate-800">Premium obuna zarur</h2>
-            <p className="text-slate-600 font-bold mb-8 leading-relaxed">
+            <h2 className="text-3xl font-bold mb-4 text-slate-900 font-sans tracking-tight">Premium obuna zarur</h2>
+            <p className="text-slate-500 text-[15px] mb-8 leading-relaxed font-sans">
               Ta'limiy o'yinlar modulidan foydalanish va o'quvchilaringiz darslarini qiziqarli o'yinlar bilan boyitish uchun Premium tarifiga o'ting.
             </p>
             <button
               onClick={() => navigate('/')}
-              className="bg-amber-500 text-white px-8 py-4 rounded-[16px] font-black text-lg border-b-[4px] border-amber-700 hover:bg-amber-400 active:border-b-0 active:translate-y-[4px] transition-all w-full shadow-lg"
+              className="bg-slate-900 text-white px-8 py-3.5 rounded-xl font-medium text-[15px] hover:bg-slate-800 active:scale-[0.98] transition-all w-full shadow-lg shadow-slate-900/20"
             >
               Tarifni o'zgartirish
             </button>
           </div>
         ) : (
           <div>
-            <div className="mb-10 text-center">
-              <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-4 text-slate-800 drop-shadow-sm">
+            {/* Elegant Title Section */}
+            <div className="mb-14 text-center max-w-2xl mx-auto">
+              <h2 className="text-3xl md:text-[42px] font-bold tracking-tight text-slate-900 mb-4 font-sans leading-tight">
                 Bosh Qotirmalar
               </h2>
-              <p className="text-base font-bold text-slate-500 max-w-2xl mx-auto">
-                O'quvchilar e'tiborini tortish va bilimlarini mustahkamlash uchun mo'ljallangan interaktiv va qiziqarli o'yinlar to'plami.
+              <p className="text-[16px] text-slate-500 font-sans leading-relaxed">
+                O'quvchilar e'tiborini tortish va bilimlarini mustahkamlash uchun mo'ljallangan interaktiv o'yinlar to'plami.
               </p>
             </div>
 
-            {/* Games Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-12 items-stretch">
-              {/* 1 — Math */}
+            {/* Premium Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch pb-16">
+              
+              {/* Math Card */}
               <GameCard
                 onClick={() => navigate('/games/math-ninja')}
                 colorObj={COLORS.blue}
                 tag="Matematika"
                 title="Tezkor Hisob"
                 description="Qisqa vaqt ichida eng ko'p matematik misollarni yeching. Tezlik va aniqlik — g'alaba kaliti!"
-                emoji="🔢"
                 icon={Brain}
               />
 
-              {/* 2 — English */}
+              {/* English Card */}
               <GameCard
                 onClick={() => navigate('/games/english-words')}
                 colorObj={COLORS.purple}
                 tag="Ingliz Tili"
                 title="English Words"
                 description="O'zbek so'zni ko'r va inglizcha tarjimasini tez tanla. Lug'atingizni kengaytiring!"
-                emoji="🇬🇧"
                 icon={BookOpen}
               />
 
-              {/* 3 — Russian */}
+              {/* Russian Card */}
               <GameCard
                 onClick={() => navigate('/games/russian-words')}
                 colorObj={COLORS.teal}
                 tag="Rus Tili"
                 title="Rus So'zlari"
                 description="O'zbek so'zni ko'r va ruscha tarjimasini tez tanla. Rus tilini o'yin orqali o'rganing!"
-                emoji="🇷🇺"
                 icon={Languages}
               />
             </div>
