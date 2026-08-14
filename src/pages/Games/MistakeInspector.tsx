@@ -129,7 +129,7 @@ const MistakeInspector = () => {
   const [lives, setLives] = useState(3);
   const [combo, setCombo] = useState(0);
   const [muted, setMuted] = useState(gameSound.getMuted());
-  const [leaderboard, setLeaderboard] = useState<GameRecord[]>([]);
+  const [, setLeaderboard] = useState<GameRecord[]>([]);
 
   // Current Task & Phase: 'select_step' -> 'fix_mistake'
   const [currentTask, setCurrentTask] = useState<InspectorTask>(INSPECTOR_DATABASE[0]);
@@ -440,7 +440,7 @@ const MistakeInspector = () => {
                       onClick={() => handleSelectStep(step.stepIndex)}
                       className={`w-full p-5 rounded-2xl text-left border font-semibold text-lg transition-all flex items-center justify-between ${selectedStepIndex === step.stepIndex ? 'bg-amber-500/20 border-amber-500 text-amber-300' : 'bg-slate-900/90 border-slate-800 text-slate-200 hover:border-slate-700 hover:bg-slate-800/60'}`}
                     >
-                      <span><FormattedText text={step.text} /></span>
+                      <FormattedText content={step.text} />
                       <ShieldAlert className="w-5 h-5 text-slate-500 group-hover:text-amber-400" />
                     </motion.button>
                   ))}
@@ -467,7 +467,7 @@ const MistakeInspector = () => {
                         onClick={() => handleSelectFix(idx)}
                         className="w-full p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-emerald-500/60 hover:bg-slate-800 text-left font-medium text-lg text-white transition-all flex items-center justify-between"
                       >
-                        <span><FormattedText text={opt} /></span>
+                        <FormattedText content={opt} />
                         <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                       </motion.button>
                     ))}

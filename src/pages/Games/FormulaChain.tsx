@@ -484,7 +484,7 @@ const FormulaChain = () => {
                       onClick={() => handleDeselectBlock(item)}
                       className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xl shadow-md border border-indigo-400/30 transition-all active:scale-95 flex items-center justify-center min-w-[56px]"
                     >
-                      <FormattedText text={item.val} />
+                      <FormattedText content={item.val} />
                     </motion.button>
                   ))
                 )}
@@ -506,7 +506,7 @@ const FormulaChain = () => {
                       onClick={() => handleSelectBlock(item)}
                       className="px-5 py-3 rounded-2xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xl shadow-sm border border-slate-600 transition-all active:scale-95 flex items-center justify-center min-w-[56px]"
                     >
-                      <FormattedText text={item.val} />
+                      <FormattedText content={item.val} />
                     </motion.button>
                   ))}
                 </div>

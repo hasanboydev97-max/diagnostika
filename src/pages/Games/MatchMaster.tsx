@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Trophy, Clock, Heart, Flame, Volume2, VolumeX, Grid, Sparkles, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Trophy, Clock, Flame, Volume2, VolumeX, Grid, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { gameSound } from '../../utils/gameSound';
@@ -61,11 +61,11 @@ const MatchMaster = () => {
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
   const [combo, setCombo] = useState(0);
   const [muted, setMuted] = useState(gameSound.getMuted());
-  const [leaderboard, setLeaderboard] = useState<GameRecord[]>([]);
+  const [, setLeaderboard] = useState<GameRecord[]>([]);
 
   const [cards, setCards] = useState<Card[]>([]);
   const [flippedCards, setFlippedCards] = useState<Card[]>([]);
-  const [matchedPairsCount, setMatchedPairsCount] = useState(0);
+  const [, setMatchedPairsCount] = useState(0);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 

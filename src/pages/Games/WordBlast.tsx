@@ -81,7 +81,7 @@ const WordBlast = () => {
   const [lives, setLives] = useState(3);
   const [combo, setCombo] = useState(0);
   const [muted, setMuted] = useState(gameSound.getMuted());
-  const [leaderboard, setLeaderboard] = useState<GameRecord[]>([]);
+  const [, setLeaderboard] = useState<GameRecord[]>([]);
 
   const [currentRound, setCurrentRound] = useState<GameRound>(BLAST_ROUNDS[0]);
   const [activeWord, setActiveWord] = useState<BlastWord | null>(null);
