@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Trophy, Clock, Heart, Flame, Volume2, VolumeX, RotateCcw, Check, Sparkles, Brain } from 'lucide-react';
+import { ArrowLeft, Trophy, Clock, Flame, Volume2, VolumeX, ChevronRight, Brain, Heart, RotateCcw, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { gameSound } from '../../utils/gameSound';
@@ -296,181 +296,151 @@ const FormulaChain = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white font-sans relative overflow-x-hidden selection:bg-indigo-500 selection:text-white">
-      {/* Dynamic Ambient Background Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-indigo-600/10 rounded-full blur-[140px] pointer-events-none" />
+    <div className="min-h-screen relative font-sans overflow-hidden transition-all duration-300 flex flex-col bg-[#F8FAFC]">
+      <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #334155 1px, transparent 0)', backgroundSize: '32px 32px' }} />
 
       {/* Header */}
-      <header className="relative z-20 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <button
-            onClick={() => navigate('/games')}
-            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="font-semibold text-sm">O'yinlar ro'yxatiga</span>
-          </button>
+      <header className="relative z-20 flex justify-between items-center p-4">
+        <button
+          onClick={() => navigate('/games')}
+          className="w-12 h-12 bg-white border border-slate-200 text-slate-700 rounded-2xl flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all shadow-sm"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
 
-          <div className="flex items-center gap-3">
-            <div className="px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-              <Brain className="w-4 h-4" /> Formula Zanjiri
-            </div>
-
-            <button
-              onClick={toggleSound}
-              className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition-all active:scale-95"
-              title={muted ? 'Ovozni yoqish' : 'Ovozni o\'chirish'}
-            >
-              {muted ? <VolumeX className="w-5 h-5 text-red-400" /> : <Volume2 className="w-5 h-5 text-emerald-400" />}
+        {gameState === 'playing' && (
+          <div className="flex gap-2">
+            <button onClick={toggleSound} className="w-12 h-12 bg-white border border-slate-200 text-slate-700 rounded-2xl flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all shadow-sm">
+              {muted ? <VolumeX className="w-5 h-5 text-rose-500" /> : <Volume2 className="w-5 h-5 text-emerald-500" />}
             </button>
+            <div className="bg-white border border-slate-200 px-5 py-2 rounded-2xl font-bold text-[17px] text-slate-700 flex items-center gap-2 shadow-sm">
+              <Trophy className="w-5 h-5 text-amber-500 fill-amber-500" />
+              {score}
+            </div>
           </div>
-        </div>
+        )}
       </header>
 
       {/* Main Body */}
-      <main className="relative z-10 max-w-4xl mx-auto px-4 py-8">
+      <main className="flex flex-col items-center justify-center flex-1 w-full max-w-4xl mx-auto p-4 relative z-10">
         <AnimatePresence mode="wait">
           {/* 1. START SCREEN */}
           {gameState === 'start' && (
-            <motion.div
-              key="start-screen"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="bg-slate-800/70 border border-slate-700/80 rounded-3xl p-8 md:p-12 shadow-2xl backdrop-blur-xl max-w-xl mx-auto text-center"
+            <motion.div key="start-screen"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              className="w-full flex flex-col items-center text-center font-sans"
             >
-              <div className="w-20 h-20 bg-indigo-500/20 border border-indigo-500/30 rounded-3xl flex items-center justify-center mx-auto mb-6 text-indigo-400 shadow-inner">
-                <Sparkles className="w-10 h-10 animate-pulse" />
+              <div className="relative mb-8">
+                <motion.div
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                  className="w-32 h-32 bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-600 rounded-[2rem] shadow-2xl shadow-indigo-500/40 flex items-center justify-center relative overflow-hidden"
+                >
+                  <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-white/20 rounded-full blur-xl" />
+                  <Brain className="w-14 h-14 text-white relative z-10" strokeWidth={1.5} />
+                </motion.div>
               </div>
 
-              <h1 className="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight">
-                Formula Zanjiri
-              </h1>
-              <p className="text-slate-400 text-sm md:text-base leading-relaxed mb-8">
+              <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-3 tracking-tight">Formula Zanjiri</h1>
+              <p className="text-slate-500 text-[16px] mb-8 max-w-sm leading-relaxed">
                 Formulalar va mantiqiy bloklarni to'g'ri ketma-ketlikda sudrab joylashtiring. Mantiqiy fikrlashingiz va bilimingizni namoyish eting!
               </p>
 
-              <div className="mb-8 text-left">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-                  Ismingizni kiriting:
-                </label>
-                <input
-                  type="text"
-                  value={playerName}
-                  onChange={e => setPlayerName(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && startGame()}
-                  placeholder="Masalan: Jasur Aliyev"
-                  className="w-full bg-slate-900/90 border border-slate-700 rounded-2xl px-5 py-4 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-lg"
-                />
-              </div>
-
-              <button
-                onClick={startGame}
-                className="w-full py-4 bg-gradient-to-r from-indigo-500 via-indigo-600 to-indigo-700 hover:from-indigo-600 hover:to-indigo-800 text-white font-bold text-lg rounded-2xl shadow-lg shadow-indigo-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-              >
-                O'yinni Boshlash
-              </button>
-
-              {/* Mini Leaderboard preview */}
               {leaderboard.length > 0 && (
-                <div className="mt-10 pt-6 border-t border-slate-700/60 text-left">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                      <Trophy className="w-4 h-4 text-amber-400" /> Eng Yuqori Natijalar
-                    </span>
-                  </div>
-                  <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                    {leaderboard.slice(0, 5).map((rec, idx) => (
-                      <div key={rec._id || idx} className="flex items-center justify-between bg-slate-900/60 border border-slate-800 rounded-xl px-4 py-2.5 text-sm">
-                        <div className="flex items-center gap-3">
-                          <span className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${idx === 0 ? 'bg-amber-400 text-slate-950' : idx === 1 ? 'bg-slate-300 text-slate-950' : idx === 2 ? 'bg-amber-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
-                            {idx + 1}
-                          </span>
-                          <span className="font-semibold text-slate-200">{rec.playerName}</span>
-                        </div>
-                        <span className="font-bold text-indigo-400">{rec.score} ball</span>
-                      </div>
-                    ))}
-                  </div>
+                <div className="bg-indigo-50/50 backdrop-blur-sm border border-indigo-100 text-indigo-700 font-semibold px-5 py-2.5 rounded-full mb-8 flex items-center gap-2 shadow-sm text-sm">
+                  <Trophy className="w-4 h-4 fill-indigo-500 text-indigo-500" /> TOP REKORD: {Math.max(...leaderboard.map(r => r.score))}
                 </div>
               )}
+
+              <div className="w-full max-w-sm space-y-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={playerName}
+                    onChange={e => setPlayerName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && startGame()}
+                    placeholder="Ismingizni kiriting..."
+                    autoFocus
+                    className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4.5 text-[17px] font-medium text-slate-800 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:text-slate-400 shadow-sm"
+                  />
+                </div>
+                <button
+                  onClick={startGame}
+                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-[17px] py-4.5 rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all shadow-xl shadow-indigo-500/20 tracking-wide flex items-center justify-center gap-2"
+                >
+                  Boshlash <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
             </motion.div>
           )}
 
           {/* 2. PLAYING SCREEN */}
           {gameState === 'playing' && (
-            <motion.div
-              key="playing-screen"
+            <motion.div key="playing-screen"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
-              className="space-y-6"
+              className="w-full flex flex-col items-center max-w-3xl space-y-6"
             >
               {/* Status Bar */}
-              <div className="grid grid-cols-4 gap-3 bg-slate-800/80 border border-slate-700/70 p-4 rounded-2xl backdrop-blur-xl">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                    <Trophy className="w-5 h-5" />
+              <div className="w-full flex justify-between items-end mb-2 px-1">
+                <div className="flex flex-col gap-1">
+                  <div className="font-semibold text-slate-500 flex items-center gap-1.5 text-[13px]">
+                    <Clock className="w-4 h-4" /> {timeLeft} soniya
                   </div>
-                  <div>
-                    <div className="text-[11px] uppercase font-bold text-slate-400">Ball</div>
-                    <div className="text-xl font-black text-amber-400">{score}</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${timeLeft <= 10 ? 'bg-red-500/20 text-red-400 animate-bounce' : 'bg-indigo-500/10 text-indigo-400'}`}>
-                    <Clock className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-[11px] uppercase font-bold text-slate-400">Vaqt</div>
-                    <div className={`text-xl font-black ${timeLeft <= 10 ? 'text-red-400' : 'text-white'}`}>{timeLeft}s</div>
+                  <div className="flex gap-1.5">
+                    {[...Array(3)].map((_, i) => (
+                      <Heart key={i} className={`w-5 h-5 ${i < lives ? 'fill-rose-500 text-rose-500' : 'fill-slate-200 text-slate-200'}`} strokeWidth={2} />
+                    ))}
                   </div>
                 </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
-                    <Heart className="w-5 h-5 fill-red-500" />
+                <div className="flex flex-col items-end gap-1">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                    Top Rekord: {leaderboard.length > 0 ? Math.max(...leaderboard.map(r => r.score), score) : score}
                   </div>
-                  <div>
-                    <div className="text-[11px] uppercase font-bold text-slate-400">Jon</div>
-                    <div className="flex gap-1">
-                      {[...Array(3)].map((_, i) => (
-                        <span key={i} className={`w-2.5 h-2.5 rounded-full ${i < lives ? 'bg-red-500 shadow-sm shadow-red-500' : 'bg-slate-700'}`} />
-                      ))}
-                    </div>
-                  </div>
+                  <AnimatePresence>
+                    {combo >= 2 && (
+                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
+                        className="text-orange-500 font-bold text-[15px] flex items-center gap-1"
+                      >
+                        <Flame className="w-4 h-4 fill-orange-500" /> {combo}x COMBO
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400">
-                    <Flame className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="text-[11px] uppercase font-bold text-slate-400">Combo</div>
-                    <div className="text-xl font-black text-orange-400">x{combo}</div>
-                  </div>
-                </div>
+              </div>
+              <div className="w-full h-2.5 bg-slate-200/60 rounded-full overflow-hidden -mt-4 mb-2">
+                <motion.div
+                  className={`h-full ${timeLeft > 15 ? 'bg-indigo-500' : 'bg-rose-500'}`}
+                  initial={{ width: '100%' }}
+                  animate={{ width: `${(timeLeft / GAME_DURATION) * 100}%` }}
+                  transition={{ duration: 1, ease: 'linear' }}
+                />
               </div>
 
               {/* Task / Formula Hint Box */}
-              <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/80 p-6 md:p-8 rounded-3xl text-center shadow-xl relative overflow-hidden">
-                <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-3 inline-block">
+              <div className="w-full bg-white border border-slate-100 p-6 md:p-8 rounded-3xl text-center shadow-xl shadow-slate-200/50 relative overflow-hidden">
+                <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-indigo-500 to-purple-500" />
+                
+                <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 text-xs font-bold uppercase tracking-wider mb-4 inline-block">
                   {currentFormula.category}
                 </span>
 
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-2 tracking-tight">
                   {currentFormula.title}
                 </h2>
-                <p className="text-slate-400 text-sm italic">
+                <p className="text-slate-500 text-[15px] font-medium italic">
                   "{currentFormula.hint}"
                 </p>
               </div>
 
               {/* Selected Formula Chain Dropzone */}
-              <div className={`min-h-[100px] p-5 rounded-3xl border-2 transition-all flex flex-wrap items-center justify-center gap-3 ${feedback === 'correct' ? 'bg-emerald-500/10 border-emerald-500 shadow-lg shadow-emerald-500/20' : feedback === 'wrong' ? 'bg-red-500/10 border-red-500 shadow-lg shadow-red-500/20' : 'bg-slate-800/90 border-dashed border-slate-600'}`}>
+              <div className={`w-full min-h-[120px] p-6 rounded-3xl border transition-all flex flex-wrap items-center justify-center gap-3 relative overflow-hidden
+                ${feedback === 'correct' ? 'bg-emerald-50/80 border-emerald-200 shadow-lg shadow-emerald-500/10' : feedback === 'wrong' ? 'bg-rose-50/80 border-rose-200 shadow-lg shadow-rose-500/10' : 'bg-slate-50/80 border-slate-200 shadow-inner'}`}>
                 {selectedBlocks.length === 0 ? (
-                  <span className="text-slate-500 text-sm font-medium">
+                  <span className="text-slate-400 text-[15px] font-medium">
                     Pastdagi bloklarni bosib zanjirni shakllantiring...
                   </span>
                 ) : (
@@ -482,7 +452,7 @@ const FormulaChain = () => {
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0.8, opacity: 0 }}
                       onClick={() => handleDeselectBlock(item)}
-                      className="px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xl shadow-md border border-indigo-400/30 transition-all active:scale-95 flex items-center justify-center min-w-[56px]"
+                      className="px-6 py-4 rounded-[1.25rem] bg-indigo-600 text-white font-bold text-xl md:text-2xl shadow-lg shadow-indigo-500/30 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center min-w-[64px]"
                     >
                       <FormattedText content={item.val} />
                     </motion.button>
@@ -491,11 +461,11 @@ const FormulaChain = () => {
               </div>
 
               {/* Available Blocks Pool */}
-              <div className="bg-slate-800/60 border border-slate-700/60 p-6 rounded-3xl">
-                <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 text-center">
-                  Mavjud Bloklar:
+              <div className="w-full bg-white border border-slate-100 p-6 rounded-3xl shadow-md">
+                <div className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-5 text-center">
+                  Mavjud Bloklar
                 </div>
-                <div className="flex flex-wrap items-center justify-center gap-3 min-h-[60px]">
+                <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 min-h-[80px]">
                   {availableBlocks.map(item => (
                     <motion.button
                       key={item.id}
@@ -504,7 +474,7 @@ const FormulaChain = () => {
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0.9, opacity: 0 }}
                       onClick={() => handleSelectBlock(item)}
-                      className="px-5 py-3 rounded-2xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xl shadow-sm border border-slate-600 transition-all active:scale-95 flex items-center justify-center min-w-[56px]"
+                      className="px-6 py-4 rounded-[1.25rem] bg-white text-slate-700 font-bold text-xl md:text-2xl shadow-sm border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all active:scale-95 flex items-center justify-center min-w-[64px]"
                     >
                       <FormattedText content={item.val} />
                     </motion.button>
@@ -513,19 +483,19 @@ const FormulaChain = () => {
               </div>
 
               {/* Check Action Button */}
-              <div className="flex gap-4">
+              <div className="flex gap-4 w-full">
                 <button
                   onClick={() => setupRound()}
-                  className="px-6 py-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-base border border-slate-700 transition-all flex items-center justify-center gap-2"
-                  title="Tashlab o'tish"
+                  className="px-6 py-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-500 font-semibold text-[15px] border border-slate-200 transition-all flex items-center justify-center gap-2 shadow-sm"
+                  title="O'tkazib yuborish"
                 >
-                  <RotateCcw className="w-5 h-5" /> O'tkazib yuborish
+                  <RotateCcw className="w-5 h-5" />
                 </button>
 
                 <button
                   disabled={selectedBlocks.length === 0}
                   onClick={checkSolution}
-                  className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-40 disabled:pointer-events-none text-white font-bold text-lg shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 disabled:opacity-50 disabled:pointer-events-none text-white font-semibold text-[17px] shadow-xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-2"
                 >
                   <Check className="w-6 h-6" /> Tekshirish
                 </button>
@@ -535,44 +505,42 @@ const FormulaChain = () => {
 
           {/* 3. GAME OVER SCREEN */}
           {gameState === 'gameover' && (
-            <motion.div
-              key="gameover-screen"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-slate-800/90 border border-slate-700 p-8 md:p-12 rounded-3xl shadow-2xl max-w-xl mx-auto text-center backdrop-blur-xl"
+            <motion.div key="gameover"
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              className="w-full max-w-xl flex flex-col items-center font-sans"
             >
-              <div className="w-20 h-20 bg-amber-500/20 border border-amber-500/30 rounded-3xl flex items-center justify-center mx-auto mb-6 text-amber-400 shadow-inner">
-                <Trophy className="w-10 h-10 animate-bounce" />
-              </div>
-
-              <h2 className="text-3xl font-extrabold text-white mb-2">O'yin Yakunlandi!</h2>
-              <p className="text-slate-400 text-sm mb-6">Ajoyib harakat, {playerName}!</p>
-
-              <div className="bg-slate-900/80 border border-slate-700 rounded-2xl p-6 mb-8 flex justify-around">
-                <div>
-                  <div className="text-xs uppercase font-bold text-slate-400 mb-1">Yakuniy Ball</div>
-                  <div className="text-4xl font-black text-amber-400">{score}</div>
+              <div className="bg-white rounded-[2rem] p-8 md:p-10 w-full border border-slate-100 shadow-2xl shadow-slate-200/50 flex flex-col items-center text-center mb-6 relative overflow-hidden">
+                <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-indigo-50/50 to-transparent pointer-events-none" />
+                
+                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2 relative z-10 tracking-tight">
+                  {lives <= 0 ? 'O\'yin Tugadi!' : 'Vaqt Tugadi!'}
+                </h2>
+                <p className="text-[15px] font-medium text-slate-500 mb-8 relative z-10">Ajoyib urinish, natijangiz bilan tanishing</p>
+                
+                <div className="w-full bg-slate-50/50 rounded-[1.5rem] py-8 mb-8 relative border border-slate-100 flex flex-col items-center">
+                  <div className="text-[5rem] md:text-[6rem] font-bold text-indigo-600 leading-none flex items-center justify-center gap-4">
+                    {score}
+                  </div>
+                  {combo > 0 && (
+                    <div className="mt-4 px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-xs font-bold uppercase tracking-wider border border-orange-200">
+                      Max Combo: {combo}x
+                    </div>
+                  )}
                 </div>
-                <div className="w-px bg-slate-700" />
-                <div>
-                  <div className="text-xs uppercase font-bold text-slate-400 mb-1">Max Combo</div>
-                  <div className="text-4xl font-black text-orange-400">x{combo}</div>
-                </div>
-              </div>
 
-              <div className="flex gap-4">
-                <button
-                  onClick={() => navigate('/games')}
-                  className="flex-1 py-3.5 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-xl transition-all"
-                >
-                  Chiqish
-                </button>
-                <button
-                  onClick={startGame}
-                  className="flex-1 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 transition-all"
-                >
-                  Qayta O'ynash
-                </button>
+                <div className="flex flex-col sm:flex-row gap-3 w-full relative z-10">
+                  <button onClick={startGame}
+                    className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-[16px] py-4 rounded-xl hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-indigo-500/20"
+                  >
+                    Qayta O'ynash
+                  </button>
+                  <button onClick={() => navigate('/games')}
+                    className="flex-1 bg-white border border-slate-200 text-slate-700 font-semibold text-[16px] py-4 rounded-xl hover:bg-slate-50 active:scale-[0.98] transition-all shadow-sm"
+                  >
+                    Chiqish
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
