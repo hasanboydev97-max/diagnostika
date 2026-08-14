@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchCurrentTeacher, getToken } from '../../lib/auth';
-import { Zap, Crown, ArrowLeft, Gamepad2, Brain, Flame, BookOpen, Languages, Play } from 'lucide-react';
+import { Crown, ArrowLeft, Gamepad2, Brain, Flame, BookOpen, Languages, Play } from 'lucide-react';
 
 // ─── Color Palettes for the 3D Cards ──────────────────────────────────────
 const COLORS = {
