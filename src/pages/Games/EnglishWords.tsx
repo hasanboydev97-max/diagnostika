@@ -174,10 +174,10 @@ const WORD_BANK: WordPair[] = [
 
 
 const OPTION_COLORS = [
-  { bg: 'bg-[#FF4B4B]', border: 'border-[#CC3C3C]', text: 'text-white' },
-  { bg: 'bg-[#3B82F6]', border: 'border-[#2563EB]', text: 'text-white' },
-  { bg: 'bg-[#F59E0B]', border: 'border-[#D97706]', text: 'text-white' },
-  { bg: 'bg-[#10B981]', border: 'border-[#059669]', text: 'text-white' },
+  { bg: 'bg-rose-500', border: 'border-rose-600', text: 'text-white', shadow: 'hover:shadow-rose-500/30' },
+  { bg: 'bg-blue-500', border: 'border-blue-600', text: 'text-white', shadow: 'hover:shadow-blue-500/30' },
+  { bg: 'bg-amber-500', border: 'border-amber-600', text: 'text-white', shadow: 'hover:shadow-amber-500/30' },
+  { bg: 'bg-emerald-500', border: 'border-emerald-600', text: 'text-white', shadow: 'hover:shadow-emerald-500/30' },
 ];
 
 // Fisher-Yates shuffle
@@ -380,46 +380,47 @@ const EnglishWords = () => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 1.05 }}
-              className="w-full flex flex-col items-center text-center"
+              className="w-full flex flex-col items-center text-center font-sans"
             >
-              <div className="relative mb-6">
+              <div className="relative mb-8">
                 <motion.div
-                  animate={{ y: [0, -10, 0], rotate: [0, -5, 5, 0] }}
+                  animate={{ y: [0, -8, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                  className="w-32 h-32 bg-gradient-to-br from-violet-500 to-purple-700 rounded-[2rem] shadow-[0_10px_0_#5b21b6] flex items-center justify-center"
+                  className="w-32 h-32 bg-gradient-to-br from-violet-500 via-fuchsia-500 to-fuchsia-600 rounded-[2rem] shadow-2xl shadow-violet-500/40 flex items-center justify-center relative overflow-hidden"
                 >
-                  <BookOpen className="w-16 h-16 text-white" strokeWidth={2.5} />
+                  <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-white/20 rounded-full blur-xl" />
+                  <BookOpen className="w-14 h-14 text-white relative z-10" strokeWidth={1.5} />
                 </motion.div>
-                <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.6, 1, 0.6] }} transition={{ duration: 2, repeat: Infinity }} className="absolute -top-3 -right-3 text-2xl">📚</motion.div>
-                <motion.div animate={{ scale: [1, 1.3, 1], opacity: [0.6, 1, 0.6] }} transition={{ duration: 2, repeat: Infinity, delay: 1 }} className="absolute -bottom-3 -left-3 text-2xl">🇬🇧</motion.div>
               </div>
 
-              <h1 className="text-4xl md:text-6xl font-black text-slate-800 mb-2 tracking-tight">English Words</h1>
-              <p className="text-slate-500 text-base md:text-lg mb-6 font-bold max-w-sm">
-                O'zbek so'zni ko'r, ingliz tarjimasini tap! 1 daqiqa, 3 jonlik.
+              <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-3 tracking-tight font-sans">English Words</h1>
+              <p className="text-slate-500 text-[16px] mb-8 font-sans max-w-sm leading-relaxed">
+                O'zbek so'zni ko'ring, ingliz tarjimasini toping. 1 daqiqa, 3 jonlik.
               </p>
 
               {highestRecord > 0 && (
-                <div className="bg-violet-100 border border-violet-300 text-violet-700 font-bold px-4 py-2 rounded-xl mb-6 flex items-center gap-2 shadow-sm">
-                  <Trophy className="w-5 h-5 fill-violet-500 text-violet-500" /> TOP REKORD: {highestRecord}
+                <div className="bg-violet-50/50 backdrop-blur-sm border border-violet-100 text-violet-700 font-semibold px-5 py-2.5 rounded-full mb-8 flex items-center gap-2 shadow-sm text-sm">
+                  <Trophy className="w-4 h-4 fill-violet-500 text-violet-500" /> TOP REKORD: {highestRecord}
                 </div>
               )}
 
               <div className="w-full max-w-sm space-y-4">
-                <input
-                  type="text"
-                  value={playerName}
-                  onChange={e => setPlayerName(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && startGame()}
-                  placeholder="Ismingiz kim?"
-                  autoFocus
-                  className="w-full bg-white border-2 border-slate-200 rounded-2xl px-5 py-4 text-xl font-bold text-center text-slate-800 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/20 transition-all placeholder:text-slate-300 shadow-sm"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={playerName}
+                    onChange={e => setPlayerName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && startGame()}
+                    placeholder="Ismingizni kiriting..."
+                    autoFocus
+                    className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4.5 text-[17px] font-medium text-slate-800 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10 transition-all placeholder:text-slate-400 shadow-sm font-sans"
+                  />
+                </div>
                 <button
                   onClick={startGame}
-                  className="w-full bg-[#8B5CF6] border-b-[6px] border-[#6D28D9] text-white font-black text-2xl py-5 rounded-2xl active:border-b-0 active:translate-y-[6px] transition-all shadow-md"
+                  className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-semibold text-[17px] py-4.5 rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all shadow-xl shadow-violet-500/20 font-sans tracking-wide"
                 >
-                  BOSHLA!
+                  Boshlash
                 </button>
               </div>
             </motion.div>
@@ -476,19 +477,19 @@ const EnglishWords = () => {
               <motion.div
                 animate={feedback === 'wrong' ? { x: [-10, 10, -10, 10, 0] } : {}}
                 transition={{ duration: 0.3 }}
-                className={`w-full max-w-3xl bg-white rounded-[2rem] p-6 md:p-10 mb-6 flex flex-col items-center justify-center border-b-[6px] shadow-sm relative overflow-hidden transition-colors min-h-[140px]
-                  ${feedback === 'correct' ? 'border-[#8B5CF6] bg-violet-50' : feedback === 'wrong' ? 'border-[#EF4444] bg-rose-50' : 'border-slate-200'}`}
+                className={`w-full max-w-3xl bg-white rounded-3xl p-8 md:p-12 mb-6 flex flex-col items-center justify-center border shadow-xl shadow-slate-200/40 relative overflow-hidden transition-colors min-h-[160px]
+                  ${feedback === 'correct' ? 'border-violet-200 bg-violet-50/50' : feedback === 'wrong' ? 'border-rose-200 bg-rose-50/50' : 'border-slate-100'}`}
               >
-                <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">O'zbek → Ingliz</div>
+                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4 font-sans">O'zbek → Ingliz</div>
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentWord.uzbek}
-                    initial={{ y: -30, opacity: 0 }}
+                    initial={{ y: -20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 30, opacity: 0 }}
-                    transition={{ type: 'spring', damping: 18 }}
-                    className={`text-[2.8rem] md:text-[4.5rem] font-black tracking-tight z-10
-                      ${feedback === 'correct' ? 'text-violet-600' : feedback === 'wrong' ? 'text-rose-500' : 'text-slate-800'}`}
+                    exit={{ y: 20, opacity: 0 }}
+                    transition={{ type: 'spring', damping: 20 }}
+                    className={`text-4xl md:text-6xl font-bold tracking-tight z-10 font-sans
+                      ${feedback === 'correct' ? 'text-violet-600' : feedback === 'wrong' ? 'text-rose-600' : 'text-slate-900'}`}
                   >
                     {currentWord.uzbek}
                   </motion.div>
@@ -496,20 +497,20 @@ const EnglishWords = () => {
 
                 <AnimatePresence>
                   {feedback === 'correct' && (
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 2, opacity: 0 }} className="absolute text-violet-400">
-                      <Check className="w-28 h-28" strokeWidth={4} />
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 2, opacity: 0 }} className="absolute text-violet-500/10">
+                      <Check className="w-40 h-40" strokeWidth={3} />
                     </motion.div>
                   )}
                   {feedback === 'wrong' && (
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 2, opacity: 0 }} className="absolute text-rose-400">
-                      <X className="w-28 h-28" strokeWidth={4} />
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 2, opacity: 0 }} className="absolute text-rose-500/10">
+                      <X className="w-40 h-40" strokeWidth={3} />
                     </motion.div>
                   )}
                 </AnimatePresence>
               </motion.div>
 
               {/* Answer buttons */}
-              <div className="grid grid-cols-2 gap-3 md:gap-5 w-full max-w-3xl">
+              <div className="grid grid-cols-2 gap-4 w-full max-w-3xl">
                 {currentWord.displayOptions.map((opt, idx) => {
                   const style = OPTION_COLORS[idx % 4];
                   const isClicked = clickedOption === opt;
@@ -519,10 +520,10 @@ const EnglishWords = () => {
                       disabled={feedback !== null}
                       onClick={() => handleOptionClick(opt)}
                       className={`
-                        w-full py-6 md:py-8 rounded-2xl text-xl md:text-3xl font-black transition-all transform
-                        ${style.bg} ${style.text} ${style.border} border-b-[6px]
-                        ${feedback === null ? 'hover:brightness-110 active:border-b-0 active:translate-y-[6px]' : ''}
-                        ${isClicked ? 'border-b-0 translate-y-[6px] brightness-110' : ''}
+                        w-full py-6 md:py-8 rounded-[20px] text-xl md:text-2xl font-bold font-sans transition-all transform border border-white/20
+                        ${style.bg} ${style.text}
+                        ${feedback === null ? `hover:-translate-y-1 hover:shadow-xl ${style.shadow}` : ''}
+                        ${isClicked ? 'scale-95 brightness-90 shadow-none' : 'shadow-md'}
                       `}
                     >
                       {opt}
@@ -536,70 +537,71 @@ const EnglishWords = () => {
           {/* GAME OVER */}
           {gameState === 'gameover' && (
             <motion.div key="gameover"
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              className="w-full max-w-2xl flex flex-col items-center"
+              className="w-full max-w-xl flex flex-col items-center font-sans"
             >
-              <div className="bg-white rounded-[2.5rem] p-8 md:p-10 w-full border-b-[8px] border-slate-200 shadow-xl flex flex-col items-center text-center mb-6">
-                <h2 className="text-3xl md:text-4xl font-black text-slate-800 mb-2">
-                  {lives <= 0 ? '3 Xato — O\'yin Tugadi!' : 'Vaqt Tugadi!'}
+              <div className="bg-white rounded-[2rem] p-8 md:p-10 w-full border border-slate-100 shadow-2xl shadow-slate-200/50 flex flex-col items-center text-center mb-6 relative overflow-hidden">
+                <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-violet-50/50 to-transparent pointer-events-none" />
+                
+                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2 relative z-10 tracking-tight">
+                  {lives <= 0 ? 'O\'yin Tugadi!' : 'Vaqt Tugadi!'}
                 </h2>
-                <p className="text-lg font-bold text-slate-500 mb-6 uppercase tracking-widest">Ajoyib urinish!</p>
-
-                <div className="w-full bg-[#F8FAFC] border-4 border-slate-100 rounded-[1.5rem] py-8 mb-6 relative">
+                <p className="text-[15px] font-medium text-slate-500 mb-8 relative z-10">Ajoyib urinish, natijangiz bilan tanishing</p>
+                
+                <div className="w-full bg-slate-50/50 rounded-[1.5rem] py-8 mb-8 relative border border-slate-100">
                   {score > highestRecord && score > 0 && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-violet-600 text-white px-4 py-1 rounded-full text-xs font-black animate-bounce">
-                      🎉 YANGI REKORD!
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white px-4 py-1.5 rounded-full text-[11px] font-bold tracking-wider uppercase shadow-md shadow-violet-500/20">
+                      Yangi Rekord
                     </div>
                   )}
-                  <div className="text-slate-400 font-bold text-base mb-2 uppercase">Sizning Natijangiz</div>
-                  <div className="text-[4.5rem] md:text-[5.5rem] font-black text-violet-500 leading-none drop-shadow-sm flex items-center justify-center gap-3">
-                    <Trophy className="w-14 h-14 fill-violet-500" />
+                  <div className="text-[5rem] md:text-[6rem] font-bold text-violet-600 leading-none flex items-center justify-center gap-4">
                     {score}
                   </div>
                   {saving && (
-                    <div className="mt-3 text-sm text-slate-400 flex items-center justify-center gap-2">
-                      <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
-                      Natija saqlanmoqda...
+                    <div className="mt-4 text-xs font-medium text-slate-400 flex items-center justify-center gap-2">
+                      <div className="w-3.5 h-3.5 border-2 border-slate-200 border-t-violet-500 rounded-full animate-spin" />
+                      Saqlanmoqda...
                     </div>
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 w-full">
+                <div className="flex flex-col sm:flex-row gap-3 w-full relative z-10">
                   <button onClick={startGame}
-                    className="flex-1 bg-[#8B5CF6] border-b-[6px] border-[#6D28D9] text-white font-black text-xl py-4 rounded-xl active:border-b-0 active:translate-y-[6px] transition-all shadow-md"
+                    className="flex-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-semibold text-[16px] py-4 rounded-xl hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-violet-500/20"
                   >
-                    QAYTA O'YNASH
+                    Qayta O'ynash
                   </button>
                   <button onClick={() => navigate('/games')}
-                    className="flex-1 bg-white border-4 border-slate-200 text-slate-700 font-black text-xl py-4 rounded-xl hover:bg-slate-50 active:translate-y-[4px] transition-all"
+                    className="flex-1 bg-white border border-slate-200 text-slate-700 font-semibold text-[16px] py-4 rounded-xl hover:bg-slate-50 active:scale-[0.98] transition-all shadow-sm"
                   >
-                    CHIQISH
+                    Chiqish
                   </button>
                 </div>
               </div>
 
               {/* Leaderboard */}
-              <div className="w-full bg-white rounded-3xl p-5 border-b-[4px] border-slate-200 shadow-sm">
-                <h3 className="font-black text-xl text-slate-800 mb-4 flex items-center justify-center gap-2">
-                  <Flame className="w-6 h-6 text-orange-500 fill-orange-500" /> TOP REKORDLAR
+              <div className="w-full bg-white rounded-[2rem] p-6 border border-slate-100 shadow-xl shadow-slate-200/40">
+                <h3 className="font-bold text-[17px] text-slate-900 mb-5 flex items-center gap-2 font-sans">
+                  <Trophy className="w-5 h-5 text-amber-500 fill-amber-500" />
+                  Top Rekordlar
                 </h3>
                 <div className="space-y-2">
                   {leaderboard.length === 0 && (
-                    <p className="text-center text-slate-400 py-4 text-sm">Hali rekordlar yo'q. Birinchi bo'ling!</p>
+                    <p className="text-center text-slate-400 py-6 text-[15px]">Hali rekordlar yo'q. Birinchi bo'ling!</p>
                   )}
                   {leaderboard.slice(0, 5).map((record, idx) => {
                     const isMe = record.playerName === playerName.trim().toUpperCase() && record.score === score;
                     return (
-                      <div key={record._id} className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 ${isMe ? 'bg-violet-50 border-violet-400' : 'bg-slate-50 border-slate-100'}`}>
+                      <div key={record._id} className={`flex items-center justify-between px-5 py-3.5 rounded-2xl transition-colors ${isMe ? 'bg-violet-50/50 border border-violet-100' : 'hover:bg-slate-50 border border-transparent'}`}>
                         <div className="flex items-center gap-4">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm
-                            ${idx === 0 ? 'bg-amber-400 text-white' : idx === 1 ? 'bg-slate-300 text-white' : idx === 2 ? 'bg-amber-700 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[13px]
+                            ${idx === 0 ? 'bg-amber-100 text-amber-600' : idx === 1 ? 'bg-slate-100 text-slate-600' : idx === 2 ? 'bg-orange-100 text-orange-600' : 'bg-slate-50 text-slate-400'}`}>
                             {idx + 1}
                           </div>
-                          <span className={`font-bold text-lg uppercase ${isMe ? 'text-violet-600' : 'text-slate-700'}`}>{record.playerName}</span>
+                          <span className={`font-semibold text-[15px] capitalize tracking-tight ${isMe ? 'text-violet-700' : 'text-slate-700'}`}>{record.playerName.toLowerCase()}</span>
                         </div>
-                        <span className={`font-black text-xl ${isMe ? 'text-violet-600' : 'text-slate-800'}`}>{record.score}</span>
+                        <span className={`font-bold text-[17px] ${isMe ? 'text-violet-600' : 'text-slate-900'}`}>{record.score}</span>
                       </div>
                     );
                   })}

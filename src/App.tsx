@@ -24,6 +24,10 @@ const GamesList = lazy(() => import('./pages/Games/GamesList'));
 const MathNinja = lazy(() => import('./pages/Games/MathNinja'));
 const EnglishWords = lazy(() => import('./pages/Games/EnglishWords'));
 const RussianWords = lazy(() => import('./pages/Games/RussianWords'));
+const FormulaChain = lazy(() => import('./pages/Games/FormulaChain'));
+const MistakeInspector = lazy(() => import('./pages/Games/MistakeInspector'));
+const MatchMaster = lazy(() => import('./pages/Games/MatchMaster'));
+const WordBlast = lazy(() => import('./pages/Games/WordBlast'));
 
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 
@@ -67,6 +71,10 @@ function App() {
             <Route path="/games/math-ninja" element={<MathNinja />} />
             <Route path="/games/english-words" element={<EnglishWords />} />
             <Route path="/games/russian-words" element={<RussianWords />} />
+            <Route path="/games/formula-chain" element={<FormulaChain />} />
+            <Route path="/games/mistake-inspector" element={<MistakeInspector />} />
+            <Route path="/games/match-master" element={<MatchMaster />} />
+            <Route path="/games/word-blast" element={<WordBlast />} />
             
             {/* Catch-all route to prevent blank screens */}
             <Route path="*" element={<Navigate to="/" replace />} />
