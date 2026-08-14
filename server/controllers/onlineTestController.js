@@ -403,13 +403,14 @@ QIYINLIK DARAJASI: ${difficulty} (aralash bo'lsa — oson/o'rta/qiyin taxminan t
 
 ${formatRules}
 
-SIFAT MEZONLARI (har bir savolni yaratishdan oldin o'zingizni shu bo'yicha tekshiring va 100% amal qiling):
-1. QAT'IY SHART: Savollar juda chuqur mantiqiy asoslangan, mukammal va oliy darajadagi sintaksis bilan yozilsin. Hech qanday imlo, grammatik yoki sintaksis xatolarga yo'l qo'yilmasin! Savol matni to'liq va mustaqil tushunarli bo'lsin.
-2. QAT'IY SHART: Savollar yuzaki bo'lmasin. 4 ta variant: 1 ta to'g'ri, 3 ta noto'g'ri. Noto'g'ri variantlar o'ta chalg'ituvchi va haqiqatga juda yaqin (mantiqiy) bo'lsin.
-3. QAT'IY SHART: Barcha faktlar, formulalar va ma'lumotlar 100% ilmiy to'g'ri va aniq bo'lishi KAFOLATLANSIN. Umuman xato qilmang!
-4. To'g'ri javob pozitsiyasi savoldan savolga tasodifiy taqsimlansin.
-5. Bir xil savol yoki bir xil variantlar takrorlanmasin. Har bir savol aniq bitta subtopic'ga tegishli bo'lsin, subtopic'lar xilma-xil bo'lsin.
-6. UMUMAN XATO QILMANG. Mutlaqo mukammal test bazasi yarating.
+SIFAT MEZONLARI (har bir savolni yaratishdan oldin o'zingizni shu bo'yicha qattiq tekshiring va 100% amal qiling):
+1. QAT'IY SHART - SINTAKSIS VA IMLO: Savollar oliy darajadagi o'zbek tilida, mukammal sintaksis va grammatika bilan yozilishi SHART. Hech qanday imlo, grammatik yoki sintaksis xatolarga umuman yo'l qo'yilmasin! Savol matnining ohanggi, gap qurilishi va mantiqiy qismi uzilishlarsiz, to'liq bo'lishi kerak. Savol oxiriga tegishli tinish belgisi (masalan, so'roq belgisi "?") qo'yishni unutmang.
+2. QAT'IY SHART - MANTIQ VA CHUQURLIK: Savollar yuzaki bo'lmasin. 4 ta variant: 1 ta to'g'ri, 3 ta noto'g'ri. Noto'g'ri variantlar o'ta chalg'ituvchi, reallikka juda yaqin (lekin aynan noto'g'ri) bo'lishi kerak.
+3. QAT'IY SHART - ILMIY ANIQLIK: Barcha faktlar, formulalar, ma'lumotlar, ismlar va sanalar 100% ilmiy to'g'ri va xatosiz bo'lishi KAFOLATLANSIN. Taxminlarga yo'l qo'ymang.
+4. QAT'IY SHART - FORMATLASH: Kodlar, formulalar yoki texnik so'zlar to'liq ishlaydigan formatda bo'lishi shart. Maxsus belgilarni (masalan, qo'shtirnoqlar, qavslar, belgilashlar) chala qoldirmang. Yozuv uzilib qolmasin.
+5. To'g'ri javob pozitsiyasi savoldan savolga tasodifiy taqsimlansin.
+6. Bir xil savol yoki bir xil variantlar mutlaqo takrorlanmasin. Har bir savol aniq bitta o'ziga xos subtopic'ga tegishli bo'lsin.
+7. XATOGA O'RIN YO'Q: Siz o'ta professional va xatosiz generatorsiz. Biror harf, biror vergul xato ketsa, dastur ishdan chiqadi deb tasavvur qiling. Mutlaqo mukammal test bazasi yarating.
 
 TO'G'RI FORMATLANGAN NAMUNALAR (aynan shu uslub va aniqlikda yozing):
 ${examples}
