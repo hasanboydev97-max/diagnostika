@@ -368,52 +368,59 @@ const MistakeInspector = () => {
               exit={{ opacity: 0, scale: 0.98 }}
               className="w-full flex flex-col items-center max-w-3xl space-y-6"
             >
-              {/* Header Stats */}
-              <div className="w-full flex justify-between items-end mb-2 px-1">
-                <div className="flex flex-col gap-1">
-                  <div className="font-semibold text-slate-500 flex items-center gap-1.5 text-[13px]">
-                    <Clock className="w-4 h-4" /> {timeLeft} soniya
+              {/* Clean Top Status Bar */}
+              <div className="w-full bg-white border border-slate-200 shadow-[0_2px_10px_rgb(0,0,0,0.02)] rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 relative z-10">
+                <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto justify-center sm:justify-start">
+                  <div className="flex items-center gap-2 text-slate-600 font-semibold text-sm">
+                    <Clock className="w-5 h-5 text-slate-400" /> 
+                    <span>{timeLeft}s</span>
                   </div>
-                  <div className="flex gap-1.5">
+                  <div className="h-4 w-px bg-slate-200" />
+                  <div className="flex items-center gap-1.5">
                     {[...Array(3)].map((_, i) => (
-                      <Heart key={i} className={`w-5 h-5 ${i < lives ? 'fill-rose-500 text-rose-500' : 'fill-slate-200 text-slate-200'}`} strokeWidth={2} />
+                      <Heart key={i} className={`w-5 h-5 ${i < lives ? 'fill-rose-500 text-rose-500' : 'fill-slate-100 text-slate-100'}`} strokeWidth={2} />
                     ))}
                   </div>
+                  <div className="h-4 w-px bg-slate-200" />
+                  <div className="flex items-center gap-2 text-slate-600 font-semibold text-sm">
+                    <Trophy className="w-5 h-5 text-amber-500" />
+                    <span>{score}</span>
+                  </div>
                 </div>
-                <div className="flex flex-col items-end gap-1">
-                  <AnimatePresence>
-                    {combo >= 2 && (
-                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-                        className="text-orange-500 font-bold text-[15px] flex items-center gap-1"
-                      >
-                        <Flame className="w-4 h-4 fill-orange-500" /> {combo}x COMBO
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-              <div className="w-full h-2.5 bg-slate-200/60 rounded-full overflow-hidden -mt-4 mb-2">
-                <motion.div
-                  className={`h-full ${timeLeft > 15 ? 'bg-amber-500' : 'bg-rose-500'}`}
-                  initial={{ width: '100%' }}
-                  animate={{ width: `${(timeLeft / GAME_DURATION) * 100}%` }}
-                  transition={{ duration: 1, ease: 'linear' }}
-                />
+
+                <AnimatePresence>
+                  {combo >= 2 && (
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
+                      className="px-3 py-1.5 bg-orange-50 text-orange-600 rounded-full text-xs font-bold border border-orange-100 flex items-center gap-1.5 shadow-sm"
+                    >
+                      <Flame className="w-4 h-4 fill-orange-500" /> x{combo} Combo
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Task Banner */}
-              <div className="w-full bg-white border border-slate-100 p-6 md:p-8 rounded-3xl text-center shadow-xl shadow-slate-200/50 relative overflow-hidden">
-                <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-amber-400 to-orange-500" />
-                <span className="px-3.5 py-1 rounded-full bg-orange-50 text-orange-600 border border-orange-100 text-xs font-bold uppercase tracking-wider mb-4 inline-block">
+              <div className="w-full bg-white border border-slate-200 p-8 md:p-10 rounded-[2rem] text-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
+                <div className="absolute top-0 inset-x-0 h-1.5 bg-slate-100">
+                  <motion.div
+                    className={`h-full ${timeLeft > 15 ? 'bg-amber-400' : 'bg-rose-500'}`}
+                    initial={{ width: '100%' }}
+                    animate={{ width: `${(timeLeft / GAME_DURATION) * 100}%` }}
+                    transition={{ duration: 1, ease: 'linear' }}
+                  />
+                </div>
+                
+                <span className="px-4 py-1.5 rounded-full bg-orange-50 text-orange-600 border border-orange-100 text-[11px] font-bold uppercase tracking-widest mb-5 inline-block mt-2">
                   {currentTask.category}
                 </span>
-                <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-2 tracking-tight">
+                <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3 tracking-tight">
                   {currentTask.title}
                 </h2>
-                <p className="text-slate-500 text-[15px] font-medium">
+                <p className="text-slate-500 text-[15px] font-medium max-w-lg mx-auto">
                   {phase === 'select_step' ? '🔍 Qaysi bosqichda XATOLIK borligini bosib ko\'rsating:' : '⚡ Ushbu xatoni to\'g\'ri tuzatuvchi variantni tanlang:'}
                 </p>
               </div>
+
 
               {/* PHASE 1: SELECT WRONG STEP */}
               {phase === 'select_step' && (
@@ -424,9 +431,9 @@ const MistakeInspector = () => {
                       whileHover={{ scale: 1.01, y: -2 }}
                       whileTap={{ scale: 0.99 }}
                       onClick={() => handleSelectStep(step.stepIndex)}
-                      className={`w-full p-5 rounded-2xl text-left border font-semibold text-[17px] transition-all flex items-center justify-between shadow-sm
+                      className={`w-full p-5 rounded-2xl text-left border font-medium text-[16px] transition-all flex items-center justify-between shadow-sm
                         ${selectedStepIndex === step.stepIndex 
-                          ? 'bg-amber-50 border-amber-200 text-amber-700 shadow-inner' 
+                          ? 'bg-amber-50 border-amber-200 text-amber-900 shadow-inner' 
                           : 'bg-white border-slate-200 text-slate-700 hover:border-amber-300 hover:shadow-md'}`}
                     >
                       <FormattedText content={step.text} />
@@ -454,7 +461,7 @@ const MistakeInspector = () => {
                         whileHover={{ scale: 1.01, y: -2 }}
                         whileTap={{ scale: 0.99 }}
                         onClick={() => handleSelectFix(idx)}
-                        className="w-full p-5 rounded-2xl bg-white border border-slate-200 hover:border-emerald-300 hover:shadow-md text-left font-medium text-[17px] text-slate-700 transition-all flex items-center justify-between shadow-sm"
+                        className="w-full p-5 rounded-2xl bg-white border border-slate-200 hover:border-emerald-300 hover:shadow-md text-left font-medium text-[16px] text-slate-700 transition-all flex items-center justify-between shadow-sm group"
                       >
                         <FormattedText content={opt} />
                         <CheckCircle2 className="w-5 h-5 text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />

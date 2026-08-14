@@ -293,43 +293,48 @@ const WordBlast = () => {
               exit={{ opacity: 0, scale: 0.98 }}
               className="w-full flex flex-col items-center max-w-3xl space-y-6"
             >
-              {/* Header Stats */}
-              <div className="w-full flex justify-between items-end mb-2 px-1">
-                <div className="flex flex-col gap-1">
-                  <div className="font-semibold text-slate-500 flex items-center gap-1.5 text-[13px]">
-                    <Clock className="w-4 h-4" /> {timeLeft} soniya
+              {/* Clean Top Status Bar */}
+              <div className="w-full bg-white border border-slate-200 shadow-[0_2px_10px_rgb(0,0,0,0.02)] rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 relative z-10">
+                <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto justify-center sm:justify-start">
+                  <div className="flex items-center gap-2 text-slate-600 font-semibold text-sm">
+                    <Clock className="w-5 h-5 text-slate-400" /> 
+                    <span>{timeLeft}s</span>
                   </div>
-                  <div className="flex gap-1.5">
+                  <div className="h-4 w-px bg-slate-200" />
+                  <div className="flex items-center gap-1.5">
                     {[...Array(3)].map((_, i) => (
-                      <Heart key={i} className={`w-5 h-5 ${i < lives ? 'fill-rose-500 text-rose-500' : 'fill-slate-200 text-slate-200'}`} strokeWidth={2} />
+                      <Heart key={i} className={`w-5 h-5 ${i < lives ? 'fill-rose-500 text-rose-500' : 'fill-slate-100 text-slate-100'}`} strokeWidth={2} />
                     ))}
                   </div>
+                  <div className="h-4 w-px bg-slate-200" />
+                  <div className="flex items-center gap-2 text-slate-600 font-semibold text-sm">
+                    <Trophy className="w-5 h-5 text-teal-500" />
+                    <span>{score}</span>
+                  </div>
                 </div>
-                <div className="flex flex-col items-end gap-1">
-                  <AnimatePresence>
-                    {combo >= 2 && (
-                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-                        className="text-orange-500 font-bold text-[15px] flex items-center gap-1"
-                      >
-                        <Flame className="w-4 h-4 fill-orange-500" /> {combo}x COMBO
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-              <div className="w-full h-2.5 bg-slate-200/60 rounded-full overflow-hidden -mt-4 mb-2">
-                <motion.div
-                  className={`h-full ${timeLeft > 15 ? 'bg-teal-500' : 'bg-rose-500'}`}
-                  initial={{ width: '100%' }}
-                  animate={{ width: `${(timeLeft / GAME_DURATION) * 100}%` }}
-                  transition={{ duration: 1, ease: 'linear' }}
-                />
+
+                <AnimatePresence>
+                  {combo >= 2 && (
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
+                      className="px-3 py-1.5 bg-orange-50 text-orange-600 rounded-full text-xs font-bold border border-orange-100 flex items-center gap-1.5 shadow-sm"
+                    >
+                      <Flame className="w-4 h-4 fill-orange-500" /> x{combo} Combo
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Target Word Display Card */}
-              <div className="w-full bg-white border border-slate-100 p-8 rounded-[2rem] text-center shadow-2xl shadow-slate-200/60 relative min-h-[220px] flex flex-col items-center justify-center overflow-hidden">
-                <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-teal-400 to-emerald-500" />
-                <span className="text-xs uppercase font-bold tracking-wider text-teal-600 bg-teal-50 px-3 py-1 rounded-full border border-teal-100 mb-6 inline-block">
+              <div className="w-full bg-white border border-slate-200 p-8 rounded-[2rem] text-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative min-h-[220px] flex flex-col items-center justify-center overflow-hidden">
+                <div className="absolute top-0 inset-x-0 h-1.5 bg-slate-100">
+                  <motion.div
+                    className={`h-full ${timeLeft > 15 ? 'bg-teal-500' : 'bg-rose-500'}`}
+                    initial={{ width: '100%' }}
+                    animate={{ width: `${(timeLeft / GAME_DURATION) * 100}%` }}
+                    transition={{ duration: 1, ease: 'linear' }}
+                  />
+                </div>
+                <span className="text-[11px] uppercase font-bold tracking-widest text-teal-600 bg-teal-50 px-4 py-1.5 rounded-full border border-teal-100 mb-6 inline-block mt-2">
                   {currentRound.title}
                 </span>
                 <AnimatePresence mode="wait">
