@@ -47,12 +47,12 @@ const ALL_GAMES: GameItem[] = [
     isNew: true
   },
   {
-    id: 'chess-puzzle',
-    route: '/games/chess-puzzle',
-    tag: 'Chess.com API',
+    id: 'shashka',
+    route: '/games/shashka',
+    tag: 'Mantiqiy O\'yin',
     category: 'logic',
-    title: 'Shaxmat Detektivi (Daily Puzzle) ♟️',
-    description: 'Chess.com API orqali har kungi yangilanadigan taktik shaxmat masalalari va mantiqiy yechimlar!',
+    title: 'Interaktiv Shashka (Checkers AI) ♟️',
+    description: 'Sun\'iy intellektga qarshi 8x8 taxtada jonli shashka o\'ynang, damalar chiqaring va g\'alaba qozoning!',
     icon: Award,
     isNew: true
   },

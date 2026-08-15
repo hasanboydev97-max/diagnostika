@@ -19,7 +19,7 @@ const STAGES: LevelStage[] = [
   { id: 2, title: 'Math Ninja Arcade', gameId: 'math-ninja', route: '/games/math-ninja', category: 'math', targetScore: 80, description: '3D plitkalar va maskot bilan tezkor matematik hisob', iconName: '🥷' },
   { id: 3, title: 'Bayroqlar va Poytaxtlar', gameId: 'flag-quiz', route: '/games/flag-quiz', category: 'logic', targetScore: 70, description: 'REST Countries API bilan dunyo davlatlarini sinang', iconName: '🗺️' },
   { id: 4, title: 'Audio Spelling Bee', gameId: 'spelling-bee', route: '/games/spelling-bee', category: 'languages', targetScore: 80, description: 'Free Dictionary Audio API talaffuzli so\'z terish', iconName: '🎧' },
-  { id: 5, title: 'Shaxmat Detektivi (Puzzle)', gameId: 'chess-puzzle', route: '/games/chess-puzzle', category: 'logic', targetScore: 100, description: 'Chess.com API orqali kunlik taktik masalalarni yeching', iconName: '♟️' },
+  { id: 5, title: 'Interaktiv Shashka AI', gameId: 'shashka', route: '/games/shashka', category: 'logic', targetScore: 100, description: 'Sun\'iy intellektga qarshi jonli shashka va damalar jangi', iconName: '♟️' },
   { id: 6, title: 'Ingliz Lug\'ati Quest', gameId: 'english-words', route: '/games/english-words', category: 'languages', targetScore: 80, description: 'Asosiy inglizcha so\'zlarni tezkor toping', iconName: '🔤' },
   { id: 7, title: 'Formulalar Sirli Olami', gameId: 'formula-chain', route: '/games/formula-chain', category: 'math', targetScore: 100, description: 'Fizika va matematika formulalarini yig\'ing', iconName: '🧪' },
   { id: 8, title: 'Juftliklar Topish', gameId: 'match-master', route: '/games/match-master', category: 'logic', targetScore: 100, description: 'Flip kartalardan juftliklarni toping', iconName: '🧩' },
