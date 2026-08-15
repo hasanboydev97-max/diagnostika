@@ -382,7 +382,7 @@ export default function TestDetails() {
                     {new Date(test.createdAt).toLocaleDateString('uz-UZ')}
                   </span>
                 </div>
-                <h1 className="text-xl md:text-2xl font-bold tracking-tight text-zinc-900 leading-tight">
+                <h1 className="text-xl md:text-2xl font-semibold font-sans tracking-normal text-zinc-900 leading-tight">
                   {test.title}
                 </h1>
               </div>
