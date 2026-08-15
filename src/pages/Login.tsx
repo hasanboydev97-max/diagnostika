@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Search, Lock, ArrowRight, Activity, ArrowLeft } from 'lucide-react';
+import { Search, Lock, ArrowRight, Activity, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../lib/db';
 import MeshGradient from '../components/ui/MeshGradient';
@@ -11,6 +11,7 @@ export default function Login() {
   const { t } = useTranslation();
   const [id, setId] = useState('');
   const [pin, setPin] = useState('');
+  const [showPin, setShowPin] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(-1);
@@ -76,7 +77,7 @@ export default function Login() {
           <motion.div 
             initial={{ opacity: 0, y: 10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            className="bg-white border border-black/10 rounded-none p-6 md:p-8"
+            className="bg-white/70 backdrop-blur-xl border border-white/60 rounded-2xl p-6 md:p-8 shadow-xl"
           >
             <div className="flex flex-col items-center text-center mb-8">
               <div className="relative w-16 h-16 mb-6">
@@ -121,7 +122,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen text-[#111111] flex flex-col justify-center py-12 px-[15px] sm:px-6 lg:px-8 font-sans selection:bg-black selection:text-white relative overflow-hidden">
+    <div className="min-h-screen text-[#111111] flex flex-col justify-center py-12 px-[15px] sm:px-6 lg:px-8 font-sans selection:bg-black selection:text-white relative overflow-hidden bg-[#fdfdfd]">
       
       <MeshGradient />
       {/* Subtle Dot Pattern Background */}
@@ -135,7 +136,7 @@ export default function Login() {
       >
         <button 
           onClick={() => navigate('/')} 
-          className="absolute top-0 -left-12 hidden md:flex items-center justify-center p-2 text-gray-400 hover:text-black bg-transparent transition-all hover:-translate-x-1"
+          className="absolute top-0 -left-12 hidden md:flex items-center justify-center p-2 text-neutral-400 hover:text-black bg-transparent transition-all hover:-translate-x-1"
           title={t('login.back_home')}
         >
           <ArrowLeft className="w-5 h-5" strokeWidth={1.5} />
@@ -158,7 +159,7 @@ export default function Login() {
         transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
         className="mt-8 sm:mx-auto sm:w-full sm:max-w-[420px] z-10"
       >
-        <div className="bg-white/60 backdrop-blur-xl py-8 px-5 sm:px-10 border-t border-white/50 md:border md:border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative z-10">
+        <div className="bg-white/60 backdrop-blur-xl py-8 px-5 sm:px-10 border-t border-white/50 md:border md:border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl md:rounded-3xl relative z-10">
           <form className="space-y-6 relative z-20" onSubmit={handleLogin}>
             
             <div>
@@ -166,7 +167,7 @@ export default function Login() {
                 {t('login.label_id')}
               </label>
               <div className="mt-2 relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
                   <Search className="h-4 w-4 text-gray-400" strokeWidth={1.5} aria-hidden="true" />
                 </div>
                 <input
@@ -175,7 +176,7 @@ export default function Login() {
                   required
                   value={id}
                   onChange={(e) => setId(e.target.value)}
-                  className="block w-full rounded-none border border-neutral-200 py-3 pl-10 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent sm:text-sm sm:leading-6 transition-all duration-300 bg-transparent"
+                  className="block w-full rounded-xl border border-neutral-200 py-3 pl-10 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent sm:text-sm sm:leading-6 transition-all duration-300 bg-transparent"
                   placeholder={t('login.placeholder_id')}
                 />
               </div>
@@ -186,23 +187,34 @@ export default function Login() {
                 {t('login.label_pin')}
               </label>
               <div className="mt-2 relative">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
                   <Lock className="h-4 w-4 text-gray-400" strokeWidth={1.5} aria-hidden="true" />
                 </div>
                 <input
                   id="pin"
-                  type="password"
+                  type={showPin ? "text" : "password"}
                   value={pin}
                   onChange={(e) => setPin(e.target.value)}
-                  className="block w-full rounded-none border border-neutral-200 py-3 pl-10 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent sm:text-sm sm:leading-6 transition-all duration-300 bg-transparent tracking-[0.2em]"
+                  className="block w-full rounded-xl border border-neutral-200 py-3 pl-10 pr-10 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent sm:text-sm sm:leading-6 transition-all duration-300 bg-transparent tracking-[0.2em]"
                   placeholder="••••"
                   maxLength={4}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPin(!showPin)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPin ? (
+                    <EyeOff className="h-4 w-4" strokeWidth={1.5} />
+                  ) : (
+                    <Eye className="h-4 w-4" strokeWidth={1.5} />
+                  )}
+                </button>
               </div>
             </div>
 
             {error && (
-              <div className="border border-red-200 bg-red-50/50 p-3 animate-in fade-in slide-in-from-top-2">
+              <div className="border border-red-200 bg-red-50/50 p-3 rounded-xl animate-in fade-in slide-in-from-top-2">
                 <div className="flex items-center">
                   <div className="ml-2">
                     <h3 className="text-sm font-medium text-red-600">{error}</h3>
@@ -219,6 +231,7 @@ export default function Login() {
                 loading={isLoading}
                 loadingLabel="Kirilmoqda..."
                 icon={<ArrowRight />}
+                fullWidth
               />
             </div>
           </form>
@@ -235,9 +248,10 @@ export default function Login() {
         </div>
       </motion.div>
       
-      <div className="mt-auto pb-6 text-center z-10">
+      <div className="mt-auto pb-6 text-center z-10 pt-8">
         <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-gray-400">&copy; {new Date().getFullYear()} {t('login.footer')}</p>
       </div>
     </div>
   );
 }
+
