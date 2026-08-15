@@ -7,7 +7,6 @@ import MeshGradient from '../../components/ui/MeshGradient';
 import confetti from 'canvas-confetti';
 import { gameSound } from '../../utils/gameSound';
 
-// Board size 8x8
 const BOARD_SIZE = 8;
 
 export type PieceType = 'empty' | 'player' | 'player_king' | 'ai' | 'ai_king';
@@ -26,16 +25,15 @@ export interface Move {
 interface ShashkaStage {
   level: number;
   name: string;
-  aiDifficulty: 'easy' | 'medium' | 'hard';
   description: string;
 }
 
 const SHASHKA_STAGES: ShashkaStage[] = [
-  { level: 1, name: "1-Bosqich: Boshlang'ich Shashkachi", aiDifficulty: 'easy', description: "Shashka asoslari va oddiy raqib" },
-  { level: 2, name: "2-Bosqich: Epchil Raqib", aiDifficulty: 'easy', description: "Taktik hujumlarni qaytaring" },
-  { level: 3, name: "3-Bosqich: Taktik Master", aiDifficulty: 'medium', description: "Dama chiqarish va pozitsiyani egallash" },
-  { level: 4, name: "4-Bosqich: Professional Shashkachi", aiDifficulty: 'medium', description: "Qiyin vaziyatlardan chiqish san'ati" },
-  { level: 5, name: "5-Bosqich: SHASHKA GRANDMASTER 👑", aiDifficulty: 'hard', description: "Mukammal sun'iy intellektga qarshi jang" }
+  { level: 1, name: "1-Bosqich: Boshlang'ich Shashkachi", description: "Shashka asoslari va oson raqib" },
+  { level: 2, name: "2-Bosqich: Epchil Raqib", description: "Taktik hujumlarni qaytaring" },
+  { level: 3, name: "3-Bosqich: Taktik Master", description: "Dama chiqarish va pozitsiyani egallash" },
+  { level: 4, name: "4-Bosqich: Professional Shashkachi", description: "Qiyin vaziyatlardan chiqish san'ati" },
+  { level: 5, name: "5-Bosqich: SHASHKA GRANDMASTER 👑", description: "Mukammal sun'iy intellektga qarshi jang" }
 ];
 
 export const Shashka = () => {
@@ -50,10 +48,11 @@ export const Shashka = () => {
   const [board, setBoard] = useState<PieceType[][]>([]);
   const [selectedPos, setSelectedPos] = useState<Position | null>(null);
   const [validMoves, setValidMoves] = useState<Move[]>([]);
+  const [lastMove, setLastMove] = useState<Move | null>(null);
   const [turn, setTurn] = useState<'player' | 'ai'>('player');
   const [playerCapturedCount, setPlayerCapturedCount] = useState(0);
   const [aiCapturedCount, setAiCapturedCount] = useState(0);
-  const [mascotQuote, setMascotQuote] = useState("Oq donalar sizniki! Qani, birinchi yurishni qiling! ♟️");
+  const [mascotQuote, setMascotQuote] = useState("Oq donalar sizniki! Birinchi yurishni boshlang! ♟️");
   const [isMuted, setIsMuted] = useState(gameSound.getMuted());
 
   const isAiThinkingRef = useRef(false);
@@ -96,6 +95,7 @@ export const Shashka = () => {
     setBoard(newBoard);
     setSelectedPos(null);
     setValidMoves([]);
+    setLastMove(null);
     setTurn('player');
     setPlayerCapturedCount(0);
     setAiCapturedCount(0);
@@ -122,7 +122,6 @@ export const Shashka = () => {
       dirs.push([1, -1], [1, 1]);
     }
 
-    // All 4 diagonal capture directions (standard international checkers allows capture backwards)
     const captureDirs: [number, number][] = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
 
     // 1. Check Captures
@@ -152,7 +151,6 @@ export const Shashka = () => {
       }
     }
 
-    // If captures are available, forced captures rule or prefer captures
     if (captures.length > 0) {
       return captures;
     }
@@ -197,7 +195,6 @@ export const Shashka = () => {
       }
     }
 
-    // Checkers rule: if any piece can capture, capture is mandatory/prioritized
     return captureMoves.length > 0 ? captureMoves : allMoves;
   }, [getMovesForPiece]);
 
@@ -216,7 +213,6 @@ export const Shashka = () => {
       setMascotQuote("OFARIN! DAMA CHIQARILDINGIZ! 👑");
     } else if (piece === 'ai' && to.r === BOARD_SIZE - 1) {
       piece = 'ai_king';
-      setMascotQuote("Ehtiyot bo'ling! Raqib Dama chiqardi!");
     }
 
     newBoard[to.r][to.c] = piece;
@@ -228,6 +224,7 @@ export const Shashka = () => {
       gameSound.playTick();
     }
 
+    setLastMove(move);
     return newBoard;
   }, []);
 
@@ -257,7 +254,7 @@ export const Shashka = () => {
     setGameState('gameover');
   }, []);
 
-  // AI Move engine with Stage-based intelligence
+  // Snappy AI Move engine (280ms response time)
   const performAiMove = useCallback((currentB: PieceType[][]) => {
     if (isAiThinkingRef.current) return;
     isAiThinkingRef.current = true;
@@ -266,25 +263,21 @@ export const Shashka = () => {
       const aiMoves = getAllMoves(currentB, 'ai');
 
       if (aiMoves.length === 0) {
-        // Player wins!
         isAiThinkingRef.current = false;
         handleStageVictory();
         return;
       }
 
-      // AI Decision Logic
-      // Prioritize capture moves, then king moves, then center control
       let chosenMove = aiMoves[0];
       const captureMoves = aiMoves.filter(m => m.captured);
 
       if (captureMoves.length > 0) {
         chosenMove = captureMoves[Math.floor(Math.random() * captureMoves.length)];
       } else {
-        // Evaluate moves based on safety and king promotion
         const scoredMoves = aiMoves.map(m => {
           let score = 0;
-          if (m.to.r === BOARD_SIZE - 1) score += 50; // promotion
-          if (m.to.c >= 2 && m.to.c <= 5) score += 10; // center control
+          if (m.to.r === BOARD_SIZE - 1) score += 50;
+          if (m.to.c >= 2 && m.to.c <= 5) score += 10;
           return { move: m, score };
         });
 
@@ -303,12 +296,19 @@ export const Shashka = () => {
       setValidMoves([]);
       isAiThinkingRef.current = false;
 
+      // Update mascot quote after AI move
+      if (chosenMove.captured) {
+        setMascotQuote("Raqib donangizni urib oldi! Diqqatli bo'ling!");
+      } else {
+        setMascotQuote("Sizning navbatingiz! Oq donalardan birini tanlang ♟️");
+      }
+
       // Check if Player has any moves left
       const playerMoves = getAllMoves(nextBoard, 'player');
       if (playerMoves.length === 0) {
         handleGameover();
       }
-    }, 600);
+    }, 280);
   }, [getAllMoves, executeMove, handleStageVictory, handleGameover]);
 
   const startStage = (lvl: number) => {
@@ -341,7 +341,7 @@ export const Shashka = () => {
       setSelectedPos(null);
       setValidMoves([]);
       setTurn('ai');
-      setMascotQuote("Ajoyib yurish! Raqib o'ylamoqda... 🤔");
+      setMascotQuote("Ajoyib yurish! Raqib javob qaytarmoqda... ⏳");
 
       // Check if AI has any pieces left
       const aiPiecesCount = nextBoard.flat().filter(p => p === 'ai' || p === 'ai_king').length;
@@ -359,6 +359,11 @@ export const Shashka = () => {
       const moves = getMovesForPiece(board, r, c);
       setSelectedPos({ r, c });
       setValidMoves(moves);
+      if (moves.length > 0) {
+        setMascotQuote("Yashil nuqtaga bosib, donani suring! ✨");
+      } else {
+        setMascotQuote("Bu donaning yurish yo'li to'silgan. Boshqasini tanlang!");
+      }
     } else {
       setSelectedPos(null);
       setValidMoves([]);
@@ -484,9 +489,20 @@ export const Shashka = () => {
                   <div className="w-4 h-4 rounded-full bg-slate-900 border-2 border-white shadow-xs" />
                   <span className="text-xs font-bold text-slate-700">Raqib (AI): {12 - playerCapturedCount} dona</span>
                 </div>
-                <div className="text-xs font-black uppercase text-amber-600 bg-amber-50 px-3 py-1 rounded-xl border border-amber-200">
-                  {turn === 'player' ? "Sizning navbatingiz" : "Raqib yurmoqda..."}
+
+                {/* Animated Turn Badge */}
+                <div>
+                  {turn === 'player' ? (
+                    <span className="text-xs font-black uppercase text-emerald-800 bg-emerald-50 px-3.5 py-1.5 rounded-xl border-2 border-emerald-300 shadow-xs flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> SIZNING NAVBATINGIZ
+                    </span>
+                  ) : (
+                    <span className="text-xs font-black uppercase text-amber-900 bg-amber-50 px-3.5 py-1.5 rounded-xl border-2 border-amber-300 shadow-xs flex items-center gap-1.5 animate-pulse">
+                      <span className="w-2 h-2 rounded-full bg-amber-500" /> RAQIB YURMOQDA...
+                    </span>
+                  )}
                 </div>
+
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-full bg-white border-2 border-amber-400 shadow-xs" />
                   <span className="text-xs font-bold text-slate-700">Siz (Oq): {12 - aiCapturedCount} dona</span>
@@ -494,12 +510,13 @@ export const Shashka = () => {
               </div>
 
               {/* 8x8 Wooden Checkers Board */}
-              <div className="w-full aspect-square max-w-md bg-amber-900/90 border-6 border-amber-950 rounded-3xl p-2.5 shadow-2xl grid grid-cols-8 grid-rows-8 gap-0.5">
+              <div className="w-full aspect-square max-w-md bg-amber-950 border-6 border-amber-950 rounded-3xl p-2.5 shadow-2xl grid grid-cols-8 grid-rows-8 gap-0.5">
                 {board.map((row, r) =>
                   row.map((piece, c) => {
                     const isDark = (r + c) % 2 === 1;
                     const isSelected = selectedPos?.r === r && selectedPos?.c === c;
                     const isValidTarget = validMoves.some(m => m.to.r === r && m.to.c === c);
+                    const isLastMovedSquare = lastMove && (lastMove.to.r === r && lastMove.to.c === c);
 
                     return (
                       <div
@@ -507,7 +524,7 @@ export const Shashka = () => {
                         onClick={() => handleSquareClick(r, c)}
                         className={`relative flex items-center justify-center rounded-md cursor-pointer transition-colors ${
                           isDark ? 'bg-[#78350f]' : 'bg-[#fef3c7]'
-                        } ${isSelected ? 'ring-3 ring-amber-400' : ''}`}
+                        } ${isSelected ? 'ring-3 ring-amber-400' : isLastMovedSquare ? 'ring-2 ring-amber-300/80' : ''}`}
                       >
                         {/* Highlight dot for valid moves */}
                         {isValidTarget && (
@@ -517,7 +534,7 @@ export const Shashka = () => {
                         {/* Pieces */}
                         {piece !== 'empty' && (
                           <motion.div
-                            whileHover={{ scale: 1.1 }}
+                            whileHover={{ scale: 1.08 }}
                             whileTap={{ scale: 0.95 }}
                             className={`w-9/12 h-9/12 rounded-full flex items-center justify-center font-black text-sm relative shadow-md border-3 transition-transform ${
                               piece === 'player' || piece === 'player_king'
