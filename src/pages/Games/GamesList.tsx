@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchCurrentTeacher, getToken } from '../../lib/auth';
-import { Crown, ArrowLeft, Gamepad2, Brain, Flame, BookOpen, Languages, ChevronRight, Sparkles, Search, Grid, Zap } from 'lucide-react';
+import { Crown, ArrowLeft, Gamepad2, Brain, Flame, BookOpen, Languages, ChevronRight, Sparkles, Search, Grid, Zap, Map } from 'lucide-react';
+import QuestLevelMap from '../../components/games/QuestLevelMap';
 
 interface GameItem {
   id: string;
@@ -89,6 +90,7 @@ const GamesList = () => {
   const [teacher, setTeacher] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<'all' | 'math' | 'logic' | 'languages'>('all');
+  const [viewMode, setViewMode] = useState<'map' | 'grid'>('map');
 
   useEffect(() => {
     if (!getToken()) { navigate('/teacher/login'); return; }
@@ -111,21 +113,49 @@ const GamesList = () => {
     <div className="min-h-screen bg-slate-50/50 font-sans text-zinc-900 selection:bg-indigo-600 selection:text-white">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-zinc-200/80 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-4">
-          <button
-            onClick={() => navigate('/online-tests')}
-            className="w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-100 hover:bg-indigo-50 text-zinc-700 hover:text-indigo-600 transition-colors border border-zinc-200/60 hover:border-indigo-200"
-            title="Ortga qaytish"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shadow-xs">
-              <Gamepad2 className="w-5 h-5" strokeWidth={2} />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate('/online-tests')}
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-100 hover:bg-indigo-50 text-zinc-700 hover:text-indigo-600 transition-colors border border-zinc-200/60 hover:border-indigo-200"
+              title="Ortga qaytish"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shadow-xs">
+                <Gamepad2 className="w-5 h-5" strokeWidth={2} />
+              </div>
+              <h1 className="text-sm font-bold text-zinc-900 tracking-wider uppercase">
+                O'yinlar Portali
+              </h1>
             </div>
-            <h1 className="text-sm font-bold text-zinc-900 tracking-wider uppercase">
-              O'yinlar Portali
-            </h1>
+          </div>
+
+          {/* Mode Switcher */}
+          <div className="flex bg-zinc-100 p-1 rounded-xl border border-zinc-200/80">
+            <button
+              onClick={() => setViewMode('map')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'map'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-zinc-600 hover:text-zinc-900'
+              }`}
+            >
+              <Map className="w-3.5 h-3.5" />
+              <span>Sarguzasht Xaritasi</span>
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'grid'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-zinc-600 hover:text-zinc-900'
+              }`}
+            >
+              <Grid className="w-3.5 h-3.5" />
+              <span>Barcha O'yinlar</span>
+            </button>
           </div>
         </div>
       </header>
@@ -150,100 +180,106 @@ const GamesList = () => {
           </div>
         ) : (
           <div>
-            {/* Title Section */}
-            <div className="mb-10 max-w-2xl">
-              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 mb-3">
-                Interaktiv Ta'limiy O'yinlar
-              </h1>
-              <p className="text-zinc-600 text-xs md:text-sm font-medium border-l-3 border-indigo-500 pl-4 leading-relaxed">
-                Dars mazmunini teranlashtirish va o'quvchilar mantiqiy hamda tanqidiy fikrlashini rivojlantiruvchi o'yinlar ekotizimi.
-              </p>
-            </div>
+            {viewMode === 'map' ? (
+              <QuestLevelMap />
+            ) : (
+              <div>
+                {/* Title Section */}
+                <div className="mb-10 max-w-2xl">
+                  <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 mb-3">
+                    Interaktiv Ta'limiy O'yinlar
+                  </h1>
+                  <p className="text-zinc-600 text-xs md:text-sm font-medium border-l-3 border-indigo-500 pl-4 leading-relaxed">
+                    Dars mazmunini teranlashtirish va o'quvchilar mantiqiy hamda tanqidiy fikrlashini rivojlantiruvchi o'yinlar ekotizimi.
+                  </p>
+                </div>
 
-            {/* Category Filter Tabs */}
-            <div className="flex items-center gap-2.5 mb-10 flex-wrap">
-              {[
-                { id: 'all', label: 'Barchasi' },
-                { id: 'math', label: 'Matematika & Fanlar' },
-                { id: 'logic', label: 'Mantiq & Tahlil' },
-                { id: 'languages', label: 'Tillar & Lug\'at' }
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveCategory(tab.id as any)}
-                  className={`rounded-xl px-4 py-2.5 text-xs font-semibold tracking-wider transition-all ${
-                    activeCategory === tab.id
-                      ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
-                      : 'bg-white text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/80 border border-zinc-200/80 shadow-xs'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
+                {/* Category Filter Tabs */}
+                <div className="flex items-center gap-2.5 mb-10 flex-wrap">
+                  {[
+                    { id: 'all', label: 'Barchasi' },
+                    { id: 'math', label: 'Matematika & Fanlar' },
+                    { id: 'logic', label: 'Mantiq & Tahlil' },
+                    { id: 'languages', label: 'Tillar & Lug\'at' }
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveCategory(tab.id as any)}
+                      className={`rounded-xl px-4 py-2.5 text-xs font-semibold tracking-wider transition-all ${
+                        activeCategory === tab.id
+                          ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                          : 'bg-white text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/80 border border-zinc-200/80 shadow-xs'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
 
-            {/* Games Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7 items-stretch pb-16">
-              {filteredGames.map(game => {
-                const Icon = game.icon;
-                const getCategoryGradient = (cat: string) => {
-                  switch (cat) {
-                    case 'math': return 'bg-gradient-to-br from-indigo-500 to-indigo-700 text-white shadow-md shadow-indigo-500/20';
-                    case 'logic': return 'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md shadow-amber-500/20';
-                    case 'languages': return 'bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-md shadow-emerald-500/20';
-                    default: return 'bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-md shadow-slate-900/20';
-                  }
-                };
+                {/* Games Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7 items-stretch pb-16">
+                  {filteredGames.map(game => {
+                    const Icon = game.icon;
+                    const getCategoryGradient = (cat: string) => {
+                      switch (cat) {
+                        case 'math': return 'bg-gradient-to-br from-indigo-500 to-indigo-700 text-white shadow-md shadow-indigo-500/20';
+                        case 'logic': return 'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md shadow-amber-500/20';
+                        case 'languages': return 'bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-md shadow-emerald-500/20';
+                        default: return 'bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-md shadow-slate-900/20';
+                      }
+                    };
 
-                return (
-                  <div
-                    key={game.id}
-                    onClick={() => navigate(game.route)}
-                    className="bg-white border border-zinc-200/80 hover:border-indigo-300 rounded-2xl p-6 md:p-7 shadow-xs hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 flex flex-col group relative overflow-hidden cursor-pointer h-full justify-between"
-                  >
-                    <div>
-                      <div className="flex justify-between items-start mb-5">
-                        {/* Icon */}
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 ${getCategoryGradient(game.category)}`}>
-                          <Icon size={24} strokeWidth={2} />
-                        </div>
-                        
-                        {/* Badges */}
-                        <div className="flex flex-col items-end gap-1.5">
-                          {game.isNew && (
-                            <span className="px-2.5 py-1 border border-amber-300/70 bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full flex items-center gap-1">
-                              <Sparkles className="w-3 h-3 text-amber-500" /> YANGI
+                    return (
+                      <div
+                        key={game.id}
+                        onClick={() => navigate(game.route)}
+                        className="bg-white border border-zinc-200/80 hover:border-indigo-300 rounded-2xl p-6 md:p-7 shadow-xs hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 flex flex-col group relative overflow-hidden cursor-pointer h-full justify-between"
+                      >
+                        <div>
+                          <div className="flex justify-between items-start mb-5">
+                            {/* Icon */}
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 ${getCategoryGradient(game.category)}`}>
+                              <Icon size={24} strokeWidth={2} />
+                            </div>
+                            
+                            {/* Badges */}
+                            <div className="flex flex-col items-end gap-1.5">
+                              {game.isNew && (
+                                <span className="px-2.5 py-1 border border-amber-300/70 bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full flex items-center gap-1">
+                                  <Sparkles className="w-3 h-3 text-amber-500" /> YANGI
+                                </span>
+                              )}
+                              <span className="px-2.5 py-1 border border-zinc-200/80 bg-zinc-50 text-zinc-600 text-[10px] font-semibold uppercase tracking-wider rounded-full">
+                                {game.tag}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-full">
+                              <Flame className="w-3 h-3 text-indigo-500" /> Interaktiv
                             </span>
-                          )}
-                          <span className="px-2.5 py-1 border border-zinc-200/80 bg-zinc-50 text-zinc-600 text-[10px] font-semibold uppercase tracking-wider rounded-full">
-                            {game.tag}
-                          </span>
+                          </div>
+
+                          <h3 className="text-xl font-bold text-zinc-900 group-hover:text-indigo-600 transition-colors mb-2.5 tracking-tight">
+                            {game.title}
+                          </h3>
+
+                          <p className="text-zinc-500 font-normal text-xs md:text-sm leading-relaxed mb-6">
+                            {game.description}
+                          </p>
+                        </div>
+
+                        <div className="w-full py-3 px-4 bg-indigo-50/70 group-hover:bg-indigo-600 text-indigo-700 group-hover:text-white rounded-xl font-semibold text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-xs group-hover:shadow-md group-hover:shadow-indigo-600/20">
+                          <span>O'ynashni boshlash</span>
+                          <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </div>
                       </div>
-
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-full">
-                          <Flame className="w-3 h-3 text-indigo-500" /> Interaktiv
-                        </span>
-                      </div>
-
-                      <h3 className="text-xl font-bold text-zinc-900 group-hover:text-indigo-600 transition-colors mb-2.5 tracking-tight">
-                        {game.title}
-                      </h3>
-
-                      <p className="text-zinc-500 font-normal text-xs md:text-sm leading-relaxed mb-6">
-                        {game.description}
-                      </p>
-                    </div>
-
-                    <div className="w-full py-3 px-4 bg-indigo-50/70 group-hover:bg-indigo-600 text-indigo-700 group-hover:text-white rounded-xl font-semibold text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-xs group-hover:shadow-md group-hover:shadow-indigo-600/20">
-                      <span>O'ynashni boshlash</span>
-                      <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
