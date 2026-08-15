@@ -85,10 +85,10 @@ const FORMULA_DATABASE: FormulaItem[] = [
   },
   {
     id: 'f10',
-    title: 'Suvning Kimyoviy Formulasi',
+    title: 'Suvning Reaksiya Tenglamasi',
     category: 'Kimyo',
-    blocks: ['H₂O', '=', '2H', '+', 'O'],
-    hint: 'Vodorod va kislorod birikmasi'
+    blocks: ['2H₂', '+', 'O₂', '=', '2H₂O'],
+    hint: 'Vodorod va kislorod reaksiyasidan suv hosil bo\'lishi'
   },
   {
     id: 'f11',
@@ -99,10 +99,10 @@ const FORMULA_DATABASE: FormulaItem[] = [
   },
   {
     id: 'f12',
-    title: 'Mantiqiy shart (Dasturlash)',
-    category: 'Mantiq',
-    blocks: ['if', '(', 'x', '>', '0', ')'],
-    hint: 'Agar x musbat bo\'lsa'
+    title: 'Ideal Gaz Holat Tenglamasi',
+    category: 'Fizika',
+    blocks: ['P', '·', 'V', '=', 'n', '·', 'R', '·', 'T'],
+    hint: 'Klapeyron-Mendeleyev tenglamasi'
   }
 ];
 
@@ -296,63 +296,58 @@ const FormulaChain = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white font-sans flex flex-col">
+    <div className="min-h-screen bg-slate-50/50 font-sans flex flex-col text-zinc-900 selection:bg-indigo-600 selection:text-white">
       {/* Header */}
-      <header className="relative z-20 flex justify-between items-center p-4">
+      <header className="relative z-20 flex justify-between items-center p-4 border-b border-zinc-200/80 bg-white/90 backdrop-blur-md shadow-xs">
         <button
           onClick={() => navigate('/games')}
-          className="w-12 h-12 bg-white border-2 border-black text-black rounded-none flex items-center justify-center hover:bg-zinc-100 transition-colors"
+          className="w-10 h-10 bg-zinc-100 border border-zinc-200/80 text-zinc-700 rounded-xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+          title="O'yinlarga qaytish"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
         {gameState === 'playing' && (
-          <div className="flex gap-2">
-            <button onClick={toggleSound} className="w-12 h-12 bg-white border-2 border-black text-black rounded-none flex items-center justify-center hover:bg-zinc-100 transition-colors">
-              {muted ? <VolumeX className="w-5 h-5 text-rose-500" /> : <Volume2 className="w-5 h-5 text-emerald-500" />}
+          <div className="flex gap-3 items-center">
+            <button onClick={toggleSound} className="w-10 h-10 bg-white border border-zinc-200/80 text-zinc-700 rounded-xl flex items-center justify-center hover:bg-zinc-50 transition-colors shadow-xs">
+              {muted ? <VolumeX className="w-5 h-5 text-rose-500" /> : <Volume2 className="w-5 h-5 text-indigo-600" />}
             </button>
-            <div className="bg-white border-2 border-black px-5 py-2 rounded-none font-bold uppercase tracking-widest text-[10px] text-black flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-black fill-black" />
-              {score}
+            <div className="bg-white border border-zinc-200/80 px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider text-zinc-900 flex items-center gap-2 shadow-xs">
+              <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />
+              <span>{score} ball</span>
             </div>
           </div>
         )}
       </header>
 
       {/* Main Body */}
-      <main className="flex flex-col items-center justify-center flex-1 w-full max-w-4xl mx-auto p-4 relative z-10">
+      <main className="flex flex-col items-center justify-center flex-1 w-full max-w-4xl mx-auto p-4 md:p-6 relative z-10">
         <AnimatePresence mode="wait">
           {/* 1. START SCREEN */}
           {gameState === 'start' && (
             <motion.div key="start-screen"
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              className="w-full flex flex-col items-center text-center font-sans"
+              exit={{ opacity: 0, scale: 1.02 }}
+              className="w-full max-w-md bg-white border border-zinc-200/80 rounded-3xl p-8 md:p-10 shadow-xl shadow-zinc-900/5 flex flex-col items-center text-center font-sans"
             >
-              <div className="relative mb-8">
-                <motion.div
-                  animate={{ y: [0, -8, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                  className="w-24 h-24 bg-black text-white border-2 border-black rounded-none flex items-center justify-center mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                >
-                  <Brain className="w-12 h-12 text-white" strokeWidth={1.5} />
-                </motion.div>
+              <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-2xl flex items-center justify-center mb-6 shadow-md shadow-indigo-500/20">
+                <Brain className="w-10 h-10 text-white" strokeWidth={1.75} />
               </div>
 
-              <h1 className="font-sans font-black text-3xl md:text-5xl uppercase tracking-tighter text-black mb-3">Formula Zanjiri</h1>
-              <p className="text-black font-bold uppercase tracking-widest text-[10px] mb-8 max-w-sm">
-                Formulalar va mantiqiy bloklarni to'g'ri ketma-ketlikda sudrab joylashtiring. Mantiqiy fikrlashingiz va bilimingizni namoyish eting!
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-900 mb-2">Formula Zanjiri</h1>
+              <p className="text-zinc-500 text-xs leading-relaxed mb-6">
+                Formulalar va mantiqiy bloklarni to'g'ri ketma-ketlikda yig'ing. Ilmiy va mantiqiy bilimlaringizni namoyish eting!
               </p>
 
               {leaderboard.length > 0 && (
-                <div className="bg-white border-2 border-black text-black font-bold px-5 py-2.5 rounded-none mb-8 flex items-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-[10px] uppercase tracking-widest">
-                  <Trophy className="w-4 h-4 fill-black text-black" /> TOP REKORD: {Math.max(...leaderboard.map(r => r.score))}
+                <div className="bg-amber-50 border border-amber-200 text-amber-900 font-semibold px-4 py-2 rounded-xl mb-6 flex items-center gap-2 text-xs">
+                  <Trophy className="w-4 h-4 fill-amber-500 text-amber-500" /> TOP REKORD: {Math.max(...leaderboard.map(r => r.score))} ball
                 </div>
               )}
 
-              <div className="w-full max-w-sm space-y-4">
-                <div className="relative">
+              <div className="w-full space-y-3.5">
+                <div>
                   <input
                     type="text"
                     value={playerName}
@@ -360,14 +355,14 @@ const FormulaChain = () => {
                     onKeyDown={e => e.key === 'Enter' && startGame()}
                     placeholder="Ismingizni kiriting..."
                     autoFocus
-                    className="w-full bg-white border-2 border-black rounded-none px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-black outline-none placeholder:text-zinc-400 focus:bg-zinc-50 transition-colors"
+                    className="w-full bg-zinc-50 border border-zinc-200/80 rounded-xl px-4 py-3.5 text-xs font-semibold text-zinc-900 outline-none placeholder:text-zinc-400 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs"
                   />
                 </div>
                 <button
                   onClick={startGame}
-                  className="w-full bg-black text-white font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors border-2 border-black rounded-none"
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm shadow-indigo-600/20 active:scale-[0.99]"
                 >
-                  Boshlash <ChevronRight className="w-5 h-5" />
+                  O'yinni Boshlash <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </motion.div>
@@ -382,35 +377,35 @@ const FormulaChain = () => {
               className="w-full flex flex-col items-center max-w-3xl space-y-6"
             >
               {/* Clean Top Status Bar */}
-              <div className="w-full bg-white border-2 border-black rounded-none p-4 flex flex-col sm:flex-row justify-between items-center gap-4 relative z-10 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <div className="w-full bg-white border border-zinc-200/80 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 relative z-10 shadow-xs">
                 <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto justify-center sm:justify-start">
-                  <div className="flex items-center gap-2 text-black font-bold uppercase tracking-widest text-[10px]">
-                    <Clock className="w-5 h-5 text-black" /> 
+                  <div className="flex items-center gap-2 text-zinc-800 font-bold text-xs uppercase tracking-wider">
+                    <Clock className="w-4 h-4 text-indigo-600" /> 
                     <span>{timeLeft}s</span>
                   </div>
-                  <div className="h-4 w-px bg-black" />
+                  <div className="h-4 w-px bg-zinc-200" />
                   <div className="flex items-center gap-1.5">
                     {[...Array(3)].map((_, i) => (
-                      <Heart key={i} className={`w-5 h-5 ${i < lives ? 'fill-black text-black' : 'fill-white text-black'}`} strokeWidth={2} />
+                      <Heart key={i} className={`w-4 h-4 ${i < lives ? 'fill-rose-500 text-rose-500' : 'fill-zinc-200 text-zinc-300'}`} />
                     ))}
                   </div>
-                  <div className="h-4 w-px bg-black" />
-                  <div className="flex items-center gap-2 text-black font-bold uppercase tracking-widest text-[10px]">
-                    <Trophy className="w-5 h-5 text-black" />
+                  <div className="h-4 w-px bg-zinc-200" />
+                  <div className="flex items-center gap-2 text-zinc-800 font-bold text-xs uppercase tracking-wider">
+                    <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />
                     <span>{score}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="hidden sm:block text-[10px] font-bold text-black uppercase tracking-widest">
+                  <div className="hidden sm:block text-[11px] font-semibold text-zinc-500">
                     Top Rekord: {leaderboard.length > 0 ? Math.max(...leaderboard.map(r => r.score), score) : score}
                   </div>
                   <AnimatePresence>
                     {combo >= 2 && (
                       <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-                        className="px-3 py-1.5 bg-black text-white rounded-none text-[10px] font-bold uppercase tracking-widest border-2 border-black flex items-center gap-1.5"
+                        className="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-[10px] font-bold uppercase tracking-wider border border-amber-200 flex items-center gap-1"
                       >
-                        <Flame className="w-4 h-4 fill-white" /> x{combo} Combo
+                        <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500" /> x{combo} Combo
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -418,33 +413,33 @@ const FormulaChain = () => {
               </div>
 
               {/* Task / Formula Hint Box */}
-              <div className="w-full bg-white rounded-none border-2 border-black p-8 md:p-10 text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden">
-                <div className="absolute top-0 inset-x-0 h-1.5 bg-white border-b-2 border-black">
+              <div className="w-full bg-white rounded-2xl border border-zinc-200/80 p-6 md:p-8 text-center shadow-xs relative overflow-hidden">
+                <div className="absolute top-0 inset-x-0 h-1 bg-zinc-100">
                   <motion.div
-                    className="h-full bg-black"
+                    className="h-full bg-indigo-600"
                     initial={{ width: '100%' }}
                     animate={{ width: `${(timeLeft / GAME_DURATION) * 100}%` }}
                     transition={{ duration: 1, ease: 'linear' }}
                   />
                 </div>
                 
-                <span className="px-4 py-1.5 rounded-none bg-black text-white border-2 border-black text-[10px] font-bold uppercase tracking-widest mb-5 inline-block mt-2">
+                <span className="px-3 py-1 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-bold uppercase tracking-wider mb-3 inline-block mt-1">
                   {currentFormula.category}
                 </span>
 
-                <h2 className="font-sans font-black text-2xl md:text-3xl uppercase tracking-tighter text-black mb-3">
+                <h2 className="text-xl md:text-2xl font-bold tracking-tight text-zinc-900 mb-2">
                   {currentFormula.title}
                 </h2>
-                <p className="text-black text-[10px] uppercase tracking-widest font-bold">
+                <p className="text-zinc-500 text-xs font-medium">
                   "{currentFormula.hint}"
                 </p>
               </div>
 
               {/* Selected Formula Chain Dropzone */}
-              <div className={`w-full min-h-[120px] p-6 rounded-none border-2 transition-all flex flex-wrap items-center justify-center gap-3 relative overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]
-                ${feedback === 'correct' ? 'bg-green-400 border-black' : feedback === 'wrong' ? 'bg-red-400 border-black' : 'bg-white border-black'}`}>
+              <div className={`w-full min-h-[110px] p-5 rounded-2xl border-2 transition-all flex flex-wrap items-center justify-center gap-2.5 relative shadow-xs
+                ${feedback === 'correct' ? 'bg-emerald-50 border-emerald-500' : feedback === 'wrong' ? 'bg-rose-50 border-rose-500' : 'bg-indigo-50/30 border-dashed border-indigo-200'}`}>
                 {selectedBlocks.length === 0 ? (
-                  <span className="text-black text-[10px] font-bold uppercase tracking-widest">
+                  <span className="text-zinc-400 text-xs font-medium uppercase tracking-wider">
                     Pastdagi bloklarni bosib zanjirni shakllantiring...
                   </span>
                 ) : (
@@ -456,7 +451,7 @@ const FormulaChain = () => {
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0.8, opacity: 0 }}
                       onClick={() => handleDeselectBlock(item)}
-                      className="px-6 py-4 rounded-none bg-black text-white font-bold text-xl md:text-2xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-zinc-800 transition-colors flex items-center justify-center min-w-[64px]"
+                      className="px-5 py-3 rounded-xl bg-indigo-600 text-white font-bold text-base md:text-lg shadow-sm shadow-indigo-600/20 hover:bg-indigo-700 transition-all flex items-center justify-center min-w-[54px] cursor-pointer"
                     >
                       <FormattedText content={item.val} />
                     </motion.button>
@@ -465,11 +460,11 @@ const FormulaChain = () => {
               </div>
 
               {/* Available Blocks Pool */}
-              <div className="w-full bg-white rounded-none border-2 border-black p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-black mb-5 text-center">
+              <div className="w-full bg-white rounded-2xl border border-zinc-200/80 p-5 md:p-6 shadow-xs">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-4 text-center">
                   Mavjud Bloklar
                 </div>
-                <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 min-h-[80px]">
+                <div className="flex flex-wrap items-center justify-center gap-2.5 md:gap-3 min-h-[70px]">
                   {availableBlocks.map(item => (
                     <motion.button
                       key={item.id}
@@ -478,7 +473,7 @@ const FormulaChain = () => {
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0.9, opacity: 0 }}
                       onClick={() => handleSelectBlock(item)}
-                      className="px-6 py-4 rounded-none bg-white text-black font-bold text-xl md:text-2xl border-2 border-black hover:bg-zinc-100 transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center min-w-[64px]"
+                      className="px-5 py-3 rounded-xl bg-white text-zinc-900 font-bold text-base md:text-lg border border-zinc-200/80 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all shadow-xs flex items-center justify-center min-w-[54px] cursor-pointer hover:scale-105 active:scale-95"
                     >
                       <FormattedText content={item.val} />
                     </motion.button>
@@ -487,21 +482,21 @@ const FormulaChain = () => {
               </div>
 
               {/* Check Action Button */}
-              <div className="flex gap-4 w-full">
+              <div className="flex gap-3 w-full">
                 <button
                   onClick={() => setupRound()}
-                  className="w-16 h-auto py-4 rounded-none bg-white hover:bg-zinc-100 text-black font-bold text-[10px] uppercase tracking-widest border-2 border-black transition-colors flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                  className="w-12 h-auto py-3.5 rounded-xl bg-white hover:bg-zinc-50 text-zinc-600 font-bold text-xs uppercase tracking-wider border border-zinc-200/80 transition-colors flex items-center justify-center shadow-xs"
                   title="O'tkazib yuborish"
                 >
-                  <RotateCcw className="w-5 h-5" />
+                  <RotateCcw className="w-4 h-4" />
                 </button>
 
                 <button
                   disabled={selectedBlocks.length === 0}
                   onClick={checkSolution}
-                  className="flex-1 w-full bg-black text-white font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors border-2 border-black rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50 disabled:hover:bg-black"
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm shadow-indigo-600/20 disabled:opacity-50"
                 >
-                  <Check className="w-6 h-6" /> Tekshirish
+                  <Check className="w-5 h-5" /> Tekshirish
                 </button>
               </div>
             </motion.div>
@@ -512,33 +507,33 @@ const FormulaChain = () => {
             <motion.div key="gameover"
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              className="w-full max-w-xl flex flex-col items-center font-sans"
+              className="w-full max-w-md flex flex-col items-center font-sans"
             >
-              <div className="rounded-none border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white p-8 md:p-10 w-full flex flex-col items-center text-center mb-6 relative overflow-hidden">
-                <h2 className="font-sans font-black text-3xl md:text-5xl uppercase tracking-tighter text-black mb-3">
+              <div className="rounded-3xl border border-zinc-200/80 shadow-xl shadow-zinc-900/5 bg-white p-8 md:p-10 w-full flex flex-col items-center text-center relative overflow-hidden">
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-900 mb-1">
                   {lives <= 0 ? 'O\'yin Tugadi!' : 'Vaqt Tugadi!'}
                 </h2>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-black mb-8 relative z-10">Ajoyib urinish, natijangiz bilan tanishing</p>
+                <p className="text-xs text-zinc-500 mb-6">Ajoyib urinish, erishgan natijangiz:</p>
                 
-                <div className="w-full bg-white border-2 border-black rounded-none py-8 mb-8 relative flex flex-col items-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                  <div className="text-[5rem] md:text-[6rem] font-black text-black leading-none flex items-center justify-center gap-4">
-                    {score}
+                <div className="w-full bg-indigo-50/50 border border-indigo-100 rounded-2xl py-6 mb-6 relative flex flex-col items-center">
+                  <div className="text-4xl md:text-5xl font-bold text-indigo-600 leading-none flex items-center justify-center">
+                    {score} <span className="text-sm text-zinc-500 font-semibold ml-2">ball</span>
                   </div>
                   {combo > 0 && (
-                    <div className="mt-4 px-3 py-1 bg-black text-white rounded-none text-[10px] font-bold uppercase tracking-widest border-2 border-black">
+                    <div className="mt-3 px-3 py-0.5 bg-amber-100 text-amber-800 rounded-full text-[10px] font-bold uppercase tracking-wider border border-amber-200">
                       Max Combo: {combo}x
                     </div>
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 w-full relative z-10">
+                <div className="flex flex-col sm:flex-row gap-3 w-full">
                   <button onClick={startGame}
-                    className="flex-1 w-full bg-black text-white font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors border-2 border-black rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                    className="flex-1 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider py-3.5 rounded-xl transition-all shadow-sm shadow-indigo-600/20"
                   >
                     Qayta O'ynash
                   </button>
                   <button onClick={() => navigate('/games')}
-                    className="flex-1 w-full bg-white text-black font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-100 transition-colors border-2 border-black rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                    className="flex-1 w-full bg-white text-zinc-800 font-bold text-xs uppercase tracking-wider py-3.5 rounded-xl transition-all border border-zinc-200/80 hover:bg-zinc-50 shadow-xs"
                   >
                     Chiqish
                   </button>

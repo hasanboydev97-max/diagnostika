@@ -237,13 +237,13 @@ export default function TeacherProfileModal({
                 </div>
 
                 {/* Minimalist Menu Tabs */}
-                <div className="space-y-1.5 pt-4 border-t border-black/10">
+                <div className="space-y-1.5 pt-4 border-t border-zinc-200/80">
                   <button
                     onClick={() => setActiveTab('profile')}
-                    className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-[0.2em] transition-all flex items-center justify-between group ${
+                    className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-between group ${
                       activeTab === 'profile'
-                        ? 'bg-[#111111] text-white shadow-xs'
-                        : 'text-gray-500 hover:text-black hover:bg-black/5'
+                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                        : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/80'
                     }`}
                   >
                     <span>01 / Shaxsiy Profil</span>
@@ -252,10 +252,10 @@ export default function TeacherProfileModal({
 
                   <button
                     onClick={() => setActiveTab('subscription')}
-                    className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-[0.2em] transition-all flex items-center justify-between group ${
+                    className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-between group ${
                       activeTab === 'subscription'
-                        ? 'bg-[#111111] text-white shadow-xs'
-                        : 'text-gray-500 hover:text-black hover:bg-black/5'
+                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                        : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/80'
                     }`}
                   >
                     <span>02 / Obuna & Limitlar</span>
@@ -264,10 +264,10 @@ export default function TeacherProfileModal({
 
                   <button
                     onClick={() => setActiveTab('security')}
-                    className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-[0.2em] transition-all flex items-center justify-between group ${
+                    className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-between group ${
                       activeTab === 'security'
-                        ? 'bg-[#111111] text-white shadow-xs'
-                        : 'text-gray-500 hover:text-black hover:bg-black/5'
+                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                        : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/80'
                     }`}
                   >
                     <span>03 / Xavfsizlik & Parol</span>
@@ -276,10 +276,10 @@ export default function TeacherProfileModal({
 
                   <button
                     onClick={() => setActiveTab('branding')}
-                    className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-[0.2em] transition-all flex items-center justify-between group ${
+                    className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-between group ${
                       activeTab === 'branding'
-                        ? 'bg-[#111111] text-white shadow-xs'
-                        : 'text-gray-500 hover:text-black hover:bg-black/5'
+                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                        : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/80'
                     }`}
                   >
                     <span>04 / Maktab Brandingi</span>

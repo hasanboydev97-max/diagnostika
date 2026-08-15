@@ -568,21 +568,23 @@ export default function TakeTest() {
 
         {/* Question Palette */}
         <div className="lg:w-64 shrink-0 order-2 lg:order-1">
-          <div className="lg:sticky lg:top-8">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em]">Savollar</h3>
-              <span className="text-[10px] font-bold text-black uppercase tracking-[0.2em]">{Object.keys(answers).length} / {test.questions.length}</span>
+          <div className="lg:sticky lg:top-8 bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-xs">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
+              <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Savollar</h3>
+              <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                {Object.keys(answers).length} / {test.questions.length}
+              </span>
             </div>
             <div className="grid grid-cols-5 gap-2">
               {test.questions.map((_: any, idx: number) => {
                 const isAnswered = answers[idx] !== undefined;
                 const isCurrent = idx === currentQIndex;
-                let cls = "w-full aspect-square text-[10px] font-bold transition-all duration-300 flex items-center justify-center border ";
-                if (isCurrent) cls += "border-black bg-black text-white scale-110";
-                else if (isAnswered) cls += "border-black/20 bg-transparent text-black hover:border-black";
-                else cls += "border-black/5 bg-transparent text-gray-400 hover:border-black/30 hover:text-black";
+                let cls = "w-full aspect-square text-[11px] font-bold rounded-xl transition-all duration-200 flex items-center justify-center border ";
+                if (isCurrent) cls += "border-indigo-600 bg-indigo-600 text-white scale-105 shadow-sm shadow-indigo-600/30";
+                else if (isAnswered) cls += "border-indigo-200 bg-indigo-50/80 text-indigo-700 hover:bg-indigo-100 font-bold";
+                else cls += "border-zinc-200 bg-zinc-50/50 text-zinc-400 hover:border-zinc-300 hover:text-zinc-700";
                 return (
-                  <motion.button key={idx} onClick={() => setCurrentQIndex(idx)} whileTap={{ scale: 0.9 }} className={cls}>
+                  <motion.button key={idx} onClick={() => setCurrentQIndex(idx)} whileTap={{ scale: 0.92 }} className={cls}>
                     {idx + 1}
                   </motion.button>
                 );
@@ -592,44 +594,50 @@ export default function TakeTest() {
         </div>
 
         {/* Question Area */}
-        <div className="flex-1 flex flex-col min-w-0 order-1 lg:order-2">
+        <div className="flex-1 flex flex-col min-w-0 order-1 lg:order-2 bg-white p-6 md:p-8 rounded-3xl border border-zinc-200/80 shadow-xs">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentQIndex}
-              initial={{ opacity: 0, x: 30 }}
+              initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -30 }}
-              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
               className="flex-1"
             >
-              <div className="mb-10">
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-3">
+              <div className="mb-8">
+                <span className="inline-flex items-center text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full uppercase tracking-wider mb-3">
                   {currentQIndex + 1}-Savol
-                </div>
-                <h3 className="text-xl md:text-2xl lg:text-3xl font-sans font-medium text-black leading-snug tracking-tight">
+                </span>
+                <h3 className="text-xl md:text-2xl font-sans font-bold text-zinc-900 leading-snug tracking-tight">
                   <FormattedText content={currentQ.questionText} />
                 </h3>
               </div>
 
               {/* Options */}
-              <div className="space-y-0 border-t border-black/10">
+              <div className="space-y-3">
                 {currentQ.options.map((opt: string, i: number) => {
                   const isSelected = answers[currentQIndex] === opt;
                   return (
                     <motion.button
                       key={i}
                       onClick={() => handleSelectOption(opt)}
-                      whileTap={{ scale: 0.99 }}
+                      whileTap={{ scale: 0.99.0 }}
                       onMouseEnter={() => setIsHovering(true)}
                       onMouseLeave={() => setIsHovering(false)}
-                      className="w-full text-left py-4 md:py-5 border-b border-black/10 transition-colors duration-300 flex items-start md:items-center gap-5 group cursor-pointer"
+                      className={`w-full text-left py-4 px-5 rounded-2xl border transition-all duration-200 flex items-start md:items-center gap-4 group cursor-pointer ${
+                        isSelected 
+                          ? 'border-indigo-600 bg-indigo-50/50 shadow-xs' 
+                          : 'border-zinc-200/80 bg-white hover:border-zinc-300 hover:bg-zinc-50/50'
+                      }`}
                     >
                       {/* Animated radio circle */}
-                      <div className="w-5 h-5 mt-0.5 md:mt-0 shrink-0 rounded-full border flex items-center justify-center transition-colors border-black/20 group-hover:border-black">
+                      <div className={`w-5 h-5 mt-0.5 md:mt-0 shrink-0 rounded-full border flex items-center justify-center transition-colors ${
+                        isSelected ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-zinc-300 group-hover:border-zinc-400'
+                      }`}>
                         <AnimatePresence>
                           {isSelected && (
                             <motion.div
-                              className="w-2.5 h-2.5 rounded-full bg-black"
+                              className="w-2 h-2 rounded-full bg-white"
                               initial={{ scale: 0 }}
                               animate={{ scale: 1 }}
                               exit={{ scale: 0 }}
@@ -638,7 +646,7 @@ export default function TakeTest() {
                           )}
                         </AnimatePresence>
                       </div>
-                      <span className={`flex-1 text-base md:text-lg leading-relaxed transition-colors ${isSelected ? 'font-medium text-black' : 'text-gray-500 group-hover:text-black'}`}>
+                      <span className={`flex-1 text-sm md:text-base leading-relaxed transition-colors ${isSelected ? 'font-bold text-indigo-950' : 'text-zinc-700 group-hover:text-zinc-900 font-medium'}`}>
                         <FormattedText content={opt} />
                       </span>
                     </motion.button>
@@ -649,14 +657,14 @@ export default function TakeTest() {
           </AnimatePresence>
 
           {/* Navigation */}
-          <div className="mt-16 pt-8 border-t border-black/5 flex items-center justify-between">
+          <div className="mt-10 pt-6 border-t border-zinc-100 flex items-center justify-between">
             <motion.button
               onClick={() => setCurrentQIndex(prev => Math.max(0, prev - 1))}
               disabled={currentQIndex === 0}
               whileTap={{ scale: 0.95 }}
               onMouseEnter={() => setIsHovering(true)}
               onMouseLeave={() => setIsHovering(false)}
-              className="text-xs md:text-sm px-2 py-1 font-bold uppercase tracking-[0.2em] text-gray-400 disabled:opacity-30 hover:text-black transition-colors"
+              className="text-xs px-4 py-2 font-bold uppercase tracking-wider text-zinc-500 disabled:opacity-30 hover:text-zinc-900 transition-colors"
             >
               Oldingi
             </motion.button>
@@ -667,7 +675,7 @@ export default function TakeTest() {
                 whileTap={{ scale: 0.95 }}
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={() => setIsHovering(false)}
-                className="text-xs md:text-sm px-4 py-2 font-bold uppercase tracking-[0.2em] text-white bg-black rounded-lg hover:bg-black/80 hover:scale-105 transition-all shadow-md"
+                className="text-xs px-6 py-2.5 font-bold uppercase tracking-wider text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-sm shadow-indigo-600/20"
               >
                 Keyingi
               </motion.button>
@@ -678,7 +686,7 @@ export default function TakeTest() {
                 whileTap={{ scale: 0.95 }}
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={() => setIsHovering(false)}
-                className="inline-flex items-center justify-center gap-3 text-xs md:text-sm px-5 py-2 font-bold uppercase tracking-[0.2em] text-white bg-black rounded-lg hover:bg-black/80 hover:scale-105 transition-all shadow-md disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2.5 text-xs px-7 py-2.5 font-bold uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-sm shadow-emerald-600/20 disabled:opacity-50"
               >
                 {submitting && <Loader2 size={16} className="animate-spin" />}
                 {submitting ? 'Yuborilmoqda...' : 'Yakunlash'}

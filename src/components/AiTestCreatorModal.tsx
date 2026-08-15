@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sparkles, Copy, ExternalLink, Check, Plus, SlidersHorizontal, Zap } from 'lucide-react';
+import { X, Sparkles, Copy, ExternalLink, Check, Plus, SlidersHorizontal, Zap, ListOrdered } from 'lucide-react';
 import { toast } from 'sonner';
 import { db } from '../lib/db';
 import { generateCustomTestQuestions, generateDiagnosticTest, generateMatrixTestQuestions } from '../lib/gemini';
 import type { QuestionBlueprint } from '../lib/blueprint';
 import { useNavigate } from 'react-router-dom';
 import MagicButton from './MagicButton';
+import { getAuthHeaders, getToken } from '../lib/auth';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 interface Props {
   initialGrade: string;
@@ -180,8 +183,39 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose }:
         status: 'active'
       });
 
+      // Save to server database if teacher token exists
+      if (getToken()) {
+        try {
+          const testTitle = topic.trim()
+            ? `${grade}-sinf: ${topic.trim()}`
+            : `${grade}-sinf AI Diagnostika Testi`;
+          const testSubject = selectedSubjects.length > 0 ? selectedSubjects.map(s => s.subject).join(', ') : 'Diagnostika & Fanlar';
+
+          const formattedQuestions = questions.map(q => ({
+            questionText: q.questionText || '',
+            options: Array.isArray(q.options) ? q.options : [],
+            correctOption: typeof q.correctOption === 'number' ? q.correctOption : 0,
+            explanation: q.explanation || ''
+          }));
+
+          await fetch(`${API_URL}/online-tests`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              title: testTitle,
+              subject: testSubject,
+              grade,
+              questions: formattedQuestions,
+              createdAt: new Date().toISOString()
+            })
+          });
+        } catch (apiErr) {
+          console.warn('Serverga saqlashda tarmoq ogohlantirish (Mahalliy bazaga saqlandi):', apiErr);
+        }
+      }
+
       setCreatedTestId(testId);
-      toast.success(`Test muvaffaqiyatli yaratildi! Kod: ${testId}`, { id: toastId });
+      toast.success(`Test muvaffaqiyatli yaratildi va saqlandi! Kod: ${testId}`, { id: toastId });
     } catch (err: any) {
       console.error(err);
       toast.error('Xatolik yuz berdi: ' + err.message, { id: toastId });
@@ -279,17 +313,24 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose }:
                   </button>
                 </div>
 
-                <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
+                <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center items-center">
+                  <MagicButton
+                    type="button"
+                    onClick={() => navigate('/online-tests')}
+                    label="Online Testlarim Ro'yxati"
+                    icon={<ListOrdered />}
+                    variant="indigo"
+                  />
                   <MagicButton
                     type="button"
                     onClick={() => navigate(`/online-tests/take/${createdTestId}`)}
-                    label="Testni ochish"
+                    label="Testni O'ynab ko'rish"
                     icon={<ExternalLink />}
                   />
                   <MagicButton
                     type="button"
                     onClick={() => setCreatedTestId(null)}
-                    label="Yangi test yaratish"
+                    label="Yangi Test Yaratish"
                     variant="ghost"
                     icon={<Plus />}
                   />

@@ -337,70 +337,68 @@ const EnglishWords = () => {
   const highestRecord = leaderboard.length > 0 ? leaderboard[0].score : 0;
 
   return (
-    <div className="min-h-screen bg-white font-sans flex flex-col relative transition-all duration-300">
-
-      {/* ── HEADER ─────────────────────────────────────── */}
-      <header className="relative z-20 flex justify-between items-center p-4">
+    <div className="min-h-screen bg-slate-50/50 font-sans flex flex-col text-zinc-900 selection:bg-indigo-600 selection:text-white">
+      {/* Header */}
+      <header className="relative z-20 flex justify-between items-center p-4 border-b border-zinc-200/80 bg-white/90 backdrop-blur-md shadow-xs">
         <button
           onClick={() => navigate('/games')}
-          className="w-12 h-12 bg-white border-2 border-black text-black rounded-none flex items-center justify-center hover:bg-zinc-100 transition-colors"
+          className="w-10 h-10 bg-zinc-100 border border-zinc-200/80 text-zinc-700 rounded-xl flex items-center justify-center hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+          title="O'yinlarga qaytish"
         >
-          <ArrowLeft className="w-6 h-6" />
+          <ArrowLeft className="w-5 h-5" />
         </button>
+
         {gameState === 'playing' && (
-          <div className="bg-white border-2 border-black px-5 py-2 rounded-none font-bold uppercase tracking-widest text-[10px] text-black flex items-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <Trophy className="w-4 h-4 text-black" />
-            {score}
+          <div className="bg-white border border-zinc-200/80 px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider text-zinc-900 flex items-center gap-2 shadow-xs">
+            <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />
+            <span>{score} ball</span>
           </div>
         )}
       </header>
 
-      {/* ── MAIN ───────────────────────────────────────── */}
-      <div className="flex flex-col items-center justify-center flex-1 w-full max-w-4xl mx-auto p-4 relative z-10">
+      {/* Main Container */}
+      <div className="flex flex-col items-center justify-center flex-1 w-full max-w-4xl mx-auto p-4 md:p-6 relative z-10">
         <AnimatePresence mode="wait">
-
-          {/* START SCREEN */}
+          {/* START */}
           {gameState === 'start' && (
             <motion.div key="start"
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              className="w-full flex flex-col items-center text-center font-sans"
+              exit={{ opacity: 0, scale: 1.02 }}
+              className="w-full max-w-md bg-white border border-zinc-200/80 rounded-3xl p-8 md:p-10 shadow-xl shadow-zinc-900/5 flex flex-col items-center text-center font-sans"
             >
-              <motion.div
-                animate={{ y: [0, -8, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                className="w-24 h-24 bg-black text-white border-2 border-black rounded-none flex items-center justify-center mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative z-10"
-              >
-                <BookOpen className="w-10 h-10 text-white" strokeWidth={2} />
-              </motion.div>
+              <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-indigo-700 text-white rounded-2xl flex items-center justify-center mb-6 shadow-md shadow-indigo-500/20">
+                <BookOpen className="w-10 h-10 text-white" strokeWidth={1.75} />
+              </div>
 
-              <h1 className="font-sans font-black text-3xl md:text-5xl uppercase tracking-tighter text-black mb-3">English Words</h1>
-              <p className="text-black font-bold text-[10px] uppercase tracking-widest mb-8 max-w-sm text-center">
-                O'zbek so'zni ko'ring, ingliz tarjimasini toping. 1 daqiqa, 3 jonlik.
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-900 mb-2">Ingliz Tili Lug'ati</h1>
+              <p className="text-zinc-500 text-xs leading-relaxed mb-6">
+                O'zbekcha so'zni ko'rib, uning inglizcha to'g'ri tarjimasini toping. 1 daqiqa vaqt!
               </p>
 
               {highestRecord > 0 && (
-                <div className="bg-white border-2 border-black text-black font-bold uppercase tracking-widest px-5 py-2.5 rounded-none mb-8 flex items-center gap-2 text-[10px] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                  <Trophy className="w-4 h-4 text-black" /> TOP REKORD: {highestRecord}
+                <div className="bg-amber-50 border border-amber-200 text-amber-900 font-semibold px-4 py-2 rounded-xl mb-6 flex items-center gap-2 text-xs">
+                  <Trophy className="w-4 h-4 fill-amber-500 text-amber-500" /> TOP REKORD: {highestRecord} ball
                 </div>
               )}
 
-              <div className="w-full max-w-sm space-y-4">
-                <input
-                  type="text"
-                  value={playerName}
-                  onChange={e => setPlayerName(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && startGame()}
-                  placeholder="Ismingizni kiriting..."
-                  autoFocus
-                  className="w-full bg-white border-2 border-black rounded-none px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-black outline-none placeholder:text-zinc-400 focus:bg-zinc-50 transition-colors"
-                />
+              <div className="w-full space-y-3.5">
+                <div>
+                  <input
+                    type="text"
+                    value={playerName}
+                    onChange={e => setPlayerName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && startGame()}
+                    placeholder="Ismingizni kiriting..."
+                    autoFocus
+                    className="w-full bg-zinc-50 border border-zinc-200/80 rounded-xl px-4 py-3.5 text-xs font-semibold text-zinc-900 outline-none placeholder:text-zinc-400 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-xs"
+                  />
+                </div>
                 <button
                   onClick={startGame}
-                  className="w-full bg-black text-white font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors border-2 border-black rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm shadow-indigo-600/20 active:scale-[0.99]"
                 >
-                  Boshlash
+                  O'yinni Boshlash
                 </button>
               </div>
             </motion.div>
@@ -409,43 +407,43 @@ const EnglishWords = () => {
           {/* PLAYING SCREEN */}
           {gameState === 'playing' && currentWord && (
             <motion.div key="playing"
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="w-full flex flex-col items-center justify-between py-2"
+              className="w-full flex flex-col items-center justify-between py-2 max-w-3xl"
             >
               {/* Stats row */}
-              <div className="w-full max-w-3xl mb-6 flex flex-col gap-4">
-                <div className="bg-white border-2 border-black rounded-none p-4 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                  <div className="flex items-center gap-6">
-                    <div className="font-bold uppercase tracking-widest text-[10px] text-black flex items-center gap-2">
-                      <Clock className="w-4 h-4" /> {timeLeft}S
+              <div className="w-full mb-4">
+                <div className="bg-white border border-zinc-200/80 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-xs mb-3">
+                  <div className="flex gap-4 items-center w-full sm:w-auto justify-between sm:justify-start">
+                    <div className="font-bold uppercase tracking-wider text-xs text-zinc-800 flex items-center gap-1.5">
+                      <Clock className="w-4 h-4 text-indigo-600" /> {timeLeft}s
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1.5">
                       {[...Array(3)].map((_, i) => (
-                        <Heart key={i} className={`w-4 h-4 ${i < lives ? 'fill-black text-black' : 'fill-transparent text-black'}`} />
+                        <Heart key={i} className={`w-4 h-4 ${i < lives ? 'fill-rose-500 text-rose-500' : 'fill-zinc-200 text-zinc-300'}`} />
                       ))}
                     </div>
                   </div>
-                  <div className="flex items-center gap-6">
-                    <div className="font-bold uppercase tracking-widest text-[10px] text-black">
-                      TOP: {Math.max(highestRecord, score)}
+                  <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                    <div className="font-semibold text-xs text-zinc-500">
+                      Top Rekord: {Math.max(highestRecord, score)}
                     </div>
                     <AnimatePresence>
                       {combo >= 2 && (
                         <motion.div
                           initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-                          className="font-bold uppercase tracking-widest text-[10px] text-black flex items-center gap-1"
+                          className="font-bold uppercase tracking-wider text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full flex items-center gap-1"
                         >
-                          <Flame className="w-4 h-4 fill-black" /> {combo}X COMBO
+                          <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500" /> {combo}x Combo
                         </motion.div>
                       )}
                     </AnimatePresence>
                   </div>
                 </div>
                 {/* Timer bar */}
-                <div className="w-full h-3 bg-white border-2 border-black rounded-none overflow-hidden">
+                <div className="w-full h-2 rounded-full border border-zinc-200/80 bg-zinc-100 overflow-hidden">
                   <motion.div
-                    className="h-full bg-black"
+                    className="h-full bg-indigo-600"
                     initial={{ width: '100%' }}
                     animate={{ width: `${timerPct}%` }}
                     transition={{ duration: 1, ease: 'linear' }}
@@ -457,18 +455,18 @@ const EnglishWords = () => {
               <motion.div
                 animate={feedback === 'wrong' ? { x: [-10, 10, -10, 10, 0] } : {}}
                 transition={{ duration: 0.3 }}
-                className={`w-full max-w-3xl rounded-none border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white p-8 md:p-12 mb-8 flex flex-col items-center justify-center relative overflow-hidden transition-colors min-h-[160px]
-                  ${feedback === 'correct' ? 'bg-zinc-100' : feedback === 'wrong' ? 'bg-zinc-200' : 'bg-white'}`}
+                className={`w-full bg-white rounded-3xl p-8 md:p-12 mb-6 flex flex-col items-center justify-center border border-zinc-200/80 shadow-xs relative overflow-hidden transition-colors min-h-[180px]
+                  ${feedback === 'correct' ? 'bg-emerald-50/60 border-emerald-300' : feedback === 'wrong' ? 'bg-rose-50/60 border-rose-300' : 'bg-white'}`}
               >
-                <div className="text-[10px] font-bold text-black uppercase tracking-widest mb-4">O'zbek → Ingliz</div>
+                <div className="text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full uppercase tracking-wider mb-3">O'zbek → Ingliz</div>
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentWord.uzbek}
-                    initial={{ y: -20, opacity: 0 }}
+                    initial={{ y: -10, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 20, opacity: 0 }}
+                    exit={{ y: 10, opacity: 0 }}
                     transition={{ type: 'spring', damping: 20 }}
-                    className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-black z-10"
+                    className="text-3xl md:text-5xl font-extrabold tracking-tight text-zinc-900 z-10"
                   >
                     {currentWord.uzbek}
                   </motion.div>
@@ -476,20 +474,20 @@ const EnglishWords = () => {
 
                 <AnimatePresence>
                   {feedback === 'correct' && (
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 2, opacity: 0 }} className="absolute text-black/10">
-                      <Check className="w-40 h-40" strokeWidth={4} />
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 2, opacity: 0 }} className="absolute text-emerald-500/10">
+                      <Check className="w-40 h-40" strokeWidth={3} />
                     </motion.div>
                   )}
                   {feedback === 'wrong' && (
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 2, opacity: 0 }} className="absolute text-black/10">
-                      <X className="w-40 h-40" strokeWidth={4} />
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 2, opacity: 0 }} className="absolute text-rose-500/10">
+                      <X className="w-40 h-40" strokeWidth={3} />
                     </motion.div>
                   )}
                 </AnimatePresence>
               </motion.div>
 
               {/* Answer buttons */}
-              <div className="grid grid-cols-2 gap-4 md:gap-6 w-full max-w-3xl">
+              <div className="grid grid-cols-2 gap-3.5 w-full">
                 {currentWord.displayOptions.map((opt) => {
                   const isClicked = clickedOption === opt;
                   return (
@@ -498,9 +496,11 @@ const EnglishWords = () => {
                       disabled={feedback !== null}
                       onClick={() => handleOptionClick(opt)}
                       className={`
-                        w-full py-6 md:py-8 rounded-none border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white text-black font-black uppercase tracking-tighter text-2xl transition-all
-                        ${feedback === null ? 'hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:bg-zinc-50' : ''}
-                        ${isClicked ? 'translate-y-[4px] translate-x-[4px] shadow-none bg-zinc-200' : ''}
+                        w-full py-4 md:py-6 rounded-2xl border text-xl md:text-2xl font-extrabold font-sans transition-all shadow-xs cursor-pointer ${
+                          isClicked 
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-600/30 scale-95' 
+                            : 'bg-white text-zinc-900 border-zinc-200/80 hover:border-indigo-400 hover:bg-indigo-50/50'
+                        }
                       `}
                     >
                       {opt}
@@ -516,40 +516,40 @@ const EnglishWords = () => {
             <motion.div key="gameover"
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              className="w-full max-w-xl flex flex-col items-center font-sans"
+              className="w-full max-w-md flex flex-col items-center font-sans"
             >
-              <div className="bg-white rounded-none border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-8 md:p-10 w-full flex flex-col items-center text-center mb-8 relative">
+              <div className="bg-white rounded-3xl p-8 md:p-10 w-full border border-zinc-200/80 shadow-xl shadow-zinc-900/5 flex flex-col items-center text-center mb-6 relative">
                 
-                <h2 className="font-sans font-black text-3xl md:text-5xl uppercase tracking-tighter text-black mb-2">
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-900 mb-1">
                   {lives <= 0 ? 'O\'yin Tugadi!' : 'Vaqt Tugadi!'}
                 </h2>
-                <p className="text-[10px] font-bold text-black uppercase tracking-widest mb-8">Ajoyib urinish, natijangiz bilan tanishing</p>
+                <p className="text-xs text-zinc-500 mb-6">Ajoyib urinish, natijangiz bilan tanishing</p>
                 
-                <div className="w-full bg-white rounded-none border-2 border-black py-8 mb-8 relative">
+                <div className="w-full bg-indigo-50/50 rounded-2xl py-6 mb-6 border border-indigo-100 flex flex-col items-center relative">
                   {score > highestRecord && score > 0 && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-1.5 rounded-none text-[10px] font-bold tracking-widest uppercase border-2 border-black">
-                      Yangi Rekord
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white px-3.5 py-0.5 rounded-full font-bold uppercase tracking-wider text-[10px] shadow-xs">
+                      Yangi Rekord 🏆
                     </div>
                   )}
-                  <div className="text-[5rem] md:text-[6rem] font-black uppercase tracking-tighter text-black leading-none flex items-center justify-center gap-4">
-                    {score}
+                  <div className="text-4xl md:text-5xl font-bold text-indigo-600 leading-none flex items-center justify-center">
+                    {score} <span className="text-sm text-zinc-500 font-semibold ml-2">ball</span>
                   </div>
                   {saving && (
-                    <div className="mt-4 text-[10px] font-bold text-black uppercase tracking-widest flex items-center justify-center gap-2">
-                      <div className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    <div className="mt-3 text-xs font-semibold text-zinc-500 flex items-center justify-center gap-2">
+                      <div className="w-3.5 h-3.5 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
                       Saqlanmoqda...
                     </div>
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 w-full">
+                <div className="flex flex-col sm:flex-row gap-3 w-full">
                   <button onClick={startGame}
-                    className="flex-1 bg-black text-white font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors border-2 border-black rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider py-3.5 rounded-xl transition-all shadow-sm shadow-indigo-600/20"
                   >
                     Qayta O'ynash
                   </button>
                   <button onClick={() => navigate('/games')}
-                    className="flex-1 bg-white text-black font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-100 transition-colors border-2 border-black rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                    className="flex-1 bg-white border border-zinc-200/80 text-zinc-800 font-bold text-xs uppercase tracking-wider py-3.5 rounded-xl transition-all hover:bg-zinc-50 shadow-xs"
                   >
                     Chiqish
                   </button>

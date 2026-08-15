@@ -80,49 +80,49 @@ export default function TeacherAuth() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md z-10">
-        <div className="bg-white/60 backdrop-blur-xl py-8 px-5 sm:px-10 border-t border-white/50 md:border md:border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative z-10">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+        <div className="bg-white/80 backdrop-blur-xl py-8 px-6 sm:px-10 border border-zinc-200/80 rounded-3xl shadow-xl shadow-zinc-900/5 relative z-10">
+          <form className="space-y-5" onSubmit={handleSubmit}>
             
             {!isLogin && (
               <div>
-                <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">F.I.SH</label>
+                <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">F.I.SH</label>
                 <div className="mt-1">
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={e => setFormData({ ...formData, name: e.target.value })}
-                    className="block w-full rounded-none border-none py-3.5 px-4 text-black placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black sm:text-sm transition-colors bg-[#eef5ff]"
+                    className="block w-full rounded-xl border border-zinc-200/80 py-3.5 px-4 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 sm:text-sm transition-all bg-zinc-50/50"
                   />
                 </div>
               </div>
             )}
 
             <div>
-              <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Email</label>
+              <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Email</label>
               <div className="mt-1">
                 <input
                   type="email"
                   required
                   value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
-                  className="block w-full rounded-none border-none py-3.5 px-4 text-black placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black sm:text-sm transition-colors bg-[#eef5ff]"
+                  className="block w-full rounded-xl border border-zinc-200/80 py-3.5 px-4 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 sm:text-sm transition-all bg-zinc-50/50"
                 />
               </div>
             </div>
 
             {!isLogin && (
               <div>
-                <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Mutaxassislik fani</label>
+                <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Mutaxassislik fani</label>
                 <div className="mt-1 relative">
                   <select
                     required
                     value={formData.subject}
                     onChange={e => setFormData({ ...formData, subject: e.target.value })}
-                    className="block w-full rounded-none border-none py-3.5 pl-4 pr-10 text-black focus:outline-none focus:ring-1 focus:ring-black sm:text-sm transition-colors bg-[#eef5ff] appearance-none"
+                    className="block w-full rounded-xl border border-zinc-200/80 py-3.5 pl-4 pr-10 text-zinc-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 sm:text-sm transition-all bg-zinc-50/50 appearance-none"
                   >
                     {SUBJECTS.map(sub => (
-                      <option key={sub} value={sub} className="text-black">{sub}</option>
+                      <option key={sub} value={sub} className="text-zinc-900">{sub}</option>
                     ))}
                   </select>
                 </div>
@@ -130,14 +130,14 @@ export default function TeacherAuth() {
             )}
 
             <div>
-              <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Parol</label>
+              <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Parol</label>
               <div className="mt-1">
                 <input
                   type="password"
                   required
                   value={formData.password}
                   onChange={e => setFormData({ ...formData, password: e.target.value })}
-                  className="block w-full rounded-none border-none py-3.5 px-4 text-black placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black sm:text-sm transition-colors bg-[#eef5ff] tracking-[0.2em]"
+                  className="block w-full rounded-xl border border-zinc-200/80 py-3.5 px-4 text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 sm:text-sm transition-all bg-zinc-50/50 tracking-widest"
                 />
               </div>
             </div>
@@ -146,7 +146,7 @@ export default function TeacherAuth() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-4 px-4 border border-transparent rounded-none shadow-none text-sm font-semibold text-white bg-[#111111] hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 transition-colors"
+                className="w-full flex justify-center py-3.5 px-4 rounded-xl shadow-sm text-xs font-bold uppercase tracking-wider text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 transition-all shadow-indigo-600/20"
               >
                 {loading ? 'Kutilmoqda...' : (isLogin ? 'Kirish' : 'Ro\'yxatdan o\'tish')}
               </button>
@@ -156,10 +156,10 @@ export default function TeacherAuth() {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-black/10" />
+                <div className="w-full border-t border-zinc-200/80" />
               </div>
               <div className="relative flex justify-center text-[11px] font-semibold uppercase tracking-wider">
-                <span className="px-3 bg-white/0 backdrop-blur-sm text-gray-500">
+                <span className="px-3 bg-white text-zinc-500">
                   {isLogin ? 'Akkauntingiz yo\'qmi?' : 'Akkauntingiz bormi?'}
                 </span>
               </div>
@@ -168,7 +168,7 @@ export default function TeacherAuth() {
             <div className="mt-6">
               <button
                 onClick={() => setIsLogin(!isLogin)}
-                className="w-full flex justify-center py-4 px-4 border-none shadow-sm text-sm font-semibold text-black bg-[#fdfdfd] hover:bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-colors"
+                className="w-full flex justify-center py-3.5 px-4 border border-zinc-200/80 rounded-xl shadow-xs text-xs font-bold uppercase tracking-wider text-zinc-800 bg-white hover:bg-zinc-50 transition-all"
               >
                 {isLogin ? 'Ro\'yxatdan o\'tish' : 'Tizimga kirish'}
               </button>
@@ -177,7 +177,7 @@ export default function TeacherAuth() {
           <div className="mt-8 md:hidden">
             <button
               onClick={() => navigate('/')}
-              className="w-full flex items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500 hover:text-black bg-transparent py-3 transition-colors border-t border-black/10"
+              className="w-full flex items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 hover:text-zinc-900 bg-transparent py-3 transition-colors border-t border-zinc-200/80"
             >
               <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
               Bosh sahifaga qaytish

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, FileText, Download, X, Sparkles, Play } from 'lucide-react';
+import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, FileText, Download, X, Sparkles, Play, Scan } from 'lucide-react';
 import { getAuthHeaders, getToken, getTeacher } from '../../lib/auth';
 import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
@@ -346,10 +346,17 @@ export default function TestDetails() {
                     variant="purple"
                     fullWidth
                   />
+
+                  <button
+                    onClick={() => navigate('/admin/omr-scanner')}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-50/70 hover:bg-emerald-100/80 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs group cursor-pointer"
+                  >
+                    <Scan size={15} className="text-emerald-600 group-hover:scale-110 transition-transform" /> Kamera Skanner (OMR)
+                  </button>
                   
                   <button
                     onClick={handleClassAnalysis}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 border border-indigo-200/90 text-indigo-950 hover:bg-indigo-100/60 hover:border-indigo-300 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs group"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 border border-indigo-200/90 text-indigo-950 hover:bg-indigo-100/60 hover:border-indigo-300 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs group cursor-pointer"
                   >
                     <Sparkles size={15} className="text-amber-500 group-hover:rotate-12 transition-transform" /> AI Sinf Tahlili
                   </button>
