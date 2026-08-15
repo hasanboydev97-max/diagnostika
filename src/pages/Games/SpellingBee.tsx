@@ -9,11 +9,16 @@ import { gameSound } from '../../utils/gameSound';
 import { fetchAudioSpellingWord, type AudioSpellingItem } from '../../services/dictionaryService';
 
 const SPELLING_WORDS_LIST = [
-  ['APPLE', 'PLANET', 'ROCKET', 'GALAXY', 'ENERGY'],
-  ['FUTURE', 'FREEDOM', 'SYSTEM', 'SCIENCE', 'NATURE'],
-  ['VICTORY', 'GENIUS', 'WONDER', 'CRYSTAL', 'DIAMOND'],
-  ['CHAMPION', 'BRAIN', 'INTELLIGENCE', 'KNOWLEDGE', 'HORIZON'],
-  ['UNIVERSE', 'PHANTOM', 'SPLENDID', 'TREASURE', 'SUPERIOR']
+  // Level 1: Basic 4-6 letter words
+  ['APPLE', 'WATER', 'EARTH', 'SOLAR', 'RIVER', 'CLOUD', 'BREAD', 'MUSIC', 'HOUSE', 'LIGHT', 'OCEAN', 'PLANT', 'TRAIN', 'SMILE'],
+  // Level 2: 6-7 letter science & nature words
+  ['PLANET', 'ROCKET', 'GALAXY', 'ENERGY', 'FUTURE', 'FOREST', 'ANIMAL', 'SPRING', 'SILVER', 'YELLOW', 'MONKEY', 'DOCTOR', 'FARMER'],
+  // Level 3: 7-8 letter general & academic words
+  ['FREEDOM', 'SYSTEM', 'SCIENCE', 'NATURE', 'VICTORY', 'CRYSTAL', 'DIAMOND', 'WEATHER', 'MORNING', 'STUDENT', 'TEACHER', 'HISTORY'],
+  // Level 4: 8-9 letter advanced words
+  ['CHAMPION', 'UNIVERSE', 'TREASURE', 'SPLENDID', 'KNOWLEDGE', 'MOUNTAIN', 'KEYBOARD', 'HOSPITAL', 'DISCOVERY', 'LANGUAGE', 'CREATIVE'],
+  // Level 5: Master vocabulary words
+  ['INTELLIGENCE', 'ASTRONOMY', 'BEAUTIFUL', 'COMMUNITY', 'DEVELOPER', 'EDUCATION', 'FANTASTIC', 'GEOGRAPHY', 'IMPORTANT', 'WONDERFUL']
 ];
 
 export const SpellingBee = () => {
@@ -124,7 +129,8 @@ export const SpellingBee = () => {
       toast.error('Ismingizni kiriting!');
       return;
     }
-    const words = SPELLING_WORDS_LIST[stageLvl - 1] || SPELLING_WORDS_LIST[0];
+    const rawWords = SPELLING_WORDS_LIST[stageLvl - 1] || SPELLING_WORDS_LIST[0];
+    const words = [...rawWords].sort(() => Math.random() - 0.5).slice(0, 5);
     setStageWords(words);
     setCurrentStageLevel(stageLvl);
     setWordIndex(0);
