@@ -270,7 +270,7 @@ export default function OnlineTestsDashboard() {
                       </button>
                     </div>
                     
-                    <h3 className="text-[15px] font-medium font-sans text-neutral-900 group-hover:text-indigo-600 transition-colors mb-3 line-clamp-2 leading-snug tracking-normal">{test.title}</h3>
+                    <h3 className="text-[15px] font-semibold font-sans text-neutral-900 group-hover:text-indigo-600 transition-colors mb-3 line-clamp-2 leading-snug tracking-tight">{test.title}</h3>
                   </div>
                   
                   <div className="mt-4 pt-4 border-t border-zinc-100 flex items-center justify-between">
