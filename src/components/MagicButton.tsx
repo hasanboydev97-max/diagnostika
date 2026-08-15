@@ -4,7 +4,7 @@ interface MagicButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>
   label: string;
   /** Icon shown on the RIGHT side (like the app's original → Play icon) */
   icon?: React.ReactNode;
-  variant?: 'primary' | 'danger' | 'ghost' | 'ghost-dark';
+  variant?: 'primary' | 'indigo' | 'purple' | 'emerald' | 'amber' | 'danger' | 'ghost' | 'ghost-dark';
   loading?: boolean;
   loadingLabel?: string;
   /** Make the button full-width */

@@ -284,25 +284,24 @@ const MistakeInspector = () => {
   };
 
   return (
-    <div className="min-h-screen relative font-sans overflow-hidden transition-all duration-300 flex flex-col bg-[#F8FAFC]">
-      <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #334155 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+    <div className="min-h-screen bg-white font-sans flex flex-col relative transition-all duration-300">
 
       {/* Header */}
       <header className="relative z-20 flex justify-between items-center p-4">
         <button
           onClick={() => navigate('/games')}
-          className="w-12 h-12 bg-white border border-slate-200 text-slate-700 rounded-2xl flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all shadow-sm"
+          className="w-12 h-12 bg-white border-2 border-black text-black rounded-none flex items-center justify-center hover:bg-zinc-100 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
         {gameState === 'playing' && (
           <div className="flex gap-2">
-            <button onClick={toggleSound} className="w-12 h-12 bg-white border border-slate-200 text-slate-700 rounded-2xl flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all shadow-sm">
-              {muted ? <VolumeX className="w-5 h-5 text-rose-500" /> : <Volume2 className="w-5 h-5 text-emerald-500" />}
+            <button onClick={toggleSound} className="w-12 h-12 bg-white border-2 border-black text-black rounded-none flex items-center justify-center hover:bg-zinc-100 transition-colors">
+              {muted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
             </button>
-            <div className="bg-white border border-slate-200 px-5 py-2 rounded-2xl font-bold text-[17px] text-slate-700 flex items-center gap-2 shadow-sm">
-              <Trophy className="w-5 h-5 text-amber-500 fill-amber-500" />
+            <div className="bg-white border-2 border-black rounded-none px-5 py-2 font-bold uppercase tracking-widest text-[10px] text-black flex items-center gap-2">
+              <Trophy className="w-4 h-4" />
               {score}
             </div>
           </div>
@@ -320,21 +319,20 @@ const MistakeInspector = () => {
               exit={{ opacity: 0, scale: 1.05 }}
               className="w-full flex flex-col items-center text-center font-sans"
             >
-              <div className="relative mb-8">
+              <div className="relative mb-8 w-full flex justify-center">
                 <motion.div
-                  animate={{ y: [0, -8, 0] }}
+                  animate={{ y: [0, -4, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                  className="w-32 h-32 bg-gradient-to-br from-amber-400 via-orange-500 to-orange-600 rounded-[2rem] shadow-2xl shadow-orange-500/40 flex items-center justify-center relative overflow-hidden"
+                  className="w-24 h-24 bg-black text-white border-2 border-black rounded-none flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                 >
-                  <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-white/30 rounded-full blur-xl" />
-                  <Search className="w-14 h-14 text-white relative z-10" strokeWidth={2} />
+                  <Search className="w-10 h-10 text-white" strokeWidth={2} />
                 </motion.div>
               </div>
 
-              <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-3 tracking-tight">
+              <h1 className="font-sans font-black text-3xl md:text-5xl uppercase tracking-tighter text-black mb-3">
                 Detektiv: Xatoni Top
               </h1>
-              <p className="text-slate-500 text-[16px] mb-8 max-w-sm leading-relaxed">
+              <p className="text-black font-bold text-[10px] uppercase tracking-widest mb-8 max-w-sm leading-relaxed">
                 Berilgan mantiqiy yechimlar va matnlardagi yashirin xatolarni aniqlang va ularni to'g'ri mezonlar bilan almashtiring.
               </p>
 
@@ -345,16 +343,16 @@ const MistakeInspector = () => {
                     value={playerName}
                     onChange={e => setPlayerName(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && startGame()}
-                    placeholder="Ismingizni kiriting..."
+                    placeholder="ISMINGIZNI KIRITING..."
                     autoFocus
-                    className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4.5 text-[17px] font-medium text-slate-800 outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-500/10 transition-all placeholder:text-slate-400 shadow-sm"
+                    className="w-full bg-white border-2 border-black rounded-none px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-black outline-none placeholder:text-zinc-400 focus:bg-zinc-50 transition-colors"
                   />
                 </div>
                 <button
                   onClick={startGame}
-                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold text-[17px] py-4.5 rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all shadow-xl shadow-orange-500/20 tracking-wide flex items-center justify-center gap-2"
+                  className="w-full bg-black text-white font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors border-2 border-black rounded-none"
                 >
-                  Detektivlikni Boshlash <ChevronRight className="w-5 h-5" />
+                  BOSHLASH <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </motion.div>
@@ -369,75 +367,75 @@ const MistakeInspector = () => {
               className="w-full flex flex-col items-center max-w-3xl space-y-6"
             >
               {/* Clean Top Status Bar */}
-              <div className="w-full bg-white border border-slate-200 shadow-[0_2px_10px_rgb(0,0,0,0.02)] rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 relative z-10">
+              <div className="w-full bg-white border-2 border-black rounded-none p-4 flex flex-col sm:flex-row justify-between items-center gap-4 relative z-10 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                 <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto justify-center sm:justify-start">
-                  <div className="flex items-center gap-2 text-slate-600 font-semibold text-sm">
-                    <Clock className="w-5 h-5 text-slate-400" /> 
+                  <div className="flex items-center gap-2 text-black font-bold uppercase tracking-widest text-[10px]">
+                    <Clock className="w-4 h-4 text-black" /> 
                     <span>{timeLeft}s</span>
                   </div>
-                  <div className="h-4 w-px bg-slate-200" />
+                  <div className="h-4 w-px bg-black" />
                   <div className="flex items-center gap-1.5">
                     {[...Array(3)].map((_, i) => (
-                      <Heart key={i} className={`w-5 h-5 ${i < lives ? 'fill-rose-500 text-rose-500' : 'fill-slate-100 text-slate-100'}`} strokeWidth={2} />
+                      <Heart key={i} className={`w-4 h-4 ${i < lives ? 'fill-black text-black' : 'fill-transparent text-black border-black border'}`} strokeWidth={2} />
                     ))}
                   </div>
-                  <div className="h-4 w-px bg-slate-200" />
-                  <div className="flex items-center gap-2 text-slate-600 font-semibold text-sm">
-                    <Trophy className="w-5 h-5 text-amber-500" />
-                    <span>{score}</span>
+                  <div className="h-4 w-px bg-black" />
+                  <div className="flex items-center gap-2 text-black font-bold uppercase tracking-widest text-[10px]">
+                    <Trophy className="w-4 h-4 text-black" />
+                    <span>{score} pts</span>
                   </div>
                 </div>
 
                 <AnimatePresence>
                   {combo >= 2 && (
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-                      className="px-3 py-1.5 bg-orange-50 text-orange-600 rounded-full text-xs font-bold border border-orange-100 flex items-center gap-1.5 shadow-sm"
+                      className="px-3 py-1.5 bg-black text-white rounded-none border-2 border-black text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                     >
-                      <Flame className="w-4 h-4 fill-orange-500" /> x{combo} Combo
+                      <Flame className="w-3 h-3 fill-white" /> x{combo} Combo
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
               {/* Task Banner */}
-              <div className="w-full bg-white border border-slate-200 p-8 md:p-10 rounded-[2rem] text-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
-                <div className="absolute top-0 inset-x-0 h-1.5 bg-slate-100">
+              <div className="w-full bg-white border-2 border-black p-8 md:p-10 rounded-none text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] relative overflow-hidden mt-2">
+                <div className="absolute top-0 inset-x-0 h-2 bg-zinc-200 border-b-2 border-black">
                   <motion.div
-                    className={`h-full ${timeLeft > 15 ? 'bg-amber-400' : 'bg-rose-500'}`}
+                    className={`h-full ${timeLeft > 15 ? 'bg-black' : 'bg-red-600'}`}
                     initial={{ width: '100%' }}
                     animate={{ width: `${(timeLeft / GAME_DURATION) * 100}%` }}
                     transition={{ duration: 1, ease: 'linear' }}
                   />
                 </div>
                 
-                <span className="px-4 py-1.5 rounded-full bg-orange-50 text-orange-600 border border-orange-100 text-[11px] font-bold uppercase tracking-widest mb-5 inline-block mt-2">
+                <span className="px-4 py-2 bg-white text-black border-2 border-black text-[10px] font-bold uppercase tracking-widest mb-5 inline-block mt-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] rounded-none">
                   {currentTask.category}
                 </span>
-                <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3 tracking-tight">
+                <h2 className="font-sans font-black text-2xl md:text-3xl uppercase tracking-tighter text-black mb-3">
                   {currentTask.title}
                 </h2>
-                <p className="text-slate-500 text-[15px] font-medium max-w-lg mx-auto">
-                  {phase === 'select_step' ? '🔍 Qaysi bosqichda XATOLIK borligini bosib ko\'rsating:' : '⚡ Ushbu xatoni to\'g\'ri tuzatuvchi variantni tanlang:'}
+                <p className="text-black text-[10px] font-bold uppercase tracking-widest max-w-lg mx-auto">
+                  {phase === 'select_step' ? 'QAYSI BOSQICHDA XATOLIK BORLIGINI TANLANG:' : 'USHBU XATONI TO\'G\'RI TUZATUVCHI VARIANTNI TANLANG:'}
                 </p>
               </div>
 
 
               {/* PHASE 1: SELECT WRONG STEP */}
               {phase === 'select_step' && (
-                <div className="space-y-3 w-full">
+                <div className="space-y-4 w-full mt-4">
                   {currentTask.steps.map(step => (
                     <motion.button
                       key={step.stepIndex}
                       whileHover={{ scale: 1.01, y: -2 }}
                       whileTap={{ scale: 0.99 }}
                       onClick={() => handleSelectStep(step.stepIndex)}
-                      className={`w-full p-5 rounded-2xl text-left border font-medium text-[16px] transition-all flex items-center justify-between shadow-sm
+                      className={`w-full p-5 rounded-none text-left border-2 transition-all flex items-center justify-between shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]
                         ${selectedStepIndex === step.stepIndex 
-                          ? 'bg-amber-50 border-amber-200 text-amber-900 shadow-inner' 
-                          : 'bg-white border-slate-200 text-slate-700 hover:border-amber-300 hover:shadow-md'}`}
+                          ? 'bg-black border-black text-white' 
+                          : 'bg-white border-black text-black hover:bg-zinc-100'}`}
                     >
-                      <FormattedText content={step.text} />
-                      <ShieldAlert className={`w-5 h-5 ${selectedStepIndex === step.stepIndex ? 'text-amber-500' : 'text-slate-400 group-hover:text-amber-500'}`} />
+                      <div className="font-bold text-[12px] uppercase tracking-widest"><FormattedText content={step.text} /></div>
+                      <ShieldAlert className={`w-5 h-5 ${selectedStepIndex === step.stepIndex ? 'text-white' : 'text-black'}`} />
                     </motion.button>
                   ))}
                 </div>
@@ -445,26 +443,26 @@ const MistakeInspector = () => {
 
               {/* PHASE 2: FIX MISTAKE OPTIONS */}
               {phase === 'fix_mistake' && (
-                <div className="space-y-4 w-full">
-                  <div className="p-5 rounded-2xl bg-amber-50/80 border border-amber-200 text-amber-900 flex items-start gap-3 shadow-sm">
-                    <AlertTriangle className="w-6 h-6 shrink-0 text-amber-500 mt-0.5" />
-                    <div className="text-[15px]">
-                      <strong className="block font-bold mb-1 text-amber-700">Xatolik Tushuntirishi:</strong>
+                <div className="space-y-4 w-full mt-4">
+                  <div className="p-5 rounded-none bg-white border-2 border-black text-black flex items-start gap-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    <AlertTriangle className="w-6 h-6 shrink-0 text-black mt-0.5" />
+                    <div className="text-[12px] font-bold uppercase tracking-widest">
+                      <strong className="block font-black mb-1 text-black text-[14px]">XATOLIK TUSHUNTIRISHI:</strong>
                       {currentTask.steps.find(s => s.isWrong)?.explanation}
                     </div>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {currentTask.fixOptions.map((opt, idx) => (
                       <motion.button
                         key={idx}
                         whileHover={{ scale: 1.01, y: -2 }}
                         whileTap={{ scale: 0.99 }}
                         onClick={() => handleSelectFix(idx)}
-                        className="w-full p-5 rounded-2xl bg-white border border-slate-200 hover:border-emerald-300 hover:shadow-md text-left font-medium text-[16px] text-slate-700 transition-all flex items-center justify-between shadow-sm group"
+                        className="w-full p-5 rounded-none bg-white border-2 border-black hover:bg-zinc-100 text-left transition-all flex items-center justify-between shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] group"
                       >
-                        <FormattedText content={opt} />
-                        <CheckCircle2 className="w-5 h-5 text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="font-bold text-[12px] uppercase tracking-widest text-black"><FormattedText content={opt} /></div>
+                        <CheckCircle2 className="w-5 h-5 text-black opacity-0 group-hover:opacity-100 transition-opacity" />
                       </motion.button>
                     ))}
                   </div>
@@ -480,35 +478,33 @@ const MistakeInspector = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               className="w-full max-w-xl flex flex-col items-center font-sans"
             >
-              <div className="bg-white rounded-[2rem] p-8 md:p-10 w-full border border-slate-100 shadow-2xl shadow-slate-200/50 flex flex-col items-center text-center mb-6 relative overflow-hidden">
-                <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-orange-50/50 to-transparent pointer-events-none" />
-                
-                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2 relative z-10 tracking-tight">
-                  {lives <= 0 ? 'O\'yin Tugadi!' : 'Vaqt Tugadi!'}
+              <div className="bg-white rounded-none border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-8 md:p-10 w-full flex flex-col items-center text-center mb-6 relative overflow-hidden">
+                <h2 className="font-sans font-black text-3xl md:text-4xl uppercase tracking-tighter text-black mb-2 relative z-10">
+                  {lives <= 0 ? 'O\'YIN TUGADI!' : 'VAQT TUGADI!'}
                 </h2>
-                <p className="text-[15px] font-medium text-slate-500 mb-8 relative z-10">Barakalla, {playerName}!</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-black mb-8 relative z-10">BARAKALLA, {playerName}!</p>
                 
-                <div className="w-full bg-slate-50/50 rounded-[1.5rem] py-8 mb-8 relative border border-slate-100 flex flex-col items-center">
-                  <div className="text-[5rem] md:text-[6rem] font-bold text-orange-500 leading-none flex items-center justify-center gap-4">
+                <div className="w-full bg-white rounded-none py-8 mb-8 relative border-2 border-black flex flex-col items-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="text-[5rem] md:text-[6rem] font-black text-black leading-none flex items-center justify-center gap-4">
                     {score}
                   </div>
                   {combo > 0 && (
-                    <div className="mt-4 px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-xs font-bold uppercase tracking-wider border border-orange-200">
-                      Max Combo: {combo}x
+                    <div className="mt-4 px-4 py-2 bg-white text-black rounded-none text-[10px] font-bold uppercase tracking-widest border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                      MAX COMBO: {combo}x
                     </div>
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 w-full relative z-10">
+                <div className="flex flex-col sm:flex-row gap-4 w-full relative z-10">
                   <button onClick={startGame}
-                    className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold text-[16px] py-4 rounded-xl hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-orange-500/20"
+                    className="flex-1 bg-black text-white font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors border-2 border-black rounded-none"
                   >
-                    Qayta O'ynash
+                    QAYTA O'YNASH
                   </button>
                   <button onClick={() => navigate('/games')}
-                    className="flex-1 bg-white border border-slate-200 text-slate-700 font-semibold text-[16px] py-4 rounded-xl hover:bg-slate-50 active:scale-[0.98] transition-all shadow-sm"
+                    className="flex-1 bg-white text-black font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-100 transition-colors border-2 border-black rounded-none"
                   >
-                    Chiqish
+                    CHIQISH
                   </button>
                 </div>
               </div>

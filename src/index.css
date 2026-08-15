@@ -76,9 +76,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.9em 1.4em;
-  border-radius: 0px;        /* sharp corners — original app style */
-  border: none;
+  padding: 0.85em 1.4em;
+  border-radius: 0.625rem;    /* modern senior-level rounded corners */
+  border: 1px solid rgba(255,255,255,0.12);
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
@@ -289,9 +289,44 @@
    VARIANTS
    ================================================================ */
 
-/* Primary — jet black (default) */
+/* Primary — jet slate (default) */
 .magic-btn--primary {
-  --mbg: #111111;
+  --mbg: #0f172a;
+}
+.magic-btn--primary:hover {
+  background: #020617;
+}
+
+/* Indigo — vibrant primary brand color */
+.magic-btn--indigo {
+  --mbg: #4338ca;
+}
+.magic-btn--indigo:hover {
+  background: #3730a3;
+}
+
+/* Purple / Violet — Kahoot & Live games */
+.magic-btn--purple {
+  --mbg: #6d28d9;
+}
+.magic-btn--purple:hover {
+  background: #5b21b6;
+}
+
+/* Emerald — success & active tasks */
+.magic-btn--emerald {
+  --mbg: #047857;
+}
+.magic-btn--emerald:hover {
+  background: #065f46;
+}
+
+/* Amber — AI features & highlights */
+.magic-btn--amber {
+  --mbg: #b45309;
+}
+.magic-btn--amber:hover {
+  background: #92400e;
 }
 
 /* Ghost — for secondary actions on LIGHT backgrounds */

@@ -172,12 +172,7 @@ const WORD_BANK: WordPair[] = [
   { uzbek: 'Qish',       russian: 'Зима',        options: ['Весна', 'Осень', 'Лето'] },
 ];
 
-const OPTION_COLORS = [
-  { bg: 'bg-rose-500', border: 'border-rose-600', text: 'text-white', shadow: 'hover:shadow-rose-500/30' },
-  { bg: 'bg-blue-500', border: 'border-blue-600', text: 'text-white', shadow: 'hover:shadow-blue-500/30' },
-  { bg: 'bg-amber-500', border: 'border-amber-600', text: 'text-white', shadow: 'hover:shadow-amber-500/30' },
-  { bg: 'bg-emerald-500', border: 'border-emerald-600', text: 'text-white', shadow: 'hover:shadow-emerald-500/30' },
-];
+
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -277,7 +272,7 @@ const RussianWords = () => {
   const startGame = useCallback(() => {
     if (!playerName.trim()) {
       toast.error('Ismingizni kiriting!', {
-        style: { background: '#0D9488', color: '#fff', border: 'none', borderRadius: '16px', padding: '16px', fontWeight: 'bold' }
+        style: { background: '#000', color: '#fff', border: '2px solid #000', borderRadius: '0', padding: '16px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '10px' }
       });
       return;
     }
@@ -336,26 +331,18 @@ const RussianWords = () => {
   const highestRecord = leaderboard.length > 0 ? leaderboard[0].score : 0;
 
   return (
-    <div className={`min-h-screen relative font-sans overflow-hidden transition-all duration-300 flex flex-col
-      ${gameState === 'playing'
-        ? feedback === 'correct' ? 'bg-teal-50' : feedback === 'wrong' ? 'bg-rose-50' : 'bg-teal-50'
-        : 'bg-[#F8FAFC]'}`}
-    >
-      <div className="absolute inset-0 opacity-10 pointer-events-none"
-        style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #0f766e 1px, transparent 0)', backgroundSize: '32px 32px' }}
-      />
-
+    <div className="min-h-screen bg-white font-sans flex flex-col relative">
       {/* HEADER */}
       <header className="relative z-20 flex justify-between items-center p-4">
         <button
           onClick={() => navigate('/games')}
-          className="w-12 h-12 bg-white border-b-[4px] border-slate-200 text-slate-700 rounded-2xl flex items-center justify-center hover:bg-slate-50 active:border-b-0 active:translate-y-[4px] transition-all"
+          className="w-12 h-12 bg-white border-2 border-black text-black rounded-none flex items-center justify-center hover:bg-zinc-100 transition-colors"
         >
           <ArrowLeft className="w-6 h-6" />
         </button>
         {gameState === 'playing' && (
-          <div className="bg-white border-b-[4px] border-slate-200 px-5 py-2 rounded-2xl font-black text-xl text-slate-700 flex items-center gap-2">
-            <Trophy className="w-6 h-6 text-amber-400 fill-amber-400" />
+          <div className="bg-white border-2 border-black rounded-none px-4 py-2 font-bold text-[10px] uppercase tracking-widest text-black flex items-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <Trophy className="w-4 h-4" />
             {score}
           </div>
         )}
@@ -377,21 +364,20 @@ const RussianWords = () => {
                 <motion.div
                   animate={{ y: [0, -8, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                  className="w-32 h-32 bg-gradient-to-br from-teal-500 via-cyan-500 to-cyan-600 rounded-[2rem] shadow-2xl shadow-teal-500/40 flex items-center justify-center relative overflow-hidden"
+                  className="w-24 h-24 bg-black text-white border-2 border-black rounded-none flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                 >
-                  <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-white/20 rounded-full blur-xl" />
-                  <Languages className="w-14 h-14 text-white relative z-10" strokeWidth={1.5} />
+                  <Languages className="w-10 h-10 text-white" strokeWidth={1.5} />
                 </motion.div>
               </div>
 
-              <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-3 tracking-tight font-sans">Rus So'zlari</h1>
-              <p className="text-slate-500 text-[16px] mb-8 font-sans max-w-sm leading-relaxed">
+              <h1 className="font-sans font-black text-3xl md:text-5xl uppercase tracking-tighter text-black mb-3">Rus So'zlari</h1>
+              <p className="text-black text-sm mb-8 font-bold uppercase tracking-widest max-w-sm leading-relaxed">
                 O'zbek so'zni ko'ring, rus tarjimasini toping. 1 daqiqa, 3 jonlik.
               </p>
 
               {highestRecord > 0 && (
-                <div className="bg-teal-50/50 backdrop-blur-sm border border-teal-100 text-teal-700 font-semibold px-5 py-2.5 rounded-full mb-8 flex items-center gap-2 shadow-sm text-sm">
-                  <Trophy className="w-4 h-4 fill-teal-500 text-teal-500" /> TOP REKORD: {highestRecord}
+                <div className="bg-white border-2 border-black text-black font-bold uppercase tracking-widest text-[10px] px-5 py-3 rounded-none mb-8 flex items-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <Trophy className="w-4 h-4" /> TOP REKORD: {highestRecord}
                 </div>
               )}
 
@@ -404,12 +390,12 @@ const RussianWords = () => {
                     onKeyDown={e => e.key === 'Enter' && startGame()}
                     placeholder="Ismingizni kiriting..."
                     autoFocus
-                    className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4.5 text-[17px] font-medium text-slate-800 outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-500/10 transition-all placeholder:text-slate-400 shadow-sm font-sans"
+                    className="w-full bg-white border-2 border-black rounded-none px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-black outline-none placeholder:text-zinc-400 focus:bg-zinc-50 transition-colors"
                   />
                 </div>
                 <button
                   onClick={startGame}
-                  className="w-full bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-semibold text-[17px] py-4.5 rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all shadow-xl shadow-teal-500/20 font-sans tracking-wide"
+                  className="w-full bg-black text-white font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors border-2 border-black rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                 >
                   Boshlash
                 </button>
@@ -426,35 +412,35 @@ const RussianWords = () => {
             >
               {/* Stats */}
               <div className="w-full max-w-3xl mb-4">
-                <div className="flex justify-between items-end mb-2 px-1">
-                  <div className="flex flex-col gap-1">
-                    <div className="font-bold text-slate-500 flex items-center gap-1.5 text-sm">
+                <div className="bg-white border-2 border-black rounded-none p-4 flex flex-col sm:flex-row justify-between items-center gap-4 mb-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="flex items-center gap-4">
+                    <div className="font-bold uppercase tracking-widest text-[10px] text-black flex items-center gap-2">
                       <Clock className="w-4 h-4" /> {timeLeft}s
                     </div>
                     <div className="flex gap-1">
                       {[...Array(3)].map((_, i) => (
-                        <Heart key={i} className={`w-5 h-5 ${i < lives ? 'fill-rose-500 text-rose-500' : 'fill-slate-200 text-slate-200'}`} />
+                        <Heart key={i} className={`w-4 h-4 ${i < lives ? 'fill-black text-black' : 'fill-transparent text-black'}`} />
                       ))}
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                  <div className="flex items-center gap-4">
+                    <div className="font-bold uppercase tracking-widest text-[10px] text-black">
                       Top Rekord: {Math.max(highestRecord, score)}
                     </div>
                     <AnimatePresence>
                       {combo >= 2 && (
                         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-                          className="text-orange-500 font-black text-lg flex items-center gap-1"
+                          className="font-bold uppercase tracking-widest text-[10px] text-black flex items-center gap-1"
                         >
-                          <Flame className="w-5 h-5 fill-orange-500" /> {combo}x COMBO
+                          <Flame className="w-4 h-4 fill-black text-black" /> {combo}x COMBO
                         </motion.div>
                       )}
                     </AnimatePresence>
                   </div>
                 </div>
-                <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
+                <div className="w-full h-3 bg-white border-2 border-black rounded-none overflow-hidden">
                   <motion.div
-                    className={`h-full ${timeLeft > 15 ? 'bg-[#0D9488]' : 'bg-[#EF4444]'}`}
+                    className={`h-full ${timeLeft > 15 ? 'bg-black' : 'bg-rose-500'}`}
                     initial={{ width: '100%' }}
                     animate={{ width: `${timerPct}%` }}
                     transition={{ duration: 1, ease: 'linear' }}
@@ -466,10 +452,10 @@ const RussianWords = () => {
               <motion.div
                 animate={feedback === 'wrong' ? { x: [-10, 10, -10, 10, 0] } : {}}
                 transition={{ duration: 0.3 }}
-                className={`w-full max-w-3xl bg-white rounded-3xl p-8 md:p-12 mb-6 flex flex-col items-center justify-center border shadow-xl shadow-slate-200/40 relative overflow-hidden transition-colors min-h-[160px]
-                  ${feedback === 'correct' ? 'border-teal-200 bg-teal-50/50' : feedback === 'wrong' ? 'border-rose-200 bg-rose-50/50' : 'border-slate-100'}`}
+                className={`w-full max-w-3xl rounded-none border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white p-8 md:p-12 mb-6 flex flex-col items-center justify-center relative overflow-hidden transition-colors min-h-[160px]
+                  ${feedback === 'correct' ? 'bg-teal-50' : feedback === 'wrong' ? 'bg-rose-50' : 'bg-white'}`}
               >
-                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4 font-sans">O'zbek → Ruscha</div>
+                <div className="font-bold uppercase tracking-widest text-[10px] text-black mb-4">O'zbek → Ruscha</div>
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentWord.uzbek}
@@ -477,20 +463,20 @@ const RussianWords = () => {
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: 20, opacity: 0 }}
                     transition={{ type: 'spring', damping: 20 }}
-                    className={`text-4xl md:text-6xl font-bold tracking-tight z-10 font-sans
-                      ${feedback === 'correct' ? 'text-teal-600' : feedback === 'wrong' ? 'text-rose-600' : 'text-slate-900'}`}
+                    className={`font-sans font-black text-3xl md:text-5xl uppercase tracking-tighter z-10
+                      ${feedback === 'correct' ? 'text-teal-600' : feedback === 'wrong' ? 'text-rose-600' : 'text-black'}`}
                   >
                     {currentWord.uzbek}
                   </motion.div>
                 </AnimatePresence>
                 <AnimatePresence>
                   {feedback === 'correct' && (
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 2, opacity: 0 }} className="absolute text-teal-500/10">
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 2, opacity: 0 }} className="absolute text-teal-500/20">
                       <Check className="w-40 h-40" strokeWidth={3} />
                     </motion.div>
                   )}
                   {feedback === 'wrong' && (
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 2, opacity: 0 }} className="absolute text-rose-500/10">
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 2, opacity: 0 }} className="absolute text-rose-500/20">
                       <X className="w-40 h-40" strokeWidth={3} />
                     </motion.div>
                   )}
@@ -499,8 +485,7 @@ const RussianWords = () => {
 
               {/* Buttons */}
               <div className="grid grid-cols-2 gap-4 w-full max-w-3xl">
-                {currentWord.displayOptions.map((opt, idx) => {
-                  const style = OPTION_COLORS[idx % 4];
+                {currentWord.displayOptions.map((opt) => {
                   const isClicked = clickedOption === opt;
                   return (
                     <button
@@ -508,10 +493,9 @@ const RussianWords = () => {
                       disabled={feedback !== null}
                       onClick={() => handleOptionClick(opt)}
                       className={`
-                        w-full py-6 md:py-8 rounded-[20px] text-xl md:text-2xl font-bold font-sans transition-all transform border border-white/20
-                        ${style.bg} ${style.text}
-                        ${feedback === null ? `hover:-translate-y-1 hover:shadow-xl ${style.shadow}` : ''}
-                        ${isClicked ? 'scale-95 brightness-90 shadow-none' : 'shadow-md'}
+                        w-full py-6 md:py-8 rounded-none border-2 border-black bg-white text-black font-sans font-black text-xl md:text-2xl uppercase tracking-widest transition-all
+                        ${feedback === null ? 'hover:-translate-y-1 hover:bg-zinc-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]' : ''}
+                        ${isClicked ? 'translate-y-0 shadow-none bg-zinc-200' : 'shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'}
                       `}
                     >
                       {opt}
@@ -529,26 +513,26 @@ const RussianWords = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               className="w-full max-w-2xl flex flex-col items-center"
             >
-              <div className="bg-white rounded-[2.5rem] p-8 md:p-10 w-full border-b-[8px] border-slate-200 shadow-xl flex flex-col items-center text-center mb-6">
-                <h2 className="text-3xl md:text-4xl font-black text-slate-800 mb-2">
+              <div className="rounded-none border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white p-8 md:p-10 w-full flex flex-col items-center text-center mb-6">
+                <h2 className="font-sans font-black text-3xl md:text-5xl uppercase tracking-tighter text-black mb-2">
                   {lives <= 0 ? '3 Xato — O\'yin Tugadi!' : 'Vaqt Tugadi!'}
                 </h2>
-                <p className="text-lg font-bold text-slate-500 mb-6 uppercase tracking-widest">Ajoyib urinish!</p>
+                <p className="text-[10px] font-bold text-black mb-6 uppercase tracking-widest">Ajoyib urinish!</p>
 
-                <div className="w-full bg-[#F8FAFC] border-4 border-slate-100 rounded-[1.5rem] py-8 mb-6 relative">
+                <div className="w-full bg-white border-2 border-black rounded-none py-8 mb-6 relative">
                   {score > highestRecord && score > 0 && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-teal-600 text-white px-4 py-1 rounded-full text-xs font-black animate-bounce">
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 border-2 border-black rounded-none text-[10px] font-bold uppercase tracking-widest animate-bounce shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                       🎉 YANGI REKORD!
                     </div>
                   )}
-                  <div className="text-slate-400 font-bold text-base mb-2 uppercase">Sizning Natijangiz</div>
-                  <div className="text-[4.5rem] md:text-[5.5rem] font-black text-teal-500 leading-none flex items-center justify-center gap-3">
-                    <Trophy className="w-14 h-14 fill-teal-500" />
+                  <div className="font-bold uppercase tracking-widest text-[10px] text-black mb-2">Sizning Natijangiz</div>
+                  <div className="text-[4.5rem] md:text-[5.5rem] font-black text-black leading-none flex items-center justify-center gap-3">
+                    <Trophy className="w-14 h-14" />
                     {score}
                   </div>
                   {saving && (
-                    <div className='mt-3 text-sm text-slate-400 flex items-center justify-center gap-2'>
-                      <div className='w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin' />
+                    <div className='mt-3 text-[10px] font-bold uppercase tracking-widest text-black flex items-center justify-center gap-2'>
+                      <div className='w-4 h-4 border-2 border-black border-t-transparent rounded-none animate-spin' />
                       Natija saqlanmoqda...
                     </div>
                   )}
@@ -556,12 +540,12 @@ const RussianWords = () => {
 
                 <div className="flex flex-col sm:flex-row gap-3 w-full">
                   <button onClick={startGame}
-                    className="flex-1 bg-[#0D9488] border-b-[6px] border-[#0f766e] text-white font-black text-xl py-4 rounded-xl active:border-b-0 active:translate-y-[6px] transition-all shadow-md"
+                    className="flex-1 w-full bg-black text-white font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors border-2 border-black rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                   >
                     QAYTA O'YNASH
                   </button>
                   <button onClick={() => navigate('/games')}
-                    className="flex-1 bg-white border-4 border-slate-200 text-slate-700 font-black text-xl py-4 rounded-xl hover:bg-slate-50 active:translate-y-[4px] transition-all"
+                    className="flex-1 w-full bg-white text-black font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-100 transition-colors border-2 border-black rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                   >
                     CHIQISH
                   </button>
@@ -569,26 +553,26 @@ const RussianWords = () => {
               </div>
 
               {/* Leaderboard */}
-              <div className="w-full bg-white rounded-3xl p-5 border-b-[4px] border-slate-200 shadow-sm">
-                <h3 className="font-black text-xl text-slate-800 mb-4 flex items-center justify-center gap-2">
-                  <Flame className="w-6 h-6 text-orange-500 fill-orange-500" /> TOP REKORDLAR
+              <div className="w-full rounded-none border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white p-5">
+                <h3 className="font-sans font-black text-2xl uppercase tracking-tighter text-black mb-4 flex items-center justify-center gap-2">
+                  <Flame className="w-6 h-6" /> TOP REKORDLAR
                 </h3>
                 <div className="space-y-2">
                   {leaderboard.length === 0 && (
-                    <p className='text-center text-slate-400 py-4 text-sm'>Hali rekordlar yo'q. Birinchi bo'ling!</p>
+                    <p className='text-center text-black font-bold uppercase tracking-widest text-[10px] py-4'>Hali rekordlar yo'q. Birinchi bo'ling!</p>
                   )}
                   {leaderboard.slice(0, 5).map((record, idx) => {
                     const isMe = record.playerName === playerName.trim().toUpperCase() && record.score === score;
                     return (
-                      <div key={record._id} className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 ${isMe ? 'bg-teal-50 border-teal-400' : 'bg-slate-50 border-slate-100'}`}>
+                      <div key={record._id} className={`flex items-center justify-between px-4 py-3 rounded-none border-2 border-black ${isMe ? 'bg-black text-white' : 'bg-white text-black'}`}>
                         <div className="flex items-center gap-4">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm
-                            ${idx === 0 ? 'bg-amber-400 text-white' : idx === 1 ? 'bg-slate-300 text-white' : idx === 2 ? 'bg-amber-700 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                          <div className={`w-8 h-8 rounded-none border-2 border-black flex items-center justify-center font-black text-[10px]
+                            ${isMe ? 'bg-white text-black' : 'bg-black text-white'}`}>
                             {idx + 1}
                           </div>
-                          <span className={`font-bold text-lg uppercase ${isMe ? 'text-teal-600' : 'text-slate-700'}`}>{record.playerName}</span>
+                          <span className={`font-bold text-[10px] uppercase tracking-widest`}>{record.playerName}</span>
                         </div>
-                        <span className={`font-black text-xl ${isMe ? 'text-teal-600' : 'text-slate-800'}`}>{record.score}</span>
+                        <span className={`font-black text-lg`}>{record.score}</span>
                       </div>
                     );
                   })}

@@ -209,25 +209,23 @@ const WordBlast = () => {
   };
 
   return (
-    <div className="min-h-screen relative font-sans overflow-hidden transition-all duration-300 flex flex-col bg-[#F8FAFC]">
-      <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #334155 1px, transparent 0)', backgroundSize: '32px 32px' }} />
-
+    <div className="min-h-screen bg-white font-sans flex flex-col relative transition-all duration-300">
       {/* Header */}
       <header className="relative z-20 flex justify-between items-center p-4">
         <button
           onClick={() => navigate('/games')}
-          className="w-12 h-12 bg-white border border-slate-200 text-slate-700 rounded-2xl flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all shadow-sm"
+          className="w-12 h-12 bg-white border-2 border-black text-black rounded-none flex items-center justify-center hover:bg-zinc-100 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
         {gameState === 'playing' && (
           <div className="flex gap-2">
-            <button onClick={toggleSound} className="w-12 h-12 bg-white border border-slate-200 text-slate-700 rounded-2xl flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all shadow-sm">
-              {muted ? <VolumeX className="w-5 h-5 text-rose-500" /> : <Volume2 className="w-5 h-5 text-emerald-500" />}
+            <button onClick={toggleSound} className="w-12 h-12 bg-white border-2 border-black text-black rounded-none flex items-center justify-center hover:bg-zinc-100 transition-colors">
+              {muted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
             </button>
-            <div className="bg-white border border-slate-200 px-5 py-2 rounded-2xl font-bold text-[17px] text-slate-700 flex items-center gap-2 shadow-sm">
-              <Trophy className="w-5 h-5 text-amber-500 fill-amber-500" />
+            <div className="bg-white border-2 border-black px-5 py-2 rounded-none font-bold text-[17px] text-black flex items-center gap-2">
+              <Trophy className="w-5 h-5" />
               {score}
             </div>
           </div>
@@ -249,17 +247,16 @@ const WordBlast = () => {
                 <motion.div
                   animate={{ y: [0, -8, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                  className="w-32 h-32 bg-gradient-to-br from-teal-400 via-emerald-500 to-emerald-600 rounded-[2rem] shadow-2xl shadow-teal-500/40 flex items-center justify-center relative overflow-hidden"
+                  className="w-24 h-24 bg-black text-white border-2 border-black rounded-none flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                 >
-                  <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-white/30 rounded-full blur-xl" />
-                  <Target className="w-14 h-14 text-white relative z-10" strokeWidth={2} />
+                  <Target className="w-10 h-10 text-white" strokeWidth={2} />
                 </motion.div>
               </div>
 
-              <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-3 tracking-tight">
+              <h1 className="font-sans font-black text-3xl md:text-5xl uppercase tracking-tighter text-black mb-3">
                 Tezkor Atamalar Shot
               </h1>
-              <p className="text-slate-500 text-[16px] mb-8 max-w-sm leading-relaxed">
+              <p className="text-black font-bold uppercase tracking-widest text-[10px] mb-8 max-w-sm leading-relaxed">
                 Ekranda paydo bo'lgan atamani imkon qadar tezroq tegishli kategoriyaga yo'naltiring!
               </p>
 
@@ -272,14 +269,14 @@ const WordBlast = () => {
                     onKeyDown={e => e.key === 'Enter' && startGame()}
                     placeholder="Ismingizni kiriting..."
                     autoFocus
-                    className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4.5 text-[17px] font-medium text-slate-800 outline-none focus:border-teal-400 focus:ring-4 focus:ring-teal-500/10 transition-all placeholder:text-slate-400 shadow-sm"
+                    className="w-full bg-white border-2 border-black rounded-none px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-black outline-none placeholder:text-zinc-400 focus:bg-zinc-50 transition-colors"
                   />
                 </div>
                 <button
                   onClick={startGame}
-                  className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-semibold text-[17px] py-4.5 rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all shadow-xl shadow-teal-500/20 tracking-wide flex items-center justify-center gap-2"
+                  className="w-full bg-black text-white font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors border-2 border-black rounded-none"
                 >
-                  Atamalar Shotni Boshlash <ChevronRight className="w-5 h-5" />
+                  Atamalar Shotni Boshlash <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </motion.div>
@@ -294,21 +291,21 @@ const WordBlast = () => {
               className="w-full flex flex-col items-center max-w-3xl space-y-6"
             >
               {/* Clean Top Status Bar */}
-              <div className="w-full bg-white border border-slate-200 shadow-[0_2px_10px_rgb(0,0,0,0.02)] rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 relative z-10">
+              <div className="w-full bg-white border-2 border-black rounded-none p-4 flex flex-col sm:flex-row justify-between items-center gap-4 relative z-10">
                 <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto justify-center sm:justify-start">
-                  <div className="flex items-center gap-2 text-slate-600 font-semibold text-sm">
-                    <Clock className="w-5 h-5 text-slate-400" /> 
-                    <span>{timeLeft}s</span>
+                  <div className="flex items-center gap-2 font-bold uppercase tracking-widest text-[10px] text-black">
+                    <Clock className="w-4 h-4" /> 
+                    <span>{timeLeft}S</span>
                   </div>
-                  <div className="h-4 w-px bg-slate-200" />
+                  <div className="h-4 w-px bg-black" />
                   <div className="flex items-center gap-1.5">
                     {[...Array(3)].map((_, i) => (
-                      <Heart key={i} className={`w-5 h-5 ${i < lives ? 'fill-rose-500 text-rose-500' : 'fill-slate-100 text-slate-100'}`} strokeWidth={2} />
+                      <Heart key={i} className={`w-4 h-4 ${i < lives ? 'fill-black text-black' : 'fill-white text-black border-black'}`} strokeWidth={2} />
                     ))}
                   </div>
-                  <div className="h-4 w-px bg-slate-200" />
-                  <div className="flex items-center gap-2 text-slate-600 font-semibold text-sm">
-                    <Trophy className="w-5 h-5 text-teal-500" />
+                  <div className="h-4 w-px bg-black" />
+                  <div className="flex items-center gap-2 font-bold uppercase tracking-widest text-[10px] text-black">
+                    <Trophy className="w-4 h-4" />
                     <span>{score}</span>
                   </div>
                 </div>
@@ -316,25 +313,25 @@ const WordBlast = () => {
                 <AnimatePresence>
                   {combo >= 2 && (
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-                      className="px-3 py-1.5 bg-orange-50 text-orange-600 rounded-full text-xs font-bold border border-orange-100 flex items-center gap-1.5 shadow-sm"
+                      className="px-3 py-1.5 bg-black text-white rounded-none border-2 border-black flex items-center gap-1.5 font-bold uppercase tracking-widest text-[10px]"
                     >
-                      <Flame className="w-4 h-4 fill-orange-500" /> x{combo} Combo
+                      <Flame className="w-3 h-3 text-white" /> x{combo} COMBO
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
               {/* Target Word Display Card */}
-              <div className="w-full bg-white border border-slate-200 p-8 rounded-[2rem] text-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative min-h-[220px] flex flex-col items-center justify-center overflow-hidden">
-                <div className="absolute top-0 inset-x-0 h-1.5 bg-slate-100">
+              <div className="w-full bg-white rounded-none border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] p-8 text-center relative min-h-[220px] flex flex-col items-center justify-center overflow-hidden mb-6">
+                <div className="absolute top-0 inset-x-0 h-1.5 bg-zinc-200">
                   <motion.div
-                    className={`h-full ${timeLeft > 15 ? 'bg-teal-500' : 'bg-rose-500'}`}
+                    className={`h-full ${timeLeft > 15 ? 'bg-black' : 'bg-red-600'}`}
                     initial={{ width: '100%' }}
                     animate={{ width: `${(timeLeft / GAME_DURATION) * 100}%` }}
                     transition={{ duration: 1, ease: 'linear' }}
                   />
                 </div>
-                <span className="text-[11px] uppercase font-bold tracking-widest text-teal-600 bg-teal-50 px-4 py-1.5 rounded-full border border-teal-100 mb-6 inline-block mt-2">
+                <span className="text-[10px] uppercase font-bold tracking-widest text-black bg-white px-4 py-1.5 rounded-none border-2 border-black mb-6 inline-block mt-2">
                   {currentRound.title}
                 </span>
                 <AnimatePresence mode="wait">
@@ -343,7 +340,7 @@ const WordBlast = () => {
                     initial={{ scale: 0.5, opacity: 0, y: 10 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 1.2, opacity: 0, y: -10 }}
-                    className="text-4xl md:text-5xl font-black text-slate-800 tracking-tight"
+                    className="font-sans font-black text-4xl md:text-5xl uppercase tracking-tighter text-black"
                   >
                     {activeWord?.term}
                   </motion.div>
@@ -351,14 +348,14 @@ const WordBlast = () => {
               </div>
 
               {/* Category Choice Buttons */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
                 {currentRound.categories.map((cat, idx) => (
                   <motion.button
                     key={idx}
-                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileHover={{ y: -2 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleCategoryChoice(idx)}
-                    className="py-6 px-6 rounded-[1.5rem] bg-white hover:bg-slate-50 border border-slate-200 hover:border-teal-300 hover:shadow-md text-slate-700 font-bold text-xl shadow-sm transition-all text-center flex items-center justify-center min-h-[100px]"
+                    className="py-6 px-6 rounded-none bg-white border-2 border-black hover:bg-black hover:text-white text-black font-bold text-lg uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all text-center flex items-center justify-center min-h-[100px]"
                   >
                     {cat}
                   </motion.button>
@@ -374,35 +371,34 @@ const WordBlast = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               className="w-full max-w-xl flex flex-col items-center font-sans"
             >
-              <div className="bg-white rounded-[2rem] p-8 md:p-10 w-full border border-slate-100 shadow-2xl shadow-slate-200/50 flex flex-col items-center text-center mb-6 relative overflow-hidden">
-                <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-teal-50/50 to-transparent pointer-events-none" />
+              <div className="bg-white rounded-none p-8 md:p-10 w-full border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center text-center mb-6 relative">
                 
-                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2 relative z-10 tracking-tight">
-                  {lives <= 0 ? 'O\'yin Tugadi!' : 'Vaqt Tugadi!'}
+                <h2 className="font-sans font-black text-3xl md:text-5xl uppercase tracking-tighter text-black mb-2 relative z-10">
+                  {lives <= 0 ? 'O\'YIN TUGADI!' : 'VAQT TUGADI!'}
                 </h2>
-                <p className="text-[15px] font-medium text-slate-500 mb-8 relative z-10">Barakalla, {playerName}!</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-8 relative z-10">Barakalla, {playerName}!</p>
                 
-                <div className="w-full bg-slate-50/50 rounded-[1.5rem] py-8 mb-8 relative border border-slate-100 flex flex-col items-center">
-                  <div className="text-[5rem] md:text-[6rem] font-bold text-teal-500 leading-none flex items-center justify-center gap-4">
+                <div className="w-full bg-white rounded-none py-8 mb-8 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center">
+                  <div className="text-[5rem] md:text-[6rem] font-black text-black leading-none flex items-center justify-center gap-4">
                     {score}
                   </div>
                   {combo > 0 && (
-                    <div className="mt-4 px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-xs font-bold uppercase tracking-wider border border-orange-200">
-                      Max Combo: {combo}x
+                    <div className="mt-4 px-3 py-1 bg-black text-white rounded-none text-[10px] font-bold uppercase tracking-widest border-2 border-black">
+                      MAX COMBO: {combo}X
                     </div>
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 w-full relative z-10">
+                <div className="flex flex-col sm:flex-row gap-4 w-full relative z-10">
                   <button onClick={startGame}
-                    className="flex-1 bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-semibold text-[16px] py-4 rounded-xl hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-teal-500/20"
+                    className="flex-1 bg-black text-white font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors border-2 border-black rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                   >
-                    Qayta O'ynash
+                    QAYTA O'YNASH
                   </button>
                   <button onClick={() => navigate('/games')}
-                    className="flex-1 bg-white border border-slate-200 text-slate-700 font-semibold text-[16px] py-4 rounded-xl hover:bg-slate-50 active:scale-[0.98] transition-all shadow-sm"
+                    className="flex-1 bg-white text-black font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-100 transition-colors border-2 border-black rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                   >
-                    Chiqish
+                    CHIQISH
                   </button>
                 </div>
               </div>

@@ -232,19 +232,22 @@ export default function TestDetails() {
   const averagePercentage = results.length > 0 ? Math.round(totalPercentage / results.length) : 0;
 
   return (
-    <div className="min-h-screen font-sans text-black bg-white">
+    <div className="min-h-screen font-sans text-zinc-900 bg-slate-50/50">
       
       {/* Header */}
-      <header className="border-b-2 border-black sticky top-0 z-30 bg-white">
+      <header className="border-b border-zinc-200/80 sticky top-0 z-30 bg-white/90 backdrop-blur-md shadow-xs">
         <div className="max-w-7xl mx-auto px-3 md:px-6 h-14 flex items-center justify-between">
           <button 
             onClick={() => navigate('/online-tests')}
-            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-black hover:opacity-50 transition-opacity"
+            className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-600 hover:text-zinc-900 transition-colors"
           >
-            <ArrowLeft size={14} />
+            <ArrowLeft size={15} />
             Dashboard
           </button>
-          <div className="text-xs font-bold uppercase tracking-widest">{test.title}</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-zinc-800 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+            {test.title}
+          </div>
           <div className="w-20"></div>
         </div>
       </header>
@@ -262,7 +265,7 @@ export default function TestDetails() {
                 <div className="pl-6 space-y-2">
                   {q.options.map((opt: string, oIndex: number) => (
                     <div key={oIndex} className="flex items-center gap-2">
-                      <div className="w-4 h-4 border border-black"></div>
+                      <div className="w-4 h-4 border border-zinc-300 rounded"></div>
                       <FormattedText content={opt} />
                     </div>
                   ))}
@@ -276,146 +279,161 @@ export default function TestDetails() {
           
           {/* Sidebar Info */}
           <div className="lg:col-span-4 flex flex-col gap-6">
-            <div className="border-2 border-black p-8">
-              <span className="inline-block px-2 py-1 bg-black text-white text-[10px] font-bold uppercase tracking-wider mb-4">
-                {test.subject}
-              </span>
-              <h1 className="text-2xl font-bold tracking-tighter text-black mb-1 leading-tight">
-                {test.title}
-              </h1>
-              <p className="text-zinc-500 text-[10px] mb-6 flex items-center gap-1.5 font-bold uppercase tracking-widest">
-                <Calendar size={12} /> 
-                {new Date(test.createdAt).toLocaleDateString('uz-UZ')}
-              </p>
+            <div className="bg-white rounded-2xl border border-zinc-200/80 shadow-sm p-6 md:p-8 flex flex-col gap-6">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="inline-flex items-center px-3 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-bold uppercase tracking-wider rounded-md">
+                    {test.subject}
+                  </span>
+                  <span className="text-[11px] text-zinc-500 flex items-center gap-1 font-medium">
+                    <Calendar size={13} className="text-zinc-400" /> 
+                    {new Date(test.createdAt).toLocaleDateString('uz-UZ')}
+                  </span>
+                </div>
+                <h1 className="text-xl md:text-2xl font-bold tracking-tight text-zinc-900 leading-tight">
+                  {test.title}
+                </h1>
+              </div>
               
-              <div className="pt-6 border-t-2 border-black flex flex-col gap-3">
+              <div className="pt-5 border-t border-zinc-100 flex flex-col gap-3">
                 <MagicButton
                   label="Link Nusxalash"
-                  icon={<Copy size={14} />}
+                  icon={<Copy size={15} />}
                   onClick={copyTestLink}
+                  variant="indigo"
+                  fullWidth
                 />
                 <button
                   onClick={() => navigate(`/online-tests/take/${testId}`)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-black text-black text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-100 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100/70 text-indigo-700 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs group"
                 >
-                  <ExternalLink size={14} /> Yechib ko'rish
+                  <ExternalLink size={15} className="group-hover:scale-110 transition-transform" /> Yechib ko'rish
                 </button>
                 
-                <div className="grid grid-cols-3 gap-2 w-full mt-1.5">
+                <div className="grid grid-cols-3 gap-2 w-full mt-1">
                   <button
                     onClick={handleExportWord}
-                    className="flex items-center justify-center gap-1 px-2 py-2 bg-white border border-zinc-200 text-zinc-700 text-[11px] font-semibold rounded-md hover:bg-zinc-50 transition-colors"
+                    className="flex items-center justify-center gap-1.5 px-2 py-2.5 bg-blue-50/70 text-blue-700 border border-blue-200/80 hover:bg-blue-100/80 hover:border-blue-300 rounded-lg text-[11px] font-semibold transition-all shadow-xs"
                     title="Word hujjat"
                   >
-                    <FileText size={12} /> Word
+                    <FileText size={13} /> Word
                   </button>
                   <button
                     onClick={handleExportExcel}
-                    className="flex items-center justify-center gap-1 px-2 py-2 bg-white border border-zinc-200 text-zinc-700 text-[11px] font-semibold rounded-md hover:bg-zinc-50 transition-colors"
+                    className="flex items-center justify-center gap-1.5 px-2 py-2.5 bg-emerald-50/70 text-emerald-700 border border-emerald-200/80 hover:bg-emerald-100/80 hover:border-emerald-300 rounded-lg text-[11px] font-semibold transition-all shadow-xs"
                     title="Excel CSV jadval"
                   >
-                    <FileText size={12} className="text-emerald-600" /> Excel
+                    <FileText size={13} /> Excel
                   </button>
                   <button
                     onClick={handleDownloadPDF}
                     disabled={isDownloadingPdf}
-                    className="flex items-center justify-center gap-1 px-2 py-2 bg-white border border-zinc-200 text-zinc-700 text-[11px] font-semibold rounded-md hover:bg-zinc-50 transition-colors disabled:opacity-50"
+                    className="flex items-center justify-center gap-1.5 px-2 py-2.5 bg-rose-50/70 text-rose-700 border border-rose-200/80 hover:bg-rose-100/80 hover:border-rose-300 rounded-lg text-[11px] font-semibold transition-all shadow-xs disabled:opacity-50"
                     title="PDF fayl"
                   >
                     {isDownloadingPdf
-                      ? <><Loader2 size={12} className="animate-spin" /> ...</>
-                      : <><Download size={12} /> PDF</>
+                      ? <><Loader2 size={13} className="animate-spin" /> ...</>
+                      : <><Download size={13} /> PDF</>
                     }
                   </button>
                 </div>
                 
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2.5 mt-1">
                   <MagicButton 
                     label="Jonli Rejim (Kahoot)" 
-                    icon={<Play fill="currentColor" />} 
+                    icon={<Play size={15} fill="currentColor" />} 
                     onClick={() => navigate(`/online-tests/live/host/${testId}`)} 
-                    className="w-full justify-center"
+                    variant="purple"
+                    fullWidth
                   />
                   
                   <button
                     onClick={handleClassAnalysis}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-zinc-900 text-zinc-900 text-xs font-bold uppercase tracking-widest hover:bg-zinc-50 transition-colors group"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 border border-indigo-200/90 text-indigo-950 hover:bg-indigo-100/60 hover:border-indigo-300 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs group"
                   >
-                    <Sparkles size={14} className="text-zinc-900" /> AI Sinf Tahlili
+                    <Sparkles size={15} className="text-amber-500 group-hover:rotate-12 transition-transform" /> AI Sinf Tahlili
                   </button>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-none border border-zinc-200 grid grid-cols-2 gap-4">
-               <div>
+            <div className="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-sm grid grid-cols-2 gap-4 divide-x divide-zinc-100">
+               <div className="pr-2">
                  <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1 flex items-center gap-1.5">
-                   <Users size={12}/> Qatnashuvchilar
+                   <Users size={14} className="text-indigo-500"/> Qatnashuvchilar
                  </p>
-                 <p className="text-xl font-semibold text-zinc-900">{results.length}</p>
+                 <p className="text-2xl font-bold text-zinc-900">{results.length}</p>
                </div>
-               <div>
+               <div className="pl-4">
                  <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1 flex items-center gap-1.5">
-                   <BrainCircuit size={12}/> O'rtacha foiz
+                   <BrainCircuit size={14} className="text-emerald-500"/> O'rtacha foiz
                  </p>
-                 <p className="text-xl font-semibold text-zinc-900">{averagePercentage}%</p>
+                 <p className="text-2xl font-bold text-zinc-900">{averagePercentage}%</p>
                </div>
             </div>
           </div>
 
           {/* Results Table */}
           <div className="lg:col-span-8">
-            <div className="bg-white rounded-none border border-zinc-200 overflow-hidden">
-              <div className="px-5 py-4 border-b border-zinc-200 bg-zinc-50">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-900">O'quvchilar Natijalari <span className="text-zinc-500 font-normal">({results.length})</span></h3>
+            <div className="bg-white rounded-2xl border border-zinc-200/80 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-zinc-100 bg-zinc-50/70 flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-900 flex items-center gap-2">
+                  <span>O'quvchilar Natijalari</span>
+                  <span className="px-2 py-0.5 rounded-full bg-zinc-200/80 text-zinc-700 text-[10px] font-semibold">
+                    {results.length}
+                  </span>
+                </h3>
               </div>
               
               {results.length === 0 ? (
                 <div className="p-12 text-center flex flex-col items-center">
-                  <Users size={24} className="text-zinc-300 mb-3" />
-                  <p className="text-sm font-medium text-zinc-900 mb-1">Hech kim topshirmagan</p>
+                  <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400 mb-3">
+                    <Users size={22} />
+                  </div>
+                  <p className="text-sm font-semibold text-zinc-900 mb-1">Hech kim topshirmagan</p>
                   <p className="text-xs text-zinc-500">Linkni nusxalab o'quvchilarga yuboring.</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm whitespace-nowrap">
-                    <thead className="bg-white border-b border-zinc-200">
+                    <thead className="bg-zinc-50/50 border-b border-zinc-100">
                       <tr>
-                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500">O'quvchi</th>
-                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Natija</th>
-                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Vaqti</th>
-                        <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500 text-right">Amal</th>
+                        <th className="px-6 py-3.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">O'quvchi</th>
+                        <th className="px-6 py-3.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Natija</th>
+                        <th className="px-6 py-3.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Vaqti</th>
+                        <th className="px-6 py-3.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500 text-right">Amal</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-100">
                       {results.map((res: any) => {
                         const percent = Math.round((res.score / res.totalScore) * 100);
                         return (
-                          <tr key={res.id || res._id} className="hover:bg-zinc-50 transition-colors">
-                            <td className="px-5 py-3.5 text-xs font-medium text-zinc-900 capitalize">
+                          <tr key={res.id || res._id} className="hover:bg-zinc-50/80 transition-colors">
+                            <td className="px-6 py-4 text-xs font-semibold text-zinc-900 capitalize">
                               {res.studentName}
                             </td>
-                            <td className="px-5 py-3.5 text-xs">
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold text-zinc-900">{res.score} <span className="text-zinc-400 font-normal">/ {res.totalScore}</span></span>
-                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold tracking-wider ${
-                                  percent >= 80 ? 'bg-zinc-900 text-white' : 
-                                  percent >= 50 ? 'bg-zinc-200 text-zinc-900' : 'bg-red-50 text-red-600 border border-red-100'
+                            <td className="px-6 py-4 text-xs">
+                              <div className="flex items-center gap-2.5">
+                                <span className="font-bold text-zinc-900">{res.score} <span className="text-zinc-400 font-normal">/ {res.totalScore}</span></span>
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${
+                                  percent >= 80 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 
+                                  percent >= 50 ? 'bg-amber-50 text-amber-700 border border-amber-200' : 
+                                  'bg-rose-50 text-rose-700 border border-rose-200'
                                 }`}>
                                   {percent}%
                                 </span>
                               </div>
                             </td>
-                            <td className="px-5 py-3.5 text-xs text-zinc-500">
+                            <td className="px-6 py-4 text-xs text-zinc-500 font-medium">
                               {new Date(res.createdAt).toLocaleString('uz-UZ', {
                                 day: '2-digit', month: '2-digit', year: 'numeric',
                                 hour: '2-digit', minute: '2-digit'
                               })}
                             </td>
-                            <td className="px-5 py-3.5 text-right">
+                            <td className="px-6 py-4 text-right">
                               <button
                                 onClick={() => navigate(`/online-tests/results/${res.id || res._id}`)}
-                                className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 hover:text-zinc-900 transition-colors"
+                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-50/70 hover:bg-indigo-100 text-indigo-700 text-[11px] font-semibold uppercase tracking-wider transition-colors border border-indigo-100"
                               >
                                 Ko'rish
                               </button>
@@ -449,48 +467,48 @@ export default function TestDetails() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
               transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-              className="bg-[#fdfdfd] border border-black/10 w-full max-w-6xl rounded-none md:rounded-2xl overflow-hidden flex flex-col max-h-[90vh] shadow-[0_20px_60px_rgba(0,0,0,0.1)] relative z-10 selection:bg-black selection:text-white"
+              className="bg-white border border-zinc-200/80 w-full max-w-6xl rounded-2xl md:rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-2xl relative z-10"
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-4 md:p-10 border-b border-black/10 bg-[#fdfdfd]">
-                <div className="flex items-center gap-4 md:gap-6">
-                  <div className="w-10 h-10 md:w-12 md:h-12 border border-black/10 bg-[#111111] text-white flex items-center justify-center rounded-none">
-                    <Sparkles className="w-5 h-5" />
+              <div className="flex items-center justify-between p-5 md:p-8 border-b border-zinc-100 bg-white">
+                <div className="flex items-center gap-4 md:gap-5">
+                  <div className="w-10 h-10 md:w-12 md:h-12 border border-indigo-100 bg-indigo-50 text-indigo-600 flex items-center justify-center rounded-xl">
+                    <Sparkles className="w-5 h-5 md:w-6 md:h-6" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-gray-500 block mb-1">AI Tahlilchi</span>
-                    <h2 className="text-xl md:text-3xl font-medium tracking-tight text-[#111111]">AI Sinf Tahlili</h2>
+                    <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-indigo-600 block mb-0.5">AI Tahlilchi</span>
+                    <h2 className="text-xl md:text-2xl font-bold tracking-tight text-zinc-900">AI Sinf Tahlili</h2>
                   </div>
                 </div>
                 {!isAnalyzing && (
                   <button 
                     onClick={() => setIsAnalysisModalOpen(false)} 
-                    className="p-2 md:p-3 text-gray-400 hover:text-black transition-colors border border-transparent hover:border-black/10 rounded-none"
+                    className="p-2 text-zinc-400 hover:text-zinc-700 transition-colors border border-zinc-200/60 hover:border-zinc-300 rounded-xl"
                   >
-                    <X className="w-6 h-6" strokeWidth={1.5} />
+                    <X className="w-5 h-5" strokeWidth={1.75} />
                   </button>
                 )}
               </div>
               
-              <div className="p-4 md:p-10 overflow-y-auto flex-1 bg-[#fdfdfd]">
+              <div className="p-5 md:p-8 overflow-y-auto flex-1 bg-slate-50/50">
                 {isAnalyzing ? (
                   <div className="flex flex-col items-center justify-center py-20">
-                    <div className="w-12 h-12 border-2 border-black/20 border-t-black rounded-full animate-spin mb-4"></div>
-                    <p className="text-sm font-medium text-black uppercase tracking-[0.1em] mb-1">AI xulosalarni shakllantirmoqda...</p>
-                    <p className="text-xs text-gray-400">Bu bir necha soniya vaqt olishi mumkin</p>
+                    <div className="w-12 h-12 border-2 border-indigo-600/20 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+                    <p className="text-sm font-semibold text-zinc-900 uppercase tracking-wider mb-1">AI xulosalarni shakllantirmoqda...</p>
+                    <p className="text-xs text-zinc-500">Bu bir necha soniya vaqt olishi mumkin</p>
                   </div>
                 ) : analysisResult ? (
-                  <div className="space-y-12">
+                  <div className="space-y-8">
                     
                     {/* Grid for Weak Topics & Recommendation */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-                      <div className="lg:col-span-5">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-4 block">Eng ko'p xato qilingan mavzular</span>
-                        <div className="border-t border-black/10 divide-y divide-black/5">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
+                      <div className="lg:col-span-5 bg-white p-6 rounded-2xl border border-zinc-200/80 shadow-xs">
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-4 block">Eng ko'p xato qilingan mavzular</span>
+                        <div className="border-t border-zinc-100 divide-y divide-zinc-100">
                           {analysisResult.weakTopics?.map((item: any, i: number) => (
-                            <div key={i} className="py-4 flex items-center justify-between gap-4">
-                              <span className="text-sm text-[#111111] font-medium">{typeof item === 'string' ? item : item.topic}</span>
-                              <span className="text-xs font-mono font-bold border border-black/10 px-2 py-1 bg-white">
+                            <div key={i} className="py-3.5 flex items-center justify-between gap-4">
+                              <span className="text-xs text-zinc-900 font-semibold">{typeof item === 'string' ? item : item.topic}</span>
+                              <span className="text-[11px] font-semibold border border-rose-200 text-rose-700 px-2.5 py-1 rounded-full bg-rose-50/70">
                                 {typeof item === 'string' ? '' : `${item.errorPercentage}% xato`}
                               </span>
                             </div>
@@ -498,10 +516,10 @@ export default function TestDetails() {
                         </div>
                       </div>
 
-                      <div className="lg:col-span-7">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-4 block">Umumiy Sinf bo'yicha Maslahat</span>
-                        <div className="border border-black/5 p-8 bg-white">
-                          <p className="text-base text-gray-600 leading-relaxed font-normal">
+                      <div className="lg:col-span-7 bg-white p-6 rounded-2xl border border-zinc-200/80 shadow-xs">
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-4 block">Umumiy Sinf bo'yicha Maslahat</span>
+                        <div className="bg-indigo-50/50 border border-indigo-100/80 p-5 rounded-xl">
+                          <p className="text-sm text-zinc-700 leading-relaxed font-normal">
                             {analysisResult.recommendation}
                           </p>
                         </div>
@@ -511,13 +529,13 @@ export default function TestDetails() {
                     {/* Student Plans */}
                     {analysisResult.studentPlans && analysisResult.studentPlans.length > 0 && (
                       <div>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-6 block">O'quvchilar uchun shaxsiy reja</span>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-4 block">O'quvchilar uchun shaxsiy reja</span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {analysisResult.studentPlans.map((plan: any, i: number) => (
-                            <div key={i} className="border border-black/5 p-4 md:p-6 bg-white flex flex-col justify-between hover:border-black/20 transition-colors shadow-sm">
+                            <div key={i} className="border border-zinc-200/80 p-5 rounded-2xl bg-white flex flex-col justify-between hover:border-zinc-300 transition-colors shadow-xs">
                               <div>
-                                <h4 className="text-sm font-bold text-black mb-2">{plan.studentName}</h4>
-                                <p className="text-sm text-gray-500 leading-relaxed">{plan.plan}</p>
+                                <h4 className="text-xs font-bold text-zinc-900 mb-2">{plan.studentName}</h4>
+                                <p className="text-xs text-zinc-600 leading-relaxed">{plan.plan}</p>
                               </div>
                             </div>
                           ))}
@@ -527,17 +545,17 @@ export default function TestDetails() {
 
                     {/* Comprehensive Student Guide */}
                     {analysisResult.studentGuide && (
-                      <div className="border-t border-black/10 pt-12 mt-12">
+                      <div className="border-t border-zinc-200/80 pt-8">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] block">O'quvchilar uchun Umumiy Qo'llanma</span>
+                          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">O'quvchilar uchun Umumiy Qo'llanma</span>
                           <button
                             onClick={handleExportGuideToWord}
-                            className="bg-[#111111] text-[#fdfdfd] px-6 py-2 text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-black transition-colors flex items-center gap-2"
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 text-xs font-semibold rounded-xl transition-all shadow-xs flex items-center gap-2"
                           >
                             <Download size={14} /> Word qilib yuklab olish
                           </button>
                         </div>
-                        <div className="prose prose-sm max-w-none text-[#111111]">
+                        <div className="prose prose-sm max-w-none text-zinc-800 bg-white p-6 rounded-2xl border border-zinc-200/80">
                           <ReactMarkdown>{analysisResult.studentGuide}</ReactMarkdown>
                         </div>
                       </div>
@@ -545,17 +563,19 @@ export default function TestDetails() {
 
                     {/* Re-generate Test Section */}
                     {analysisResult.generatedQuestions?.length > 0 && (
-                      <div className="border border-black/10 p-8 md:p-12 text-center bg-white flex flex-col items-center justify-center max-w-3xl mx-auto">
-                        <BrainCircuit size={32} className="text-black mb-4" strokeWidth={1} />
-                        <h4 className="text-lg font-medium text-black mb-2">Qayta Test Tayyor!</h4>
-                        <p className="text-sm text-gray-500 mb-8 max-w-lg">
+                      <div className="border border-indigo-200/80 p-8 md:p-10 text-center bg-white rounded-2xl shadow-xs flex flex-col items-center justify-center max-w-3xl mx-auto">
+                        <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+                          <BrainCircuit size={24} />
+                        </div>
+                        <h4 className="text-base font-bold text-zinc-900 mb-1">Qayta Test Tayyor!</h4>
+                        <p className="text-xs text-zinc-500 mb-6 max-w-lg">
                           Aynan yuqoridagi zaif mavzularni mustahkamlash uchun {analysisResult.generatedQuestions.length} ta yepyangi savol yaratildi.
                         </p>
                         <button
                           onClick={handleCreateNewTestFromAnalysis}
-                          className="bg-[#111111] text-[#fdfdfd] px-8 py-4 text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-black transition-colors flex items-center gap-2"
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-2"
                         >
-                          <Sparkles size={14} /> Shu savollar bilan yangi test yaratish
+                          <Sparkles size={15} /> Shu savollar bilan yangi test yaratish
                         </button>
                       </div>
                     )}

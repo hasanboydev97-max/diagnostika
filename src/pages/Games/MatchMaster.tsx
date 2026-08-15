@@ -219,25 +219,24 @@ const MatchMaster = () => {
   };
 
   return (
-    <div className="min-h-screen relative font-sans overflow-hidden transition-all duration-300 flex flex-col bg-[#F8FAFC]">
-      <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #334155 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+    <div className="min-h-screen relative font-sans flex flex-col bg-white">
 
       {/* Header */}
       <header className="relative z-20 flex justify-between items-center p-4">
         <button
           onClick={() => navigate('/games')}
-          className="w-12 h-12 bg-white border border-slate-200 text-slate-700 rounded-2xl flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all shadow-sm"
+          className="w-12 h-12 bg-white border-2 border-black text-black rounded-none flex items-center justify-center hover:bg-zinc-100 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
         {gameState === 'playing' && (
           <div className="flex gap-2">
-            <button onClick={toggleSound} className="w-12 h-12 bg-white border border-slate-200 text-slate-700 rounded-2xl flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all shadow-sm">
-              {muted ? <VolumeX className="w-5 h-5 text-rose-500" /> : <Volume2 className="w-5 h-5 text-emerald-500" />}
+            <button onClick={toggleSound} className="w-12 h-12 bg-white border-2 border-black text-black rounded-none flex items-center justify-center hover:bg-zinc-100 transition-colors">
+              {muted ? <VolumeX className="w-5 h-5 text-black" /> : <Volume2 className="w-5 h-5 text-black" />}
             </button>
-            <div className="bg-white border border-slate-200 px-5 py-2 rounded-2xl font-bold text-[17px] text-slate-700 flex items-center gap-2 shadow-sm">
-              <Trophy className="w-5 h-5 text-amber-500 fill-amber-500" />
+            <div className="bg-white border-2 border-black px-5 py-2 rounded-none font-bold text-[10px] uppercase tracking-widest text-black flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-black" />
               {score}
             </div>
           </div>
@@ -257,16 +256,15 @@ const MatchMaster = () => {
             >
               <div className="relative mb-8">
                 <motion.div
-                  animate={{ y: [0, -8, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                  className="w-32 h-32 bg-gradient-to-br from-purple-500 via-fuchsia-500 to-fuchsia-600 rounded-[2rem] shadow-2xl shadow-purple-500/40 flex items-center justify-center relative overflow-hidden"
+                  animate={{ y: [0, -4, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                  className="w-24 h-24 bg-black text-white border-2 border-black rounded-none flex items-center justify-center mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                 >
-                  <div className="absolute top-[-20%] left-[-20%] w-[60%] h-[60%] bg-white/20 rounded-full blur-xl" />
-                  <Grid className="w-14 h-14 text-white relative z-10" strokeWidth={1.5} />
+                  <Grid className="w-10 h-10 text-white relative z-10" strokeWidth={2} />
                 </motion.div>
               </div>
 
-              <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-3 tracking-tight">Juftliklar Ustasi</h1>
+              <h1 className="font-sans font-black text-3xl md:text-5xl uppercase tracking-tighter text-black mb-3">Juftliklar Ustasi</h1>
               <p className="text-slate-500 text-[16px] mb-8 max-w-sm leading-relaxed">
                 Kartalarni ag'darib, bir-biriga mos keladigan fan atamalari, formulalar va tarjimalar juftligini toping!
               </p>
@@ -280,12 +278,12 @@ const MatchMaster = () => {
                     onKeyDown={e => e.key === 'Enter' && startGame()}
                     placeholder="Ismingizni kiriting..."
                     autoFocus
-                    className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4.5 text-[17px] font-medium text-slate-800 outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-500/10 transition-all placeholder:text-slate-400 shadow-sm"
+                    className="w-full bg-white border-2 border-black rounded-none px-5 py-4 text-[10px] font-bold uppercase tracking-widest text-black outline-none placeholder:text-zinc-400 focus:bg-zinc-50 transition-colors"
                   />
                 </div>
                 <button
                   onClick={startGame}
-                  className="w-full bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white font-semibold text-[17px] py-4.5 rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all shadow-xl shadow-purple-500/20 tracking-wide flex items-center justify-center gap-2"
+                  className="w-full bg-black text-white font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors border-2 border-black rounded-none"
                 >
                   Xotira O'yinini Boshlash <ChevronRight className="w-5 h-5" />
                 </button>
@@ -302,23 +300,23 @@ const MatchMaster = () => {
               className="w-full flex flex-col items-center max-w-3xl space-y-6"
             >
               {/* Clean Top Status Bar */}
-              <div className="w-full bg-white border border-slate-200 shadow-[0_2px_10px_rgb(0,0,0,0.02)] rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 relative z-10">
+              <div className="w-full bg-white border-2 border-black rounded-none p-4 flex flex-col sm:flex-row justify-between items-center gap-4 relative z-10">
                 <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto justify-center sm:justify-start">
-                  <div className="flex items-center gap-2 text-slate-600 font-semibold text-sm">
-                    <Clock className="w-5 h-5 text-slate-400" /> 
+                  <div className="flex items-center gap-2 text-black font-bold uppercase tracking-widest text-[10px]">
+                    <Clock className="w-4 h-4 text-black" /> 
                     <span>{timeLeft}s</span>
                   </div>
-                  <div className="h-4 w-px bg-slate-200" />
-                  <div className="flex items-center gap-2 text-slate-600 font-semibold text-sm">
-                    <Trophy className="w-5 h-5 text-purple-500" />
+                  <div className="h-4 w-px bg-black" />
+                  <div className="flex items-center gap-2 text-black font-bold uppercase tracking-widest text-[10px]">
+                    <Trophy className="w-4 h-4 text-black" />
                     <span>{score}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3 w-full sm:w-1/2">
-                  <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="flex-1 h-2 bg-white border-2 border-black rounded-none overflow-hidden">
                     <motion.div
-                      className={`h-full ${timeLeft > 15 ? 'bg-purple-500' : 'bg-rose-500'}`}
+                      className="h-full bg-black"
                       initial={{ width: '100%' }}
                       animate={{ width: `${(timeLeft / GAME_DURATION) * 100}%` }}
                       transition={{ duration: 1, ease: 'linear' }}
@@ -327,9 +325,9 @@ const MatchMaster = () => {
                   <AnimatePresence>
                     {combo >= 2 && (
                       <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-                        className="px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-[11px] font-bold border border-orange-100 flex items-center gap-1 shadow-sm whitespace-nowrap"
+                        className="px-3 py-1 bg-white text-black rounded-none text-[10px] uppercase tracking-widest font-bold border-2 border-black flex items-center gap-1 whitespace-nowrap"
                       >
-                        <Flame className="w-3.5 h-3.5 fill-orange-500" /> x{combo} Combo
+                        <Flame className="w-3.5 h-3.5 fill-black" /> x{combo} Combo
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -344,21 +342,21 @@ const MatchMaster = () => {
                     whileHover={{ scale: card.isMatched ? 1 : 1.02 }}
                     whileTap={{ scale: card.isMatched ? 1 : 0.98 }}
                     onClick={() => handleCardClick(card)}
-                    className={`h-28 sm:h-32 rounded-3xl cursor-pointer select-none transition-all duration-300 flex items-center justify-center p-3 text-center border shadow-sm relative overflow-hidden 
+                    className={`h-28 sm:h-32 rounded-none cursor-pointer select-none transition-colors duration-300 flex items-center justify-center p-3 text-center border-2 border-black relative overflow-hidden 
                       ${card.isMatched 
-                        ? 'bg-emerald-50 border-emerald-200 text-emerald-600 opacity-80 pointer-events-none shadow-inner' 
+                        ? 'bg-zinc-200 text-black opacity-80 pointer-events-none' 
                         : card.isFlipped 
-                          ? 'bg-gradient-to-br from-purple-500 to-fuchsia-600 border-purple-400 text-white font-bold text-lg shadow-lg shadow-purple-500/25' 
-                          : 'bg-white hover:border-purple-300 border-slate-200 text-slate-400'}`}
+                          ? 'bg-black text-white font-bold text-lg' 
+                          : 'bg-white hover:bg-zinc-100 text-black'}`}
                   >
                     {card.isFlipped || card.isMatched ? (
                       <span className="font-bold text-base md:text-lg leading-tight relative z-10 flex flex-col items-center gap-1">
-                        {card.isMatched && <Check className="w-5 h-5 text-emerald-500 mb-1" />}
+                        {card.isMatched && <Check className="w-5 h-5 text-black mb-1" />}
                         {card.text}
                       </span>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Sparkles className="w-8 h-8 text-slate-300 opacity-70" />
+                        <Sparkles className="w-8 h-8 text-black opacity-30" />
                       </div>
                     )}
                   </motion.div>
@@ -374,18 +372,16 @@ const MatchMaster = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               className="w-full max-w-xl flex flex-col items-center font-sans"
             >
-              <div className="bg-white rounded-[2rem] p-8 md:p-10 w-full border border-slate-100 shadow-2xl shadow-slate-200/50 flex flex-col items-center text-center mb-6 relative overflow-hidden">
-                <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-b from-purple-50/50 to-transparent pointer-events-none" />
+              <div className="bg-white p-8 md:p-10 w-full border-2 border-black flex flex-col items-center text-center mb-6 relative overflow-hidden">
+                <h2 className="font-sans font-black text-3xl md:text-4xl uppercase tracking-tighter text-black mb-2 relative z-10">Vaqt Tugadi!</h2>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-black mb-8 relative z-10">Ajoyib natija, {playerName}!</p>
                 
-                <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2 relative z-10 tracking-tight">Vaqt Tugadi!</h2>
-                <p className="text-[15px] font-medium text-slate-500 mb-8 relative z-10">Ajoyib natija, {playerName}!</p>
-                
-                <div className="w-full bg-slate-50/50 rounded-[1.5rem] py-8 mb-8 relative border border-slate-100 flex flex-col items-center">
-                  <div className="text-[5rem] md:text-[6rem] font-bold text-purple-600 leading-none flex items-center justify-center gap-4">
+                <div className="w-full bg-white py-8 mb-8 relative border-2 border-black flex flex-col items-center">
+                  <div className="text-[5rem] md:text-[6rem] font-black text-black leading-none flex items-center justify-center gap-4">
                     {score}
                   </div>
                   {combo > 0 && (
-                    <div className="mt-4 px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-xs font-bold uppercase tracking-wider border border-orange-200">
+                    <div className="mt-4 px-3 py-1 bg-white text-black rounded-none text-[10px] uppercase tracking-widest font-bold border-2 border-black">
                       Max Combo: {combo}x
                     </div>
                   )}
@@ -393,12 +389,12 @@ const MatchMaster = () => {
 
                 <div className="flex flex-col sm:flex-row gap-3 w-full relative z-10">
                   <button onClick={startGame}
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white font-semibold text-[16px] py-4 rounded-xl hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-purple-500/20"
+                    className="flex-1 bg-black text-white font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors border-2 border-black rounded-none"
                   >
                     Qayta O'ynash
                   </button>
                   <button onClick={() => navigate('/games')}
-                    className="flex-1 bg-white border border-slate-200 text-slate-700 font-semibold text-[16px] py-4 rounded-xl hover:bg-slate-50 active:scale-[0.98] transition-all shadow-sm"
+                    className="flex-1 bg-white border-2 border-black text-black font-bold text-[10px] uppercase tracking-[0.2em] py-4 flex items-center justify-center gap-2 hover:bg-zinc-100 transition-colors rounded-none"
                   >
                     Chiqish
                   </button>
