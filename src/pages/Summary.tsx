@@ -217,30 +217,30 @@ export default function Summary() {
         <div className="max-w-[1440px] mx-auto px-[15px] sm:px-6 md:px-12 pt-3 sm:pt-6 md:pt-12 space-y-6 md:space-y-16">
           <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-[15px] sm:p-8 md:p-12 rounded-2xl md:rounded-[2rem] flex flex-col space-y-10 md:space-y-20">
           <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-black/5 pb-6">
-          <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="HB Diagnostikasi" className="w-10 h-10 md:w-12 md:h-12 rounded-xl border border-black/10 bg-white p-1 object-contain shadow-sm" />
-            <div>
-              <h1 className="font-bold text-lg md:text-xl text-neutral-main">HB Diagnostikasi</h1>
-              <p className="text-[10px] text-gray-500">{studentData.studentName} • {studentData.grade || '5'}-sinf</p>
+            <div className="flex items-center gap-3">
+              <img src="/logo.png" alt="HB Diagnostikasi" className="w-10 h-10 md:w-12 md:h-12 rounded-xl border border-black/10 bg-white p-1 object-contain shadow-sm" />
+              <div>
+                <h1 className="font-display font-bold text-lg md:text-xl text-neutral-main">HB Diagnostikasi</h1>
+                <p className="text-[10px] text-gray-500">{studentData.studentName} • {studentData.grade || '5'}-sinf</p>
+              </div>
             </div>
-          </div>
-          <div className="flex flex-wrap items-center justify-between sm:justify-end w-full sm:w-auto gap-3 text-xs md:text-sm font-medium text-neutral-secondary">
-            <span className="hidden sm:inline">{studentData.studentName} ({studentData.grade || '5'}-sinf)</span>
-            <div className="hidden sm:flex w-8 h-8 rounded-full bg-primary/10 items-center justify-center text-primary font-bold">
-              {studentData.studentName.charAt(0).toUpperCase()}
+            <div className="flex flex-wrap items-center justify-between sm:justify-end w-full sm:w-auto gap-3 text-xs md:text-sm font-medium text-neutral-secondary">
+              <span className="hidden sm:inline">{studentData.studentName} ({studentData.grade || '5'}-sinf)</span>
+              <div className="hidden sm:flex w-8 h-8 rounded-full bg-primary/10 items-center justify-center text-primary font-bold">
+                {studentData.studentName.charAt(0).toUpperCase()}
+              </div>
+              <button
+                onClick={() => {
+                  document.body.style.overflow = 'unset';
+                  window.scrollTo(0, 0);
+                  navigate('/');
+                }}
+                className="print-hide flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-neutral-main text-white rounded-lg text-[10px] md:text-xs font-semibold uppercase tracking-wider hover:bg-neutral-900 transition-colors shadow-sm"
+              >
+                Chiqish
+              </button>
             </div>
-            <button
-              onClick={() => {
-                document.body.style.overflow = 'unset';
-                window.scrollTo(0, 0);
-                navigate('/');
-              }}
-              className="print-hide flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-neutral-main text-white rounded-lg text-[10px] md:text-xs font-semibold uppercase tracking-wider hover:bg-neutral-900 transition-colors shadow-sm"
-            >
-              Chiqish
-            </button>
-          </div>
-        </header>
+          </header>
 
         <motion.div 
           initial={isGeneratingPdf ? "visible" : "hidden"}

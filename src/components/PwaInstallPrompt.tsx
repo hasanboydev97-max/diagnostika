@@ -53,9 +53,9 @@ export default function PwaInstallPrompt() {
           <div className="flex items-center gap-3 min-w-0">
             <img src="/logo.png" alt="HB Logo" className="w-10 h-10 rounded-xl object-contain bg-white border border-black/10 p-1 flex-shrink-0 shadow-sm" />
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5 font-bold text-xs md:text-sm tracking-tight text-neutral-900">
-                <span className="truncate">HB Diagnostikasi</span>
-                <span className="bg-black/5 text-neutral-600 text-[9px] font-bold px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">PWA</span>
+              <div className="flex flex-col ml-3">
+                <span className="truncate font-display font-bold">HB Diagnostikasi</span>
+                <span className="text-xs text-gray-500">Bahoingizni qog'ozsiz oling!</span>
               </div>
               <p className="text-[11px] text-neutral-500 truncate">Telefonga yoki kompyuterga o'rnating</p>
             </div>

@@ -65,7 +65,7 @@ export default function Landing() {
           <div className="md:col-span-4 md:sticky md:top-32 h-fit">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="flex items-center gap-3 mb-8 md:mb-0">
               <img src="/logo.png" alt="HB Diagnostikasi" className="w-10 h-10 rounded-xl object-contain bg-white border border-black/10 p-1 shadow-sm" />
-              <span className="font-extrabold text-lg tracking-tight text-neutral-900">HB Diagnostikasi</span>
+              <span className="font-display font-extrabold text-lg tracking-tight text-neutral-900">HB Diagnostikasi</span>
             </motion.div>
           </div>
           <div className="md:col-span-8">
