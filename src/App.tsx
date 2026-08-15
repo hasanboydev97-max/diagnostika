@@ -28,6 +28,8 @@ const FormulaChain = lazy(() => import('./pages/Games/FormulaChain'));
 const MistakeInspector = lazy(() => import('./pages/Games/MistakeInspector'));
 const MatchMaster = lazy(() => import('./pages/Games/MatchMaster'));
 const WordBlast = lazy(() => import('./pages/Games/WordBlast'));
+const GlobalTrivia = lazy(() => import('./pages/Games/GlobalTrivia'));
+const ChessPuzzle = lazy(() => import('./pages/Games/ChessPuzzle'));
 
 // OMR Routes
 const OMRGenerator = lazy(() => import('./pages/Admin/OMRGenerator'));
@@ -81,6 +83,8 @@ function App() {
             <Route path="/games/mistake-inspector" element={<MistakeInspector />} />
             <Route path="/games/match-master" element={<MatchMaster />} />
             <Route path="/games/word-blast" element={<WordBlast />} />
+            <Route path="/games/global-trivia" element={<GlobalTrivia />} />
+            <Route path="/games/chess-puzzle" element={<ChessPuzzle />} />
             
             {/* Catch-all route to prevent blank screens */}
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -15,16 +15,16 @@ interface LevelStage {
 }
 
 const STAGES: LevelStage[] = [
-  { id: 1, title: 'Sonlar Boshlanishi', gameId: 'math-ninja', route: '/games/math-ninja', category: 'math', targetScore: 50, description: '1 daqiqada 5 ta oddiy hisobni bajaring', iconName: '⚡' },
-  { id: 2, title: 'Ingliz Lug\'ati 1', gameId: 'english-words', route: '/games/english-words', category: 'languages', targetScore: 60, description: 'Asosiy inglizcha so\'zlarni toping', iconName: '🔤' },
-  { id: 3, title: 'Formulalar Sirli Olami', gameId: 'formula-chain', route: '/games/formula-chain', category: 'math', targetScore: 70, description: 'Fizika va matematika formulalarini yig\'ing', iconName: '🧪' },
-  { id: 4, title: 'Rus Tili Qadami', gameId: 'russian-words', route: '/games/russian-words', category: 'languages', targetScore: 60, description: 'Ruscha kundalik so\'zlarni sinang', iconName: '🇷🇺' },
-  { id: 5, title: 'Juftliklar Topish', gameId: 'match-master', route: '/games/match-master', category: 'logic', targetScore: 80, description: 'Flip kartalardan juftliklarni toping', iconName: '🧩' },
-  { id: 6, title: 'Detektiv: Xato Izlab', gameId: 'mistake-inspector', route: '/games/mistake-inspector', category: 'logic', targetScore: 90, description: 'Hisobdagi mantiqiy xatoni toping', iconName: '🔍' },
-  { id: 7, title: 'Tezkor Reaksiya', gameId: 'word-blast', route: '/games/word-blast', category: 'languages', targetScore: 100, description: 'Atamalarni to\'g\'ri savatga otib kiring', iconName: '💥' },
-  { id: 8, title: 'Hisob Ninja: 2-Bosqich', gameId: 'math-ninja', route: '/games/math-ninja', category: 'math', targetScore: 120, description: 'Tezkor ko\'paytirish va ayirish', iconName: '🥷' },
-  { id: 9, title: 'English Master 2', gameId: 'english-words', route: '/games/english-words', category: 'languages', targetScore: 130, description: 'Qiyinroq inglizcha iboralar', iconName: '🇬🇧' },
-  { id: 10, title: 'Super Mantiqiy Qal\'a', gameId: 'formula-chain', route: '/games/formula-chain', category: 'math', targetScore: 150, description: 'Murakkab tenglamalar zanjiri', iconName: '🏰' }
+  { id: 1, title: 'Global Live Trivia Duel', gameId: 'global-trivia', route: '/games/global-trivia', category: 'logic', targetScore: 60, description: 'Open Trivia API orqali fanlar va IT bo\'yicha jonli duel!', iconName: '🌍' },
+  { id: 2, title: 'Math Ninja Arcade', gameId: 'math-ninja', route: '/games/math-ninja', category: 'math', targetScore: 80, description: '3D plitkalar va maskot bilan tezkor matematik hisob', iconName: '🥷' },
+  { id: 3, title: 'Shaxmat Detektivi (Puzzle)', gameId: 'chess-puzzle', route: '/games/chess-puzzle', category: 'logic', targetScore: 100, description: 'Chess.com API orqali kunlik taktik masalalarni yeching', iconName: '♟️' },
+  { id: 4, title: 'Ingliz Lug\'ati Quest', gameId: 'english-words', route: '/games/english-words', category: 'languages', targetScore: 80, description: 'Asosiy inglizcha so\'zlarni tezkor toping', iconName: '🔤' },
+  { id: 5, title: 'Formulalar Sirli Olami', gameId: 'formula-chain', route: '/games/formula-chain', category: 'math', targetScore: 100, description: 'Fizika va matematika formulalarini yig\'ing', iconName: '🧪' },
+  { id: 6, title: 'Rus Tili Qadami', gameId: 'russian-words', route: '/games/russian-words', category: 'languages', targetScore: 90, description: 'Ruscha kundalik so\'zlarni sinang', iconName: '🇷🇺' },
+  { id: 7, title: 'Juftliklar Topish', gameId: 'match-master', route: '/games/match-master', category: 'logic', targetScore: 100, description: 'Flip kartalardan juftliklarni toping', iconName: '🧩' },
+  { id: 8, title: 'Detektiv: Xato Izlab', gameId: 'mistake-inspector', route: '/games/mistake-inspector', category: 'logic', targetScore: 110, description: 'Hisobdagi mantiqiy xatoni toping', iconName: '🔍' },
+  { id: 9, title: 'Global Trivia Master', gameId: 'global-trivia', route: '/games/global-trivia', category: 'logic', targetScore: 130, description: 'Qiyin darajadagi dunyo bilimlar testi', iconName: '🚀' },
+  { id: 10, title: 'Ninja Master Boss Level', gameId: 'math-ninja', route: '/games/math-ninja', category: 'math', targetScore: 150, description: 'Chaqqonlik va chaqmoq tezligidagi oxirgi bosqich', iconName: '👑' }
 ];
 
 export const QuestLevelMap = () => {

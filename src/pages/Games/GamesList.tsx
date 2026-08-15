@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchCurrentTeacher, getToken } from '../../lib/auth';
-import { Crown, ArrowLeft, Gamepad2, Brain, Flame, BookOpen, Languages, ChevronRight, Sparkles, Search, Grid, Zap, Map } from 'lucide-react';
+import { Crown, ArrowLeft, Gamepad2, Brain, Flame, BookOpen, Languages, ChevronRight, Sparkles, Search, Grid, Zap, Map, Globe, Award } from 'lucide-react';
 import QuestLevelMap from '../../components/games/QuestLevelMap';
 
 interface GameItem {
@@ -17,6 +17,36 @@ interface GameItem {
 
 const ALL_GAMES: GameItem[] = [
   {
+    id: 'global-trivia',
+    route: '/games/global-trivia',
+    tag: 'Open Trivia API',
+    category: 'logic',
+    title: 'Global Live Trivia Duel 🌍',
+    description: 'Open Trivia API orqali fan va tabiat, IT, geografiya hamda matematika bo\'yicha jonli bilimlar dueli!',
+    icon: Globe,
+    isNew: true
+  },
+  {
+    id: 'chess-puzzle',
+    route: '/games/chess-puzzle',
+    tag: 'Chess.com API',
+    category: 'logic',
+    title: 'Shaxmat Detektivi (Daily Puzzle) ♟️',
+    description: 'Chess.com API orqali har kungi yangilanadigan taktik shaxmat masalalari va mantiqiy yechimlar!',
+    icon: Award,
+    isNew: true
+  },
+  {
+    id: 'math-ninja',
+    route: '/games/math-ninja',
+    tag: 'Matematika',
+    category: 'math',
+    title: 'Tezkor Hisob (Math Ninja 🥷)',
+    description: '5 bosqichli matematik chaqqonlik o\'yini. 3D tactile plitkalar va maskot motivatsiyasi!',
+    icon: Brain,
+    isNew: true
+  },
+  {
     id: 'formula-chain',
     route: '/games/formula-chain',
     tag: 'Matematika & Fizika',
@@ -24,7 +54,6 @@ const ALL_GAMES: GameItem[] = [
     title: 'Formula Zanjiri',
     description: 'Formulalar va mantiqiy bloklarni to\'g\'ri ketma-ketlikda yig\'ing. KaTeX mantiqiy puzzle!',
     icon: Sparkles,
-    isNew: true
   },
   {
     id: 'mistake-inspector',
@@ -34,7 +63,6 @@ const ALL_GAMES: GameItem[] = [
     title: 'Detektiv: Xatoni Top',
     description: 'Mantiqiy yechimlardan yashirin xatoni toping va uni to\'g\'ri variant bilan almashtiring.',
     icon: Search,
-    isNew: true
   },
   {
     id: 'match-master',
@@ -44,7 +72,6 @@ const ALL_GAMES: GameItem[] = [
     title: 'Juftliklar Ustasi',
     description: '3D flip kartalarni ag\'darib, mantiqan mos fan atamalari va formulalar juftligini toping.',
     icon: Grid,
-    isNew: true
   },
   {
     id: 'word-blast',
@@ -54,16 +81,6 @@ const ALL_GAMES: GameItem[] = [
     title: 'Tezkor Atamalar Shot',
     description: 'Atamalarni tezlik bilan to\'g\'ri kategoriyaga yo\'naltiring. Diqqat va tezkorlik!',
     icon: Zap,
-    isNew: true
-  },
-  {
-    id: 'math-ninja',
-    route: '/games/math-ninja',
-    tag: 'Matematika',
-    category: 'math',
-    title: 'Tezkor Hisob (Math Ninja)',
-    description: 'Qisqa vaqt ichida eng ko\'p matematik misollarni yeching. Tezlik va aniqlik — g\'alaba kaliti!',
-    icon: Brain
   },
   {
     id: 'english-words',
