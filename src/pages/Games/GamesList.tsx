@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchCurrentTeacher, getToken } from '../../lib/auth';
-import { Crown, ArrowLeft, Gamepad2, Brain, Flame, BookOpen, Languages, ChevronRight, Sparkles, Search, Grid, Zap, Map, Globe, Award } from 'lucide-react';
+import { Crown, ArrowLeft, Gamepad2, Brain, Flame, BookOpen, Languages, ChevronRight, Sparkles, Search, Grid, Zap, Map, Globe, Award, Headphones } from 'lucide-react';
 import QuestLevelMap from '../../components/games/QuestLevelMap';
 
 interface GameItem {
@@ -16,6 +16,26 @@ interface GameItem {
 }
 
 const ALL_GAMES: GameItem[] = [
+  {
+    id: 'flag-quiz',
+    route: '/games/flag-quiz',
+    tag: 'REST Countries API',
+    category: 'logic',
+    title: 'Bayroqlar va Poytaxtlar Quiz 🗺️',
+    description: 'REST Countries API orqali dunyo davlatlari bayroqlari, qit\'alari va poytaxtlarini sinang!',
+    icon: Globe,
+    isNew: true
+  },
+  {
+    id: 'spelling-bee',
+    route: '/games/spelling-bee',
+    tag: 'Audio MP3 API',
+    category: 'languages',
+    title: 'Audio Spelling Bee Quest 🎧',
+    description: 'Free Dictionary Audio API bilan talaffuzni eshitib, inglizcha so\'zlarni to\'g mezon yig\'ing!',
+    icon: Headphones,
+    isNew: true
+  },
   {
     id: 'global-trivia',
     route: '/games/global-trivia',
