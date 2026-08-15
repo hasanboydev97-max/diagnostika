@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 // Mongoose Schema
 const ResultSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
+  id: { type: String, required: true, unique: true, index: true },
   pin: String,
   studentName: String,
   grade: String,
@@ -18,8 +18,8 @@ const ResultSchema = new mongoose.Schema({
 export const Result = mongoose.model('Result', ResultSchema);
 
 const OnlineTestSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  teacherId: { type: String, required: true },
+  id: { type: String, required: true, unique: true, index: true },
+  teacherId: { type: String, required: true, index: true },
   title: String,
   subject: String,
   questions: Array,
@@ -28,11 +28,14 @@ const OnlineTestSchema = new mongoose.Schema({
   durationMinutes: Number,
   createdAt: String
 }, { strict: false });
+
+OnlineTestSchema.index({ teacherId: 1, createdAt: -1 });
+
 export const OnlineTest = mongoose.model('OnlineTest', OnlineTestSchema);
 
 const OnlineTestResultSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  testId: String,
+  id: { type: String, required: true, unique: true, index: true },
+  testId: { type: String, index: true },
   studentName: String,
   answers: Object,
   score: Number,
@@ -40,12 +43,15 @@ const OnlineTestResultSchema = new mongoose.Schema({
   aiFeedback: String,
   createdAt: String
 }, { strict: false });
+
+OnlineTestResultSchema.index({ testId: 1, createdAt: -1 });
+
 export const OnlineTestResult = mongoose.model('OnlineTestResult', OnlineTestResultSchema);
 
 // Teacher Schema for Auth
 const TeacherSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true, index: true },
   password: { type: String, required: true },
   subject: { type: String, required: true },
   role: { type: String, enum: ['teacher', 'admin'], default: 'teacher' },
@@ -61,4 +67,6 @@ const TeacherSchema = new mongoose.Schema({
   avatar: { type: String, default: '' },
   phone: { type: String, default: '' }
 }, { timestamps: true });
+
 export const Teacher = mongoose.model('Teacher', TeacherSchema);
+

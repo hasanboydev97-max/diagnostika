@@ -4,23 +4,32 @@ import { Teacher } from '../models/index.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'maktab-test-super-secret-key';
+const getJwtSecret = () => {
+  return process.env.JWT_SECRET || 'hb-diagnostika-secure-jwt-key-2026-production';
+};
 
 export const register = async (req, res) => {
   try {
     const { name, password, subject } = req.body;
     const email = req.body.email?.toLowerCase().trim();
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Barcha maydonlarni to\'ldiring.' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Parol kamida 6 ta belgidan iborat bo\'lishi kerak.' });
+    }
     
-    const existing = await Teacher.findOne({ email });
+    const existing = await Teacher.findOne({ email: new RegExp(`^${email}$`, 'i') });
     if (existing) return res.status(400).json({ error: 'Ushbu email allaqachon ro\'yxatdan o\'tgan.' });
     
     const hashedPassword = await bcrypt.hash(password, 10);
-    // Hardcoded logic: Make admin@maktab.uz an admin automatically
-    const role = email === 'admin@maktab.uz' ? 'admin' : 'teacher';
+    const role = 'teacher';
     const teacher = new Teacher({ name, email, password: hashedPassword, subject, role, plan: 'free', planStatus: 'active' });
     await teacher.save();
     
-    const token = jwt.sign({ id: teacher._id, role: teacher.role }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: teacher._id, role: teacher.role }, getJwtSecret(), { expiresIn: '7d' });
     res.status(201).json({ token, teacher: { id: teacher._id, name, email, subject, role: teacher.role, plan: teacher.plan, planStatus: teacher.planStatus, avatar: teacher.avatar } });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -30,19 +39,20 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { password } = req.body;
-    // Tizimda allaqachon katta harf bilan saqlangan (Admin@...) akkauntlarga kiritish uchun
-    // login paytida toLowerCase() qilinmaydi.
-    const email = req.body.email?.trim();
+    const rawEmail = req.body.email?.trim();
+
+    if (!rawEmail || !password) {
+      return res.status(400).json({ error: 'Email va parolni kiriting.' });
+    }
     
-    // Agar foydalanuvchi "Admin@maktab.uz" va "admin@maktab.uz" qilib 2 ta ochgan bo'lsa, 
-    // u qanday harf bilan yozsa, o'sha akkauntiga kiradi.
-    const teacher = await Teacher.findOne({ email });
+    // Case-insensitive lookup so accounts created with uppercase or lowercase emails match reliably
+    const teacher = await Teacher.findOne({ email: new RegExp(`^${rawEmail}$`, 'i') });
     if (!teacher) return res.status(400).json({ error: 'Email yoki parol xato.' });
     
     const isMatch = await bcrypt.compare(password, teacher.password);
     if (!isMatch) return res.status(400).json({ error: 'Email yoki parol xato.' });
     
-    const token = jwt.sign({ id: teacher._id, role: teacher.role || 'teacher' }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: teacher._id, role: teacher.role || 'teacher' }, getJwtSecret(), { expiresIn: '7d' });
     res.json({ token, teacher: { id: teacher._id, name: teacher.name, email: teacher.email, subject: teacher.subject, role: teacher.role || 'teacher', plan: teacher.plan || 'free', planStatus: teacher.planStatus || 'active', requestedPlan: teacher.requestedPlan, paymentNote: teacher.paymentNote, planExpiresAt: teacher.planExpiresAt, avatar: teacher.avatar } });
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -39,8 +39,17 @@ if (process.env.CLOUDINARY_CLOUD_NAME) {
   });
 }
 
-const upload = multer({ dest: 'uploads/' });
-
+const upload = multer({
+  dest: 'uploads/',
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf' || file.mimetype.includes('word')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Faqat rasm, PDF yoki Word fayllarini yuklash mumkin.'));
+    }
+  }
+});
 
 // Connect to MongoDB
 if (MONGODB_URI) {
@@ -65,7 +74,8 @@ app.get('/api/ping', (req, res) => {
 
 app.get('/api/results', async (req, res) => {
   try {
-    const results = await Result.find().sort({ _id: -1 });
+    const limit = parseInt(req.query.limit) || 100;
+    const results = await Result.find().sort({ _id: -1 }).limit(limit).lean();
     res.json(results);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -74,7 +84,7 @@ app.get('/api/results', async (req, res) => {
 
 app.get('/api/results/:id', async (req, res) => {
   try {
-    const result = await Result.findOne({ id: req.params.id });
+    const result = await Result.findOne({ id: req.params.id }).lean();
     if (!result) return res.status(404).json({ error: 'Not found' });
     res.json(result);
   } catch (error) {
@@ -94,17 +104,28 @@ app.post('/api/results', async (req, res) => {
 
 app.post('/api/upload', upload.single('file'), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    if (!req.file) return res.status(400).json({ error: 'Fayl yuklanmadi' });
     
+    if (!process.env.CLOUDINARY_CLOUD_NAME) {
+      return res.status(500).json({ error: 'Cloudinary sozlamalari mavjud emas' });
+    }
+
     const result = await cloudinary.uploader.upload(req.file.path, {
       folder: 'maktab-diagnostika'
     });
     
-    fs.unlinkSync(req.file.path);
     res.json({ url: result.secure_url });
   } catch (error) {
     console.error('Upload Error:', error);
     res.status(500).json({ error: error.message });
+  } finally {
+    if (req.file && fs.existsSync(req.file.path)) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (err) {
+        console.error('File cleanup error:', err);
+      }
+    }
   }
 });
 

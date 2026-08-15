@@ -92,7 +92,7 @@ export const setupSockets = (httpServer) => {
 
     socket.on('end_game', ({ pin }) => {
       const room = liveRooms.get(pin);
-      if (!room) return;
+      if (!room || room.hostId !== socket.id) return;
       io.to(pin).emit('game_ended', { players: room.players });
       liveRooms.delete(pin);
     });
