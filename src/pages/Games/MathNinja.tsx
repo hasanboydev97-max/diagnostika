@@ -1,119 +1,108 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Trophy, Clock, X, Check, Flame, Zap, Heart, Sparkles, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Trophy, Clock, X, Check, Flame, Heart, RefreshCw, Star, Lock, Play, Volume2, VolumeX } from 'lucide-react';
 import { toast } from 'sonner';
 import MeshGradient from '../../components/ui/MeshGradient';
 import confetti from 'canvas-confetti';
+import { gameSound } from '../../utils/gameSound';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-const GAME_ID  = 'math-ninja';
-const GAME_DURATION = 60;
-
-interface GameRecord {
-  _id: string;
-  playerName: string;
-  score: number;
-  createdAt: string;
+interface GameStage {
+  level: number;
+  name: string;
+  targetQuestions: number;
+  durationSeconds: number;
+  maxOperand: number;
+  operators: string[];
 }
+
+const STAGES_CONFIG: GameStage[] = [
+  { level: 1, name: "1-Bosqich: Boshlang'ich Ninja", targetQuestions: 5, durationSeconds: 45, maxOperand: 10, operators: ['+'] },
+  { level: 2, name: "2-Bosqich: Ayirish Ustasi", targetQuestions: 7, durationSeconds: 45, maxOperand: 20, operators: ['+', '-'] },
+  { level: 3, name: "3-Bosqich: Ko'paytirish Olami", targetQuestions: 8, durationSeconds: 50, maxOperand: 10, operators: ['+', '-', '×'] },
+  { level: 4, name: "4-Bosqich: Chaqqon Hisob", targetQuestions: 10, durationSeconds: 60, maxOperand: 30, operators: ['+', '-', '×'] },
+  { level: 5, name: "5-Bosqich: NINJA MASTER 🥷", targetQuestions: 12, durationSeconds: 60, maxOperand: 50, operators: ['+', '-', '×'] }
+];
 
 interface FloatingScore {
   id: number;
   text: string;
-  x: number;
-  y: number;
   color: string;
 }
 
-const MathNinja = () => {
+export const MathNinja = () => {
   const navigate = useNavigate();
-  const [gameState, setGameState] = useState<'start' | 'playing' | 'gameover'>('start');
+  const [gameState, setGameState] = useState<'stage_select' | 'playing' | 'stage_victory' | 'gameover'>('stage_select');
   const [playerName, setPlayerName] = useState('');
+  const [currentStageLevel, setCurrentStageLevel] = useState<number>(1);
+  const [unlockedStageLevel, setUnlockedStageLevel] = useState<number>(1);
+  const [stageStars, setStageStars] = useState<Record<number, number>>({});
+  
   const [score, setScore]           = useState(0);
-  const [timeLeft, setTimeLeft]     = useState(GAME_DURATION);
+  const [questionCount, setQuestionCount] = useState(0);
+  const [timeLeft, setTimeLeft]     = useState(45);
   const [lives, setLives]           = useState(3);
   const [combo, setCombo]           = useState(0);
-  const [leaderboard, setLeaderboard] = useState<GameRecord[]>([]);
   const [feedback, setFeedback]     = useState<'correct' | 'wrong' | null>(null);
   const [clickedOption, setClickedOption] = useState<number | null>(null);
   const [options, setOptions]       = useState<number[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState({ text: '', answer: 0 });
-  const [saving, setSaving]         = useState(false);
   const [floatingScores, setFloatingScores] = useState<FloatingScore[]>([]);
+  const [mascotQuote, setMascotQuote] = useState("Tayyormisan? Qani ketdik! 🥷");
+  const [isMuted, setIsMuted] = useState(gameSound.getMuted());
 
-  // Refs for values needed inside interval/callbacks without stale closures
   const timerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
   const scoreRef   = useRef(0);
   const livesRef   = useRef(3);
-  const nameRef    = useRef('');
 
-  // Keep refs in sync
-  const syncScore = (v: number) => { scoreRef.current = v; setScore(v); };
-  const syncLives = (v: number) => { livesRef.current = v; setLives(v); };
-
-  const triggerFloatingText = (text: string, color: string) => {
-    const id = Date.now() + Math.random();
-    setFloatingScores(prev => [...prev, { id, text, x: Math.random() * 80 - 40, y: -20, color }]);
-    setTimeout(() => {
-      setFloatingScores(prev => prev.filter(item => item.id !== id));
-    }, 1000);
-  };
-
-  // ── Leaderboard ────────────────────────────────────────────────────────
-  const fetchLeaderboard = useCallback(async () => {
+  // Load unlocked stage progress
+  useEffect(() => {
     try {
-      const res = await fetch(`${API_URL}/games/leaderboard/${GAME_ID}`);
-      if (res.ok) setLeaderboard(await res.json());
+      const saved = localStorage.getItem('hb_math_ninja_stages');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setUnlockedStageLevel(parsed.unlockedStageLevel || 1);
+        setStageStars(parsed.stageStars || {});
+      }
     } catch (_) {}
   }, []);
 
-  useEffect(() => { fetchLeaderboard(); }, [fetchLeaderboard]);
+  const syncScore = (v: number) => { scoreRef.current = v; setScore(v); };
+  const syncLives = (v: number) => { livesRef.current = v; setLives(v); };
 
-  // ── Save score ─────────────────────────────────────────────────────────
-  const saveScore = useCallback(async (finalScore: number, name: string) => {
-    if (finalScore <= 0) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`${API_URL}/games/score`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          playerName: name.trim().toUpperCase(),
-          gameId: GAME_ID,
-          score: finalScore,
-        }),
-      });
-      if (res.ok) {
-        await fetchLeaderboard();
-      }
-    } catch (e) {
-      console.error('[MathNinja] saveScore network error:', e);
-    } finally {
-      setSaving(false);
-    }
-  }, [fetchLeaderboard]);
+  const toggleSound = () => {
+    const muted = gameSound.toggleMute();
+    setIsMuted(muted);
+  };
 
-  // ── Question generator ───────────────────────────────────
-  const generateQuestion = useCallback((currentScore: number) => {
-    const operators = ['+', '-', '×'];
-    const operator  = operators[Math.floor(Math.random() * operators.length)];
-    const level     = Math.min(Math.floor(currentScore / 50), 8);
-    const maxNum    = 10 + level * 5;
+  const triggerFloatingText = (text: string, color: string) => {
+    const id = Date.now() + Math.random();
+    setFloatingScores(prev => [...prev, { id, text, color }]);
+    setTimeout(() => {
+      setFloatingScores(prev => prev.filter(item => item.id !== id));
+    }, 900);
+  };
+
+  // Question generator based on Stage Level
+  const generateQuestion = useCallback((stageLevel: number) => {
+    const config = STAGES_CONFIG.find(s => s.level === stageLevel) || STAGES_CONFIG[0];
+    const operator = config.operators[Math.floor(Math.random() * config.operators.length)];
+    const maxNum = config.maxOperand;
 
     let a: number, b: number, answer: number;
     let attempts = 0;
     do {
       if (operator === '+') {
-        a      = Math.floor(Math.random() * maxNum) + 2;
-        b      = Math.floor(Math.random() * maxNum) + 2;
+        a = Math.floor(Math.random() * maxNum) + 2;
+        b = Math.floor(Math.random() * maxNum) + 2;
         answer = a + b;
       } else if (operator === '-') {
-        a      = Math.floor(Math.random() * maxNum) + 4;
-        b      = Math.floor(Math.random() * (a - 2)) + 1;
+        a = Math.floor(Math.random() * maxNum) + 4;
+        b = Math.floor(Math.random() * (a - 2)) + 1;
         answer = a - b;
       } else {
-        a      = Math.floor(Math.random() * 10) + 2;
-        b      = Math.floor(Math.random() * 10) + 2;
+        a = Math.floor(Math.random() * 9) + 2;
+        b = Math.floor(Math.random() * 9) + 2;
         answer = a * b;
       }
       attempts++;
@@ -121,7 +110,7 @@ const MathNinja = () => {
 
     setCurrentQuestion({ text: `${a} ${operator} ${b}`, answer });
 
-    const OFFSETS = [2, 3, 4, 5, 6, 8, 10, 12, 15];
+    const OFFSETS = [2, 3, 4, 5, 7, 8, 10, 12];
     const wrongPool = new Set<number>();
     const shuffledOffsets = [...OFFSETS].sort(() => Math.random() - 0.5);
 
@@ -139,236 +128,309 @@ const MathNinja = () => {
       fallback++;
     }
 
-    const allOptions = [answer, ...Array.from(wrongPool)]
-      .sort(() => Math.random() - 0.5);
-
+    const allOptions = [answer, ...Array.from(wrongPool)].sort(() => Math.random() - 0.5);
     setOptions(allOptions);
   }, []);
 
-  // ── Timer end ──────────────────────────────────────────────────────────
-  const endGame = useCallback((finalScore?: number, name?: string) => {
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    const s = finalScore ?? scoreRef.current;
-    const n = name     ?? nameRef.current;
+  const completeStageVictory = useCallback((stageLvl: number, finalScore: number) => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    syncScore(finalScore);
+    
+    // Calculate stars: 3 stars if 0 lives lost, 2 stars if 1 lost, 1 star if 2 lost
+    const earnedStars = Math.max(1, livesRef.current);
+    const nextUnlocked = Math.max(unlockedStageLevel, Math.min(5, stageLvl + 1));
+    
+    const newStageStars = { ...stageStars, [stageLvl]: Math.max(stageStars[stageLvl] || 0, earnedStars) };
+    setUnlockedStageLevel(nextUnlocked);
+    setStageStars(newStageStars);
+
+    try {
+      localStorage.setItem('hb_math_ninja_stages', JSON.stringify({
+        unlockedStageLevel: nextUnlocked,
+        stageStars: newStageStars
+      }));
+    } catch (_) {}
+
+    gameSound.playVictory();
+    confetti({ particleCount: 120, spread: 80, origin: { y: 0.5 } });
+    setGameState('stage_victory');
+  }, [unlockedStageLevel, stageStars]);
+
+  const endGameover = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    gameSound.playWrong();
     setGameState('gameover');
-    fetchLeaderboard();
-    saveScore(s, n);
+  }, []);
 
-    if (s > 0) {
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
-    }
-  }, [fetchLeaderboard, saveScore]);
-
-  // ── Start ──────────────────────────────────────────────────────────────
-  const startGame = useCallback(() => {
+  const startStage = useCallback((stageLvl: number) => {
     if (!playerName.trim()) {
       toast.error('Ismingizni kiriting!');
       return;
     }
-    nameRef.current = playerName;
+    const config = STAGES_CONFIG.find(s => s.level === stageLvl) || STAGES_CONFIG[0];
+    
+    setCurrentStageLevel(stageLvl);
     syncScore(0);
     syncLives(3);
+    setQuestionCount(0);
     setCombo(0);
-    setTimeLeft(GAME_DURATION);
+    setTimeLeft(config.durationSeconds);
     setFeedback(null);
     setClickedOption(null);
+    setMascotQuote("Qani harakat qil! Tezroq hisobla! ⚡");
     setGameState('playing');
-    generateQuestion(0);
+    generateQuestion(stageLvl);
 
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
+        if (prev <= 10 && prev > 1) {
+          gameSound.playTick();
+        }
         if (prev <= 1) {
-          endGame(scoreRef.current, nameRef.current);
+          endGameover();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-  }, [playerName, generateQuestion, endGame]);
+  }, [playerName, generateQuestion, endGameover]);
 
   useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
 
-  // ── Answer click ───────────────────────────────────────────────────────
   const handleOptionClick = (selected: number) => {
     if (feedback !== null) return;
     setClickedOption(selected);
+    const config = STAGES_CONFIG.find(s => s.level === currentStageLevel) || STAGES_CONFIG[0];
 
     if (selected === currentQuestion.answer) {
+      gameSound.playCorrect();
       const newCombo = combo + 1;
       const points   = 10 + (newCombo - 1) * 5;
       const newScore = scoreRef.current + points;
+      const newCount = questionCount + 1;
+      
       syncScore(newScore);
+      setQuestionCount(newCount);
       setCombo(newCombo);
       setFeedback('correct');
       triggerFloatingText(`+${points}`, '#10B981');
+      setMascotQuote(newCombo >= 3 ? "DAHSHAT! SUPER COMBO! 🔥" : "Barakalla! Davom et! ✨");
+
       setTimeout(() => {
         setFeedback(null);
         setClickedOption(null);
-        generateQuestion(newScore);
+        if (newCount >= config.targetQuestions) {
+          completeStageVictory(currentStageLevel, newScore);
+        } else {
+          generateQuestion(currentStageLevel);
+        }
       }, 350);
     } else {
+      gameSound.playWrong();
       const newLives = livesRef.current - 1;
       syncLives(newLives);
       setCombo(0);
       setFeedback('wrong');
       triggerFloatingText('-1 ❤️', '#EF4444');
+      setMascotQuote("Ehtiyot bo'l! Xato qilding 😅");
+
       setTimeout(() => {
         setFeedback(null);
         setClickedOption(null);
         if (newLives <= 0) {
-          endGame(scoreRef.current, nameRef.current);
+          endGameover();
         } else {
-          generateQuestion(scoreRef.current);
+          generateQuestion(currentStageLevel);
         }
       }, 550);
     }
   };
 
-  const timerPct = (timeLeft / GAME_DURATION) * 100;
-  const highestRecord = leaderboard.length > 0 ? leaderboard[0].score : 0;
+  const currentConfig = STAGES_CONFIG.find(s => s.level === currentStageLevel) || STAGES_CONFIG[0];
+  const timerPct = (timeLeft / currentConfig.durationSeconds) * 100;
+
+  // Vibrant Tile Colors for 3D Arcade Buttons
+  const optionColors = [
+    { bg: 'bg-[#8B5CF6]', border: 'border-[#6D28D9]', text: 'text-white' }, // Purple
+    { bg: 'bg-[#06B6D4]', border: 'border-[#0891B2]', text: 'text-white' }, // Cyan
+    { bg: 'bg-[#F59E0B]', border: 'border-[#D97706]', text: 'text-white' }, // Amber
+    { bg: 'bg-[#10B981]', border: 'border-[#059669]', text: 'text-white' }, // Emerald
+  ];
 
   return (
-    <div className="min-h-screen text-[#111111] flex flex-col font-sans selection:bg-indigo-600 selection:text-white relative overflow-hidden bg-[#fafafa]">
+    <div className="min-h-screen text-slate-900 flex flex-col font-sans selection:bg-indigo-600 selection:text-white relative overflow-hidden bg-[#0F172A]">
       <MeshGradient />
       
-      {/* Grid Pattern Overlay */}
-      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none mix-blend-overlay" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='30' height='30' viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h30v30H0z' fill='none'/%3E%3Cpath d='M30 0H0v1h30V0zM0 30V0h1v30H0z' fill='%23000000' fill-opacity='0.05'/%3E%3C/svg%3E")` }}></div>
-
-      {/* Header HUD */}
-      <header className="relative z-20 flex justify-between items-center px-4 md:px-8 py-4 border-b border-white/60 bg-white/70 backdrop-blur-xl shadow-xs">
+      {/* Dynamic Header */}
+      <header className="relative z-20 flex justify-between items-center px-4 md:px-8 py-4 border-b border-white/10 bg-slate-900/80 backdrop-blur-xl shadow-lg">
         <button
           onClick={() => navigate('/games')}
-          className="h-10 px-3.5 bg-white border border-neutral-200/80 text-neutral-700 rounded-xl flex items-center gap-2 hover:bg-neutral-100 hover:text-black transition-all shadow-xs font-semibold text-xs uppercase tracking-wider"
+          className="h-11 px-4 bg-white/10 border border-white/20 text-white rounded-2xl flex items-center gap-2 hover:bg-white/20 transition-all font-bold text-xs uppercase tracking-wider"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">Chiqish</span>
+          <span>PORTAL</span>
         </button>
 
         <div className="flex items-center gap-3">
-          <div className="bg-amber-500/10 border border-amber-500/20 px-3.5 py-1.5 rounded-xl font-bold text-xs uppercase tracking-wider text-amber-900 flex items-center gap-1.5 shadow-2xs">
-            <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />
-            <span>{score} BALL</span>
-          </div>
+          <button
+            onClick={toggleSound}
+            className="w-11 h-11 bg-white/10 border border-white/20 text-white rounded-2xl flex items-center justify-center hover:bg-white/20 transition-all"
+            title="Ovozni yoqish/o'chirish"
+          >
+            {isMuted ? <VolumeX className="w-5 h-5 text-rose-400" /> : <Volume2 className="w-5 h-5 text-emerald-400" />}
+          </button>
+          {gameState === 'playing' && (
+            <div className="bg-amber-400 text-slate-950 px-4 py-2 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg shadow-amber-400/20 border-2 border-white">
+              <Trophy className="w-4 h-4 fill-slate-950" />
+              <span>{score} BALL</span>
+            </div>
+          )}
         </div>
       </header>
 
-      {/* Main Container */}
-      <div className="flex flex-col items-center justify-center flex-1 w-full max-w-3xl mx-auto p-4 md:p-6 relative z-10">
+      {/* Main Game Container */}
+      <div className="flex flex-col items-center justify-center flex-1 w-full max-w-4xl mx-auto p-4 md:p-6 relative z-10">
         <AnimatePresence mode="wait">
-          {/* START */}
-          {gameState === 'start' && (
-            <motion.div key="start"
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 1.02 }}
-              className="w-full max-w-md bg-white/70 backdrop-blur-xl border border-white/60 rounded-3xl p-8 md:p-10 shadow-[0_15px_35px_rgba(0,0,0,0.04)] flex flex-col items-center text-center font-sans relative"
+          {/* 1. STAGE SELECTION MAP MODAL */}
+          {gameState === 'stage_select' && (
+            <motion.div key="stage_select"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              className="w-full max-w-2xl bg-slate-900/90 backdrop-blur-2xl border-2 border-indigo-500/40 rounded-3xl p-6 md:p-10 shadow-2xl text-white font-sans relative overflow-hidden"
             >
-              <div className="w-20 h-20 bg-gradient-to-tr from-indigo-600 to-indigo-800 text-white rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-indigo-600/30">
-                <Zap className="w-10 h-10 text-white" strokeWidth={2} />
+              <div className="text-center mb-8">
+                <div className="w-20 h-20 bg-gradient-to-tr from-amber-400 to-yellow-500 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-amber-500/30 text-4xl border-2 border-white">
+                  🥷
+                </div>
+                <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white mb-2">Math Ninja Bosqichlari</h1>
+                <p className="text-xs text-indigo-200 font-medium">Barcha bosqichlarni 3 yulduz bilan zabt eting!</p>
               </div>
 
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-neutral-900 mb-2">Tezkor Hisob Ninja</h1>
-              <p className="text-neutral-500 text-xs leading-relaxed mb-6 font-medium">
-                60 soniya vaqt. 3 ta imkoniyat. Hisoblash tezligingizni sinab ko'ring va rekord o'rnating!
-              </p>
+              {/* Name Input */}
+              <div className="mb-8 max-w-md mx-auto">
+                <label className="block text-xs font-bold uppercase tracking-wider text-amber-300 mb-2">O'quvchi Ismi:</label>
+                <input
+                  type="text"
+                  value={playerName}
+                  onChange={e => setPlayerName(e.target.value)}
+                  placeholder="Ismingizni kiriting..."
+                  className="w-full bg-slate-800/80 border-2 border-indigo-400/50 rounded-2xl px-5 py-4 text-sm font-bold text-white outline-none placeholder:text-slate-400 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/20 transition-all"
+                />
+              </div>
 
-              {highestRecord > 0 && (
-                <div className="bg-amber-500/10 border border-amber-500/20 text-amber-900 font-bold px-4 py-2 rounded-xl mb-6 flex items-center gap-2 text-xs uppercase tracking-wider">
-                  <Trophy className="w-4 h-4 fill-amber-500 text-amber-500" /> REKORD: {highestRecord} BALL
-                </div>
-              )}
+              {/* Stages List */}
+              <div className="space-y-4 mb-6">
+                {STAGES_CONFIG.map((stage) => {
+                  const isUnlocked = stage.level <= unlockedStageLevel;
+                  const stars = stageStars[stage.level] || 0;
 
-              <div className="w-full space-y-4">
-                <div>
-                  <input
-                    type="text"
-                    value={playerName}
-                    onChange={e => setPlayerName(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && startGame()}
-                    placeholder="Ismingizni kiriting..."
-                    autoFocus
-                    className="w-full bg-white/80 border border-neutral-200/90 rounded-xl px-4 py-3.5 text-sm font-semibold text-neutral-900 outline-none placeholder:text-neutral-400 focus:bg-white focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition-all shadow-xs"
-                  />
-                </div>
-                <button
-                  onClick={startGame}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider py-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-600/25 active:scale-[0.98] border-b-4 border-indigo-800 active:border-b-0 cursor-pointer"
-                >
-                  <Sparkles className="w-4 h-4" /> O'yinni Boshlash
-                </button>
+                  return (
+                    <div
+                      key={stage.level}
+                      className={`p-5 rounded-2xl border-2 transition-all flex items-center justify-between gap-4 ${
+                        isUnlocked
+                          ? 'bg-indigo-950/60 border-indigo-400/60 hover:border-amber-400 shadow-lg'
+                          : 'bg-slate-900/40 border-slate-800 opacity-60'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg ${
+                          isUnlocked ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/30' : 'bg-slate-800 text-slate-500'
+                        }`}>
+                          {isUnlocked ? stage.level : <Lock className="w-5 h-5" />}
+                        </div>
+                        <div>
+                          <h3 className="font-extrabold text-sm text-white">{stage.name}</h3>
+                          <p className="text-xs text-indigo-200 mt-0.5">{stage.targetQuestions} ta misol • {stage.durationSeconds}s vaqt</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        {/* Stars */}
+                        {isUnlocked && (
+                          <div className="flex gap-1 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-white/10">
+                            {[1, 2, 3].map(starIdx => (
+                              <Star
+                                key={starIdx}
+                                className={`w-4 h-4 ${starIdx <= stars ? 'text-amber-400 fill-amber-400' : 'text-slate-700 fill-slate-700'}`}
+                              />
+                            ))}
+                          </div>
+                        )}
+
+                        <button
+                          disabled={!isUnlocked}
+                          onClick={() => startStage(stage.level)}
+                          className={`px-5 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 border-b-4 ${
+                            isUnlocked
+                              ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 border-emerald-700 active:border-b-0 active:translate-y-1 cursor-pointer shadow-lg shadow-emerald-500/20'
+                              : 'bg-slate-800 text-slate-600 border-slate-900 cursor-not-allowed'
+                          }`}
+                        >
+                          <Play className="w-4 h-4 fill-slate-950" /> O'ynash
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </motion.div>
           )}
 
-          {/* PLAYING */}
+          {/* 2. PLAYING ARENA (KIDS CARTOON / ARCADE UI) */}
           {gameState === 'playing' && (
             <motion.div key="playing"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="w-full flex flex-col items-center justify-between py-2 max-w-2xl"
+              className="w-full flex flex-col items-center justify-between max-w-2xl"
             >
-              {/* Floating scores animation */}
-              <div className="relative w-full pointer-events-none">
-                {floatingScores.map(item => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 1, y: 0, scale: 0.8 }}
-                    animate={{ opacity: 0, y: -50, scale: 1.4 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="absolute font-black text-2xl z-30 pointer-events-none left-1/2 -translate-x-1/2 drop-shadow-md"
-                    style={{ color: item.color }}
-                  >
-                    {item.text}
-                  </motion.div>
-                ))}
+              {/* Animated Mascot Corner */}
+              <div className="w-full flex items-center gap-3 mb-4 bg-slate-900/80 backdrop-blur-xl border border-white/15 p-3 rounded-2xl shadow-lg">
+                <motion.div 
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ repeat: Infinity, duration: 1.5 }}
+                  className="w-12 h-12 bg-gradient-to-tr from-amber-400 to-yellow-500 rounded-2xl flex items-center justify-center text-2xl shadow-md border border-white"
+                >
+                  🥷
+                </motion.div>
+                <div className="bg-indigo-600/30 border border-indigo-400/40 px-4 py-2 rounded-xl text-xs font-bold text-amber-300">
+                  {mascotQuote}
+                </div>
               </div>
 
               {/* Stats Bar */}
-              <div className="w-full mb-6">
-                <div className="bg-white/70 backdrop-blur-xl border border-white/60 rounded-2xl p-4 flex justify-between items-center shadow-xs mb-3">
+              <div className="w-full mb-4">
+                <div className="bg-slate-900/90 backdrop-blur-xl border-2 border-indigo-500/40 rounded-2xl p-4 flex justify-between items-center shadow-xl mb-3">
                   <div className="flex gap-4 items-center">
-                    <div className="font-extrabold uppercase tracking-wider text-xs text-neutral-800 flex items-center gap-2 bg-neutral-100 px-3 py-1.5 rounded-lg">
-                      <Clock className="w-4 h-4 text-indigo-600 animate-spin" style={{ animationDuration: '4s' }} /> {timeLeft}S
+                    <div className="font-black uppercase tracking-wider text-xs text-amber-300 flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-white/10">
+                      <Clock className="w-4 h-4 text-indigo-400 animate-spin" style={{ animationDuration: '4s' }} /> {timeLeft}S
                     </div>
                     <div className="flex gap-1.5">
                       {[...Array(3)].map((_, i) => (
-                        <motion.div 
-                          key={i}
-                          animate={i < lives ? { scale: [1, 1.2, 1] } : { scale: 1 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <Heart className={`w-5 h-5 transition-all ${i < lives ? 'fill-rose-500 text-rose-500 drop-shadow-xs' : 'fill-neutral-200 text-neutral-300'}`} />
-                        </motion.div>
+                        <Heart key={i} className={`w-5 h-5 transition-all ${i < lives ? 'fill-rose-500 text-rose-500 drop-shadow-md' : 'fill-slate-700 text-slate-800'}`} />
                       ))}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <AnimatePresence>
-                      {combo >= 2 && (
-                        <motion.div 
-                          initial={{ scale: 0, rotate: -10 }} 
-                          animate={{ scale: 1, rotate: 0 }} 
-                          exit={{ scale: 0 }}
-                          className="font-black uppercase tracking-wider text-[10px] text-amber-700 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full flex items-center gap-1 shadow-2xs"
-                        >
-                          <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500 animate-bounce" /> {combo}x COMBO
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                    <span className="text-xs font-black text-indigo-200 uppercase tracking-wider bg-indigo-950 px-3 py-1 rounded-xl border border-indigo-800">
+                      {questionCount} / {currentConfig.targetQuestions} MISOL
+                    </span>
+                    {combo >= 2 && (
+                      <span className="font-black text-xs text-amber-900 bg-amber-400 border border-amber-300 px-3 py-1 rounded-full flex items-center gap-1 shadow-md">
+                        <Flame className="w-4 h-4 fill-amber-900" /> {combo}x COMBO
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                {/* Animated Progress Bar */}
-                <div className="w-full h-2.5 rounded-full border border-white/80 bg-neutral-200/60 overflow-hidden shadow-inner p-[1px]">
+                {/* Timer Bar */}
+                <div className="w-full h-3 rounded-full border-2 border-white/20 bg-slate-950 overflow-hidden shadow-inner p-[1px]">
                   <motion.div
                     className={`h-full rounded-full transition-all duration-300 ${
-                      timeLeft <= 10 ? 'bg-rose-500' : timeLeft <= 25 ? 'bg-amber-500' : 'bg-indigo-600'
+                      timeLeft <= 10 ? 'bg-rose-500' : timeLeft <= 20 ? 'bg-amber-500' : 'bg-emerald-400'
                     }`}
                     initial={{ width: '100%' }}
                     animate={{ width: `${timerPct}%` }}
@@ -377,21 +439,37 @@ const MathNinja = () => {
                 </div>
               </div>
 
-              {/* Question Card */}
+              {/* Floating score text */}
+              <div className="relative w-full pointer-events-none">
+                {floatingScores.map(item => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 1, y: 0, scale: 0.8 }}
+                    animate={{ opacity: 0, y: -60, scale: 1.5 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className="absolute font-black text-3xl z-30 pointer-events-none left-1/2 -translate-x-1/2 drop-shadow-lg"
+                    style={{ color: item.color }}
+                  >
+                    {item.text}
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Vibrant Question Card */}
               <motion.div
-                animate={feedback === 'wrong' ? { x: [-12, 12, -12, 12, 0] } : {}}
+                animate={feedback === 'wrong' ? { x: [-14, 14, -14, 14, 0] } : {}}
                 transition={{ duration: 0.3 }}
-                className={`w-full bg-white/70 backdrop-blur-xl rounded-3xl p-8 md:p-12 mb-6 flex items-center justify-center border shadow-xs relative overflow-hidden transition-all duration-200 min-h-[200px]
-                  ${feedback === 'correct' ? 'border-emerald-500 bg-emerald-500/10 shadow-lg shadow-emerald-500/10' : feedback === 'wrong' ? 'border-rose-500 bg-rose-500/10 shadow-lg shadow-rose-500/10' : 'border-white/60'}`}
+                className={`w-full bg-slate-900/90 backdrop-blur-2xl rounded-3xl p-8 md:p-12 mb-6 flex items-center justify-center border-4 shadow-2xl relative overflow-hidden transition-all duration-200 min-h-[220px]
+                  ${feedback === 'correct' ? 'border-emerald-400 bg-emerald-950/40 shadow-emerald-500/20' : feedback === 'wrong' ? 'border-rose-500 bg-rose-950/40 shadow-rose-500/20' : 'border-amber-400/80'}`}
               >
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentQuestion.text}
-                    initial={{ scale: 0.85, opacity: 0, y: 10 }}
+                    initial={{ scale: 0.8, opacity: 0, y: 15 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
-                    exit={{ scale: 1.1, opacity: 0 }}
-                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-                    className="font-sans font-black text-5xl md:text-7xl text-neutral-900 z-10 tracking-tight"
+                    exit={{ scale: 1.15, opacity: 0 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                    className="font-sans font-black text-6xl md:text-8xl text-amber-300 z-10 tracking-wider drop-shadow-[0_5px_15px_rgba(245,158,11,0.4)]"
                   >
                     {currentQuestion.text}
                   </motion.div>
@@ -399,21 +477,22 @@ const MathNinja = () => {
 
                 <AnimatePresence>
                   {feedback === 'correct' && (
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 1.5, opacity: 0 }} className="absolute text-emerald-500/15">
-                      <Check className="w-48 h-48" strokeWidth={3} />
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 1.5, opacity: 0 }} className="absolute text-emerald-400/20">
+                      <Check className="w-56 h-56" strokeWidth={3} />
                     </motion.div>
                   )}
                   {feedback === 'wrong' && (
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 1.5, opacity: 0 }} className="absolute text-rose-500/15">
-                      <X className="w-48 h-48" strokeWidth={3} />
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 1.5, opacity: 0 }} className="absolute text-rose-500/20">
+                      <X className="w-56 h-56" strokeWidth={3} />
                     </motion.div>
                   )}
                 </AnimatePresence>
               </motion.div>
 
-              {/* 3D Action Choice Tiles */}
+              {/* 4 Vibrant 3D Color Option Buttons */}
               <div className="grid grid-cols-2 gap-4 w-full">
                 {options.map((opt, idx) => {
+                  const colorScheme = optionColors[idx % optionColors.length];
                   const isClicked = clickedOption === opt;
                   const isCorrectAnswer = feedback !== null && opt === currentQuestion.answer;
                   const isWrongAnswer = feedback === 'wrong' && isClicked;
@@ -424,12 +503,12 @@ const MathNinja = () => {
                       disabled={feedback !== null}
                       onClick={() => handleOptionClick(opt)}
                       className={`
-                        w-full py-6 md:py-8 rounded-2xl text-3xl md:text-4xl font-extrabold font-sans transition-all duration-150 border-b-4 cursor-pointer relative overflow-hidden select-none active:border-b-0 active:translate-y-1 ${
+                        w-full py-7 md:py-9 rounded-3xl text-3xl md:text-5xl font-black font-sans transition-all duration-150 border-b-8 cursor-pointer relative overflow-hidden select-none active:border-b-0 active:translate-y-2 shadow-2xl ${
                           isCorrectAnswer
-                            ? 'bg-emerald-500 text-white border-emerald-700 shadow-lg shadow-emerald-500/30'
+                            ? 'bg-emerald-500 text-slate-950 border-emerald-700 shadow-emerald-500/40'
                             : isWrongAnswer
-                            ? 'bg-rose-500 text-white border-rose-700 shadow-lg shadow-rose-500/30'
-                            : 'bg-white text-neutral-900 border-neutral-200/90 hover:border-indigo-500 hover:bg-indigo-50/50 shadow-xs'
+                            ? 'bg-rose-500 text-white border-rose-700 shadow-rose-500/40'
+                            : `${colorScheme.bg} ${colorScheme.text} ${colorScheme.border} hover:brightness-110`
                         }
                       `}
                     >
@@ -441,77 +520,80 @@ const MathNinja = () => {
             </motion.div>
           )}
 
-          {/* GAME OVER */}
-          {gameState === 'gameover' && (
-            <motion.div key="gameover"
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              className="w-full max-w-md flex flex-col items-center font-sans"
+          {/* 3. STAGE VICTORY MODAL */}
+          {gameState === 'stage_victory' && (
+            <motion.div key="stage_victory"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="w-full max-w-md bg-slate-900/95 backdrop-blur-2xl border-4 border-amber-400 rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center font-sans text-white relative overflow-hidden"
             >
-              <div className="bg-white/70 backdrop-blur-xl rounded-3xl p-8 md:p-10 w-full border border-white/60 shadow-[0_15px_35px_rgba(0,0,0,0.04)] flex flex-col items-center text-center mb-6 relative overflow-hidden">
-                <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-neutral-900 mb-1">
-                  {lives <= 0 ? 'O\'yin Tugadi!' : 'Vaqt Tugadi!'}
-                </h2>
-                <p className="text-xs text-neutral-500 mb-6 font-medium">Ajoyib o'yin, natijangiz bilan tanishing</p>
-                
-                <div className="w-full bg-indigo-600/10 rounded-2xl py-6 mb-6 border border-indigo-600/20 flex flex-col items-center relative">
-                  {score > highestRecord && score > 0 && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white px-3.5 py-0.5 rounded-full font-bold uppercase tracking-wider text-[10px] shadow-sm">
-                      Yangi Rekord 🏆
-                    </div>
-                  )}
-                  <div className="text-4xl md:text-5xl font-black text-indigo-600 leading-none flex items-center justify-center">
-                    {score} <span className="text-xs text-neutral-500 font-bold ml-2 uppercase tracking-wider">ball</span>
-                  </div>
-                  {saving && (
-                    <div className="mt-3 text-xs font-semibold text-neutral-500 flex items-center justify-center gap-2">
-                      <div className="w-3.5 h-3.5 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
-                      Saqlanmoqda...
-                    </div>
-                  )}
-                </div>
+              <div className="w-24 h-24 bg-gradient-to-tr from-amber-400 to-yellow-500 rounded-3xl flex items-center justify-center text-5xl mb-4 shadow-xl shadow-amber-400/30 border-2 border-white">
+                🏆
+              </div>
+              
+              <h2 className="text-3xl font-black text-amber-300 mb-1">BOSQICH FATH ETILDI!</h2>
+              <p className="text-xs text-indigo-200 mb-6 font-bold">{currentConfig.name} muvaffaqiyatli yakunlandi!</p>
 
-                <div className="flex flex-col sm:flex-row gap-3 w-full">
-                  <button 
-                    onClick={startGame}
-                    className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider py-4 rounded-xl transition-all shadow-lg shadow-indigo-600/25 border-b-4 border-indigo-800 active:border-b-0 active:translate-y-1 cursor-pointer flex items-center justify-center gap-2"
-                  >
-                    <RefreshCw className="w-4 h-4" /> Qayta O'ynash
-                  </button>
-                  <button 
-                    onClick={() => navigate('/games')}
-                    className="flex-1 bg-white border border-neutral-200/90 text-neutral-800 font-bold text-xs uppercase tracking-wider py-4 rounded-xl transition-all hover:bg-neutral-100 shadow-xs border-b-4 border-neutral-300 active:border-b-0 active:translate-y-1 cursor-pointer"
-                  >
-                    Chiqish
-                  </button>
-                </div>
+              {/* Stars Earned */}
+              <div className="flex gap-2 mb-6 bg-slate-950/80 px-6 py-3 rounded-2xl border border-white/10">
+                {[1, 2, 3].map(starIdx => (
+                  <Star
+                    key={starIdx}
+                    className={`w-8 h-8 ${starIdx <= Math.max(1, lives) ? 'text-amber-400 fill-amber-400 animate-bounce' : 'text-slate-700 fill-slate-700'}`}
+                    style={{ animationDelay: `${starIdx * 0.15}s` }}
+                  />
+                ))}
               </div>
 
-              {/* Leaderboard */}
-              <div className="w-full bg-white/70 backdrop-blur-xl rounded-3xl p-6 border border-white/60 shadow-xs">
-                <h3 className="font-extrabold text-xs uppercase tracking-wider text-neutral-900 mb-4 flex items-center gap-2">
-                  <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />
-                  Top Rekordlar
-                </h3>
-                <div className="space-y-2">
-                  {leaderboard.length === 0 && (
-                    <p className="text-center font-medium text-xs text-neutral-400 py-4">Hali rekordlar yo'q. Birinchi bo'ling!</p>
-                  )}
-                  {leaderboard.slice(0, 5).map((record, idx) => {
-                    const isMe = record.playerName === playerName.trim().toUpperCase() && record.score === score;
-                    return (
-                      <div key={record._id} className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-colors ${isMe ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs' : 'bg-white/80 text-neutral-800 border-neutral-200/60'}`}>
-                        <div className="flex items-center gap-3">
-                          <div className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center ${isMe ? 'bg-white/20 text-white' : 'bg-neutral-200/80 text-neutral-700'}`}>
-                            {idx + 1}
-                          </div>
-                          <span className="font-semibold text-xs">{record.playerName.toLowerCase()}</span>
-                        </div>
-                        <span className="font-bold text-sm">{record.score} ball</span>
-                      </div>
-                    );
-                  })}
-                </div>
+              <div className="w-full bg-indigo-950/80 rounded-2xl py-4 mb-6 border border-indigo-400/40">
+                <div className="text-3xl font-black text-white">{score} <span className="text-xs text-amber-400">BALL</span></div>
+              </div>
+
+              <div className="flex flex-col gap-3 w-full">
+                {currentStageLevel < 5 && (
+                  <button
+                    onClick={() => startStage(currentStageLevel + 1)}
+                    className="w-full bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-black text-xs uppercase tracking-wider py-4 rounded-2xl shadow-xl shadow-emerald-500/30 border-b-4 border-emerald-700 active:border-b-0 active:translate-y-1 cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <span>KEYINGI BOSQICH ➔</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setGameState('stage_select')}
+                  className="w-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider py-4 rounded-2xl border border-white/20 cursor-pointer"
+                >
+                  Bosqichlar Xaritasiga Qaytish
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* 4. GAMEOVER MODAL */}
+          {gameState === 'gameover' && (
+            <motion.div key="gameover"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="w-full max-w-md bg-slate-900/95 backdrop-blur-2xl border-4 border-rose-500 rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center font-sans text-white"
+            >
+              <div className="w-20 h-20 bg-rose-500/20 border-2 border-rose-500 text-rose-400 rounded-3xl flex items-center justify-center text-4xl mb-4">
+                💔
+              </div>
+              <h2 className="text-2xl font-black text-white mb-1">Vaqt yoki Jon Tugadi!</h2>
+              <p className="text-xs text-slate-400 mb-6">Yana bir bor harakat qilib ko'ring!</p>
+
+              <div className="flex flex-col gap-3 w-full">
+                <button
+                  onClick={() => startStage(currentStageLevel)}
+                  className="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs uppercase tracking-wider py-4 rounded-2xl shadow-xl shadow-amber-400/20 border-b-4 border-amber-600 active:border-b-0 active:translate-y-1 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" /> Qayta Urinish
+                </button>
+                <button
+                  onClick={() => setGameState('stage_select')}
+                  className="w-full bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider py-4 rounded-2xl border border-white/20 cursor-pointer"
+                >
+                  Bosqichlar Xaritasi
+                </button>
               </div>
             </motion.div>
           )}
@@ -522,4 +604,5 @@ const MathNinja = () => {
 };
 
 export default MathNinja;
+
 
