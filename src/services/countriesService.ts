@@ -1,5 +1,4 @@
-// ── REST Countries API Service ──────────────────────────────────────────────
-// Fetches real-time flags, capitals, continents, and country data
+// ── REST Countries API Service with Uzbek Localization ────────────────────
 
 export interface CountryQuizItem {
   id: string;
@@ -9,6 +8,33 @@ export interface CountryQuizItem {
   region: string;
   options: string[];
 }
+
+const COUNTRY_NAME_UZ: Record<string, string> = {
+  'Uzbekistan': 'O\'zbekiston',
+  'United Kingdom': 'Buyuk Britaniya',
+  'United States': 'AQSH',
+  'Japan': 'Yaponiya',
+  'Germany': 'Germaniya',
+  'France': 'Fransiya',
+  'Italy': 'Italiya',
+  'Spain': 'Ispaniya',
+  'China': 'Xitoy',
+  'Russia': 'Rossiya',
+  'Turkey': 'Turkiya',
+  'Egypt': 'Misr',
+  'South Korea': 'Janubiy Koreya',
+  'India': 'Hindiston',
+  'Brazil': 'Braziliya',
+  'Canada': 'Kanada',
+};
+
+const REGION_UZ: Record<string, string> = {
+  'Asia': 'Osiyo',
+  'Europe': 'Yevropa',
+  'Africa': 'Afrika',
+  'Americas': 'Amerika',
+  'Oceania': 'Okeaniya',
+};
 
 export async function fetchCountriesQuizData(count: number = 10): Promise<CountryQuizItem[]> {
   try {
@@ -22,9 +48,11 @@ export async function fetchCountriesQuizData(count: number = 10): Promise<Countr
     const shuffled = validCountries.sort(() => Math.random() - 0.5).slice(0, count);
 
     return shuffled.map((country: any, idx: number) => {
-      const countryName = country.name.common;
+      const rawName = country.name.common;
+      const countryName = COUNTRY_NAME_UZ[rawName] || rawName;
       const capital = country.capital[0];
       const flagSvg = country.flags.svg;
+      const region = REGION_UZ[country.region] || country.region;
 
       // Generate 3 wrong capitals
       const wrongCapitals = validCountries
@@ -40,7 +68,7 @@ export async function fetchCountriesQuizData(count: number = 10): Promise<Countr
         name: countryName,
         capital,
         flagSvg,
-        region: country.region,
+        region,
         options,
       };
     });
