@@ -22,16 +22,10 @@
 
 @layer base {
   body {
-    background-color: var(--color-background-main);
-    color: var(--color-neutral-main);
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    @apply bg-[#FDFDFD] text-[#111111] font-sans antialiased;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
-    font-weight: 600;
-    letter-spacing: -0.02em;
+    @apply font-display font-semibold tracking-tight;
   }
 }
 

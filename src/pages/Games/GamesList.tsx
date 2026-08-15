@@ -97,8 +97,8 @@ const GamesList = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white font-sans">
-        <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-none animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50/50 font-sans">
+        <div className="w-10 h-10 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -108,59 +108,60 @@ const GamesList = () => {
   const filteredGames = ALL_GAMES.filter(g => activeCategory === 'all' || g.category === activeCategory);
 
   return (
-    <div className="min-h-screen bg-white font-sans text-black selection:bg-black selection:text-white">
+    <div className="min-h-screen bg-slate-50/50 font-sans text-zinc-900 selection:bg-indigo-600 selection:text-white">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-white border-b-2 border-black">
+      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-zinc-200/80 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-4">
           <button
             onClick={() => navigate('/online-tests')}
-            className="w-10 h-10 flex items-center justify-center border-2 border-black hover:bg-black hover:text-white transition-colors text-black rounded-none"
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-zinc-100 hover:bg-indigo-50 text-zinc-700 hover:text-indigo-600 transition-colors border border-zinc-200/60 hover:border-indigo-200"
+            title="Ortga qaytish"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-white flex items-center justify-center border-2 border-black">
-              <Gamepad2 className="w-4 h-4 text-black" strokeWidth={2.5} />
+            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shadow-xs">
+              <Gamepad2 className="w-5 h-5" strokeWidth={2} />
             </div>
-            <h1 className="text-[16px] font-black text-black tracking-widest uppercase">
-              O'yinlar
+            <h1 className="text-sm font-bold text-zinc-900 tracking-wider uppercase">
+              O'yinlar Portali
             </h1>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         {!isPremium ? (
-          <div className="max-w-xl mx-auto text-center mt-12 bg-white border-2 border-black p-10 rounded-none shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <div className="w-20 h-20 bg-white text-black border-2 border-black flex items-center justify-center mx-auto mb-6">
-              <Crown className="w-10 h-10" strokeWidth={2} />
+          <div className="max-w-xl mx-auto text-center my-12 bg-white border border-amber-200/80 p-8 md:p-12 rounded-3xl shadow-xl shadow-amber-500/5">
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto mb-5 shadow-xs">
+              <Crown className="w-8 h-8" strokeWidth={2} />
             </div>
-            <h2 className="text-3xl font-black mb-4 text-black font-sans uppercase tracking-tighter">Premium obuna zarur</h2>
-            <p className="text-black text-[15px] mb-8 font-sans font-medium">
-              Ta'limiy o'yinlar modulidan foydalanish va o'quvchilaringiz darslarini qiziqarli o'yinlar bilan boyitish uchun Premium tarifiga o'ting.
+            <h2 className="text-2xl md:text-3xl font-bold mb-3 text-zinc-900 tracking-tight">Premium Obuna Zarur</h2>
+            <p className="text-zinc-600 text-sm mb-8 leading-relaxed max-w-md mx-auto">
+              Ta'limiy o'yinlar modulidan foydalanish va o'quvchilaringiz darslarini interaktiv o'yinlar bilan boyitish uchun Premium tarifiga o'ting.
             </p>
             <button
               onClick={() => navigate('/')}
-              className="bg-white text-black border-2 border-black px-8 py-3.5 font-bold text-[12px] uppercase tracking-widest hover:bg-black hover:text-white transition-colors w-full shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+              className="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs uppercase tracking-wider px-8 py-3.5 rounded-xl transition-all shadow-sm shadow-amber-500/20 w-full"
             >
-              Tarifni o'zgartirish
+              Tarifni O'zgartirish
             </button>
           </div>
         ) : (
           <div>
             {/* Title Section */}
             <div className="mb-10 max-w-2xl">
-              <h1 className="font-sans font-black uppercase tracking-tighter text-3xl md:text-5xl mb-4 text-black">
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-zinc-900 mb-3">
                 Interaktiv Ta'limiy O'yinlar
               </h1>
-              <p className="text-black text-base font-bold font-sans border-l-4 border-black pl-4">
+              <p className="text-zinc-600 text-xs md:text-sm font-medium border-l-3 border-indigo-500 pl-4 leading-relaxed">
                 Dars mazmunini teranlashtirish va o'quvchilar mantiqiy hamda tanqidiy fikrlashini rivojlantiruvchi o'yinlar ekotizimi.
               </p>
             </div>
 
             {/* Category Filter Tabs */}
-            <div className="flex items-center gap-2 mb-12 flex-wrap">
+            <div className="flex items-center gap-2.5 mb-10 flex-wrap">
               {[
                 { id: 'all', label: 'Barchasi' },
                 { id: 'math', label: 'Matematika & Fanlar' },
@@ -170,10 +171,10 @@ const GamesList = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveCategory(tab.id as any)}
-                  className={`border-2 border-black rounded-none px-4 py-2 text-[10px] uppercase font-bold tracking-widest transition-colors ${
+                  className={`rounded-xl px-4 py-2.5 text-xs font-semibold tracking-wider transition-all ${
                     activeCategory === tab.id
-                      ? 'bg-black text-white'
-                      : 'bg-white text-black hover:bg-zinc-100'
+                      ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                      : 'bg-white text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/80 border border-zinc-200/80 shadow-xs'
                   }`}
                 >
                   {tab.label}
@@ -182,52 +183,63 @@ const GamesList = () => {
             </div>
 
             {/* Games Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch pb-16">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-7 items-stretch pb-16">
               {filteredGames.map(game => {
                 const Icon = game.icon;
+                const getCategoryGradient = (cat: string) => {
+                  switch (cat) {
+                    case 'math': return 'bg-gradient-to-br from-indigo-500 to-indigo-700 text-white shadow-md shadow-indigo-500/20';
+                    case 'logic': return 'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md shadow-amber-500/20';
+                    case 'languages': return 'bg-gradient-to-br from-emerald-500 to-teal-700 text-white shadow-md shadow-emerald-500/20';
+                    default: return 'bg-gradient-to-br from-slate-700 to-slate-900 text-white shadow-md shadow-slate-900/20';
+                  }
+                };
+
                 return (
                   <div
                     key={game.id}
                     onClick={() => navigate(game.route)}
-                    className="bg-white border-2 border-black rounded-none p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex flex-col group relative overflow-hidden cursor-pointer h-full"
+                    className="bg-white border border-zinc-200/80 hover:border-indigo-300 rounded-2xl p-6 md:p-7 shadow-xs hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 flex flex-col group relative overflow-hidden cursor-pointer h-full justify-between"
                   >
-                    <div className="flex justify-between items-start mb-6">
-                      {/* Icon */}
-                      <div className="w-12 h-12 bg-white text-black border-2 border-black flex items-center justify-center">
-                        <Icon size={24} strokeWidth={2} />
-                      </div>
-                      
-                      {/* Badges */}
-                      <div className="flex flex-col items-end gap-2">
-                        {game.isNew && (
-                          <div className="px-2 py-1 border border-black bg-white text-black text-[9px] font-bold uppercase tracking-wider rounded-none flex items-center gap-1">
-                            <Sparkles className="w-3 h-3" /> YANGI
-                          </div>
-                        )}
-                        <div className="px-2 py-1 border border-black bg-white text-black text-[9px] font-bold uppercase tracking-wider rounded-none">
-                          {game.tag}
+                    <div>
+                      <div className="flex justify-between items-start mb-5">
+                        {/* Icon */}
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-105 ${getCategoryGradient(game.category)}`}>
+                          <Icon size={24} strokeWidth={2} />
+                        </div>
+                        
+                        {/* Badges */}
+                        <div className="flex flex-col items-end gap-1.5">
+                          {game.isNew && (
+                            <span className="px-2.5 py-1 border border-amber-300/70 bg-amber-50 text-amber-700 text-[10px] font-bold uppercase tracking-wider rounded-full flex items-center gap-1">
+                              <Sparkles className="w-3 h-3 text-amber-500" /> YANGI
+                            </span>
+                          )}
+                          <span className="px-2.5 py-1 border border-zinc-200/80 bg-zinc-50 text-zinc-600 text-[10px] font-semibold uppercase tracking-wider rounded-full">
+                            {game.tag}
+                          </span>
                         </div>
                       </div>
+
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-full">
+                          <Flame className="w-3 h-3 text-indigo-500" /> Interaktiv
+                        </span>
+                      </div>
+
+                      <h3 className="text-xl font-bold text-zinc-900 group-hover:text-indigo-600 transition-colors mb-2.5 tracking-tight">
+                        {game.title}
+                      </h3>
+
+                      <p className="text-zinc-500 font-normal text-xs md:text-sm leading-relaxed mb-6">
+                        {game.description}
+                      </p>
                     </div>
 
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-black bg-white border border-black px-2 py-1 rounded-none">
-                        <Flame className="w-3 h-3" /> Interaktiv
-                      </span>
+                    <div className="w-full py-3 px-4 bg-indigo-50/70 group-hover:bg-indigo-600 text-indigo-700 group-hover:text-white rounded-xl font-semibold text-xs uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 shadow-xs group-hover:shadow-md group-hover:shadow-indigo-600/20">
+                      <span>O'ynashni boshlash</span>
+                      <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </div>
-
-                    <h3 className="text-2xl font-black text-black mb-3 font-sans tracking-tight uppercase">
-                      {game.title}
-                    </h3>
-
-                    <p className="text-black font-medium text-[14px] leading-relaxed mb-6 flex-1 font-sans">
-                      {game.description}
-                    </p>
-
-                    <button className="mt-6 w-full py-3 bg-white text-black border-2 border-black font-bold text-[10px] uppercase tracking-widest group-hover:bg-black group-hover:text-white transition-colors flex items-center justify-center gap-2">
-                      O'ynashni boshlash
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
                   </div>
                 );
               })}
