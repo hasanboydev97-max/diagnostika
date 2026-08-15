@@ -421,5 +421,11 @@ export async function fetchOpenTriviaQuestions(
   
   // Randomly shuffle the pool and pick unique questions
   const shuffled = [...candidates].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, Math.min(amount, shuffled.length));
+  const picked = shuffled.slice(0, Math.min(amount, shuffled.length));
+
+  // Randomize the 4 options order so correctAnswer is not always first
+  return picked.map(q => ({
+    ...q,
+    options: [...q.options].sort(() => Math.random() - 0.5)
+  }));
 }

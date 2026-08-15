@@ -62,17 +62,37 @@ export const SpellingBee = () => {
   const syncLives = (v: number) => { livesRef.current = v; setLives(v); };
   const toggleSound = () => setIsMuted(gameSound.toggleMute());
 
-  const playWordAudio = (url?: string) => {
-    const targetUrl = url || currentWordItem?.audioUrl;
-    if (!targetUrl) return;
-    try {
-      if (audioRef.current) {
-        audioRef.current.pause();
+  const playWordAudio = (wordText?: string, audioUrl?: string) => {
+    if (isMuted) return;
+    const text = wordText || currentWordItem?.word || '';
+    const url = audioUrl || currentWordItem?.audioUrl;
+
+    // 1. Native Web Speech Synthesis (100% reliable, zero network dependency, native pronunciation)
+    if ('speechSynthesis' in window && text) {
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text.toLowerCase());
+        utterance.lang = 'en-US';
+        utterance.rate = 0.85; // slightly slower for clear listening
+        utterance.pitch = 1.0;
+        window.speechSynthesis.speak(utterance);
+        return;
+      } catch (e) {
+        console.warn('[SpeechSynthesis] error, falling back to audio:', e);
       }
-      const audio = new Audio(targetUrl);
-      audioRef.current = audio;
-      audio.play().catch(e => console.warn('Audio play error:', e));
-    } catch (_) {}
+    }
+
+    // 2. Fallback to Audio element
+    if (url) {
+      try {
+        if (audioRef.current) {
+          audioRef.current.pause();
+        }
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        audio.play().catch(e => console.warn('Audio play error:', e));
+      } catch (_) {}
+    }
   };
 
   const loadWord = async (word: string) => {
@@ -93,7 +113,9 @@ export const SpellingBee = () => {
     const fullPool = [...lettersArr, ...extraLetters].sort(() => Math.random() - 0.5);
     setShuffledPool(fullPool);
     setGameState('playing');
-    playWordAudio(item.audioUrl);
+    setTimeout(() => {
+      playWordAudio(item.word, item.audioUrl);
+    }, 150);
   };
 
   const completeVictory = useCallback((stageLvl: number, finalScore: number) => {
@@ -362,7 +384,7 @@ export const SpellingBee = () => {
               {/* Audio Play Card */}
               <motion.div className="w-full bg-white rounded-3xl p-6 mb-6 flex flex-col items-center justify-center border-2 border-purple-100 shadow-xl shadow-purple-100/40 text-center">
                 <button
-                  onClick={() => playWordAudio()}
+                  onClick={() => playWordAudio(currentWordItem.word, currentWordItem.audioUrl)}
                   className="w-20 h-20 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-3xl flex items-center justify-center shadow-xl shadow-purple-400/30 text-white mb-3 hover:scale-105 active:scale-95 transition-all cursor-pointer border-2 border-white"
                 >
                   <Music className="w-10 h-10 animate-pulse" />
