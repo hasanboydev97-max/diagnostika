@@ -29,6 +29,10 @@ const MistakeInspector = lazy(() => import('./pages/Games/MistakeInspector'));
 const MatchMaster = lazy(() => import('./pages/Games/MatchMaster'));
 const WordBlast = lazy(() => import('./pages/Games/WordBlast'));
 
+// OMR Routes
+const OMRGenerator = lazy(() => import('./pages/Admin/OMRGenerator'));
+const OMRScanner = lazy(() => import('./pages/Admin/OMRScanner'));
+
 import PwaInstallPrompt from './components/PwaInstallPrompt';
 
 const RouteLoader = () => (
@@ -52,6 +56,8 @@ function App() {
             <Route path="/summary/:resultId" element={<Summary />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/superadmin" element={<SuperAdmin />} />
+            <Route path="/admin/omr-generator" element={<OMRGenerator />} />
+            <Route path="/admin/omr-scanner" element={<OMRScanner />} />
             
             {/* Teacher Auth */}
             <Route path="/teacher/login" element={<TeacherAuth />} />
