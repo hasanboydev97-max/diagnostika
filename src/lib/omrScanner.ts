@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
@@ -29,22 +29,29 @@ export async function processWithGemini(base64Image: string, totalQuestions: num
   }
 
   const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  // Flash is perfect for vision tasks, it's fast and cheap.
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ 
+    model: "gemini-1.5-flash",
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            q: { type: SchemaType.INTEGER, description: "Savol raqami (masalan 1)" },
+            ans: { type: SchemaType.STRING, nullable: true, description: "O'quvchi belgilagan javob, masalan 'A', 'B'. Hech narsa belgilanmagan yoki ikkita belgilangan bo'lsa null bo'ladi." }
+          },
+          required: ["q", "ans"]
+        }
+      }
+    }
+  });
 
   const prompt = `
     Sen OMR (Optical Mark Recognition) skannersan. Vazifang rasmda keltirilgan test javoblar varag'ini (bubble sheet) o'qib berish.
-    Rasmda 1 dan ${totalQuestions} gacha savollar raqamlangan bo'lishi va har biriga (A, B, C, D) kabi variantlar belgilangan bo'lishi mumkin.
+    Rasmda 1 dan ${totalQuestions} gacha savollar raqamlangan.
     O'quvchi tomonidan qora ruchkada to'ldirilgan yoki qoraytirilgan javoblarni top. Agar o'quvchi xato qilib "V" yoki "X" qo'ygan bo'lsa ham javobni qabul qil, asosiysi niyat qaysi variantga qaratilganini aniqla.
-    Agar bitta savolga bir nechta javob belgilangan bo'lsa yoki umuman belgilanmagan bo'lsa, uni null deb qaytar.
-
-    JAVOBNI FAQATGINA QATIY JSON ARRAY FORMATIDA QAYTAR. HECH QANDAY QO'SHIMCHA SO'ZLARSIZ. 
-    Format quyidagicha bo'lishi shart:
-    [
-      {"q": 1, "ans": "A"},
-      {"q": 2, "ans": "B"},
-      {"q": 3, "ans": null}
-    ]
+    Agar bitta savolga bir nechta javob belgilangan bo'lsa yoki umuman belgilanmagan bo'lsa, 'ans' qiymatini null deb qaytar.
   `;
 
   try {
@@ -53,9 +60,8 @@ export async function processWithGemini(base64Image: string, totalQuestions: num
     const response = await result.response;
     const text = response.text();
     
-    // Clean JSON parsing
-    const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    const parsed = JSON.parse(jsonStr);
+    // Yana ham ishonchli JSON.parse
+    const parsed = JSON.parse(text);
 
     if (!Array.isArray(parsed)) {
       throw new Error("AI noto'g'ri format qaytardi.");

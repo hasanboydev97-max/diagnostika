@@ -14,6 +14,11 @@ export default function OMRGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const generatePDF = async () => {
+    if (!testTitle.trim() || !schoolName.trim()) {
+      toast.error("Iltimos, maktab nomi va test sarlavhasini kiriting.");
+      return;
+    }
+
     setIsGenerating(true);
     try {
       // Create a new PDF document (A4 size)
@@ -56,20 +61,34 @@ export default function OMRGenerator() {
       doc.text("O'quvchining F.I.Sh: _______________________________________", margin + 25, margin + 45);
       doc.text("Sinf: _________      Sana: ___/___/20__", margin + 25, margin + 55);
 
-      // Bubble Sheet Grid Settings
+      // Bubble Sheet Dynamic Grid Settings
       const startY = margin + 75;
-      const bubblesPerRow = Math.ceil(questionCount / 3); // 3 columns
-      const colWidth = (pageWidth - (margin * 2)) / 3;
-      const bubbleRadius = 2.5;
-      const spacingY = 10;
       
-      doc.setFontSize(10);
+      let columns = 3;
+      let spacingY = 10;
+      let fontSizeNum = 10;
+      let bubbleRadius = 2.5;
+      
+      if (questionCount > 60) {
+        columns = 4;
+        spacingY = 7.5;
+        fontSizeNum = 8;
+        bubbleRadius = 2.2;
+      } else if (questionCount > 45) {
+        columns = 3;
+        spacingY = 8;
+      }
+
+      const rowsPerCol = Math.ceil(questionCount / columns); 
+      const colWidth = (pageWidth - (margin * 2)) / columns;
+      
+      doc.setFontSize(fontSizeNum);
       const labels = ['A', 'B', 'C', 'D', 'E'];
 
       // Draw Bubbles
       for (let i = 0; i < questionCount; i++) {
-        const col = Math.floor(i / bubblesPerRow);
-        const row = i % bubblesPerRow;
+        const col = Math.floor(i / rowsPerCol);
+        const row = i % rowsPerCol;
         
         const xPos = margin + 15 + (col * colWidth);
         const yPos = startY + (row * spacingY);
@@ -238,14 +257,15 @@ export default function OMRGenerator() {
                   <div className="h-2 w-1/2 bg-slate-100 rounded-full" />
                 </div>
 
-                <div className="flex-1 grid grid-cols-3 gap-4">
-                  {[...Array(3)].map((_, col) => (
-                    <div key={col} className="space-y-3">
-                      {[...Array(Math.ceil(questionCount / 3))].map((_, row) => (
-                        <div key={row} className="flex items-center gap-1.5 opacity-40">
-                          <span className="text-[6px] font-bold text-slate-400 w-3 text-right">{col * Math.ceil(questionCount/3) + row + 1}.</span>
+                <div className="flex-1 flex gap-2">
+                  {/* For preview, we'll just show 3 columns for simplicity, or we can mirror the logic */}
+                  {[...Array(questionCount > 60 ? 4 : 3)].map((_, col) => (
+                    <div key={col} className="space-y-2 flex-1">
+                      {[...Array(Math.ceil(questionCount / (questionCount > 60 ? 4 : 3)))].map((_, row) => (
+                        <div key={row} className="flex items-center gap-1 opacity-40">
+                          <span className="text-[5px] font-bold text-slate-400 w-3 text-right">{col * Math.ceil(questionCount/(questionCount > 60 ? 4 : 3)) + row + 1}.</span>
                           {[...Array(optionsCount)].map((_, opt) => (
-                            <div key={opt} className="w-2.5 h-2.5 rounded-full border border-slate-400" />
+                            <div key={opt} className={`w-2 h-2 rounded-full border border-slate-400 ${questionCount > 60 ? 'w-1.5 h-1.5' : ''}`} />
                           ))}
                         </div>
                       ))}

@@ -15,6 +15,11 @@ export default function OMRScanner() {
   const [result, setResult] = useState<OMRResult | null>(null);
   const totalQuestions = 30; // Matches generator default
 
+  const handleMediaError = useCallback((err: string | DOMException) => {
+    console.error("Kamera xatosi:", err);
+    toast.error("Kameraga ulanib bo'lmadi. Ruxsat berilganligini tekshiring.");
+  }, []);
+
   const capture = useCallback(() => {
     if (webcamRef.current) {
       const imageSrc = webcamRef.current.getScreenshot();
@@ -105,6 +110,7 @@ export default function OMRScanner() {
                   ref={webcamRef}
                   screenshotFormat="image/jpeg"
                   videoConstraints={{ facingMode: "environment" }}
+                  onUserMediaError={handleMediaError}
                   className="absolute inset-0 w-full h-full object-cover"
                 />
                 
