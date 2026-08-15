@@ -531,30 +531,34 @@ export default function TakeTest() {
 
   return (
     <div
-      className="min-h-screen relative overflow-hidden flex flex-col font-sans select-none bg-[#fdfdfd] text-[#111111]"
+      className="min-h-screen relative flex flex-col font-sans select-none bg-[#f8fafc] text-zinc-900"
       onCopy={e => e.preventDefault()}
       onCut={e => e.preventDefault()}
       onPaste={e => e.preventDefault()}
       onContextMenu={e => e.preventDefault()}
     >
-      {/* ── Spring-animated progress bar ── */}
-      <div className="h-[3px] w-full bg-black/5 relative z-20">
+      {/* ── Animated progress bar ── */}
+      <div className="h-[3px] w-full bg-indigo-100 relative z-40">
         <motion.div
-          className="h-full bg-black"
+          className="h-full bg-indigo-600"
           animate={{ width: `${progress}%` }}
           transition={{ type: "spring", stiffness: 80, damping: 20 }}
         />
       </div>
 
       {/* ── Header ── */}
-      <header className="border-b border-black/5 px-3 md:px-12 h-16 flex items-center justify-between sticky top-0 bg-[#fdfdfd] z-20">
+      <header className="border-b border-zinc-200/80 px-4 md:px-8 h-16 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md z-30 shadow-xs">
         <div className="flex flex-col">
-          <h2 className="text-sm font-medium text-black tracking-tight">{test.title}</h2>
-          <p className="text-[9px] font-bold text-gray-600 uppercase tracking-[0.2em] mt-1">{studentName}</p>
+          <h2 className="text-sm md:text-base font-extrabold text-zinc-900 tracking-wide">
+            {test.title ? test.title.toUpperCase() : 'BILIMNI BAHOLASH TESTI'}
+          </h2>
+          <p className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-[0.2em] mt-0.5">
+            {studentName ? studentName.toUpperCase() : ''}
+          </p>
         </div>
         <div className="flex items-center gap-6">
-          <div className="hidden md:flex items-center gap-2 text-[9px] font-bold text-gray-600 uppercase tracking-[0.2em]">
-            <AlertTriangle size={12} strokeWidth={2} /> Oynani tark etmang
+          <div className="hidden md:flex items-center gap-2 text-[10px] font-extrabold text-zinc-400 uppercase tracking-[0.15em]">
+            <AlertTriangle size={14} className="text-amber-500" strokeWidth={2.5} /> Oynani tark etmang
           </div>
           {/* ── SVG Countdown Ring ── */}
           {timeLeft !== null && (
@@ -563,28 +567,28 @@ export default function TakeTest() {
         </div>
       </header>
 
-      {/* ── Main ── */}
-      <main className="flex-1 w-full max-w-6xl mx-auto px-3 md:px-12 py-6 md:py-8 relative z-10 flex flex-col lg:flex-row gap-8 lg:gap-24 h-full">
+      {/* ── Main Content ── */}
+      <main className="flex-1 w-full max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-8 relative z-10 flex flex-col lg:flex-row gap-6 md:gap-8 h-full">
 
-        {/* Question Palette */}
-        <div className="lg:w-64 shrink-0 order-2 lg:order-1">
-          <div className="lg:sticky lg:top-8 bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-xs">
+        {/* Question Palette Sidebar */}
+        <div className="lg:w-72 xl:w-80 shrink-0 order-2 lg:order-1">
+          <div className="bg-white p-5 md:p-6 rounded-2xl md:rounded-3xl border border-zinc-200/80 shadow-xs lg:sticky lg:top-24">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
-              <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Savollar</h3>
-              <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+              <h3 className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">Savollar</h3>
+              <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">
                 {Object.keys(answers).length} / {test.questions.length}
               </span>
             </div>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-5 gap-2 mt-4">
               {test.questions.map((_: any, idx: number) => {
                 const isAnswered = answers[idx] !== undefined;
                 const isCurrent = idx === currentQIndex;
-                let cls = "w-full aspect-square text-[11px] font-bold rounded-xl transition-all duration-200 flex items-center justify-center border ";
-                if (isCurrent) cls += "border-indigo-600 bg-indigo-600 text-white scale-105 shadow-sm shadow-indigo-600/30";
+                let cls = "w-full aspect-square text-xs font-bold rounded-xl transition-all duration-200 flex items-center justify-center border cursor-pointer ";
+                if (isCurrent) cls += "border-indigo-600 bg-indigo-600 text-white font-bold scale-[1.03] shadow-sm shadow-indigo-600/30";
                 else if (isAnswered) cls += "border-indigo-200 bg-indigo-50/80 text-indigo-700 hover:bg-indigo-100 font-bold";
-                else cls += "border-zinc-200 bg-zinc-50/50 text-zinc-400 hover:border-zinc-300 hover:text-zinc-700";
+                else cls += "border-zinc-200/80 bg-zinc-50/50 text-zinc-500 hover:border-zinc-300 hover:text-zinc-800 hover:bg-zinc-100/50";
                 return (
-                  <motion.button key={idx} onClick={() => setCurrentQIndex(idx)} whileTap={{ scale: 0.92 }} className={cls}>
+                  <motion.button key={idx} onClick={() => setCurrentQIndex(idx)} whileTap={{ scale: 0.94 }} className={cls}>
                     {idx + 1}
                   </motion.button>
                 );
@@ -594,77 +598,73 @@ export default function TakeTest() {
         </div>
 
         {/* Question Area */}
-        <div className="flex-1 flex flex-col min-w-0 order-1 lg:order-2 bg-white p-6 md:p-8 rounded-3xl border border-zinc-200/80 shadow-xs">
+        <div className="flex-1 flex flex-col min-w-0 order-1 lg:order-2 bg-white p-6 md:p-10 rounded-2xl md:rounded-3xl border border-zinc-200/80 shadow-xs flex-col justify-between min-h-[480px]">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentQIndex}
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: 15 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="flex-1"
+              exit={{ opacity: 0, x: -15 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="flex-1 flex flex-col justify-between"
             >
-              <div className="mb-8">
-                <span className="inline-flex items-center text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full uppercase tracking-wider mb-3">
-                  {currentQIndex + 1}-Savol
-                </span>
-                <h3 className="text-xl md:text-2xl font-sans font-bold text-zinc-900 leading-snug tracking-tight">
-                  <FormattedText content={currentQ.questionText} />
-                </h3>
-              </div>
+              <div>
+                <div className="mb-6 md:mb-8">
+                  <span className="inline-flex items-center text-[10px] font-black text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full uppercase tracking-wider mb-4 w-fit">
+                    {currentQIndex + 1}-SAVOL
+                  </span>
+                  <h3 className="text-xl md:text-2xl font-sans font-bold text-zinc-900 leading-snug tracking-tight">
+                    <FormattedText content={currentQ.questionText} />
+                  </h3>
+                </div>
 
-              {/* Options */}
-              <div className="space-y-3">
-                {currentQ.options.map((opt: string, i: number) => {
-                  const isSelected = answers[currentQIndex] === opt;
-                  return (
-                    <motion.button
-                      key={i}
-                      onClick={() => handleSelectOption(opt)}
-                      whileTap={{ scale: 0.99 }}
-                      onMouseEnter={() => setIsHovering(true)}
-                      onMouseLeave={() => setIsHovering(false)}
-                      className={`w-full text-left py-4 px-5 rounded-2xl border transition-all duration-200 flex items-start md:items-center gap-4 group cursor-pointer ${
-                        isSelected 
-                          ? 'border-indigo-600 bg-indigo-50/50 shadow-xs' 
-                          : 'border-zinc-200/80 bg-white hover:border-zinc-300 hover:bg-zinc-50/50'
-                      }`}
-                    >
-                      {/* Animated radio circle */}
-                      <div className={`w-5 h-5 mt-0.5 md:mt-0 shrink-0 rounded-full border flex items-center justify-center transition-colors ${
-                        isSelected ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-zinc-300 group-hover:border-zinc-400'
-                      }`}>
-                        <AnimatePresence>
+                {/* Options */}
+                <div className="space-y-3 md:space-y-3.5 mb-8">
+                  {currentQ.options.map((opt: string, i: number) => {
+                    const isSelected = answers[currentQIndex] === opt;
+                    return (
+                      <motion.button
+                        key={i}
+                        onClick={() => handleSelectOption(opt)}
+                        whileTap={{ scale: 0.995 }}
+                        className={`w-full text-left p-4 md:p-4.5 rounded-2xl border transition-all duration-200 flex items-center gap-4 group cursor-pointer ${
+                          isSelected 
+                            ? 'border-2 border-indigo-600 bg-indigo-50/30 shadow-xs' 
+                            : 'border-zinc-200/80 bg-white hover:border-zinc-300 hover:bg-zinc-50/50'
+                        }`}
+                      >
+                        {/* Radio circle */}
+                        <div className={`w-5 h-5 shrink-0 rounded-full border flex items-center justify-center transition-colors ${
+                          isSelected ? 'border-2 border-indigo-600 bg-white' : 'border-zinc-300 group-hover:border-zinc-400 bg-white'
+                        }`}>
                           {isSelected && (
                             <motion.div
-                              className="w-2 h-2 rounded-full bg-white"
+                              className="w-2.5 h-2.5 rounded-full bg-indigo-600"
                               initial={{ scale: 0 }}
                               animate={{ scale: 1 }}
                               exit={{ scale: 0 }}
                               transition={{ type: "spring", stiffness: 600, damping: 20 }}
                             />
                           )}
-                        </AnimatePresence>
-                      </div>
-                      <span className={`flex-1 text-sm md:text-base leading-relaxed transition-colors ${isSelected ? 'font-bold text-indigo-950' : 'text-zinc-700 group-hover:text-zinc-900 font-medium'}`}>
-                        <FormattedText content={opt} />
-                      </span>
-                    </motion.button>
-                  );
-                })}
+                        </div>
+                        <span className={`flex-1 text-sm md:text-base leading-relaxed transition-colors ${isSelected ? 'font-bold text-indigo-950' : 'text-zinc-700 group-hover:text-zinc-900 font-medium'}`}>
+                          <FormattedText content={opt} />
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
               </div>
             </motion.div>
           </AnimatePresence>
 
           {/* Navigation */}
-          <div className="mt-10 pt-6 border-t border-zinc-100 flex items-center justify-between">
+          <div className="pt-6 border-t border-zinc-100 flex items-center justify-between mt-auto">
             <motion.button
               onClick={() => setCurrentQIndex(prev => Math.max(0, prev - 1))}
               disabled={currentQIndex === 0}
               whileTap={{ scale: 0.95 }}
-              onMouseEnter={() => setIsHovering(true)}
-              onMouseLeave={() => setIsHovering(false)}
-              className="text-xs px-4 py-2 font-bold uppercase tracking-wider text-zinc-500 disabled:opacity-30 hover:text-zinc-900 transition-colors"
+              className="text-xs font-bold uppercase tracking-wider text-zinc-400 hover:text-zinc-800 disabled:opacity-30 transition-colors cursor-pointer"
             >
               Oldingi
             </motion.button>
@@ -672,10 +672,8 @@ export default function TakeTest() {
             {currentQIndex < test.questions.length - 1 ? (
               <motion.button
                 onClick={() => setCurrentQIndex(prev => prev + 1)}
-                whileTap={{ scale: 0.95 }}
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}
-                className="text-xs px-6 py-2.5 font-bold uppercase tracking-wider text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-sm shadow-indigo-600/20"
+                whileTap={{ scale: 0.96 }}
+                className="text-xs font-bold uppercase tracking-wider text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl px-7 py-3 shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
               >
                 Keyingi
               </motion.button>
@@ -683,10 +681,8 @@ export default function TakeTest() {
               <motion.button
                 onClick={() => handleSubmit(false)}
                 disabled={submitting}
-                whileTap={{ scale: 0.95 }}
-                onMouseEnter={() => setIsHovering(true)}
-                onMouseLeave={() => setIsHovering(false)}
-                className="inline-flex items-center justify-center gap-2.5 text-xs px-7 py-2.5 font-bold uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-sm shadow-emerald-600/20 disabled:opacity-50"
+                whileTap={{ scale: 0.96 }}
+                className="inline-flex items-center justify-center gap-2.5 text-xs font-bold uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl px-7 py-3 shadow-md shadow-emerald-600/20 transition-all cursor-pointer disabled:opacity-50"
               >
                 {submitting && <Loader2 size={16} className="animate-spin" />}
                 {submitting ? 'Yuborilmoqda...' : 'Yakunlash'}
@@ -698,3 +694,4 @@ export default function TakeTest() {
     </div>
   );
 }
+
