@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, FileText, Download, X, Sparkles, Play } from 'lucide-react';
 import { getAuthHeaders, getToken, getTeacher } from '../../lib/auth';
-import MeshGradient from '../../components/ui/MeshGradient';
 import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
+import MagicButton from '../../components/MagicButton';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -129,7 +129,7 @@ export default function TestDetails() {
     if (!test) return;
     const teacher = getTeacher();
     if (teacher?.plan === 'free') {
-      toast.error('AI Sinf Tahlili faqat Standard va Premium tariflarda mavjud! Tarifni oshiring.');
+      toast.error("AI Sinf Tahlili faqat 'Premium' yoki 'Standard' tarifda mavjud! Tarifni oshiring.");
       return;
     }
     
@@ -207,21 +207,19 @@ export default function TestDetails() {
 
   if (loading) {
     return (
-      <div className="min-h-screen relative bg-[#fdfdfd] flex flex-col justify-center items-center font-sans overflow-hidden">
-        <MeshGradient />
-        <div className="w-5 h-5 border-2 border-white/50 border-t-black rounded-full animate-spin mb-3 relative z-10"></div>
-        <p className="text-gray-500 font-medium text-[11px] uppercase tracking-wider relative z-10">Yuklanmoqda</p>
+      <div className="min-h-screen bg-white flex flex-col justify-center items-center font-mono">
+        <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin mb-3"></div>
+        <p className="text-black font-bold text-[10px] uppercase tracking-widest">Yuklanmoqda</p>
       </div>
     );
   }
 
   if (!test) {
     return (
-      <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex flex-col items-center justify-center font-sans text-[#111111]">
-        <MeshGradient />
-        <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 md:p-8 rounded-2xl relative z-10 text-center">
-          <h2 className="text-lg font-medium mb-4">Test topilmadi</h2>
-          <button onClick={() => navigate('/online-tests')} className="text-xs font-semibold uppercase tracking-wider text-gray-500 hover:text-black transition-colors">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center font-mono p-4">
+        <div className="border-2 border-black p-8 text-center">
+          <h2 className="text-lg font-bold mb-4 uppercase tracking-tighter">Test topilmadi</h2>
+          <button onClick={() => navigate('/online-tests')} className="text-[10px] font-bold uppercase tracking-widest underline underline-offset-4 hover:opacity-50">
             Dashboard'ga qaytish
           </button>
         </div>
@@ -234,25 +232,24 @@ export default function TestDetails() {
   const averagePercentage = results.length > 0 ? Math.round(totalPercentage / results.length) : 0;
 
   return (
-    <div className="min-h-screen relative font-sans text-[#111111] overflow-x-hidden bg-[#fdfdfd] pb-24 selection:bg-black selection:text-white">
-      <MeshGradient />
+    <div className="min-h-screen font-sans text-black bg-white">
       
       {/* Header */}
-      <header className="border-b border-white/50 bg-white/60 backdrop-blur-xl sticky top-0 z-30 shadow-sm">
+      <header className="border-b-2 border-black sticky top-0 z-30 bg-white">
         <div className="max-w-7xl mx-auto px-3 md:px-6 h-14 flex items-center justify-between">
           <button 
             onClick={() => navigate('/online-tests')}
-            className="flex items-center gap-2 text-xs font-medium text-zinc-500 hover:text-zinc-900 transition-colors"
+            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-black hover:opacity-50 transition-opacity"
           >
             <ArrowLeft size={14} />
-            Dashboard'ga qaytish
+            Dashboard
           </button>
-          <div className="text-sm font-semibold tracking-tight">{test.title}</div>
-          <div className="w-20"></div> {/* Spacer for centering */}
+          <div className="text-xs font-bold uppercase tracking-widest">{test.title}</div>
+          <div className="w-20"></div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-3 md:px-6 py-6 md:py-8 relative z-20">
+      <div className="max-w-7xl mx-auto px-3 md:px-6 py-6 md:py-8">
 
         {/* Print-only View (Hidden on screen) */}
         <div id="print-view" className="hidden print:block mb-8 bg-white p-8">
@@ -265,7 +262,7 @@ export default function TestDetails() {
                 <div className="pl-6 space-y-2">
                   {q.options.map((opt: string, oIndex: number) => (
                     <div key={oIndex} className="flex items-center gap-2">
-                      <div className="w-4 h-4 border border-black rounded-full"></div>
+                      <div className="w-4 h-4 border border-black"></div>
                       <FormattedText content={opt} />
                     </div>
                   ))}
@@ -275,32 +272,31 @@ export default function TestDetails() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 print:hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 print:hidden">
           
           {/* Sidebar Info */}
-          <div className="lg:col-span-4 flex flex-col gap-4 md:gap-6">
-            <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 md:p-6 rounded-2xl">
-              <span className="inline-block px-2 py-0.5 bg-zinc-100 text-zinc-600 text-[10px] font-bold uppercase tracking-wider rounded-sm mb-3">
+          <div className="lg:col-span-4 flex flex-col gap-6">
+            <div className="border-2 border-black p-8">
+              <span className="inline-block px-2 py-1 bg-black text-white text-[10px] font-bold uppercase tracking-wider mb-4">
                 {test.subject}
               </span>
-              <h1 className="text-xl font-semibold tracking-tight text-zinc-900 mb-1.5 leading-tight">
+              <h1 className="text-2xl font-bold tracking-tighter text-black mb-1 leading-tight">
                 {test.title}
               </h1>
-              <p className="text-zinc-500 text-xs mb-5 flex items-center gap-1.5 font-medium">
+              <p className="text-zinc-500 text-[10px] mb-6 flex items-center gap-1.5 font-bold uppercase tracking-widest">
                 <Calendar size={12} /> 
                 {new Date(test.createdAt).toLocaleDateString('uz-UZ')}
               </p>
               
-              <div className="pt-4 border-t border-zinc-100 flex flex-col gap-2.5">
-                <button
+              <div className="pt-6 border-t-2 border-black flex flex-col gap-3">
+                <MagicButton
+                  label="Link Nusxalash"
+                  icon={<Copy size={14} />}
                   onClick={copyTestLink}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-zinc-900 text-white text-xs font-semibold rounded-md hover:bg-zinc-800 transition-colors shadow-sm"
-                >
-                  <Copy size={14} /> Link Nusxalash
-                </button>
+                />
                 <button
                   onClick={() => navigate(`/online-tests/take/${testId}`)}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-white border border-zinc-200 text-zinc-700 text-xs font-medium rounded-md hover:bg-zinc-50 hover:border-zinc-300 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-black text-black text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-100 transition-colors"
                 >
                   <ExternalLink size={14} /> Yechib ko'rish
                 </button>
@@ -333,23 +329,25 @@ export default function TestDetails() {
                   </button>
                 </div>
                 
-                <button
-                  onClick={() => navigate(`/online-tests/live/host/${testId}`)}
-                  className="w-full mt-1.5 flex items-center justify-center gap-2 px-3 py-2.5 bg-[#46178f] text-white text-xs font-bold rounded-md hover:bg-[#381272] transition-colors shadow-sm"
-                >
-                  <Play size={14} fill="currentColor" /> Jonli Rejim (Kahoot)
-                </button>
-                
-                <button
-                  onClick={handleClassAnalysis}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-semibold rounded-md hover:from-violet-700 hover:to-indigo-700 transition-all shadow-md"
-                >
-                  <Sparkles size={14} /> AI Sinf Tahlili
-                </button>
+                <div className="flex flex-col gap-2">
+                  <MagicButton 
+                    label="Jonli Rejim (Kahoot)" 
+                    icon={<Play fill="currentColor" />} 
+                    onClick={() => navigate(`/online-tests/live/host/${testId}`)} 
+                    className="w-full justify-center"
+                  />
+                  
+                  <button
+                    onClick={handleClassAnalysis}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border-2 border-zinc-900 text-zinc-900 text-xs font-bold uppercase tracking-widest hover:bg-zinc-50 transition-colors group"
+                  >
+                    <Sparkles size={14} className="text-zinc-900" /> AI Sinf Tahlili
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-md border border-zinc-200 grid grid-cols-2 gap-4">
+            <div className="bg-white p-5 rounded-none border border-zinc-200 grid grid-cols-2 gap-4">
                <div>
                  <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1 flex items-center gap-1.5">
                    <Users size={12}/> Qatnashuvchilar
@@ -367,9 +365,9 @@ export default function TestDetails() {
 
           {/* Results Table */}
           <div className="lg:col-span-8">
-            <div className="bg-white rounded-md border border-zinc-200 overflow-hidden">
+            <div className="bg-white rounded-none border border-zinc-200 overflow-hidden">
               <div className="px-5 py-4 border-b border-zinc-200 bg-zinc-50">
-                <h3 className="text-sm font-semibold text-zinc-900">O'quvchilar Natijalari <span className="text-zinc-500 font-normal">({results.length})</span></h3>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-900">O'quvchilar Natijalari <span className="text-zinc-500 font-normal">({results.length})</span></h3>
               </div>
               
               {results.length === 0 ? (

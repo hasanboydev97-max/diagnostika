@@ -142,8 +142,8 @@ export default function OnlineTestsDashboard() {
               </div>
               
               {teacher?.plan === 'premium' ? (
-                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white p-0.5 rounded-full border border-white shadow-xs flex items-center justify-center">
-                  <Crown size={8} className="fill-current text-white" />
+                <span className="absolute -top-1.5 -right-1.5 w-[16px] h-[16px] bg-gradient-to-br from-amber-400 to-amber-600 rounded-full border-2 border-white shadow-sm flex items-center justify-center">
+                  <Crown size={9} className="text-white fill-white" />
                 </span>
               ) : (
                 <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
@@ -171,12 +171,12 @@ export default function OnlineTestsDashboard() {
 
         {/* Controls */}
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-8">
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <div className="relative w-full md:w-96 flex items-center">
+            <Search className="absolute left-3.5 text-zinc-400" size={16} />
             <input 
               type="text" 
               placeholder="Test nomini qidirish..." 
-              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all shadow-sm"
+              className="w-full pl-10 pr-4 py-3 bg-white border border-zinc-200 rounded-none focus:outline-none focus:border-zinc-900 transition-colors shadow-sm text-sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -184,9 +184,9 @@ export default function OnlineTestsDashboard() {
           <div className="w-full md:w-auto flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => navigate('/games')}
-              className="bg-indigo-50 border border-indigo-200 text-indigo-700 px-6 py-3 rounded-2xl font-semibold flex items-center justify-center gap-2 hover:bg-indigo-100 transition-colors shadow-sm"
+              className="bg-zinc-50 border border-zinc-200 text-zinc-900 px-6 py-3 rounded-none font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-zinc-100 transition-colors"
             >
-              <Gamepad2 size={18} />
+              <Gamepad2 size={16} />
               Mini O'yinlar
             </button>
             <MagicButton
@@ -203,26 +203,26 @@ export default function OnlineTestsDashboard() {
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-4 md:p-6 h-[160px] flex flex-col justify-between animate-pulse">
+                <div key={i} className="bg-white border border-zinc-200 rounded-none p-4 md:p-6 h-[160px] flex flex-col justify-between animate-pulse">
                   <div className="space-y-3 w-full">
                     <div className="flex justify-between">
-                       <div className="h-5 bg-zinc-100 rounded-lg w-16"></div>
-                       <div className="h-5 bg-zinc-100 rounded-lg w-6"></div>
+                       <div className="h-5 bg-zinc-100 rounded-none w-16"></div>
+                       <div className="h-5 bg-zinc-100 rounded-none w-6"></div>
                     </div>
-                    <div className="h-5 bg-zinc-200 rounded w-full"></div>
-                    <div className="h-5 bg-zinc-200 rounded w-2/3"></div>
+                    <div className="h-5 bg-zinc-200 rounded-none w-full"></div>
+                    <div className="h-5 bg-zinc-200 rounded-none w-2/3"></div>
                   </div>
                   <div className="flex justify-between items-center border-t border-zinc-100 pt-3">
-                     <div className="h-3 bg-zinc-100 rounded w-24"></div>
-                     <div className="h-5 bg-zinc-100 rounded w-5"></div>
+                     <div className="h-3 bg-zinc-100 rounded-none w-24"></div>
+                     <div className="h-5 bg-zinc-100 rounded-none w-5"></div>
                   </div>
                 </div>
               ))}
             </div>
           ) : filteredTests.length === 0 ? (
-            <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl p-16 flex flex-col items-center justify-center text-center">
-              <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-6 border border-gray-100">
-                <FileText className="text-gray-400" size={32} strokeWidth={1.5} />
+            <div className="bg-white border border-zinc-200 rounded-none p-16 flex flex-col items-center justify-center text-center">
+              <div className="w-16 h-16 bg-zinc-50 rounded-none flex items-center justify-center mb-6 border border-zinc-100">
+                <FileText className="text-zinc-400" size={32} strokeWidth={1.5} />
               </div>
               <h3 className="text-xl font-semibold text-black mb-2">Ma'lumot topilmadi</h3>
               <p className="text-gray-500 mb-8 max-w-md">Hali hech qanday test yaratmagansiz. O'quvchilaringiz uchun birinchi onlayn testingizni yarating.</p>
@@ -254,16 +254,14 @@ export default function OnlineTestsDashboard() {
                   }}
                   key={test.id}
                   onClick={() => navigate(`/online-tests/details/${test.id}`)}
-                  className="bg-white/80 backdrop-blur-xl border border-black/5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-4 md:p-6 hover:bg-white hover:-translate-y-1 hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:border-black/10 transition-all cursor-pointer group relative flex flex-col h-full overflow-hidden"
+                  className="bg-white border border-zinc-200 hover:border-zinc-400 transition-all rounded-none p-5 md:p-6 flex flex-col justify-between relative group hover:shadow-sm"
                 >
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#111111]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-4">
-                      <span className="px-3 py-1 bg-gray-100/80 rounded-lg text-[10px] uppercase tracking-wider font-bold text-gray-600 border border-black/5 group-hover:bg-gray-100 group-hover:text-black transition-colors">{test.subject}</span>
+                      <span className="inline-flex items-center px-2 py-1 bg-zinc-100 text-zinc-600 text-[10px] font-bold uppercase tracking-wider rounded-none">{test.subject}</span>
                       <button 
                         onClick={(e) => handleDeleteTest(e, test.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 z-10"
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-none transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 z-10"
                         title="O'chirish"
                       >
                         <Trash2 size={16} strokeWidth={1.5} />
