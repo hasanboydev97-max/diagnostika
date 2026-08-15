@@ -23,17 +23,67 @@ function base64ToGenerativePart(base64String: string, mimeType: string) {
   };
 }
 
+const GEMINI_VISION_MODELS = [
+  "gemini-1.5-flash-latest",
+  "gemini-1.5-flash",
+  "gemini-2.0-flash-exp",
+  "gemini-1.5-pro",
+  "gemini-1.5-flash-8b"
+];
+
+async function executeVisionAiModel(
+  genAI: GoogleGenerativeAI,
+  prompt: string,
+  imageParts: any[],
+  schemaProps: any
+): Promise<string> {
+  let lastError = "";
+
+  for (const modelName of GEMINI_VISION_MODELS) {
+    try {
+      console.log(`Gemini Vision AI yuborilmoqda: ${modelName}...`);
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: schemaProps
+        }
+      });
+      const result = await model.generateContent([prompt, ...imageParts]);
+      const responseText = await result.response.text();
+      if (responseText && responseText.trim()) {
+        console.log(`✅ Gemini Vision (${modelName}) muvaffaqiyatli tahlil qildi.`);
+        return responseText;
+      }
+    } catch (err: any) {
+      console.warn(`Gemini Vision (${modelName}) xatoligi:`, err.message || err);
+      lastError += `[${modelName}]: ${err.message || String(err)}; `;
+    }
+  }
+
+  throw new Error("Gemini Vision AI xatoligi: " + lastError);
+}
+
 export async function processWithGemini(base64Image: string, totalQuestions: number): Promise<OMRResult> {
   if (!GEMINI_API_KEY) {
     throw new Error("Gemini API Key topilmadi.");
   }
 
   const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-flash",
-    generationConfig: {
-      responseMimeType: "application/json",
-      responseSchema: {
+  const prompt = `
+    Sen OMR (Optical Mark Recognition) skannersan. Vazifang rasmda keltirilgan test javoblar varag'ini (bubble sheet) o'qib berish.
+    Rasmda 1 dan ${totalQuestions} gacha savollar raqamlangan.
+    O'quvchi tomonidan qora ruchkada to'ldirilgan yoki qoraytirilgan javoblarni top. Agar o'quvchi xato qilib "V" yoki "X" qo'ygan bo'lsa ham javobni qabul qil, asosiysi niyat qaysi variantga qaratilganini aniqla.
+    Agar bitta savolga bir nechta javob belgilangan bo'lsa yoki umuman belgilanmagan bo'lsa, 'ans' qiymatini null deb qaytar.
+  `;
+
+  try {
+    const imagePart = base64ToGenerativePart(base64Image, 'image/jpeg');
+    const text = await executeVisionAiModel(
+      genAI,
+      prompt,
+      [imagePart],
+      {
         type: SchemaType.ARRAY,
         items: {
           type: SchemaType.OBJECT,
@@ -44,21 +94,7 @@ export async function processWithGemini(base64Image: string, totalQuestions: num
           required: ["q", "ans"]
         }
       }
-    }
-  });
-
-  const prompt = `
-    Sen OMR (Optical Mark Recognition) skannersan. Vazifang rasmda keltirilgan test javoblar varag'ini (bubble sheet) o'qib berish.
-    Rasmda 1 dan ${totalQuestions} gacha savollar raqamlangan.
-    O'quvchi tomonidan qora ruchkada to'ldirilgan yoki qoraytirilgan javoblarni top. Agar o'quvchi xato qilib "V" yoki "X" qo'ygan bo'lsa ham javobni qabul qil, asosiysi niyat qaysi variantga qaratilganini aniqla.
-    Agar bitta savolga bir nechta javob belgilangan bo'lsa yoki umuman belgilanmagan bo'lsa, 'ans' qiymatini null deb qaytar.
-  `;
-
-  try {
-    const imagePart = base64ToGenerativePart(base64Image, 'image/jpeg');
-    const result = await model.generateContent([prompt, imagePart]);
-    const response = await result.response;
-    const text = response.text();
+    );
     
     // Yana ham ishonchli JSON.parse
     const parsed = JSON.parse(text);
@@ -153,27 +189,6 @@ export async function gradeTestFromPhoto(
   }
 
   const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    generationConfig: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: SchemaType.ARRAY,
-        items: {
-          type: SchemaType.OBJECT,
-          properties: {
-            q: { type: SchemaType.INTEGER, description: "Savol raqami (1 dan boshlab)" },
-            ansIndex: { 
-              type: SchemaType.INTEGER, 
-              nullable: true, 
-              description: "O'quvchi tanlagan javob indeksi: 0 = A, 1 = B, 2 = C, 3 = D. Agar belgilamagan yoki tushunarsiz bo'lsa null" 
-            }
-          },
-          required: ["q", "ansIndex"]
-        }
-      }
-    }
-  });
 
   const questionPrompts = questions.map((q, idx) => {
     const opts = (q.options || []).map((o, i) => `${String.fromCharCode(65 + i)}: ${o}`).join(', ');
@@ -196,8 +211,26 @@ export async function gradeTestFromPhoto(
 
   try {
     const imageParts = imagesArray.map(img => base64ToGenerativePart(img, 'image/jpeg'));
-    const result = await model.generateContent([prompt, ...imageParts]);
-    const responseText = await result.response.text();
+    const responseText = await executeVisionAiModel(
+      genAI,
+      prompt,
+      imageParts,
+      {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            q: { type: SchemaType.INTEGER, description: "Savol raqami (1 dan boshlab)" },
+            ansIndex: { 
+              type: SchemaType.INTEGER, 
+              nullable: true, 
+              description: "O'quvchi tanlagan javob indeksi: 0 = A, 1 = B, 2 = C, 3 = D. Agar belgilamagan yoki tushunarsiz bo'lsa null" 
+            }
+          },
+          required: ["q", "ansIndex"]
+        }
+      }
+    );
     const parsed = JSON.parse(responseText);
 
     const gradedAnswers: PaperGradingResult['answers'] = questions.map((q, idx) => {
