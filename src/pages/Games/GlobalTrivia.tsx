@@ -100,7 +100,6 @@ export const GlobalTrivia = () => {
     }
     const stageConfig = TRIVIA_STAGES.find(s => s.level === stageLvl) || TRIVIA_STAGES[0];
     setCurrentStageLevel(stageLvl);
-    setGameState('loading');
 
     try {
       const fetched = await fetchOpenTriviaQuestions(stageConfig.categoryKey, stageConfig.difficulty, stageConfig.targetQuestions);

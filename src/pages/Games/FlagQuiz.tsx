@@ -96,7 +96,6 @@ export const FlagQuiz = () => {
     }
     const stageConfig = STAGES.find(s => s.level === stageLvl) || STAGES[0];
     setCurrentStageLevel(stageLvl);
-    setGameState('loading');
 
     try {
       const data = await fetchCountriesQuizData(stageConfig.count);
@@ -123,7 +122,7 @@ export const FlagQuiz = () => {
         });
       }, 1000);
     } catch (e) {
-      toast.error('REST Countries API error');
+      toast.error('Savollarni yuklashda xatolik yuz berdi');
       setGameState('stage_select');
     }
   };
