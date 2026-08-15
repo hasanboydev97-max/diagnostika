@@ -35,20 +35,19 @@ async function executeVisionAiModel(
   genAI: GoogleGenerativeAI,
   prompt: string,
   imageParts: any[],
-  schemaProps: any
+  schemaProps?: any
 ): Promise<string> {
   let lastError = "";
 
   for (const modelName of GEMINI_VISION_MODELS) {
+    // Attempt 1: With JSON Mime type
     try {
       console.log(`Gemini Vision AI yuborilmoqda: ${modelName}...`);
-      const model = genAI.getGenerativeModel({
-        model: modelName,
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: schemaProps
-        }
-      });
+      const config: any = {};
+      if (schemaProps) {
+        config.responseMimeType = "application/json";
+      }
+      const model = genAI.getGenerativeModel({ model: modelName, generationConfig: config });
       const result = await model.generateContent([prompt, ...imageParts]);
       const responseText = await result.response.text();
       if (responseText && responseText.trim()) {
@@ -56,12 +55,29 @@ async function executeVisionAiModel(
         return responseText;
       }
     } catch (err: any) {
-      console.warn(`Gemini Vision (${modelName}) xatoligi:`, err.message || err);
-      lastError += `[${modelName}]: ${err.message || String(err)}; `;
+      const msg = err.message || String(err);
+      console.warn(`Gemini Vision (${modelName}) xatoligi:`, msg);
+      if (msg.includes("leaked") || msg.includes("API key") || msg.includes("403")) {
+        throw new Error("Gemini API key bekor qilingan (leaked key error). Iltimos Vercel Sozlamalarida (Environment Variables) VITE_GEMINI_API_KEY ga yangi kalit qo'ying!");
+      }
+      lastError += `[${modelName}]: ${msg}; `;
     }
   }
 
-  throw new Error("Gemini Vision AI xatoligi: " + lastError);
+  // Final fallback: try without schema on gemini-1.5-flash
+  try {
+    const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const result = await fallbackModel.generateContent([prompt + "\nFAQT JSON formatida qaytar: [{\"q\": 1, \"ansIndex\": 0}]", ...imageParts]);
+    const text = await result.response.text();
+    if (text && text.trim()) return text;
+  } catch (err: any) {
+    const msg = err.message || String(err);
+    if (msg.includes("leaked") || msg.includes("403")) {
+      throw new Error("Gemini API key bekor qilingan (leaked key). Iltimos Vercel (Environment Variables) ga yangi VITE_GEMINI_API_KEY kiriting!");
+    }
+  }
+
+  throw new Error("Gemini Vision AI xatoligi: API key bekor qilingan yoki model javob bermadi. Iltimos Vercel environment parametrlarida VITE_GEMINI_API_KEY ni yangilang.");
 }
 
 export async function processWithGemini(base64Image: string, totalQuestions: number): Promise<OMRResult> {
