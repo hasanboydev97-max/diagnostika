@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, ArrowLeft, AlertTriangle, Swords } from 'lucide-react';
 import { toast } from 'sonner';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import MagicButton from '../../components/MagicButton';
 import confetti from 'canvas-confetti';
 import FormattedText from '../../components/FormattedText';
