@@ -128,6 +128,8 @@ export interface PaperGradingResult {
   score: number;
   totalScore: number;
   correctCount: number;
+  summaryText: string;
+  weakTopics: string[];
   answers: {
     questionIndex: number;
     selectedOption: number | null; // 0=A, 1=B, 2=C, 3=D
@@ -137,12 +139,17 @@ export interface PaperGradingResult {
 }
 
 export async function gradeTestFromPhoto(
-  base64Image: string,
+  base64Images: string | string[],
   questions: { questionText: string; options: string[]; correctOption: number }[],
   studentName: string
 ): Promise<PaperGradingResult> {
   if (!GEMINI_API_KEY) {
     throw new Error("Gemini API kaliti sozlangan bo'lishi kerak.");
+  }
+
+  const imagesArray = Array.isArray(base64Images) ? base64Images : [base64Images];
+  if (imagesArray.length === 0) {
+    throw new Error("Kamida 1 ta rasm taqdim etilishi kerak.");
   }
 
   const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
@@ -174,21 +181,22 @@ export async function gradeTestFromPhoto(
   }).join('\n');
 
   const prompt = `
-    Sen ta'limiy AI OMR va test javoblarini tekshiruvchi inspektsiyasan.
-    Senga o'quvchi qog'ozda to'ldirgan test varaqasi rasmi taqdim etilmoqda.
+    Sen ta'limiy AI OMR va multi-page test javoblarini tekshiruvchi inspektsiyasan.
+    Senga o'quvchi qog'ozda to'ldirgan test varaqasi rasmlari (${imagesArray.length} bet/sahifa) taqdim etilmoqda.
     Savollar soni: ${questions.length} ta.
     
     Savollar ro'yxati:
     ${questionPrompts}
     
     Vazifang:
-    Rasmda har bir savol uchun o'quvchi belgilagan javob variantini top (A -> 0, B -> 1, C -> 2, D -> 3).
+    Keltirilgan ${imagesArray.length} ta sahifadagi rasmlarning barchasini ko'rib chiq.
+    Har bir savol uchun o'quvchi belgilagan javob variantini top (A -> 0, B -> 1, C -> 2, D -> 3).
     Agar belgilanmagan bo'lsa ansIndex = null qilib ber.
   `;
 
   try {
-    const imagePart = base64ToGenerativePart(base64Image, 'image/jpeg');
-    const result = await model.generateContent([prompt, imagePart]);
+    const imageParts = imagesArray.map(img => base64ToGenerativePart(img, 'image/jpeg'));
+    const result = await model.generateContent([prompt, ...imageParts]);
     const responseText = await result.response.text();
     const parsed = JSON.parse(responseText);
 
@@ -208,12 +216,30 @@ export async function gradeTestFromPhoto(
     });
 
     const correctCount = gradedAnswers.filter(a => a.isCorrect).length;
+    const percentage = Math.round((correctCount / questions.length) * 100);
+
+    const incorrectQuestions = gradedAnswers.filter(a => !a.isCorrect);
+    const weakTopics = incorrectQuestions.map(a => {
+      const qText = questions[a.questionIndex]?.questionText || '';
+      return qText.replace(/<[^>]*>/g, '').trim().substring(0, 60);
+    }).filter(Boolean);
+
+    let summaryText = '';
+    if (percentage >= 85) {
+      summaryText = `Ajoyib natija! O'quvchi ${studentName} ushbu test mavzularini a'lo darajada o'zlashtirgan (${percentage}%).`;
+    } else if (percentage >= 60) {
+      summaryText = `Yaxshi natija (${percentage}%). O'quvchi ${studentName} asosiy konseptlarni tushungan, biroq xato qilingan savollar ustida qo'shimcha ishlash tavsiya etiladi.`;
+    } else {
+      summaryText = `Qayta tayyorgarlik talab etiladi (${percentage}%). O'quvchi ${studentName} bilimidagi bo'shliqlarni to'ldirish uchun ushbu fan bo'yicha takrorlash va individual tahlil zarur.`;
+    }
 
     return {
       studentName,
       score: correctCount,
       totalScore: questions.length,
       correctCount,
+      summaryText,
+      weakTopics,
       answers: gradedAnswers
     };
   } catch (err: any) {

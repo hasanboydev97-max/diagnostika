@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Webcam from 'react-webcam';
-import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, FileText, Download, X, Sparkles, Play, Scan, Camera, RefreshCw, Upload, CheckCircle2, Check, XCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, FileText, Download, X, Sparkles, Play, Scan, Camera, Upload, CheckCircle2, Check, XCircle } from 'lucide-react';
 import { getAuthHeaders, getToken, getTeacher } from '../../lib/auth';
 import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
@@ -36,7 +36,7 @@ export default function TestDetails() {
   // Camera paper test grading states
   const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
   const [paperStudentName, setPaperStudentName] = useState('');
-  const [paperImageSrc, setPaperImageSrc] = useState<string | null>(null);
+  const [paperImageSrcs, setPaperImageSrcs] = useState<string[]>([]);
   const [isScanningPaper, setIsScanningPaper] = useState(false);
   const [paperGradingResult, setPaperGradingResult] = useState<PaperGradingResult | null>(null);
   const webcamRef = useRef<Webcam>(null);
@@ -45,7 +45,8 @@ export default function TestDetails() {
     if (webcamRef.current) {
       const screenshot = webcamRef.current.getScreenshot();
       if (screenshot) {
-        setPaperImageSrc(screenshot);
+        setPaperImageSrcs(prev => [...prev, screenshot]);
+        toast.success(`${paperImageSrcs.length + 1}-bet rasmi olindi!`);
       } else {
         toast.error("Kameradan tasvir o'qib bo'lmadi");
       }
@@ -53,13 +54,23 @@ export default function TestDetails() {
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPaperImageSrc(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (reader.result) {
+          setPaperImageSrcs(prev => [...prev, reader.result as string]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    toast.success(`${files.length} ta sahifa rasmi yuklandi!`);
+  };
+
+  const removePagePhoto = (idx: number) => {
+    setPaperImageSrcs(prev => prev.filter((_, i) => i !== idx));
   };
 
   const handleGradePaperTest = async () => {
@@ -67,8 +78,8 @@ export default function TestDetails() {
       toast.error("Iltimos, o'quvchi ism-familiyasini kiriting!");
       return;
     }
-    if (!paperImageSrc) {
-      toast.error("Iltimos, javoblar varaqasini kamerada rasmga oling yoki fayl yuklang!");
+    if (paperImageSrcs.length === 0) {
+      toast.error("Iltimos, kamida 1 ta javoblar varaqasini kamerada rasmga oling yoki fayl yuklang!");
       return;
     }
     if (!test || !test.questions || test.questions.length === 0) {
@@ -77,10 +88,10 @@ export default function TestDetails() {
     }
 
     setIsScanningPaper(true);
-    const toastId = toast.loading("AI javoblar varag'ini skanerlamoqda va tekshirmoqda...");
+    const toastId = toast.loading(`AI ${paperImageSrcs.length} ta sahifadagi javoblar varaqalarini skanerlamoqda va tekshirmoqda...`);
 
     try {
-      const result = await gradeTestFromPhoto(paperImageSrc, test.questions, paperStudentName.trim());
+      const result = await gradeTestFromPhoto(paperImageSrcs, test.questions, paperStudentName.trim());
       setPaperGradingResult(result);
 
       // Save result to server database
@@ -107,7 +118,7 @@ export default function TestDetails() {
   };
 
   const resetPaperScanner = () => {
-    setPaperImageSrc(null);
+    setPaperImageSrcs([]);
     setPaperGradingResult(null);
     setPaperStudentName('');
   };
@@ -724,70 +735,89 @@ export default function TestDetails() {
 
                     {/* Camera View / Preview */}
                     <div className="space-y-3">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700">
-                        Javoblar Varaqasi (Kamera yoki Rasm)
-                      </label>
+                      <div className="flex justify-between items-center">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700">
+                          Javoblar Varaqasi (Bir yoki bir nechta bet rasmga oling)
+                        </label>
+                        {paperImageSrcs.length > 0 && (
+                          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                            {paperImageSrcs.length} ta bet olindi
+                          </span>
+                        )}
+                      </div>
 
-                      {!paperImageSrc ? (
-                        <div className="relative bg-slate-900 rounded-2xl overflow-hidden aspect-[4/3] border border-zinc-200 shadow-md flex items-center justify-center">
-                          <Webcam
-                            audio={false}
-                            ref={webcamRef}
-                            screenshotFormat="image/jpeg"
-                            videoConstraints={{ facingMode: 'environment' }}
-                            className="w-full h-full object-cover"
-                          />
-                          
-                          {/* Guide Box Overlay */}
-                          <div className="absolute inset-4 border-2 border-dashed border-white/60 rounded-xl pointer-events-none flex items-center justify-center">
-                            <span className="bg-black/60 backdrop-blur-md text-white text-xs font-medium px-4 py-2 rounded-full">
-                              Qog'oz varag'ini romga to'g'rilang
-                            </span>
-                          </div>
-
-                          {/* Action overlay buttons */}
-                          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 z-10">
-                            <button
-                              type="button"
-                              onClick={handleCapturePhoto}
-                              className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg flex items-center gap-2 transition-transform active:scale-95 cursor-pointer"
-                            >
-                              <Camera size={16} /> Rasmga Olish
-                            </button>
-                            <label className="px-4 py-3 bg-white/90 hover:bg-white text-zinc-800 font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg flex items-center gap-2 cursor-pointer transition-colors backdrop-blur-md">
-                              <Upload size={16} /> Fayl
-                              <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
-                            </label>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="relative rounded-2xl overflow-hidden border border-zinc-200 shadow-md aspect-[4/3]">
-                          <img src={paperImageSrc} alt="Scanned test sheet" className="w-full h-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={() => setPaperImageSrc(null)}
-                            className="absolute top-3 right-3 bg-black/70 hover:bg-black text-white text-xs font-semibold px-3 py-1.5 rounded-lg backdrop-blur-md flex items-center gap-1.5 transition-colors cursor-pointer"
-                          >
-                            <RefreshCw size={13} /> Qayta Olish
-                          </button>
+                      {/* Thumbnails of captured pages */}
+                      {paperImageSrcs.length > 0 && (
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-2">
+                          {paperImageSrcs.map((src, idx) => (
+                            <div key={idx} className="relative rounded-xl overflow-hidden border border-zinc-200 aspect-[4/3] group shadow-xs">
+                              <img src={src} alt={`Page ${idx + 1}`} className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => removePagePhoto(idx)}
+                                  className="w-7 h-7 bg-rose-600 text-white rounded-lg flex items-center justify-center hover:bg-rose-700 transition-colors"
+                                  title="O'chirish"
+                                >
+                                  <X size={14} />
+                                </button>
+                              </div>
+                              <span className="absolute bottom-1 left-1 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                                {idx + 1}-bet
+                              </span>
+                            </div>
+                          ))}
                         </div>
                       )}
+
+                      {/* Live Camera Box */}
+                      <div className="relative bg-slate-900 rounded-2xl overflow-hidden aspect-[4/3] border border-zinc-200 shadow-md flex items-center justify-center">
+                        <Webcam
+                          audio={false}
+                          ref={webcamRef}
+                          screenshotFormat="image/jpeg"
+                          videoConstraints={{ facingMode: 'environment' }}
+                          className="w-full h-full object-cover"
+                        />
+                        
+                        {/* Guide Box Overlay */}
+                        <div className="absolute inset-4 border-2 border-dashed border-white/60 rounded-xl pointer-events-none flex items-center justify-center">
+                          <span className="bg-black/60 backdrop-blur-md text-white text-xs font-medium px-4 py-2 rounded-full">
+                            {paperImageSrcs.length === 0 ? "1-bet qog'ozini romga to'g'rilang" : `${paperImageSrcs.length + 1}-bet qog'ozini to'g'rilang`}
+                          </span>
+                        </div>
+
+                        {/* Action overlay buttons */}
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 z-10 w-full px-4 justify-center">
+                          <button
+                            type="button"
+                            onClick={handleCapturePhoto}
+                            className="px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg flex items-center gap-2 transition-transform active:scale-95 cursor-pointer"
+                          >
+                            <Camera size={16} /> {paperImageSrcs.length === 0 ? "Rasmga Olish (1-Bet)" : `➕ ${paperImageSrcs.length + 1}-Betni Qo'shish`}
+                          </button>
+                          <label className="px-3.5 py-3 bg-white/90 hover:bg-white text-zinc-800 font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg flex items-center gap-2 cursor-pointer transition-colors backdrop-blur-md">
+                            <Upload size={16} /> Fayllar
+                            <input type="file" accept="image/*" multiple onChange={handleFileUpload} className="hidden" />
+                          </label>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Submit Button */}
                     <button
                       type="button"
-                      disabled={isScanningPaper || !paperImageSrc || !paperStudentName.trim()}
+                      disabled={isScanningPaper || paperImageSrcs.length === 0 || !paperStudentName.trim()}
                       onClick={handleGradePaperTest}
                       className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {isScanningPaper ? (
                         <>
-                          <Loader2 size={16} className="animate-spin" /> AI tekshirmoqda...
+                          <Loader2 size={16} className="animate-spin" /> AI {paperImageSrcs.length} ta sahifani tekshirmoqda...
                         </>
                       ) : (
                         <>
-                          <CheckCircle2 size={16} /> AI Bilan Tekshirish va Natijani Saqlash
+                          <CheckCircle2 size={16} /> AI Bilan {paperImageSrcs.length > 0 ? `${paperImageSrcs.length} ta Sahifani` : ''} Tekshirish va Saqlash
                         </>
                       )}
                     </button>
@@ -808,6 +838,32 @@ export default function TestDetails() {
                         </div>
                       </div>
                     </div>
+
+                    {/* AI Diagnostic Summary Card */}
+                    {paperGradingResult.summaryText && (
+                      <div className="bg-amber-50/80 border border-amber-200/90 rounded-2xl p-5 shadow-xs">
+                        <div className="flex items-center gap-2 text-xs font-bold text-amber-900 uppercase tracking-wider mb-2">
+                          <Sparkles size={15} className="text-amber-600" /> AI Diagnostik Xulosa va Tavsiya
+                        </div>
+                        <p className="text-xs text-amber-950 font-medium leading-relaxed mb-3">
+                          {paperGradingResult.summaryText}
+                        </p>
+                        {paperGradingResult.weakTopics && paperGradingResult.weakTopics.length > 0 && (
+                          <div className="pt-2 border-t border-amber-200/60">
+                            <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block mb-1.5">
+                              Xato qilingan asosiy mavzular:
+                            </span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {paperGradingResult.weakTopics.slice(0, 4).map((topic, i) => (
+                                <span key={i} className="text-[10px] font-semibold bg-white border border-amber-300 text-amber-900 px-2.5 py-1 rounded-lg shadow-xs">
+                                  {topic}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Answers Breakdown */}
                     <div>
