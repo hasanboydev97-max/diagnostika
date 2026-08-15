@@ -209,15 +209,6 @@ const WordBlast = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white font-sans flex flex-col relative transition-all duration-300">
-      {/* Header */}
-      <header className="relative z-20 flex justify-between items-center p-4">
-        <button
-          onClick={() => navigate('/games')}
-          className="w-12 h-12 bg-white border-2 border-black text-black rounded-none flex items-center justify-center hover:bg-zinc-100 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-  return (
     <div className="min-h-screen bg-slate-50/50 font-sans flex flex-col text-zinc-900 selection:bg-indigo-600 selection:text-white">
 
       {/* Header */}

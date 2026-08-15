@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, FileText, Download, X, Sparkles, Play, Scan } from 'lucide-react';
+import Webcam from 'react-webcam';
+import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, FileText, Download, X, Sparkles, Play, Scan, Camera, RefreshCw, Upload, CheckCircle2, Check, XCircle } from 'lucide-react';
 import { getAuthHeaders, getToken, getTeacher } from '../../lib/auth';
 import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import MagicButton from '../../components/MagicButton';
+import { gradeTestFromPhoto, type PaperGradingResult } from '../../lib/omrScanner';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -30,6 +32,85 @@ export default function TestDetails() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
+
+  // Camera paper test grading states
+  const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
+  const [paperStudentName, setPaperStudentName] = useState('');
+  const [paperImageSrc, setPaperImageSrc] = useState<string | null>(null);
+  const [isScanningPaper, setIsScanningPaper] = useState(false);
+  const [paperGradingResult, setPaperGradingResult] = useState<PaperGradingResult | null>(null);
+  const webcamRef = useRef<Webcam>(null);
+
+  const handleCapturePhoto = () => {
+    if (webcamRef.current) {
+      const screenshot = webcamRef.current.getScreenshot();
+      if (screenshot) {
+        setPaperImageSrc(screenshot);
+      } else {
+        toast.error("Kameradan tasvir o'qib bo'lmadi");
+      }
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPaperImageSrc(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleGradePaperTest = async () => {
+    if (!paperStudentName.trim()) {
+      toast.error("Iltimos, o'quvchi ism-familiyasini kiriting!");
+      return;
+    }
+    if (!paperImageSrc) {
+      toast.error("Iltimos, javoblar varaqasini kamerada rasmga oling yoki fayl yuklang!");
+      return;
+    }
+    if (!test || !test.questions || test.questions.length === 0) {
+      toast.error("Test savollari topilmadi");
+      return;
+    }
+
+    setIsScanningPaper(true);
+    const toastId = toast.loading("AI javoblar varag'ini skanerlamoqda va tekshirmoqda...");
+
+    try {
+      const result = await gradeTestFromPhoto(paperImageSrc, test.questions, paperStudentName.trim());
+      setPaperGradingResult(result);
+
+      // Save result to server database
+      await fetch(`${API_URL}/online-test-results`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          testId,
+          studentName: paperStudentName.trim(),
+          score: result.score,
+          totalScore: result.totalScore,
+          createdAt: new Date().toISOString()
+        })
+      });
+
+      toast.success(`${paperStudentName.trim()} natijasi (${result.score}/${result.totalScore}) saqlandi!`, { id: toastId });
+      fetchData(); // Refresh test results table!
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`Xatolik: ${err.message}`, { id: toastId });
+    } finally {
+      setIsScanningPaper(false);
+    }
+  };
+
+  const resetPaperScanner = () => {
+    setPaperImageSrc(null);
+    setPaperGradingResult(null);
+    setPaperStudentName('');
+  };
 
   useEffect(() => {
     if (!getToken()) {
@@ -348,7 +429,7 @@ export default function TestDetails() {
                   />
 
                   <button
-                    onClick={() => navigate('/admin/omr-scanner')}
+                    onClick={() => setIsCameraModalOpen(true)}
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-50/70 hover:bg-emerald-100/80 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs group cursor-pointer"
                   >
                     <Scan size={15} className="text-emerald-600 group-hover:scale-110 transition-transform" /> Kamera Skanner (OMR)
@@ -588,6 +669,176 @@ export default function TestDetails() {
                     )}
                   </div>
                 ) : null}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Paper Camera Scanner Modal */}
+      <AnimatePresence>
+        {isCameraModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-white border border-zinc-200/80 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+            >
+              {/* Modal Header */}
+              <div className="px-6 py-5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shadow-xs">
+                    <Camera size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-zinc-900 leading-tight">Qog'ozdagi Javoblarni Kamera Orqali Tekshirish</h3>
+                    <p className="text-xs text-zinc-500 font-medium">Suratga oling yoki fayl yuklang — AI bu test uchun avtomatik baholaydi</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setIsCameraModalOpen(false); resetPaperScanner(); }}
+                  className="w-9 h-9 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-500 flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 overflow-y-auto space-y-6 flex-1">
+                {!paperGradingResult ? (
+                  <>
+                    {/* Student Name Field */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 mb-2">
+                        O'quvchi Ismi va Familiyasi <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={paperStudentName}
+                        onChange={e => setPaperStudentName(e.target.value)}
+                        placeholder="Masalan: Azizbek Rahimov"
+                        className="w-full bg-zinc-50 border border-zinc-200/80 rounded-xl px-4 py-3 text-xs font-semibold text-zinc-900 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-xs"
+                      />
+                    </div>
+
+                    {/* Camera View / Preview */}
+                    <div className="space-y-3">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700">
+                        Javoblar Varaqasi (Kamera yoki Rasm)
+                      </label>
+
+                      {!paperImageSrc ? (
+                        <div className="relative bg-slate-900 rounded-2xl overflow-hidden aspect-[4/3] border border-zinc-200 shadow-md flex items-center justify-center">
+                          <Webcam
+                            audio={false}
+                            ref={webcamRef}
+                            screenshotFormat="image/jpeg"
+                            videoConstraints={{ facingMode: 'environment' }}
+                            className="w-full h-full object-cover"
+                          />
+                          
+                          {/* Guide Box Overlay */}
+                          <div className="absolute inset-4 border-2 border-dashed border-white/60 rounded-xl pointer-events-none flex items-center justify-center">
+                            <span className="bg-black/60 backdrop-blur-md text-white text-xs font-medium px-4 py-2 rounded-full">
+                              Qog'oz varag'ini romga to'g'rilang
+                            </span>
+                          </div>
+
+                          {/* Action overlay buttons */}
+                          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 z-10">
+                            <button
+                              type="button"
+                              onClick={handleCapturePhoto}
+                              className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg flex items-center gap-2 transition-transform active:scale-95 cursor-pointer"
+                            >
+                              <Camera size={16} /> Rasmga Olish
+                            </button>
+                            <label className="px-4 py-3 bg-white/90 hover:bg-white text-zinc-800 font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg flex items-center gap-2 cursor-pointer transition-colors backdrop-blur-md">
+                              <Upload size={16} /> Fayl
+                              <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                            </label>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="relative rounded-2xl overflow-hidden border border-zinc-200 shadow-md aspect-[4/3]">
+                          <img src={paperImageSrc} alt="Scanned test sheet" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => setPaperImageSrc(null)}
+                            className="absolute top-3 right-3 bg-black/70 hover:bg-black text-white text-xs font-semibold px-3 py-1.5 rounded-lg backdrop-blur-md flex items-center gap-1.5 transition-colors cursor-pointer"
+                          >
+                            <RefreshCw size={13} /> Qayta Olish
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Submit Button */}
+                    <button
+                      type="button"
+                      disabled={isScanningPaper || !paperImageSrc || !paperStudentName.trim()}
+                      onClick={handleGradePaperTest}
+                      className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {isScanningPaper ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" /> AI tekshirmoqda...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 size={16} /> AI Bilan Tekshirish va Natijani Saqlash
+                        </>
+                      )}
+                    </button>
+                  </>
+                ) : (
+                  /* Graded Result View */
+                  <div className="space-y-6">
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center relative overflow-hidden">
+                      <div className="text-xs font-bold uppercase tracking-wider text-emerald-800 mb-1">Muvaffaqiyatli Tekshirildi va Saqlandi!</div>
+                      <h4 className="text-2xl font-bold text-emerald-950 mb-4">{paperGradingResult.studentName}</h4>
+
+                      <div className="inline-flex items-center gap-3 bg-white px-6 py-3 rounded-xl border border-emerald-200 shadow-xs mb-2">
+                        <div className="text-3xl font-extrabold text-emerald-600">
+                          {paperGradingResult.score} / {paperGradingResult.totalScore}
+                        </div>
+                        <div className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                          ({Math.round((paperGradingResult.score / paperGradingResult.totalScore) * 100)}%)
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Answers Breakdown */}
+                    <div>
+                      <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-700 mb-3">Savollar Bo'yicha Tahlil:</h5>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {paperGradingResult.answers.map((ans, idx) => (
+                          <div
+                            key={idx}
+                            className={`p-3 rounded-xl border flex items-center justify-between text-xs font-semibold ${
+                              ans.isCorrect ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900' : 'bg-rose-50/60 border-rose-200 text-rose-900'
+                            }`}
+                          >
+                            <span>#{idx + 1} savol</span>
+                            <div className="flex items-center gap-1 font-bold">
+                              {ans.selectedOption !== null ? String.fromCharCode(65 + ans.selectedOption) : '—'}
+                              {ans.isCorrect ? <Check size={14} className="text-emerald-600" /> : <XCircle size={14} className="text-rose-600" />}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={resetPaperScanner}
+                      className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm shadow-indigo-600/20 cursor-pointer"
+                    >
+                      Keyingi O'quvchi Qog'ozini Tekshirish ➕
+                    </button>
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>

@@ -122,3 +122,102 @@ export async function processWithOpenCV(_base64Image: string, totalQuestions: nu
     }, 1500);
   });
 }
+
+export interface PaperGradingResult {
+  studentName: string;
+  score: number;
+  totalScore: number;
+  correctCount: number;
+  answers: {
+    questionIndex: number;
+    selectedOption: number | null; // 0=A, 1=B, 2=C, 3=D
+    correctOption: number;
+    isCorrect: boolean;
+  }[];
+}
+
+export async function gradeTestFromPhoto(
+  base64Image: string,
+  questions: { questionText: string; options: string[]; correctOption: number }[],
+  studentName: string
+): Promise<PaperGradingResult> {
+  if (!GEMINI_API_KEY) {
+    throw new Error("Gemini API kaliti sozlangan bo'lishi kerak.");
+  }
+
+  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  const model = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            q: { type: SchemaType.INTEGER, description: "Savol raqami (1 dan boshlab)" },
+            ansIndex: { 
+              type: SchemaType.INTEGER, 
+              nullable: true, 
+              description: "O'quvchi tanlagan javob indeksi: 0 = A, 1 = B, 2 = C, 3 = D. Agar belgilamagan yoki tushunarsiz bo'lsa null" 
+            }
+          },
+          required: ["q", "ansIndex"]
+        }
+      }
+    }
+  });
+
+  const questionPrompts = questions.map((q, idx) => {
+    const opts = (q.options || []).map((o, i) => `${String.fromCharCode(65 + i)}: ${o}`).join(', ');
+    return `Savol #${idx + 1}: ${q.questionText} [Variantlar: ${opts}]`;
+  }).join('\n');
+
+  const prompt = `
+    Sen ta'limiy AI OMR va test javoblarini tekshiruvchi inspektsiyasan.
+    Senga o'quvchi qog'ozda to'ldirgan test varaqasi rasmi taqdim etilmoqda.
+    Savollar soni: ${questions.length} ta.
+    
+    Savollar ro'yxati:
+    ${questionPrompts}
+    
+    Vazifang:
+    Rasmda har bir savol uchun o'quvchi belgilagan javob variantini top (A -> 0, B -> 1, C -> 2, D -> 3).
+    Agar belgilanmagan bo'lsa ansIndex = null qilib ber.
+  `;
+
+  try {
+    const imagePart = base64ToGenerativePart(base64Image, 'image/jpeg');
+    const result = await model.generateContent([prompt, imagePart]);
+    const responseText = await result.response.text();
+    const parsed = JSON.parse(responseText);
+
+    const gradedAnswers: PaperGradingResult['answers'] = questions.map((q, idx) => {
+      const found = Array.isArray(parsed) ? parsed.find((item: any) => item.q === idx + 1) : null;
+      const selectedOption = found && typeof found.ansIndex === 'number' && found.ansIndex >= 0 && found.ansIndex < (q.options?.length || 4)
+        ? found.ansIndex
+        : null;
+
+      const isCorrect = selectedOption === q.correctOption;
+      return {
+        questionIndex: idx,
+        selectedOption,
+        correctOption: q.correctOption,
+        isCorrect
+      };
+    });
+
+    const correctCount = gradedAnswers.filter(a => a.isCorrect).length;
+
+    return {
+      studentName,
+      score: correctCount,
+      totalScore: questions.length,
+      correctCount,
+      answers: gradedAnswers
+    };
+  } catch (err: any) {
+    console.error("Camera Paper Grading error:", err);
+    throw new Error(err.message || "Rasm o'qishda va baholashda xatolik yuz berdi");
+  }
+}

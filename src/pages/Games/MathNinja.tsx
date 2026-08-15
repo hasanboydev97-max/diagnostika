@@ -228,45 +228,6 @@ const MathNinja = () => {
   const highestRecord = leaderboard.length > 0 ? leaderboard[0].score : 0;
 
   return (
-    <div className="min-h-screen bg-white font-sans flex flex-col relative transition-all duration-300">
-
-      {/* ── HEADER ─────────────────────────────────────────────────────── */}
-      <header className="relative z-20 flex justify-between items-center p-4">
-        <button
-          onClick={() => navigate('/games')}
-          className="w-12 h-12 bg-white border-2 border-black text-black rounded-none flex items-center justify-center hover:bg-zinc-100 transition-colors"
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-        {gameState === 'playing' && (
-          <div className="bg-white border-2 border-black rounded-none px-5 py-2 font-black text-xl text-black flex items-center gap-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <Trophy className="w-6 h-6" />
-            {score}
-          </div>
-        )}
-      </header>
-
-      {/* ── MAIN ───────────────────────────────────────────────────────── */}
-      <div className="flex flex-col items-center justify-center flex-1 w-full max-w-4xl mx-auto p-4 relative z-10">
-        <AnimatePresence mode="wait">
-
-          {/* START */}
-          {gameState === 'start' && (
-            <motion.div key="start"
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              className="w-full flex flex-col items-center text-center font-sans"
-            >
-              <div className="relative mb-8">
-                <motion.div
-                  animate={{ y: [0, -8, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                  className="w-24 h-24 bg-black text-white border-2 border-black rounded-none flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                >
-                  <Zap className="w-12 h-12 text-white" />
-                </motion.div>
-              </div>  return (
     <div className="min-h-screen bg-slate-50/50 font-sans flex flex-col text-zinc-900 selection:bg-indigo-600 selection:text-white">
       {/* Header */}
       <header className="relative z-20 flex justify-between items-center p-4 border-b border-zinc-200/80 bg-white/90 backdrop-blur-md shadow-xs">

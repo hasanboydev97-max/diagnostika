@@ -621,7 +621,7 @@ export default function TakeTest() {
                     <motion.button
                       key={i}
                       onClick={() => handleSelectOption(opt)}
-                      whileTap={{ scale: 0.99.0 }}
+                      whileTap={{ scale: 0.99 }}
                       onMouseEnter={() => setIsHovering(true)}
                       onMouseLeave={() => setIsHovering(false)}
                       className={`w-full text-left py-4 px-5 rounded-2xl border transition-all duration-200 flex items-start md:items-center gap-4 group cursor-pointer ${
