@@ -5,7 +5,7 @@ import { generateDiagnosticSummary } from '../lib/gemini';
 import { useNavigate } from 'react-router-dom';
 import type { QuestionBlueprint } from '../lib/blueprint';
 import { GRADE_BLUEPRINTS } from '../lib/gradeBlueprints';
-import { Check, Settings2, Users, PlusCircle, ChevronDown, Sparkles } from 'lucide-react';
+import { Check, Settings2, Users, PlusCircle, ChevronDown, Sparkles, Scan, Printer } from 'lucide-react';
 import BlueprintEditorModal from '../components/BlueprintEditorModal';
 import AiTestCreatorModal from '../components/AiTestCreatorModal';
 import MeshGradient from '../components/ui/MeshGradient';
@@ -190,16 +190,30 @@ export default function Admin() {
             <p className="text-sm text-gray-500 mt-2 ml-14">O'quvchi natijalarini boshqarish va diagnostika yaratish.</p>
           </div>
           
-          <div className="flex w-full md:w-auto gap-2">
+          <div className="flex flex-wrap w-full md:w-auto gap-2">
+            <button 
+              onClick={() => navigate('/admin/omr-scanner')}
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 rounded-xl font-bold text-xs uppercase tracking-wider transition-all"
+              title="Kamera va ZipGrade orqali testlarni tekshirish"
+            >
+              <Scan className="w-4 h-4" /> OMR Skanner
+            </button>
+            <button 
+              onClick={() => navigate('/admin/omr-generator')}
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-black/10 text-neutral-700 hover:bg-neutral-50 rounded-xl font-bold text-xs uppercase tracking-wider transition-all"
+              title="Test blankasini chop etish (PDF)"
+            >
+              <Printer className="w-4 h-4 text-neutral-500" /> Varaqa PDF
+            </button>
             <button 
               onClick={() => setActiveTab('new')}
-              className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-6 py-3 font-semibold text-xs uppercase tracking-widest transition-all duration-300 border ${activeTab === 'new' ? 'bg-black text-white border-black' : 'bg-transparent text-gray-400 border-black/10 hover:border-black hover:text-black'}`}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-5 py-3 font-semibold text-xs uppercase tracking-widest transition-all duration-300 rounded-xl border ${activeTab === 'new' ? 'bg-black text-white border-black shadow-sm' : 'bg-transparent text-gray-400 border-black/10 hover:border-black hover:text-black'}`}
             >
               <PlusCircle className="w-4 h-4" /> Qo'shish
             </button>
             <button 
               onClick={() => setActiveTab('dashboard')}
-              className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-6 py-3 font-semibold text-xs uppercase tracking-widest transition-all duration-300 border ${activeTab === 'dashboard' ? 'bg-black text-white border-black' : 'bg-transparent text-gray-400 border-black/10 hover:border-black hover:text-black'}`}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-5 py-3 font-semibold text-xs uppercase tracking-widest transition-all duration-300 rounded-xl border ${activeTab === 'dashboard' ? 'bg-black text-white border-black shadow-sm' : 'bg-transparent text-gray-400 border-black/10 hover:border-black hover:text-black'}`}
             >
               <Users className="w-4 h-4" /> Barchasi
             </button>

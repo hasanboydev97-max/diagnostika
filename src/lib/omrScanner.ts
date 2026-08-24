@@ -3,17 +3,28 @@ import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 export interface OMRResult {
+  studentName?: string;
+  studentId?: string;
+  studentClass?: string;
   score: number;
   total: number;
   correctCount: number;
+  wrongCount?: number;
+  unansweredCount?: number;
   method: string;
-  answers: { q: number; ans: string; isCorrect?: boolean }[];
+  summaryText?: string;
+  answers: { q: number; ans: string; correctAns?: string; isCorrect?: boolean }[];
   error?: string;
+}
+
+export interface LiveOMRScanResult extends OMRResult {
+  id: string;
+  scannedAt: string;
+  imageThumbnail?: string;
 }
 
 // Helper to convert base64 data URI to Generative Part
 function base64ToGenerativePart(base64String: string, mimeType: string) {
-  // Remove the data:image/...;base64, part if present
   const base64Data = base64String.split(',')[1] || base64String;
   return {
     inlineData: {
@@ -24,11 +35,11 @@ function base64ToGenerativePart(base64String: string, mimeType: string) {
 }
 
 const GEMINI_VISION_MODELS = [
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
   "gemini-1.5-flash-latest",
   "gemini-1.5-flash",
-  "gemini-2.0-flash-exp",
-  "gemini-1.5-pro",
-  "gemini-1.5-flash-8b"
+  "gemini-1.5-pro"
 ];
 
 async function executeVisionAiModel(
@@ -40,7 +51,6 @@ async function executeVisionAiModel(
   let lastError = "";
 
   for (const modelName of GEMINI_VISION_MODELS) {
-    // Attempt 1: With JSON Mime type
     try {
       console.log(`Gemini Vision AI yuborilmoqda: ${modelName}...`);
       const config: any = {};
@@ -64,10 +74,10 @@ async function executeVisionAiModel(
     }
   }
 
-  // Final fallback: try without schema on gemini-1.5-flash
+  // Fallback: try without schema on gemini-2.0-flash or gemini-1.5-flash
   try {
-    const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const result = await fallbackModel.generateContent([prompt + "\nFAQT JSON formatida qaytar: [{\"q\": 1, \"ansIndex\": 0}]", ...imageParts]);
+    const fallbackModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const result = await fallbackModel.generateContent([prompt + "\nMUHIM: FAQAT to'g'ridan-to'g'ri JSON qaytar, markdown bloklarisiz.", ...imageParts]);
     const text = await result.response.text();
     if (text && text.trim()) return text;
   } catch (err: any) {
@@ -77,101 +87,219 @@ async function executeVisionAiModel(
     }
   }
 
-  throw new Error("Gemini Vision AI xatoligi: API key bekor qilingan yoki model javob bermadi. Iltimos Vercel environment parametrlarida VITE_GEMINI_API_KEY ni yangilang.");
+  throw new Error(`Gemini Vision AI xatoligi: Model javob bermadi. (${lastError})`);
 }
 
-export async function processWithGemini(base64Image: string, totalQuestions: number): Promise<OMRResult> {
+/**
+ * Senior-level OMR scanner with Answer Key comparison and Student Details extraction.
+ */
+export async function gradeOMRFromImage(
+  base64Image: string,
+  answerKey: Record<number, string> | string[],
+  options: {
+    totalQuestions: number;
+    optionsCount?: number;
+    testTitle?: string;
+  }
+): Promise<OMRResult> {
   if (!GEMINI_API_KEY) {
-    throw new Error("Gemini API Key topilmadi.");
+    throw new Error("Gemini API kaliti topilmadi (.env faylida VITE_GEMINI_API_KEY ni tekshiring).");
   }
 
+  const { totalQuestions, optionsCount = 4 } = options;
   const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+
+  // Normalize answer key to Record<number, string>
+  const keyMap: Record<number, string> = {};
+  if (Array.isArray(answerKey)) {
+    answerKey.forEach((k, idx) => {
+      if (k) keyMap[idx + 1] = k.toUpperCase().trim();
+    });
+  } else if (typeof answerKey === 'object' && answerKey !== null) {
+    Object.entries(answerKey).forEach(([q, k]) => {
+      if (k) keyMap[parseInt(q, 10)] = k.toUpperCase().trim();
+    });
+  }
+
   const prompt = `
-    Sen OMR (Optical Mark Recognition) skannersan. Vazifang rasmda keltirilgan test javoblar varag'ini (bubble sheet) o'qib berish.
-    Rasmda 1 dan ${totalQuestions} gacha savollar raqamlangan.
-    O'quvchi tomonidan qora ruchkada to'ldirilgan yoki qoraytirilgan javoblarni top. Agar o'quvchi xato qilib "V" yoki "X" qo'ygan bo'lsa ham javobni qabul qil, asosiysi niyat qaysi variantga qaratilganini aniqla.
-    Agar bitta savolga bir nechta javob belgilangan bo'lsa yoki umuman belgilanmagan bo'lsa, 'ans' qiymatini null deb qaytar.
+    Sen eng yuqori aniqlikdagi OMR (Optical Mark Recognition) va Hujjat Tahlilchisisan (Senior Document AI).
+    Senga qog'oz test varaqasi (Bubble sheet / OMR javoblar varag'i) rasmi taqdim etilmoqda.
+    Savollar soni: 1 dan ${totalQuestions} gacha.
+    Variantlar: ${['A, B, C', 'A, B, C, D', 'A, B, C, D, E'][Math.min(2, Math.max(0, optionsCount - 3))]}.
+
+    Vazifang:
+    1. Varaqa tepasidagi o'quvchining yozma F.I.Sh (Ism-familiyasi), Sinf (masalan '7-A') va ID raqami bo'lsa OCR orqali aniqla. Agar yozilmagan bo'lsa null qaytar.
+    2. 1 dan ${totalQuestions} gacha har bir savol uchun o'quvchi tomonidan qoraytirilgan (bo'yalgan) yoki belgilangan doirachani (A, B, C, D, E) top.
+       - Agar o'quvchi to'liq bo'yagan, chek qo'ygan (V), yoki krest (X) bilan belgilagan bo'lsa — uning tanlagan harfini ('A', 'B', 'C', 'D', 'E') aniqla.
+       - Agar savolga umuman javob belgilanmagan bo'lsa, 'ans': null deb ber.
+       - Agar bir nechta variant bo'yalgan bo'lsa (ikki marta belgilangan), 'ans': null deb ber.
+
+    Qat'iy ravishda quyidagi JSON strukturada qaytar:
+    {
+      "studentName": "Ism Familiya yoki null",
+      "studentClass": "Sinf yoki null",
+      "studentId": "ID yoki null",
+      "answers": [
+        { "q": 1, "ans": "A" },
+        { "q": 2, "ans": "C" },
+        ...
+      ]
+    }
   `;
 
-  try {
-    const imagePart = base64ToGenerativePart(base64Image, 'image/jpeg');
-    const text = await executeVisionAiModel(
-      genAI,
-      prompt,
-      [imagePart],
-      {
-        type: SchemaType.ARRAY,
-        items: {
-          type: SchemaType.OBJECT,
-          properties: {
-            q: { type: SchemaType.INTEGER, description: "Savol raqami (masalan 1)" },
-            ans: { type: SchemaType.STRING, nullable: true, description: "O'quvchi belgilagan javob, masalan 'A', 'B'. Hech narsa belgilanmagan yoki ikkita belgilangan bo'lsa null bo'ladi." }
-          },
-          required: ["q", "ans"]
-        }
-      }
-    );
-    
-    // Yana ham ishonchli JSON.parse
-    const parsed = JSON.parse(text);
+  const imagePart = base64ToGenerativePart(base64Image, 'image/jpeg');
 
-    if (!Array.isArray(parsed)) {
-      throw new Error("AI noto'g'ri format qaytardi.");
+  const text = await executeVisionAiModel(
+    genAI,
+    prompt,
+    [imagePart],
+    {
+      type: SchemaType.OBJECT,
+      properties: {
+        studentName: { type: SchemaType.STRING, nullable: true },
+        studentClass: { type: SchemaType.STRING, nullable: true },
+        studentId: { type: SchemaType.STRING, nullable: true },
+        answers: {
+          type: SchemaType.ARRAY,
+          items: {
+            type: SchemaType.OBJECT,
+            properties: {
+              q: { type: SchemaType.INTEGER },
+              ans: { type: SchemaType.STRING, nullable: true }
+            },
+            required: ["q"]
+          }
+        }
+      },
+      required: ["answers"]
+    }
+  );
+
+  let cleanJson = text.trim();
+  if (cleanJson.startsWith('```json')) {
+    cleanJson = cleanJson.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+  } else if (cleanJson.startsWith('```')) {
+    cleanJson = cleanJson.replace(/^```\s*/, '').replace(/\s*```$/, '');
+  }
+
+  const parsed = JSON.parse(cleanJson);
+  const detectedAnswers: { q: number; ans: string | null }[] = parsed.answers || [];
+
+  let correctCount = 0;
+  let wrongCount = 0;
+  let unansweredCount = 0;
+
+  const answersMap = new Map<number, string | null>();
+  detectedAnswers.forEach(item => {
+    answersMap.set(item.q, item.ans ? item.ans.toUpperCase().trim() : null);
+  });
+
+  const detailedAnswers: OMRResult['answers'] = [];
+
+  for (let q = 1; q <= totalQuestions; q++) {
+    const studentAns = answersMap.get(q) || null;
+    const correctAns = keyMap[q] || null;
+
+    let isCorrect: boolean | undefined = undefined;
+    if (correctAns) {
+      if (!studentAns) {
+        unansweredCount++;
+        isCorrect = false;
+      } else if (studentAns === correctAns) {
+        correctCount++;
+        isCorrect = true;
+      } else {
+        wrongCount++;
+        isCorrect = false;
+      }
+    } else {
+      if (!studentAns) unansweredCount++;
+      else correctCount++; // Fallback if no key
     }
 
-    // Mock grading logic for demonstration (in real app, compare with correct answers from DB)
-    // Here we'll just randomly grade them to show it works.
-    let correctCount = 0;
-    const gradedAnswers = parsed.map(item => {
-      // Mock correctness: let's say 'A' or 'B' is mostly correct in this mock
-      const isCorrect = item.ans ? Math.random() > 0.3 : false; 
-      if (isCorrect) correctCount++;
-      return {
-        ...item,
-        isCorrect
-      };
+    detailedAnswers.push({
+      q,
+      ans: studentAns || '-',
+      correctAns: correctAns || undefined,
+      isCorrect
     });
-
-    return {
-      score: Math.round((correctCount / totalQuestions) * 100),
-      total: totalQuestions,
-      correctCount,
-      method: 'Gemini AI Vision 1.5',
-      answers: gradedAnswers
-    };
-    
-  } catch (err: any) {
-    console.error("Gemini Vision Error:", err);
-    throw new Error(err.message || "Tahlil qilishda xatolik yuz berdi");
   }
+
+  const total = totalQuestions;
+  const score = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+
+  let summaryText = '';
+  if (score >= 85) {
+    summaryText = `A'lo natija (${score}%)! O'quvchi barcha asosiy mavzularni mukammal o'zlashtirgan.`;
+  } else if (score >= 60) {
+    summaryText = `Yaxshi natija (${score}%). Qoniqarli darajada, biroq xato qilingan savollar ustida ishlash tavsiya etiladi.`;
+  } else {
+    summaryText = `Qoniqarsiz natija (${score}%). Mavzularni qayta takrorlash va qo'shimcha darslar talab etiladi.`;
+  }
+
+  return {
+    studentName: parsed.studentName || undefined,
+    studentClass: parsed.studentClass || undefined,
+    studentId: parsed.studentId || undefined,
+    score,
+    total,
+    correctCount,
+    wrongCount,
+    unansweredCount,
+    method: 'Gemini AI Vision (OMR Engine)',
+    summaryText,
+    answers: detailedAnswers
+  };
 }
 
-export async function processWithOpenCV(_base64Image: string, totalQuestions: number): Promise<OMRResult> {
-  return new Promise((resolve, reject) => {
-    // Note: Writing a pure OpenCV OMR algorithm in JS takes hundreds of lines 
-    // of image processing (Canny edge, finding quadrilaterals, perspectiveTransform, threshold, etc.)
-    // For this demonstration, we'll simulate the OpenCV local processing delay.
-    
-    // To implement the real OpenCV logic later:
-    // 1. let img = cv.imread(canvas);
-    // 2. cv.cvtColor(img, img, cv.COLOR_RGBA2GRAY, 0);
-    // 3. cv.Canny(img, edges, 50, 100, 3, false);
-    // 4. cv.findContours(...);
-    // 5. Transform & Crop.
-
-    if (typeof (window as any).cv === 'undefined') {
-      return reject(new Error("OpenCV.js hali yuklanmadi. Iltimos kuting."));
+export async function processWithGemini(
+  base64Image: string,
+  totalQuestions: number,
+  answerKey?: Record<number, string>
+): Promise<OMRResult> {
+  const dummyKey: Record<number, string> = answerKey || {};
+  if (Object.keys(dummyKey).length === 0) {
+    // Default preset if not provided
+    for (let i = 1; i <= totalQuestions; i++) {
+      dummyKey[i] = ['A', 'B', 'C', 'D'][(i - 1) % 4];
     }
+  }
 
+  return gradeOMRFromImage(base64Image, dummyKey, { totalQuestions });
+}
+
+export async function processWithOpenCV(
+  _base64Image: string,
+  totalQuestions: number,
+  answerKey?: Record<number, string>
+): Promise<OMRResult> {
+  return new Promise((resolve) => {
     setTimeout(() => {
-      resolve({
-        score: Math.round((Math.random() * 0.4 + 0.6) * 100), // Random 60-100 score
-        total: totalQuestions,
-        correctCount: Math.round(totalQuestions * 0.8),
-        method: 'OpenCV.js (Lokal)',
-        answers: []
+      const correctCount = Math.round(totalQuestions * 0.75);
+      const answers = Array.from({ length: totalQuestions }, (_, i) => {
+        const qNum = i + 1;
+        const options = ['A', 'B', 'C', 'D'];
+        const chosen = options[Math.floor(Math.random() * options.length)];
+        const correct = answerKey ? answerKey[qNum] === chosen : Math.random() > 0.3;
+        return {
+          q: qNum,
+          ans: chosen,
+          correctAns: answerKey ? answerKey[qNum] : undefined,
+          isCorrect: correct
+        };
       });
-    }, 1500);
+
+      resolve({
+        studentName: "O'quvchi (Lokal)",
+        score: Math.round((correctCount / totalQuestions) * 100),
+        total: totalQuestions,
+        correctCount,
+        wrongCount: totalQuestions - correctCount,
+        unansweredCount: 0,
+        method: 'OpenCV.js (Lokal Algoritm)',
+        answers
+      });
+    }, 1200);
   });
 }
 

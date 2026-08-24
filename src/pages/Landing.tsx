@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowRight, Plus, User, GraduationCap, Settings, Palette, Check, X,
-  Zap, Crown, Copy, ExternalLink, Send
+  Zap, Crown, Copy, ExternalLink, Send, Scan
 } from 'lucide-react';
 import MeshGradient, { palettes } from '../components/ui/MeshGradient';
 import { getToken } from '../lib/auth';
@@ -158,6 +158,33 @@ export default function Landing() {
                 </div>
               </div>
               <ArrowRight className="relative z-10 w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 group-hover:text-black transition-all duration-500" strokeWidth={1.5} />
+            </motion.div>
+
+            {/* OMR & ZipGrade Skanner Portali */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.05 }}
+              onClick={() => navigate('/admin/omr-scanner')}
+              className="relative group cursor-pointer border-b border-black/10 py-10 px-6 -mx-6 flex flex-col md:flex-row md:items-end justify-between gap-6 pointer-events-auto overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-indigo-50/70 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500 ease-[cubic-bezier(0.87,0,0.13,1)] z-0 rounded-xl" />
+
+              <div className="relative z-10 flex flex-col md:flex-row gap-6 md:items-center">
+                <div className="w-12 h-12 rounded-full bg-white border border-neutral-200 flex items-center justify-center shrink-0 group-hover:border-indigo-500/50 group-hover:shadow-[0_0_15px_rgba(99,102,241,0.15)] transition-all duration-500">
+                  <Scan className="w-6 h-6 text-indigo-600 group-hover:scale-110 transition-transform duration-500" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-2xl md:text-3xl font-medium transition-all duration-300 group-hover:translate-x-1">OMR & ZipGrade Skanner</h3>
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200 uppercase tracking-wider">
+                      Yangi
+                    </span>
+                  </div>
+                  <p className="text-neutral-500 leading-relaxed max-w-md transition-all duration-300 delay-75 group-hover:translate-x-1">
+                    Smartfon kamerasi orqali qog'oz testlarni skanerlash yoki ZipGrade CSV fayllarini import qilish.
+                  </p>
+                </div>
+              </div>
+              <ArrowRight className="relative z-10 w-6 h-6 transform -rotate-45 group-hover:rotate-0 group-hover:translate-x-2 group-hover:text-indigo-600 transition-all duration-500" strokeWidth={1.5} />
             </motion.div>
 
             {/* Super Admin */}

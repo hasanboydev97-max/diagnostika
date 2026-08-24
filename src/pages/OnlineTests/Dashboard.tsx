@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChevronRight, FileText, Search, Trash2, ShieldAlert, Crown, Gamepad2 } from 'lucide-react';
+import { Plus, ChevronRight, FileText, Search, Trash2, ShieldAlert, Crown, Gamepad2, Scan, Printer } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { getAuthHeaders, getToken, getTeacher, fetchCurrentTeacher } from '../../lib/auth';
@@ -181,17 +181,33 @@ export default function OnlineTestsDashboard() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="w-full md:w-auto flex flex-col sm:flex-row gap-3">
+          <div className="w-full md:w-auto flex flex-wrap sm:flex-nowrap gap-2.5">
+            <button
+              onClick={() => navigate('/admin/omr-scanner')}
+              className="bg-indigo-50 border border-indigo-200/80 text-indigo-700 hover:bg-indigo-100/80 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-xs"
+              title="Kamera va ZipGrade orqali testlarni tekshirish"
+            >
+              <Scan size={16} className="text-indigo-600" />
+              OMR Skanner
+            </button>
+            <button
+              onClick={() => navigate('/admin/omr-generator')}
+              className="bg-white border border-zinc-200/80 text-zinc-700 hover:bg-zinc-50 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-xs"
+              title="Test javoblar varaqasini chop etish uchun PDF yaratish"
+            >
+              <Printer size={16} className="text-zinc-500" />
+              Varaqa PDF
+            </button>
             <button
               onClick={() => navigate('/games')}
-              className="bg-white border border-zinc-200/80 text-zinc-800 px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-zinc-50 transition-colors shadow-xs"
+              className="bg-white border border-zinc-200/80 text-zinc-800 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-zinc-50 transition-colors shadow-xs"
             >
               <Gamepad2 size={16} className="text-indigo-600" />
-              Mini O'yinlar
+              O'yinlar
             </button>
             <MagicButton
               onClick={() => navigate('/online-tests/create')}
-              label="Yangi Test Yaratish"
+              label="Yangi Test"
               icon={<Plus />}
               variant="indigo"
               className="w-full sm:w-auto"
