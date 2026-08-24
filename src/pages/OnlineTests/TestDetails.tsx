@@ -124,7 +124,6 @@ export default function TestDetails() {
         subject: test.subject || 'Umumiy Fan',
         questionCount,
         optionsCount: 4,
-        includeStudentIdGrid: true,
         variant: 'A'
       });
 
