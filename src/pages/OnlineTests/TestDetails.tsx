@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import MagicButton from '../../components/MagicButton';
 import MeshGradient from '../../components/ui/MeshGradient';
-import { jsPDF } from 'jspdf';
+import { generateOMRPdf } from '../../lib/omrPdfGenerator';
 import { gradeOMRFromImage, gradeTestFromPhoto, type OMRResult, type PaperGradingResult } from '../../lib/omrScanner';
 import { parseZipGradeFile, type ZipGradeImportResult } from '../../lib/zipgradeParser';
 import { db, type StudentResult } from '../../lib/db';
@@ -110,95 +110,30 @@ export default function TestDetails() {
     return keyMap;
   }, [test]);
 
-  // 1. Download OMR Bubble Sheet PDF for this specific test
+  // 1. Download Standardized OMR Bubble Sheet PDF for this specific test
   const handleDownloadOMRSheet = () => {
     if (!test) return;
     const questionCount = test.questions?.length || 30;
     const schoolName = test.subject ? `${test.subject.toUpperCase()} FANI TESTI` : 'Maktab Diagnostika Testi';
     const testTitle = test.title || 'Imtihon Javoblar Varag\'i';
 
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
+    try {
+      const doc = generateOMRPdf({
+        schoolName,
+        testTitle,
+        subject: test.subject || 'Umumiy Fan',
+        questionCount,
+        optionsCount: 4,
+        includeStudentIdGrid: true,
+        variant: 'A'
+      });
 
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 15;
-
-    // Draw 4 Corner Alignment Fiducial Marks
-    const markerSize = 10;
-    doc.setFillColor(0, 0, 0);
-    doc.rect(margin, margin, markerSize, markerSize, 'F');
-    doc.rect(pageWidth - margin - markerSize, margin, markerSize, markerSize, 'F');
-    doc.rect(margin, pageHeight - margin - markerSize, markerSize, markerSize, 'F');
-    doc.rect(pageWidth - margin - markerSize, pageHeight - margin - markerSize, markerSize, markerSize, 'F');
-
-    // Title Header
-    doc.setFontSize(15);
-    doc.setFont('helvetica', 'bold');
-    doc.text(testTitle, pageWidth / 2, margin + 12, { align: 'center' });
-    
-    doc.setFontSize(10.5);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Fan: ${test.subject || 'Umumiy'}  |  Savollar soni: ${questionCount} ta  |  Muassasa: ${schoolName}`, pageWidth / 2, margin + 18, { align: 'center' });
-
-    // Student Details Box
-    doc.setDrawColor(180, 180, 180);
-    doc.rect(margin + 10, margin + 24, pageWidth - (margin * 2) - 20, 22);
-    doc.setFontSize(10);
-    doc.text("O'quvchining F.I.Sh: ____________________________________________", margin + 15, margin + 33);
-    doc.text("Sinf: _________      Sana: ___/___/20__      Variant: ___", margin + 15, margin + 41);
-
-    // Dynamic Columns Calculation
-    const startY = margin + 55;
-    let columns = 3;
-    let spacingY = 9.5;
-    let fontSizeNum = 9.5;
-    let bubbleRadius = 2.4;
-
-    if (questionCount > 60) {
-      columns = 4;
-      spacingY = 7.5;
-      fontSizeNum = 8;
-      bubbleRadius = 2.1;
-    } else if (questionCount > 40) {
-      columns = 3;
-      spacingY = 8.5;
+      doc.save(`OMR_Blankasi_${test.title.replace(/\s+/g, '_')}.pdf`);
+      toast.success("Standardlashtirilgan OMR Javoblar varaqasi (PDF) tayyorlandi!");
+    } catch (err: any) {
+      console.error(err);
+      toast.error("PDF yaratishda xatolik: " + err.message);
     }
-
-    const rowsPerCol = Math.ceil(questionCount / columns);
-    const colWidth = (pageWidth - (margin * 2) - 10) / columns;
-    const labels = ['A', 'B', 'C', 'D', 'E'];
-
-    for (let i = 0; i < questionCount; i++) {
-      const col = Math.floor(i / rowsPerCol);
-      const row = i % rowsPerCol;
-      const xPos = margin + 10 + (col * colWidth);
-      const yPos = startY + (row * spacingY);
-
-      doc.setFontSize(fontSizeNum);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`${i + 1}.`, xPos, yPos + 1);
-
-      const optionsCount = test.questions[i]?.options?.length || 4;
-      for (let opt = 0; opt < optionsCount; opt++) {
-        const bubbleX = xPos + 10 + (opt * 10.5);
-        doc.setDrawColor(100, 100, 100);
-        doc.circle(bubbleX, yPos, bubbleRadius, 'S');
-        doc.setFontSize(7);
-        doc.setFont('helvetica', 'normal');
-        doc.text(labels[opt], bubbleX - 1.1, yPos + 1);
-      }
-    }
-
-    doc.setFontSize(8.5);
-    doc.setFont('helvetica', 'italic');
-    doc.text("Ko'rsatma: To'g'ri javob doirachasini qora ruchkada to'liq bo'yang. Burchakdagi 4 ta qora kvadratni buzmang.", pageWidth / 2, pageHeight - margin + 4, { align: 'center' });
-
-    doc.save(`OMR_Blankasi_${test.title.replace(/\s+/g, '_')}.pdf`);
-    toast.success("OMR Javoblar varaqasi (PDF) tayyorlandi!");
   };
 
   // 2. Process Smart OMR Camera Scan
