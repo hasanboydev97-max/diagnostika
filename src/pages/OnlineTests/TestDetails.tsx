@@ -1,14 +1,22 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Webcam from 'react-webcam';
-import { ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, ExternalLink, FileText, Download, X, Sparkles, Play, Scan, Camera, Upload, CheckCircle2, Check, XCircle } from 'lucide-react';
+import { 
+  ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, 
+  ExternalLink, FileText, Download, X, Sparkles, Play, 
+  Scan, Camera, Upload, CheckCircle2, RefreshCw,
+  Printer, FileSpreadsheet
+} from 'lucide-react';
 import { getAuthHeaders, getToken, getTeacher } from '../../lib/auth';
 import { toast } from 'sonner';
-import FormattedText from '../../components/FormattedText';
 import { motion, AnimatePresence } from 'framer-motion';
-import ReactMarkdown from 'react-markdown';
 import MagicButton from '../../components/MagicButton';
-import { gradeTestFromPhoto, type PaperGradingResult } from '../../lib/omrScanner';
+import MeshGradient from '../../components/ui/MeshGradient';
+import { jsPDF } from 'jspdf';
+import { gradeOMRFromImage, gradeTestFromPhoto, type OMRResult, type PaperGradingResult } from '../../lib/omrScanner';
+import { parseZipGradeFile, type ZipGradeImportResult } from '../../lib/zipgradeParser';
+import { db, type StudentResult } from '../../lib/db';
+import { QUESTIONS_BLUEPRINT } from '../../lib/blueprint';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -33,95 +41,31 @@ export default function TestDetails() {
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
 
-  // Camera paper test grading states
+  // OMR & ZipGrade Modal State
   const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
+  const [omrTab, setOmrTab] = useState<'bubble-omr' | 'zipgrade' | 'multi-page'>('bubble-omr');
+  
+  // Smart OMR Camera State
+  const [omrImageSrc, setOmrImageSrc] = useState<string | null>(null);
+  const [isProcessingOmr, setIsProcessingOmr] = useState(false);
+  const [omrResult, setOmrResult] = useState<OMRResult | null>(null);
+  const [omrStudentName, setOmrStudentName] = useState('');
+  const [omrStudentId, setOmrStudentId] = useState('');
+  const [omrCameraFacing, setOmrCameraFacing] = useState<'environment' | 'user'>('environment');
+  const omrWebcamRef = useRef<Webcam>(null);
+  const omrFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Multi-page Question Paper State
   const [paperStudentName, setPaperStudentName] = useState('');
   const [paperImageSrcs, setPaperImageSrcs] = useState<string[]>([]);
   const [isScanningPaper, setIsScanningPaper] = useState(false);
   const [paperGradingResult, setPaperGradingResult] = useState<PaperGradingResult | null>(null);
-  const webcamRef = useRef<Webcam>(null);
+  const paperWebcamRef = useRef<Webcam>(null);
 
-  const handleCapturePhoto = () => {
-    if (webcamRef.current) {
-      const screenshot = webcamRef.current.getScreenshot();
-      if (screenshot) {
-        setPaperImageSrcs(prev => [...prev, screenshot]);
-        toast.success(`${paperImageSrcs.length + 1}-bet rasmi olindi!`);
-      } else {
-        toast.error("Kameradan tasvir o'qib bo'lmadi");
-      }
-    }
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (reader.result) {
-          setPaperImageSrcs(prev => [...prev, reader.result as string]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-    toast.success(`${files.length} ta sahifa rasmi yuklandi!`);
-  };
-
-  const removePagePhoto = (idx: number) => {
-    setPaperImageSrcs(prev => prev.filter((_, i) => i !== idx));
-  };
-
-  const handleGradePaperTest = async () => {
-    if (!paperStudentName.trim()) {
-      toast.error("Iltimos, o'quvchi ism-familiyasini kiriting!");
-      return;
-    }
-    if (paperImageSrcs.length === 0) {
-      toast.error("Iltimos, kamida 1 ta javoblar varaqasini kamerada rasmga oling yoki fayl yuklang!");
-      return;
-    }
-    if (!test || !test.questions || test.questions.length === 0) {
-      toast.error("Test savollari topilmadi");
-      return;
-    }
-
-    setIsScanningPaper(true);
-    const toastId = toast.loading(`AI ${paperImageSrcs.length} ta sahifadagi javoblar varaqalarini skanerlamoqda va tekshirmoqda...`);
-
-    try {
-      const result = await gradeTestFromPhoto(paperImageSrcs, test.questions, paperStudentName.trim());
-      setPaperGradingResult(result);
-
-      // Save result to server database
-      await fetch(`${API_URL}/online-test-results`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          testId,
-          studentName: paperStudentName.trim(),
-          score: result.score,
-          totalScore: result.totalScore,
-          createdAt: new Date().toISOString()
-        })
-      });
-
-      toast.success(`${paperStudentName.trim()} natijasi (${result.score}/${result.totalScore}) saqlandi!`, { id: toastId });
-      fetchData(); // Refresh test results table!
-    } catch (err: any) {
-      console.error(err);
-      toast.error(`Xatolik: ${err.message}`, { id: toastId });
-    } finally {
-      setIsScanningPaper(false);
-    }
-  };
-
-  const resetPaperScanner = () => {
-    setPaperImageSrcs([]);
-    setPaperGradingResult(null);
-    setPaperStudentName('');
-  };
+  // ZipGrade Import State
+  const [zipGradeData, setZipGradeData] = useState<ZipGradeImportResult | null>(null);
+  const [isImportingZipGrade, setIsImportingZipGrade] = useState(false);
+  const zipgradeFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!getToken()) {
@@ -149,16 +93,342 @@ export default function TestDetails() {
       }
     } catch (error) {
       console.error(error);
-      toast.error('Ma\'lumotlarni yuklashda xatolik yuz berdi');
+      toast.error("Ma'lumotlarni yuklashda xatolik yuz berdi");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getTestAnswerKey = useCallback((): Record<number, string> => {
+    if (!test || !test.questions) return {};
+    const keyMap: Record<number, string> = {};
+    const optionLetters = ['A', 'B', 'C', 'D', 'E'];
+    test.questions.forEach((q: any, idx: number) => {
+      const optIdx = typeof q.correctOption === 'number' ? q.correctOption : 0;
+      keyMap[idx + 1] = optionLetters[optIdx] || 'A';
+    });
+    return keyMap;
+  }, [test]);
+
+  // 1. Download OMR Bubble Sheet PDF for this specific test
+  const handleDownloadOMRSheet = () => {
+    if (!test) return;
+    const questionCount = test.questions?.length || 30;
+    const schoolName = test.subject ? `${test.subject.toUpperCase()} FANI TESTI` : 'Maktab Diagnostika Testi';
+    const testTitle = test.title || 'Imtihon Javoblar Varag\'i';
+
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 15;
+
+    // Draw 4 Corner Alignment Fiducial Marks
+    const markerSize = 10;
+    doc.setFillColor(0, 0, 0);
+    doc.rect(margin, margin, markerSize, markerSize, 'F');
+    doc.rect(pageWidth - margin - markerSize, margin, markerSize, markerSize, 'F');
+    doc.rect(margin, pageHeight - margin - markerSize, markerSize, markerSize, 'F');
+    doc.rect(pageWidth - margin - markerSize, pageHeight - margin - markerSize, markerSize, markerSize, 'F');
+
+    // Title Header
+    doc.setFontSize(15);
+    doc.setFont('helvetica', 'bold');
+    doc.text(testTitle, pageWidth / 2, margin + 12, { align: 'center' });
+    
+    doc.setFontSize(10.5);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Fan: ${test.subject || 'Umumiy'}  |  Savollar soni: ${questionCount} ta  |  Muassasa: ${schoolName}`, pageWidth / 2, margin + 18, { align: 'center' });
+
+    // Student Details Box
+    doc.setDrawColor(180, 180, 180);
+    doc.rect(margin + 10, margin + 24, pageWidth - (margin * 2) - 20, 22);
+    doc.setFontSize(10);
+    doc.text("O'quvchining F.I.Sh: ____________________________________________", margin + 15, margin + 33);
+    doc.text("Sinf: _________      Sana: ___/___/20__      Variant: ___", margin + 15, margin + 41);
+
+    // Dynamic Columns Calculation
+    const startY = margin + 55;
+    let columns = 3;
+    let spacingY = 9.5;
+    let fontSizeNum = 9.5;
+    let bubbleRadius = 2.4;
+
+    if (questionCount > 60) {
+      columns = 4;
+      spacingY = 7.5;
+      fontSizeNum = 8;
+      bubbleRadius = 2.1;
+    } else if (questionCount > 40) {
+      columns = 3;
+      spacingY = 8.5;
+    }
+
+    const rowsPerCol = Math.ceil(questionCount / columns);
+    const colWidth = (pageWidth - (margin * 2) - 10) / columns;
+    const labels = ['A', 'B', 'C', 'D', 'E'];
+
+    for (let i = 0; i < questionCount; i++) {
+      const col = Math.floor(i / rowsPerCol);
+      const row = i % rowsPerCol;
+      const xPos = margin + 10 + (col * colWidth);
+      const yPos = startY + (row * spacingY);
+
+      doc.setFontSize(fontSizeNum);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${i + 1}.`, xPos, yPos + 1);
+
+      const optionsCount = test.questions[i]?.options?.length || 4;
+      for (let opt = 0; opt < optionsCount; opt++) {
+        const bubbleX = xPos + 10 + (opt * 10.5);
+        doc.setDrawColor(100, 100, 100);
+        doc.circle(bubbleX, yPos, bubbleRadius, 'S');
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.text(labels[opt], bubbleX - 1.1, yPos + 1);
+      }
+    }
+
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'italic');
+    doc.text("Ko'rsatma: To'g'ri javob doirachasini qora ruchkada to'liq bo'yang. Burchakdagi 4 ta qora kvadratni buzmang.", pageWidth / 2, pageHeight - margin + 4, { align: 'center' });
+
+    doc.save(`OMR_Blankasi_${test.title.replace(/\s+/g, '_')}.pdf`);
+    toast.success("OMR Javoblar varaqasi (PDF) tayyorlandi!");
+  };
+
+  // 2. Process Smart OMR Camera Scan
+  const handleCaptureOmrPhoto = useCallback(() => {
+    if (omrWebcamRef.current) {
+      const screenshot = omrWebcamRef.current.getScreenshot();
+      if (screenshot) {
+        setOmrImageSrc(screenshot);
+        processOmrImage(screenshot);
+      }
+    }
+  }, [omrWebcamRef, test]);
+
+  const handleOmrFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      setOmrImageSrc(base64);
+      processOmrImage(base64);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const processOmrImage = async (base64Img: string) => {
+    if (!test || !test.questions) return;
+    setIsProcessingOmr(true);
+    setOmrResult(null);
+
+    const toastId = toast.loading("AI OMR varaqani tahlil qilmoqda...");
+    try {
+      const answerKey = getTestAnswerKey();
+      const omrRes = await gradeOMRFromImage(base64Img, answerKey, {
+        totalQuestions: test.questions.length,
+        optionsCount: 4,
+        testTitle: test.title
+      });
+
+      setOmrResult(omrRes);
+      setOmrStudentName(omrRes.studentName || `O'quvchi #${results.length + 1}`);
+      setOmrStudentId(omrRes.studentId || Math.floor(100000 + Math.random() * 900000).toString());
+
+      toast.success(`Tekshirildi! Natija: ${omrRes.score}% (${omrRes.correctCount}/${test.questions.length})`, { id: toastId });
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Tekshirishda xatolik yuz berdi", { id: toastId });
+    } finally {
+      setIsProcessingOmr(false);
+    }
+  };
+
+  const handleSaveOmrStudent = async () => {
+    if (!omrResult || !test) return;
+
+    const studentName = omrStudentName.trim() || `O'quvchi #${results.length + 1}`;
+    const studentId = omrStudentId.trim() || Math.floor(100000 + Math.random() * 900000).toString();
+    const score = omrResult.correctCount;
+    const totalScore = test.questions.length;
+
+    const toastId = toast.loading(`${studentName} natijasi saqlanmoqda...`);
+
+    try {
+      await fetch(`${API_URL}/online-test-results`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          testId,
+          studentName,
+          score,
+          totalScore,
+          answers: omrResult.answers,
+          summaryText: omrResult.summaryText,
+          createdAt: new Date().toISOString()
+        })
+      });
+
+      const questionResults: Record<number, boolean> = {};
+      omrResult.answers.forEach(a => {
+        questionResults[a.q] = !!a.isCorrect;
+      });
+
+      const blueprint = QUESTIONS_BLUEPRINT.slice(0, totalScore);
+      const catTotals: Record<string, number> = {};
+      const catCorrects: Record<string, number> = {};
+
+      blueprint.forEach(bp => {
+        const isCorrect = questionResults[bp.id] || false;
+        catTotals[bp.category] = (catTotals[bp.category] || 0) + 1;
+        if (isCorrect) catCorrects[bp.category] = (catCorrects[bp.category] || 0) + 1;
+      });
+
+      const scores: Record<string, number> = {};
+      Object.keys(catTotals).forEach(cat => {
+        scores[cat] = Math.round(((catCorrects[cat] || 0) / catTotals[cat]) * 100);
+      });
+
+      const fullResult: StudentResult = {
+        id: studentId,
+        pin: Math.floor(1000 + Math.random() * 9000).toString(),
+        studentName,
+        grade: test.subject || '5',
+        blueprintSnapshot: blueprint,
+        scores,
+        totalScore: omrResult.score,
+        questionResults,
+        aiSummaryText: omrResult.summaryText,
+        createdAt: new Date().toISOString()
+      };
+
+      await db.saveResult(fullResult);
+
+      toast.success(`${studentName} muvaffaqiyatli saqlandi!`, { id: toastId });
+      
+      setOmrImageSrc(null);
+      setOmrResult(null);
+      setOmrStudentName('');
+      
+      fetchData();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`Saqlashda xatolik: ${err.message}`, { id: toastId });
+    }
+  };
+
+  const handleZipGradeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      toast.loading("ZipGrade fayli o'qilmoqda...", { id: 'zipgrade-load' });
+      const arrayBuffer = await file.arrayBuffer();
+      const parsed = parseZipGradeFile(arrayBuffer);
+      
+      setZipGradeData(parsed);
+      toast.success(`${parsed.students.length} nafar o'quvchi ma'lumotlari yuklandi!`, { id: 'zipgrade-load' });
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "ZipGrade faylini o'qishda xatolik yuz berdi", { id: 'zipgrade-load' });
+    } finally {
+      e.target.value = '';
+    }
+  };
+
+  const handleSaveAllZipGradeStudents = async () => {
+    if (!zipGradeData || zipGradeData.students.length === 0 || !test) return;
+
+    setIsImportingZipGrade(true);
+    const toastId = toast.loading(`0/${zipGradeData.students.length} o'quvchi saqlanmoqda...`);
+
+    try {
+      for (let i = 0; i < zipGradeData.students.length; i++) {
+        const s = zipGradeData.students[i];
+        const earned = typeof s.earnedPts === 'number' ? s.earnedPts : Math.round((s.percent / 100) * test.questions.length);
+
+        await fetch(`${API_URL}/online-test-results`, {
+          method: 'POST',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            testId,
+            studentName: s.studentName,
+            score: earned,
+            totalScore: test.questions.length,
+            createdAt: new Date().toISOString()
+          })
+        });
+
+        toast.loading(`${i + 1}/${zipGradeData.students.length} o'quvchi saqlandi...`, { id: toastId });
+      }
+
+      toast.success(`Barcha ${zipGradeData.students.length} nafar o'quvchi ushbu testga saqlandi!`, { id: toastId });
+      setZipGradeData(null);
+      fetchData();
+      setIsCameraModalOpen(false);
+    } catch (err: any) {
+      console.error(err);
+      toast.error("ZipGrade natijalarini saqlashda xatolik yuz berdi", { id: toastId });
+    } finally {
+      setIsImportingZipGrade(false);
+    }
+  };
+
+  const handleGradePaperTest = async () => {
+    if (!paperStudentName.trim()) {
+      toast.error("Iltimos, o'quvchi ism-familiyasini kiriting!");
+      return;
+    }
+    if (paperImageSrcs.length === 0) {
+      toast.error("Iltimos, kamida 1 ta javoblar varaqasini kamerada rasmga oling yoki fayl yuklang!");
+      return;
+    }
+    if (!test || !test.questions || test.questions.length === 0) {
+      toast.error("Test savollari topilmadi");
+      return;
+    }
+
+    setIsScanningPaper(true);
+    const toastId = toast.loading(`AI ${paperImageSrcs.length} ta sahifadagi javoblar varaqalarini tekshirmoqda...`);
+
+    try {
+      const result = await gradeTestFromPhoto(paperImageSrcs, test.questions, paperStudentName.trim());
+      setPaperGradingResult(result);
+
+      await fetch(`${API_URL}/online-test-results`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          testId,
+          studentName: paperStudentName.trim(),
+          score: result.score,
+          totalScore: result.totalScore,
+          createdAt: new Date().toISOString()
+        })
+      });
+
+      toast.success(`${paperStudentName.trim()} natijasi (${result.score}/${result.totalScore}) saqlandi!`, { id: toastId });
+      fetchData();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`Xatolik: ${err.message}`, { id: toastId });
+    } finally {
+      setIsScanningPaper(false);
     }
   };
 
   const copyTestLink = () => {
     const link = `${window.location.origin}/online-tests/take/${testId}`;
     navigator.clipboard.writeText(link);
-    toast.success('Test manzili nusxalandi! O\'quvchilarga yuborishingiz mumkin.');
+    toast.success("Test manzili nusxalandi! O'quvchilarga yuborishingiz mumkin.");
   };
 
   const secureDownload = async (url: string, filename: string, loadingMsg: string) => {
@@ -194,7 +464,7 @@ export default function TestDetails() {
     if (!test) return;
     const teacher = getTeacher();
     if (teacher?.plan === 'free') {
-      toast.error('Word (DOCX) eksporti faqat Standard va Premium tariflarda mavjud! Tarifni oshiring.');
+      toast.error('Word (DOCX) eksporti faqat Standard va Premium tariflarda mavjud!');
       return;
     }
     await secureDownload(`${API_URL}/online-tests/${testId}/export/docx`, `${test.title}.docx`, 'Word fayl tayyorlanmoqda...');
@@ -204,7 +474,7 @@ export default function TestDetails() {
     if (!test) return;
     const teacher = getTeacher();
     if (teacher?.plan === 'free') {
-      toast.error('Excel (CSV) eksporti faqat Standard va Premium tariflarda mavjud! Tarifni oshiring.');
+      toast.error('Excel eksporti faqat Standard va Premium tariflarda mavjud!');
       return;
     }
     await secureDownload(`${API_URL}/online-tests/${testId}/export/excel`, `${test.title}_natijalar.xlsx`, 'Excel fayl tayyorlanmoqda...');
@@ -221,7 +491,7 @@ export default function TestDetails() {
     if (!test) return;
     const teacher = getTeacher();
     if (teacher?.plan === 'free') {
-      toast.error("AI Sinf Tahlili faqat 'Premium' yoki 'Standard' tarifda mavjud! Tarifni oshiring.");
+      toast.error("AI Sinf Tahlili faqat 'Premium' yoki 'Standard' tarifda mavjud!");
       return;
     }
     
@@ -242,76 +512,22 @@ export default function TestDetails() {
       setIsAnalyzing(false);
     }
   };
-  
-  const handleCreateNewTestFromAnalysis = () => {
-     if (!analysisResult?.generatedQuestions) return;
-     navigate('/online-tests/create', { state: { importedQuestions: analysisResult.generatedQuestions } });
-  };
-
-  const handleExportGuideToWord = async () => {
-    if (!analysisResult?.studentGuide || !test) return;
-    try {
-      const { Document, Packer, Paragraph, TextRun, HeadingLevel } = await import('docx');
-      
-      const lines = analysisResult.studentGuide.split('\n');
-      const children = [
-        new Paragraph({
-          text: `${test.title} - Kengaytirilgan O'quv Qo'llanmasi`,
-          heading: HeadingLevel.HEADING_1,
-          spacing: { after: 400 }
-        })
-      ];
-
-      lines.forEach((line: string) => {
-        const tLine = line.trim();
-        if (tLine.startsWith('# ')) {
-          children.push(new Paragraph({ text: tLine.replace('# ', ''), heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 }}));
-        } else if (tLine.startsWith('## ')) {
-          children.push(new Paragraph({ text: tLine.replace('## ', ''), heading: HeadingLevel.HEADING_2, spacing: { before: 300, after: 150 }}));
-        } else if (tLine.startsWith('### ')) {
-          children.push(new Paragraph({ text: tLine.replace('### ', ''), heading: HeadingLevel.HEADING_3, spacing: { before: 200, after: 100 }}));
-        } else if (tLine.startsWith('- ')) {
-          children.push(new Paragraph({ text: tLine, bullet: { level: 0 }, spacing: { after: 100 }}));
-        } else if (tLine !== '') {
-          children.push(new Paragraph({ children: [new TextRun({ text: tLine })], spacing: { after: 120 } }));
-        }
-      });
-
-      const doc = new Document({
-        sections: [{ properties: {}, children }]
-      });
-
-      const blob = await Packer.toBlob(doc);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${test.title}_Qollanma.docx`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast.success("Qo'llanma Word formatida yuklandi!");
-    } catch (error) {
-      console.error(error);
-      toast.error('Word hujjatni yaratishda xatolik yuz berdi');
-    }
-  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex flex-col justify-center items-center font-mono">
-        <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin mb-3"></div>
-        <p className="text-black font-bold text-[10px] uppercase tracking-widest">Yuklanmoqda</p>
+      <div className="min-h-screen bg-[#fdfdfd] flex flex-col justify-center items-center font-sans">
+        <div className="w-6 h-6 border-2 border-black/20 border-t-black rounded-full animate-spin mb-3"></div>
+        <p className="text-black font-semibold text-xs uppercase tracking-widest">Yuklanmoqda</p>
       </div>
     );
   }
 
   if (!test) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center font-mono p-4">
-        <div className="border-2 border-black p-8 text-center">
-          <h2 className="text-lg font-bold mb-4 uppercase tracking-tighter">Test topilmadi</h2>
-          <button onClick={() => navigate('/online-tests')} className="text-[10px] font-bold uppercase tracking-widest underline underline-offset-4 hover:opacity-50">
+      <div className="min-h-screen bg-[#fdfdfd] flex flex-col items-center justify-center font-sans p-6">
+        <div className="border border-black/10 bg-white p-8 rounded-3xl text-center max-w-md shadow-sm">
+          <h2 className="text-lg font-bold mb-4 text-neutral-900">Test topilmadi</h2>
+          <button onClick={() => navigate('/online-tests')} className="text-xs font-bold uppercase tracking-widest underline underline-offset-4 hover:opacity-70 text-neutral-800">
             Dashboard'ga qaytish
           </button>
         </div>
@@ -319,75 +535,54 @@ export default function TestDetails() {
     );
   }
 
-  // Calculate average score
   const totalPercentage = results.reduce((acc, curr) => acc + (curr.score / curr.totalScore) * 100, 0);
   const averagePercentage = results.length > 0 ? Math.round(totalPercentage / results.length) : 0;
 
   return (
-    <div className="min-h-screen font-sans text-zinc-900 bg-slate-50/50">
+    <div className="min-h-screen font-sans text-[#111111] selection:bg-black selection:text-white relative overflow-hidden bg-[#fdfdfd]">
+      <MeshGradient />
       
       {/* Header */}
-      <header className="border-b border-zinc-200/80 sticky top-0 z-30 bg-white/90 backdrop-blur-md shadow-xs">
-        <div className="max-w-7xl mx-auto px-3 md:px-6 h-14 flex items-center justify-between">
+      <header className="border-b border-black/10 sticky top-0 z-30 bg-white/70 backdrop-blur-xl shadow-xs">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
           <button 
             onClick={() => navigate('/online-tests')}
-            className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-600 hover:text-zinc-900 transition-colors"
+            className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-neutral-600 hover:text-black transition-colors group"
           >
-            <ArrowLeft size={15} />
+            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
             Dashboard
           </button>
-          <div className="text-xs font-bold uppercase tracking-wider text-zinc-800 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+          <div className="text-xs font-bold uppercase tracking-widest text-neutral-800 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-black"></span>
             {test.title}
           </div>
           <div className="w-20"></div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-3 md:px-6 py-6 md:py-8">
-
-        {/* Print-only View (Hidden on screen) */}
-        <div id="print-view" className="hidden print:block mb-8 bg-white p-8">
-          <h1 className="text-3xl font-bold text-center mb-2">{test.title}</h1>
-          <p className="text-center text-zinc-600 mb-8">Fan: {test.subject}</p>
-          <div className="space-y-6">
-            {test.questions.map((q: any, i: number) => (
-              <div key={i} className="mb-4 page-break-inside-avoid">
-                <p className="font-semibold text-lg mb-2">{i + 1}. <FormattedText content={q.questionText} /></p>
-                <div className="pl-6 space-y-2">
-                  {q.options.map((opt: string, oIndex: number) => (
-                    <div key={oIndex} className="flex items-center gap-2">
-                      <div className="w-4 h-4 border border-zinc-300 rounded"></div>
-                      <FormattedText content={opt} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 print:hidden">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12 relative z-10">
+        
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Sidebar Info */}
+          {/* Left Sidebar Test Action Card */}
           <div className="lg:col-span-4 flex flex-col gap-6">
-            <div className="bg-white rounded-2xl border border-zinc-200/80 shadow-sm p-6 md:p-8 flex flex-col gap-6">
+            <div className="bg-white/80 backdrop-blur-md rounded-3xl border border-black/10 shadow-[0_8px_30px_rgb(0,0,0,0.03)] p-6 md:p-8 flex flex-col gap-6">
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="inline-flex items-center px-3 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-bold uppercase tracking-wider rounded-md">
-                    {test.subject}
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full bg-white border border-black/10 text-neutral-800 shadow-xs">
+                    {test.subject || 'FAN'}
                   </span>
-                  <span className="text-[11px] text-zinc-500 flex items-center gap-1 font-medium">
-                    <Calendar size={13} className="text-zinc-400" /> 
+                  <span className="text-xs text-neutral-400 font-medium flex items-center gap-1.5">
+                    <Calendar size={13} /> 
                     {new Date(test.createdAt).toLocaleDateString('uz-UZ')}
                   </span>
                 </div>
-                <h1 className="text-xl md:text-2xl font-semibold font-sans tracking-normal text-zinc-900 leading-tight">
+                <h1 className="text-2xl md:text-3xl font-medium tracking-tight text-neutral-900 leading-tight">
                   {test.title}
                 </h1>
               </div>
               
-              <div className="pt-5 border-t border-zinc-100 flex flex-col gap-3">
+              <div className="pt-6 border-t border-black/10 flex flex-col gap-3">
                 <MagicButton
                   label="Link Nusxalash"
                   icon={<Copy size={15} />}
@@ -395,60 +590,68 @@ export default function TestDetails() {
                   variant="indigo"
                   fullWidth
                 />
+                
                 <button
                   onClick={() => navigate(`/online-tests/take/${testId}`)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100/70 text-indigo-700 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs group"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-neutral-100 hover:bg-neutral-200/80 text-neutral-900 border border-black/5 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs group cursor-pointer"
                 >
                   <ExternalLink size={15} className="group-hover:scale-110 transition-transform" /> Yechib ko'rish
                 </button>
                 
-                <div className="grid grid-cols-3 gap-2 w-full mt-1">
+                {/* 4-Way Export Grid */}
+                <div className="grid grid-cols-2 gap-2.5 w-full mt-1">
                   <button
                     onClick={handleExportWord}
-                    className="flex items-center justify-center gap-1.5 px-2 py-2.5 bg-blue-50/70 text-blue-700 border border-blue-200/80 hover:bg-blue-100/80 hover:border-blue-300 rounded-lg text-[11px] font-semibold transition-all shadow-xs"
-                    title="Word hujjat"
+                    className="flex items-center justify-center gap-2 p-3 bg-white hover:bg-neutral-50 text-neutral-800 border border-black/10 rounded-2xl text-xs font-semibold transition-all shadow-xs group cursor-pointer"
+                    title="Word (.docx) formatida test savollarini yuklash"
                   >
-                    <FileText size={13} /> Word
+                    <FileText size={14} className="text-neutral-500 group-hover:text-black transition-colors" /> Word
                   </button>
                   <button
                     onClick={handleExportExcel}
-                    className="flex items-center justify-center gap-1.5 px-2 py-2.5 bg-emerald-50/70 text-emerald-700 border border-emerald-200/80 hover:bg-emerald-100/80 hover:border-emerald-300 rounded-lg text-[11px] font-semibold transition-all shadow-xs"
-                    title="Excel CSV jadval"
+                    className="flex items-center justify-center gap-2 p-3 bg-white hover:bg-neutral-50 text-neutral-800 border border-black/10 rounded-2xl text-xs font-semibold transition-all shadow-xs group cursor-pointer"
+                    title="Excel (.xlsx) formatida natijalarni yuklash"
                   >
-                    <FileText size={13} /> Excel
+                    <FileSpreadsheet size={14} className="text-neutral-500 group-hover:text-black transition-colors" /> Excel
                   </button>
                   <button
                     onClick={handleDownloadPDF}
                     disabled={isDownloadingPdf}
-                    className="flex items-center justify-center gap-1.5 px-2 py-2.5 bg-rose-50/70 text-rose-700 border border-rose-200/80 hover:bg-rose-100/80 hover:border-rose-300 rounded-lg text-[11px] font-semibold transition-all shadow-xs disabled:opacity-50"
-                    title="PDF fayl"
+                    className="flex items-center justify-center gap-2 p-3 bg-white hover:bg-neutral-50 text-neutral-800 border border-black/10 rounded-2xl text-xs font-semibold transition-all shadow-xs group cursor-pointer disabled:opacity-50"
+                    title="PDF formatida test savollarini yuklash"
                   >
-                    {isDownloadingPdf
-                      ? <><Loader2 size={13} className="animate-spin" /> ...</>
-                      : <><Download size={13} /> PDF</>
-                    }
+                    {isDownloadingPdf ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} className="text-neutral-500 group-hover:text-black transition-colors" />} PDF
+                  </button>
+                  <button
+                    onClick={handleDownloadOMRSheet}
+                    className="flex items-center justify-center gap-2 p-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-900 border border-amber-500/20 rounded-2xl text-xs font-bold transition-all shadow-xs group cursor-pointer"
+                    title="Ushbu test uchun maxsus OMR javoblar varaqasi (PDF)ni chop etish"
+                  >
+                    <Printer size={14} className="text-amber-700 group-hover:scale-110 transition-transform" /> OMR Blank
                   </button>
                 </div>
                 
-                <div className="flex flex-col gap-2.5 mt-1">
-                  <MagicButton 
-                    label="Jonli Rejim (Kahoot)" 
-                    icon={<Play size={15} fill="currentColor" />} 
+                {/* Main Interactive Modes */}
+                <div className="flex flex-col gap-2.5 mt-2">
+                  <button 
                     onClick={() => navigate(`/online-tests/live/host/${testId}`)} 
-                    variant="purple"
-                    fullWidth
-                  />
+                    className="w-full flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white rounded-2xl text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-purple-500/20 group cursor-pointer"
+                  >
+                    <Play size={15} fill="currentColor" className="group-hover:scale-110 transition-transform" /> 
+                    Jonli Rejim (Kahoot)
+                  </button>
 
                   <button
                     onClick={() => setIsCameraModalOpen(true)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-50/70 hover:bg-emerald-100/80 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs group cursor-pointer"
+                    className="w-full flex items-center justify-center gap-2 px-5 py-3.5 bg-neutral-900 hover:bg-black text-white rounded-2xl text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-black/15 group cursor-pointer"
                   >
-                    <Scan size={15} className="text-emerald-600 group-hover:scale-110 transition-transform" /> Kamera Skanner (OMR)
+                    <Scan size={16} className="text-emerald-400 group-hover:scale-110 transition-transform" /> 
+                    Kamera Skanner (OMR) & ZipGrade
                   </button>
                   
                   <button
                     onClick={handleClassAnalysis}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 border border-indigo-200/90 text-indigo-950 hover:bg-indigo-100/60 hover:border-indigo-300 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs group cursor-pointer"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white hover:bg-neutral-50 border border-black/10 text-neutral-800 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs group cursor-pointer"
                   >
                     <Sparkles size={15} className="text-amber-500 group-hover:rotate-12 transition-transform" /> AI Sinf Tahlili
                   </button>
@@ -456,83 +659,86 @@ export default function TestDetails() {
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-zinc-200/80 shadow-sm grid grid-cols-2 gap-4 divide-x divide-zinc-100">
-               <div className="pr-2">
-                 <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1 flex items-center gap-1.5">
-                   <Users size={14} className="text-indigo-500"/> Qatnashuvchilar
+            {/* Quick Metrics */}
+            <div className="bg-white/80 backdrop-blur-md p-6 rounded-3xl border border-black/10 shadow-[0_8px_30px_rgb(0,0,0,0.03)] grid grid-cols-2 gap-4 divide-x divide-black/10">
+               <div className="pr-4">
+                 <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1 flex items-center gap-1.5">
+                   <Users size={13} className="text-neutral-500"/> Qatnashuvchilar
                  </p>
-                 <p className="text-2xl font-bold text-zinc-900">{results.length}</p>
+                 <p className="text-3xl font-medium tracking-tight text-neutral-900">{results.length}</p>
                </div>
-               <div className="pl-4">
-                 <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1 flex items-center gap-1.5">
-                   <BrainCircuit size={14} className="text-emerald-500"/> O'rtacha foiz
+               <div className="pl-6">
+                 <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1 flex items-center gap-1.5">
+                   <BrainCircuit size={13} className="text-neutral-500"/> O'rtacha foiz
                  </p>
-                 <p className="text-2xl font-bold text-zinc-900">{averagePercentage}%</p>
+                 <p className="text-3xl font-medium tracking-tight text-neutral-900">{averagePercentage}%</p>
                </div>
             </div>
           </div>
 
-          {/* Results Table */}
+          {/* Right Results Table */}
           <div className="lg:col-span-8">
-            <div className="bg-white rounded-2xl border border-zinc-200/80 shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-zinc-100 bg-zinc-50/70 flex items-center justify-between">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-900 flex items-center gap-2">
+            <div className="bg-white/80 backdrop-blur-md rounded-3xl border border-black/10 shadow-[0_8px_30px_rgb(0,0,0,0.03)] overflow-hidden">
+              <div className="px-8 py-5 border-b border-black/10 bg-white/40 flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-900 flex items-center gap-2">
                   <span>O'quvchilar Natijalari</span>
-                  <span className="px-2 py-0.5 rounded-full bg-zinc-200/80 text-zinc-700 text-[10px] font-semibold">
+                  <span className="px-2.5 py-0.5 rounded-full bg-black text-white text-[10px] font-mono font-bold">
                     {results.length}
                   </span>
                 </h3>
               </div>
-              
+
               {results.length === 0 ? (
-                <div className="p-12 text-center flex flex-col items-center">
-                  <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400 mb-3">
-                    <Users size={22} />
+                <div className="p-20 text-center text-neutral-400 flex flex-col items-center justify-center">
+                  <div className="w-14 h-14 rounded-full bg-neutral-100 flex items-center justify-center mb-4 border border-black/5">
+                    <Scan size={26} strokeWidth={1.5} className="text-neutral-400" />
                   </div>
-                  <p className="text-sm font-semibold text-zinc-900 mb-1">Hech kim topshirmagan</p>
-                  <p className="text-xs text-zinc-500">Linkni nusxalab o'quvchilarga yuboring.</p>
+                  <p className="text-sm font-semibold text-neutral-700">Hozircha natijalar mavjud emas</p>
+                  <p className="text-xs text-neutral-400 max-w-sm mt-1.5 leading-relaxed">
+                    O'quvchilar onlayn test yechishi yoki siz qog'ozdagi javoblarini kamera skanneri orqali kiritishingiz mumkin.
+                  </p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm whitespace-nowrap">
-                    <thead className="bg-zinc-50/50 border-b border-zinc-100">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-neutral-50/70 border-b border-black/5 text-[10px] uppercase font-bold text-neutral-400 tracking-widest">
                       <tr>
-                        <th className="px-6 py-3.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">O'quvchi</th>
-                        <th className="px-6 py-3.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Natija</th>
-                        <th className="px-6 py-3.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">Vaqti</th>
-                        <th className="px-6 py-3.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500 text-right">Amal</th>
+                        <th className="px-8 py-4">O'quvchi</th>
+                        <th className="px-6 py-4">Natija</th>
+                        <th className="px-6 py-4">Vaqti</th>
+                        <th className="px-8 py-4 text-right">Amal</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-100">
-                      {results.map((res: any) => {
-                        const percent = Math.round((res.score / res.totalScore) * 100);
+                    <tbody className="divide-y divide-black/5">
+                      {results.map((r, i) => {
+                        const pct = Math.round((r.score / r.totalScore) * 100);
                         return (
-                          <tr key={res.id || res._id} className="hover:bg-zinc-50/80 transition-colors">
-                            <td className="px-6 py-4 text-xs font-semibold text-zinc-900 capitalize">
-                              {res.studentName}
+                          <tr key={r._id || r.id || i} className="hover:bg-neutral-50/80 transition-colors">
+                            <td className="px-8 py-4 font-semibold text-neutral-900 flex items-center gap-2.5">
+                              <span className="w-2 h-2 rounded-full bg-neutral-400"></span>
+                              {r.studentName}
                             </td>
-                            <td className="px-6 py-4 text-xs">
-                              <div className="flex items-center gap-2.5">
-                                <span className="font-bold text-zinc-900">{res.score} <span className="text-zinc-400 font-normal">/ {res.totalScore}</span></span>
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${
-                                  percent >= 80 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 
-                                  percent >= 50 ? 'bg-amber-50 text-amber-700 border border-amber-200' : 
-                                  'bg-rose-50 text-rose-700 border border-rose-200'
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-neutral-800">{r.score} / {r.totalScore}</span>
+                                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                                  pct >= 70 
+                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+                                    : pct >= 50 
+                                    ? 'bg-amber-50 text-amber-800 border-amber-200' 
+                                    : 'bg-rose-50 text-rose-800 border-rose-200'
                                 }`}>
-                                  {percent}%
+                                  {pct}%
                                 </span>
                               </div>
                             </td>
-                            <td className="px-6 py-4 text-xs text-zinc-500 font-medium">
-                              {new Date(res.createdAt).toLocaleString('uz-UZ', {
-                                day: '2-digit', month: '2-digit', year: 'numeric',
-                                hour: '2-digit', minute: '2-digit'
-                              })}
+                            <td className="px-6 py-4 text-xs text-neutral-400 font-medium">
+                              {new Date(r.createdAt).toLocaleString('uz-UZ', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                             </td>
-                            <td className="px-6 py-4 text-right">
+                            <td className="px-8 py-4 text-right">
                               <button
-                                onClick={() => navigate(`/online-tests/results/${res.id || res._id}`)}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-50/70 hover:bg-indigo-100 text-indigo-700 text-[11px] font-semibold uppercase tracking-wider transition-colors border border-indigo-100"
+                                onClick={() => navigate(`/online-tests/results/${r._id || r.id}`)}
+                                className="text-xs font-bold text-neutral-800 hover:text-black bg-white hover:bg-neutral-100 border border-black/10 px-3.5 py-1.5 rounded-xl transition-all shadow-xs cursor-pointer uppercase tracking-wider"
                               >
                                 Ko'rish
                               </button>
@@ -550,134 +756,462 @@ export default function TestDetails() {
         </div>
       </div>
 
-      {/* AI Analysis Modal */}
+      {/* REFINED BESPOKE OMR & ZIPGRADE SCANNER MODAL */}
       <AnimatePresence>
-        {isAnalysisModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 bg-black/40 backdrop-blur-sm">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-transparent" 
-              onClick={() => !isAnalyzing && setIsAnalysisModalOpen(false)}
-            />
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-              className="bg-white border border-zinc-200/80 w-full max-w-6xl rounded-2xl md:rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-2xl relative z-10"
+        {isCameraModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              className="bg-white border border-black/10 rounded-3xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl relative z-10"
             >
-              {/* Header */}
-              <div className="flex items-center justify-between p-5 md:p-8 border-b border-zinc-100 bg-white">
-                <div className="flex items-center gap-4 md:gap-5">
-                  <div className="w-10 h-10 md:w-12 md:h-12 border border-indigo-100 bg-indigo-50 text-indigo-600 flex items-center justify-center rounded-xl">
-                    <Sparkles className="w-5 h-5 md:w-6 md:h-6" />
+              {/* Modal Top Bar */}
+              <div className="px-8 py-5 border-b border-black/10 flex items-center justify-between bg-neutral-50/70">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-11 h-11 rounded-2xl bg-neutral-900 text-white flex items-center justify-center shadow-sm">
+                    <Scan size={20} className="text-emerald-400" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-indigo-600 block mb-0.5">AI Tahlilchi</span>
-                    <h2 className="text-xl md:text-2xl font-bold tracking-tight text-zinc-900">AI Sinf Tahlili</h2>
+                    <h3 className="text-base font-semibold tracking-tight text-neutral-900 leading-tight">Qog'ozdagi Testlarni Tekshirish</h3>
+                    <p className="text-xs text-neutral-500 font-medium mt-0.5">
+                      Test: <span className="font-bold text-neutral-800">"{test.title}"</span> ({test.questions?.length} ta savol kaliti ulangan)
+                    </p>
                   </div>
                 </div>
-                {!isAnalyzing && (
-                  <button 
-                    onClick={() => setIsAnalysisModalOpen(false)} 
-                    className="p-2 text-zinc-400 hover:text-zinc-700 transition-colors border border-zinc-200/60 hover:border-zinc-300 rounded-xl"
-                  >
-                    <X className="w-5 h-5" strokeWidth={1.75} />
-                  </button>
-                )}
+                <button
+                  onClick={() => setIsCameraModalOpen(false)}
+                  className="w-9 h-9 rounded-xl bg-white hover:bg-neutral-100 border border-black/10 text-neutral-500 hover:text-black flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
               </div>
-              
-              <div className="p-5 md:p-8 overflow-y-auto flex-1 bg-slate-50/50">
-                {isAnalyzing ? (
-                  <div className="flex flex-col items-center justify-center py-20">
-                    <div className="w-12 h-12 border-2 border-indigo-600/20 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
-                    <p className="text-sm font-semibold text-zinc-900 uppercase tracking-wider mb-1">AI xulosalarni shakllantirmoqda...</p>
-                    <p className="text-xs text-zinc-500">Bu bir necha soniya vaqt olishi mumkin</p>
-                  </div>
-                ) : analysisResult ? (
-                  <div className="space-y-8">
+
+              {/* Minimalist Segmented Tab Switcher */}
+              <div className="px-8 pt-4 pb-2 border-b border-black/5 bg-white flex gap-2 overflow-x-auto">
+                <button
+                  onClick={() => setOmrTab('bubble-omr')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                    omrTab === 'bubble-omr' 
+                      ? 'bg-black text-white shadow-sm' 
+                      : 'text-neutral-500 hover:text-black hover:bg-neutral-100'
+                  }`}
+                >
+                  <Scan size={14} /> OMR Blankasi Skaneri
+                </button>
+                <button
+                  onClick={() => setOmrTab('zipgrade')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                    omrTab === 'zipgrade' 
+                      ? 'bg-black text-white shadow-sm' 
+                      : 'text-neutral-500 hover:text-black hover:bg-neutral-100'
+                  }`}
+                >
+                  <FileSpreadsheet size={14} /> ZipGrade CSV Import
+                </button>
+                <button
+                  onClick={() => setOmrTab('multi-page')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                    omrTab === 'multi-page' 
+                      ? 'bg-black text-white shadow-sm' 
+                      : 'text-neutral-500 hover:text-black hover:bg-neutral-100'
+                  }`}
+                >
+                  <FileText size={14} /> Savollar Kitobchasini Tekshirish
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-8 overflow-y-auto flex-1 space-y-6">
+
+                {/* TAB 1: BUBBLE OMR CAMERA SCANNER */}
+                {omrTab === 'bubble-omr' && (
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                     
-                    {/* Grid for Weak Topics & Recommendation */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
-                      <div className="lg:col-span-5 bg-white p-6 rounded-2xl border border-zinc-200/80 shadow-xs">
-                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-4 block">Eng ko'p xato qilingan mavzular</span>
-                        <div className="border-t border-zinc-100 divide-y divide-zinc-100">
-                          {analysisResult.weakTopics?.map((item: any, i: number) => (
-                            <div key={i} className="py-3.5 flex items-center justify-between gap-4">
-                              <span className="text-xs text-zinc-900 font-semibold">{typeof item === 'string' ? item : item.topic}</span>
-                              <span className="text-[11px] font-semibold border border-rose-200 text-rose-700 px-2.5 py-1 rounded-full bg-rose-50/70">
-                                {typeof item === 'string' ? '' : `${item.errorPercentage}% xato`}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
+                    {/* Viewfinder Area */}
+                    <div className="lg:col-span-7 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-500">
+                          Javoblar varaqasini ramkaga to'g'rilang:
+                        </span>
+                        <button
+                          onClick={handleDownloadOMRSheet}
+                          className="text-xs font-bold text-neutral-800 hover:text-black bg-white hover:bg-neutral-50 px-3 py-1.5 rounded-xl border border-black/10 flex items-center gap-1.5 shadow-xs transition-all"
+                        >
+                          <Printer size={13} /> Blankani yuklash (PDF)
+                        </button>
                       </div>
 
-                      <div className="lg:col-span-7 bg-white p-6 rounded-2xl border border-zinc-200/80 shadow-xs">
-                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-4 block">Umumiy Sinf bo'yicha Maslahat</span>
-                        <div className="bg-indigo-50/50 border border-indigo-100/80 p-5 rounded-xl">
-                          <p className="text-sm text-zinc-700 leading-relaxed font-normal">
-                            {analysisResult.recommendation}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                      <div className="bg-neutral-950 rounded-3xl overflow-hidden shadow-2xl relative aspect-[4/3] border-4 border-neutral-100 flex items-center justify-center">
+                        {!omrImageSrc ? (
+                          <>
+                            <Webcam
+                              audio={false}
+                              ref={omrWebcamRef}
+                              screenshotFormat="image/jpeg"
+                              videoConstraints={{ facingMode: omrCameraFacing }}
+                              className="w-full h-full object-cover"
+                            />
 
-                    {/* Student Plans */}
-                    {analysisResult.studentPlans && analysisResult.studentPlans.length > 0 && (
-                      <div>
-                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-4 block">O'quvchilar uchun shaxsiy reja</span>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {analysisResult.studentPlans.map((plan: any, i: number) => (
-                            <div key={i} className="border border-zinc-200/80 p-5 rounded-2xl bg-white flex flex-col justify-between hover:border-zinc-300 transition-colors shadow-xs">
-                              <div>
-                                <h4 className="text-xs font-bold text-zinc-900 mb-2">{plan.studentName}</h4>
-                                <p className="text-xs text-zinc-600 leading-relaxed">{plan.plan}</p>
+                            {/* Laser corner HUD overlay */}
+                            <div className="absolute inset-0 pointer-events-none p-6 flex flex-col justify-between">
+                              <div className="flex justify-between">
+                                <div className="w-8 h-8 border-t-4 border-l-4 border-emerald-400 rounded-tl-md shadow-[0_0_12px_rgba(52,211,153,0.6)]" />
+                                <div className="w-8 h-8 border-t-4 border-r-4 border-emerald-400 rounded-tr-md shadow-[0_0_12px_rgba(52,211,153,0.6)]" />
+                              </div>
+                              <div className="flex justify-center">
+                                <span className="bg-black/70 backdrop-blur-md px-3.5 py-1.5 rounded-full text-white text-[11px] font-semibold border border-white/10">
+                                  4 ta burchakni nishonga to'g'rilang
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <div className="w-8 h-8 border-b-4 border-l-4 border-emerald-400 rounded-bl-md shadow-[0_0_12px_rgba(52,211,153,0.6)]" />
+                                <div className="w-8 h-8 border-b-4 border-r-4 border-emerald-400 rounded-br-md shadow-[0_0_12px_rgba(52,211,153,0.6)]" />
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
 
-                    {/* Comprehensive Student Guide */}
-                    {analysisResult.studentGuide && (
-                      <div className="border-t border-zinc-200/80 pt-8">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">O'quvchilar uchun Umumiy Qo'llanma</span>
+                            {/* Bottom Controls */}
+                            <div className="absolute bottom-5 left-0 right-0 px-6 flex items-center justify-between z-20">
+                              <button
+                                type="button"
+                                onClick={() => setOmrCameraFacing(prev => prev === 'environment' ? 'user' : 'environment')}
+                                className="p-3 bg-black/50 backdrop-blur-md text-white rounded-2xl hover:bg-black/70 border border-white/20 transition-all"
+                                title="Kamerani almashtirish"
+                              >
+                                <RefreshCw size={18} />
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={handleCaptureOmrPhoto}
+                                className="w-16 h-16 bg-white hover:bg-neutral-100 rounded-full flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition-all"
+                              >
+                                <div className="w-12 h-12 rounded-full bg-neutral-900 text-white flex items-center justify-center">
+                                  <Camera size={22} className="text-emerald-400" />
+                                </div>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => omrFileInputRef.current?.click()}
+                                className="p-3 bg-black/50 backdrop-blur-md text-white rounded-2xl hover:bg-black/70 border border-white/20 transition-all"
+                                title="Galereyadan rasm yuklash"
+                              >
+                                <Upload size={18} />
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <img src={omrImageSrc} alt="Scanned sheet" className="w-full h-full object-contain" />
+                            {isProcessingOmr && (
+                              <div className="absolute inset-0 bg-neutral-950/75 backdrop-blur-md flex flex-col items-center justify-center text-white z-30">
+                                <Loader2 size={36} className="animate-spin text-emerald-400 mb-3" />
+                                <p className="font-bold text-sm">Neyrotarmoq AI tahlil qilmoqda...</p>
+                              </div>
+                            )}
+                            {!isProcessingOmr && (
+                              <button
+                                type="button"
+                                onClick={() => { setOmrImageSrc(null); setOmrResult(null); }}
+                                className="absolute bottom-5 left-1/2 -translate-x-1/2 px-6 py-3 bg-white text-neutral-900 font-bold text-xs rounded-2xl shadow-xl flex items-center gap-2 hover:bg-neutral-100 transition-all"
+                              >
+                                <RefreshCw size={14} /> Qaytadan rasmga olish
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                      <input type="file" ref={omrFileInputRef} accept="image/*" onChange={handleOmrFileUpload} className="hidden" />
+                    </div>
+
+                    {/* Verification & Grade Card */}
+                    <div className="lg:col-span-5 space-y-4">
+                      {omrResult ? (
+                        <div className="bg-white border border-black/10 rounded-3xl p-6 shadow-xl space-y-4">
+                          <div className="flex items-center justify-between pb-3 border-b border-black/5">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-12 h-12 rounded-2xl text-white font-black text-xl flex items-center justify-center shadow-md ${
+                                omrResult.score >= 80 ? 'bg-emerald-600' : omrResult.score >= 60 ? 'bg-amber-500' : 'bg-rose-500'
+                              }`}>
+                                {omrResult.score}%
+                              </div>
+                              <div>
+                                <h4 className="font-bold text-sm text-neutral-900 leading-tight">To'g'ri: {omrResult.correctCount} / {test.questions.length}</h4>
+                                <span className="text-[10px] text-neutral-400 uppercase font-semibold">Gemini Vision AI</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-1 block">O'quvchi F.I.Sh</label>
+                            <input
+                              type="text"
+                              value={omrStudentName}
+                              onChange={e => setOmrStudentName(e.target.value)}
+                              className="w-full bg-neutral-50 border border-black/10 rounded-2xl px-4 py-2.5 text-xs font-bold text-neutral-900 outline-none focus:border-black transition-colors"
+                            />
+                          </div>
+
+                          {omrResult.summaryText && (
+                            <div className="bg-neutral-50 border border-black/5 rounded-2xl p-3.5 text-xs text-neutral-800 flex gap-2.5 leading-relaxed">
+                              <Sparkles size={16} className="text-amber-500 shrink-0 mt-0.5" />
+                              <div>{omrResult.summaryText}</div>
+                            </div>
+                          )}
+
+                          {/* Question Pills */}
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2 block">Savollar tahlili:</span>
+                            <div className="grid grid-cols-5 gap-1.5 max-h-36 overflow-y-auto pr-1">
+                              {omrResult.answers.map(a => (
+                                <div key={a.q} className={`p-1.5 rounded-xl text-center text-[10px] font-bold border ${
+                                  a.isCorrect ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-800 border-rose-200'
+                                }`}>
+                                  #{a.q}: {a.ans} {a.correctAns && !a.isCorrect && `(${a.correctAns})`}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
                           <button
-                            onClick={handleExportGuideToWord}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 text-xs font-semibold rounded-xl transition-all shadow-xs flex items-center gap-2"
+                            type="button"
+                            onClick={handleSaveOmrStudent}
+                            className="w-full py-3.5 bg-neutral-900 hover:bg-black text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
                           >
-                            <Download size={14} /> Word qilib yuklab olish
+                            <CheckCircle2 size={16} className="text-emerald-400" /> 
+                            Bazaga Saqlash & Keyingi O'quvchi
                           </button>
                         </div>
-                        <div className="prose prose-sm max-w-none text-zinc-800 bg-white p-6 rounded-2xl border border-zinc-200/80">
-                          <ReactMarkdown>{analysisResult.studentGuide}</ReactMarkdown>
+                      ) : (
+                        <div className="bg-neutral-50/70 rounded-3xl p-8 border-2 border-dashed border-black/10 flex flex-col items-center justify-center text-center text-neutral-400 h-[340px]">
+                          <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center mb-3 border border-black/5">
+                            <Scan size={24} className="text-neutral-400" />
+                          </div>
+                          <p className="text-xs font-bold text-neutral-700">Varaqani Skaner Qiling</p>
+                          <p className="text-[11px] text-neutral-400 max-w-xs mt-1.5 leading-relaxed">
+                            Kamerani to'g'rilab oq tugmani bosing. Natijalar avtomatik o'qilib, shu test jadvaliga qo'shiladi.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                  </div>
+                )}
+
+                {/* TAB 2: ZIPGRADE CSV IMPORT */}
+                {omrTab === 'zipgrade' && (
+                  <div className="space-y-6">
+                    <div className="bg-neutral-900 text-white p-8 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400 mb-2 flex items-center gap-1.5">
+                          <FileSpreadsheet size={13} /> ZipGrade CSV Sinxronizatsiya
+                        </div>
+                        <h4 className="text-xl font-medium tracking-tight">ZipGrade ilovasidan olingan faylni yuklang</h4>
+                        <p className="text-xs text-neutral-300 mt-1.5 max-w-xl leading-relaxed">
+                          Ushbu test uchun ZipGrade ilovasida olingan CSV yoki Excel faylini tanlang. Tizim barcha o'quvchilar ballarini ushbu test natijalariga avtomatik kiritadi.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => zipgradeFileInputRef.current?.click()}
+                        className="px-6 py-3.5 bg-white text-neutral-900 font-bold text-xs rounded-2xl shadow-lg hover:bg-neutral-100 transition-all shrink-0 flex items-center gap-2 cursor-pointer uppercase tracking-wider"
+                      >
+                        <Upload size={15} /> CSV / Excel Tanlash
+                      </button>
+                      <input type="file" ref={zipgradeFileInputRef} accept=".csv, .xlsx, .xls" onChange={handleZipGradeUpload} className="hidden" />
+                    </div>
+
+                    {zipGradeData && (
+                      <div className="bg-white border border-black/10 rounded-3xl p-6 shadow-xl space-y-4">
+                        <div className="flex items-center justify-between pb-3 border-b border-black/5">
+                          <h4 className="font-bold text-sm text-neutral-900">
+                            Aniqlangan o'quvchilar: <span className="font-mono font-black">{zipGradeData.students.length} nafar</span>
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={handleSaveAllZipGradeStudents}
+                            disabled={isImportingZipGrade}
+                            className="px-6 py-3 bg-neutral-900 hover:bg-black text-white font-bold text-xs rounded-2xl shadow-md transition-all flex items-center gap-2 cursor-pointer uppercase tracking-wider"
+                          >
+                            {isImportingZipGrade ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} className="text-emerald-400" />}
+                            Barcha O'quvchilarni Ushbu Testga Saqlash
+                          </button>
+                        </div>
+
+                        <div className="max-h-60 overflow-y-auto rounded-2xl border border-black/5 bg-neutral-50/50">
+                          <table className="w-full text-left text-xs">
+                            <thead className="bg-neutral-100/70 font-bold text-neutral-500 uppercase text-[10px] tracking-wider">
+                              <tr>
+                                <th className="p-3.5">#</th>
+                                <th className="p-3.5">F.I.Sh</th>
+                                <th className="p-3.5">Ball</th>
+                                <th className="p-3.5">Foiz</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-black/5">
+                              {zipGradeData.students.map((st, idx) => (
+                                <tr key={idx}>
+                                  <td className="p-3.5 text-neutral-400 font-bold">{idx + 1}</td>
+                                  <td className="p-3.5 font-bold text-neutral-900">{st.studentName}</td>
+                                  <td className="p-3.5 font-semibold">{st.earnedPts} / {test.questions.length}</td>
+                                  <td className="p-3.5">
+                                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-neutral-200 text-neutral-800">
+                                      {st.percent}%
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
                       </div>
                     )}
+                  </div>
+                )}
 
-                    {/* Re-generate Test Section */}
-                    {analysisResult.generatedQuestions?.length > 0 && (
-                      <div className="border border-indigo-200/80 p-8 md:p-10 text-center bg-white rounded-2xl shadow-xs flex flex-col items-center justify-center max-w-3xl mx-auto">
-                        <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
-                          <BrainCircuit size={24} />
+                {/* TAB 3: MULTI-PAGE QUESTION PAPER SCANNER */}
+                {omrTab === 'multi-page' && (
+                  <div className="space-y-6">
+                    {!paperGradingResult ? (
+                      <>
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-1.5">
+                            O'quvchi Ismi va Familiyasi <span className="text-rose-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={paperStudentName}
+                            onChange={e => setPaperStudentName(e.target.value)}
+                            placeholder="Masalan: Azizbek Rahimov"
+                            className="w-full bg-neutral-50 border border-black/10 rounded-2xl px-4 py-3 text-xs font-bold text-neutral-900 outline-none focus:border-black transition-colors"
+                          />
                         </div>
-                        <h4 className="text-base font-bold text-zinc-900 mb-1">Qayta Test Tayyor!</h4>
-                        <p className="text-xs text-zinc-500 mb-6 max-w-lg">
-                          Aynan yuqoridagi zaif mavzularni mustahkamlash uchun {analysisResult.generatedQuestions.length} ta yepyangi savol yaratildi.
-                        </p>
+
+                        {paperImageSrcs.length > 0 && (
+                          <div className="grid grid-cols-4 gap-3">
+                            {paperImageSrcs.map((src, idx) => (
+                              <div key={idx} className="relative rounded-2xl overflow-hidden border border-black/10 aspect-[4/3] shadow-sm">
+                                <img src={src} alt="page" className="w-full h-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => setPaperImageSrcs(prev => prev.filter((_, i) => i !== idx))}
+                                  className="absolute top-2 right-2 w-6 h-6 bg-rose-600 text-white rounded-lg flex items-center justify-center shadow-md"
+                                >
+                                  <X size={12} />
+                                </button>
+                                <span className="absolute bottom-2 left-2 bg-black/70 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
+                                  {idx + 1}-bet
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="relative bg-neutral-950 rounded-3xl overflow-hidden aspect-[4/3] flex items-center justify-center shadow-xl border-4 border-neutral-100">
+                          <Webcam
+                            audio={false}
+                            ref={paperWebcamRef}
+                            screenshotFormat="image/jpeg"
+                            videoConstraints={{ facingMode: 'environment' }}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-3 z-10">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (paperWebcamRef.current) {
+                                  const shot = paperWebcamRef.current.getScreenshot();
+                                  if (shot) setPaperImageSrcs(prev => [...prev, shot]);
+                                }
+                              }}
+                              className="px-6 py-3 bg-white text-neutral-900 font-bold text-xs uppercase tracking-wider rounded-2xl shadow-xl flex items-center gap-2 hover:bg-neutral-100 transition-all cursor-pointer"
+                            >
+                              <Camera size={16} /> {paperImageSrcs.length === 0 ? "Rasmga olish" : `➕ ${paperImageSrcs.length + 1}-Betni qo'shish`}
+                            </button>
+                          </div>
+                        </div>
+
                         <button
-                          onClick={handleCreateNewTestFromAnalysis}
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-2"
+                          type="button"
+                          disabled={isScanningPaper || paperImageSrcs.length === 0 || !paperStudentName.trim()}
+                          onClick={handleGradePaperTest}
+                          className="w-full py-4 bg-neutral-900 hover:bg-black disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                         >
-                          <Sparkles size={15} /> Shu savollar bilan yangi test yaratish
+                          {isScanningPaper ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} className="text-emerald-400" />}
+                          AI Bilan Tekshirish va Saqlash
+                        </button>
+                      </>
+                    ) : (
+                      <div className="bg-neutral-50 border border-black/10 rounded-3xl p-8 text-center space-y-4">
+                        <h4 className="text-2xl font-medium tracking-tight text-neutral-900">{paperGradingResult.studentName}</h4>
+                        <div className="text-4xl font-bold text-neutral-900">
+                          {paperGradingResult.score} / {paperGradingResult.totalScore} ({Math.round((paperGradingResult.score / paperGradingResult.totalScore) * 100)}%)
+                        </div>
+                        {paperGradingResult.summaryText && (
+                          <p className="text-xs text-neutral-600 max-w-lg mx-auto leading-relaxed">
+                            {paperGradingResult.summaryText}
+                          </p>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => { setPaperGradingResult(null); setPaperImageSrcs([]); setPaperStudentName(''); }}
+                          className="px-8 py-3 bg-neutral-900 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-md hover:bg-black transition-all cursor-pointer"
+                        >
+                          Keyingi o'quvchini tekshirish
                         </button>
                       </div>
                     )}
+                  </div>
+                )}
+
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* AI CLASS ANALYSIS MODAL */}
+      <AnimatePresence>
+        {isAnalysisModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 10 }}
+              className="bg-white border border-black/10 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+            >
+              <div className="px-8 py-5 border-b border-black/10 flex items-center justify-between bg-neutral-50/70">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-amber-500/10 text-amber-700 border border-amber-500/20 flex items-center justify-center">
+                    <Sparkles size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-neutral-900 tracking-tight leading-tight">AI Sinf Tahlili va Xulosa</h3>
+                    <p className="text-xs text-neutral-500 font-medium mt-0.5">Barcha o'quvchilar natijalari bo'yicha kognitiv pedagogik tahlil</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsAnalysisModalOpen(false)}
+                  className="w-9 h-9 rounded-xl bg-white hover:bg-neutral-100 border border-black/10 text-neutral-500 hover:text-black flex items-center justify-center transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="p-8 overflow-y-auto space-y-6 flex-1">
+                {isAnalyzing ? (
+                  <div className="py-20 flex flex-col items-center justify-center text-center">
+                    <Loader2 size={36} className="animate-spin text-neutral-900 mb-4" />
+                    <h4 className="text-base font-bold text-neutral-900">Sinf natijalari tahlil qilinmoqda...</h4>
+                    <p className="text-xs text-neutral-400 max-w-xs mt-1">Sun'iy intellekt zaif mavzularni va shaxsiy tavsiyalarni tuzmoqda</p>
+                  </div>
+                ) : analysisResult ? (
+                  <div className="space-y-6">
+                    <div className="bg-neutral-50 border border-black/5 p-6 rounded-3xl">
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-2">Umumiy Sinf bo'yicha Xulosa:</h4>
+                      <p className="text-xs text-neutral-800 leading-relaxed">{analysisResult.recommendation}</p>
+                    </div>
                   </div>
                 ) : null}
               </div>
@@ -686,220 +1220,6 @@ export default function TestDetails() {
         )}
       </AnimatePresence>
 
-      {/* Paper Camera Scanner Modal */}
-      <AnimatePresence>
-        {isCameraModalOpen && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="bg-white border border-zinc-200/80 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
-            >
-              {/* Modal Header */}
-              <div className="px-6 py-5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shadow-xs">
-                    <Camera size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold text-zinc-900 leading-tight">Qog'ozdagi Javoblarni Kamera Orqali Tekshirish</h3>
-                    <p className="text-xs text-zinc-500 font-medium">Suratga oling yoki fayl yuklang — AI bu test uchun avtomatik baholaydi</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => { setIsCameraModalOpen(false); resetPaperScanner(); }}
-                  className="w-9 h-9 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-500 flex items-center justify-center transition-colors cursor-pointer"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              {/* Modal Content */}
-              <div className="p-6 overflow-y-auto space-y-6 flex-1">
-                {!paperGradingResult ? (
-                  <>
-                    {/* Student Name Field */}
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700 mb-2">
-                        O'quvchi Ismi va Familiyasi <span className="text-rose-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={paperStudentName}
-                        onChange={e => setPaperStudentName(e.target.value)}
-                        placeholder="Masalan: Azizbek Rahimov"
-                        className="w-full bg-zinc-50 border border-zinc-200/80 rounded-xl px-4 py-3 text-xs font-semibold text-zinc-900 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-xs"
-                      />
-                    </div>
-
-                    {/* Camera View / Preview */}
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <label className="block text-xs font-bold uppercase tracking-wider text-zinc-700">
-                          Javoblar Varaqasi (Bir yoki bir nechta bet rasmga oling)
-                        </label>
-                        {paperImageSrcs.length > 0 && (
-                          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                            {paperImageSrcs.length} ta bet olindi
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Thumbnails of captured pages */}
-                      {paperImageSrcs.length > 0 && (
-                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-2">
-                          {paperImageSrcs.map((src, idx) => (
-                            <div key={idx} className="relative rounded-xl overflow-hidden border border-zinc-200 aspect-[4/3] group shadow-xs">
-                              <img src={src} alt={`Page ${idx + 1}`} className="w-full h-full object-cover" />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => removePagePhoto(idx)}
-                                  className="w-7 h-7 bg-rose-600 text-white rounded-lg flex items-center justify-center hover:bg-rose-700 transition-colors"
-                                  title="O'chirish"
-                                >
-                                  <X size={14} />
-                                </button>
-                              </div>
-                              <span className="absolute bottom-1 left-1 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
-                                {idx + 1}-bet
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Live Camera Box */}
-                      <div className="relative bg-slate-900 rounded-2xl overflow-hidden aspect-[4/3] border border-zinc-200 shadow-md flex items-center justify-center">
-                        <Webcam
-                          audio={false}
-                          ref={webcamRef}
-                          screenshotFormat="image/jpeg"
-                          videoConstraints={{ facingMode: 'environment' }}
-                          className="w-full h-full object-cover"
-                        />
-                        
-                        {/* Guide Box Overlay */}
-                        <div className="absolute inset-4 border-2 border-dashed border-white/60 rounded-xl pointer-events-none flex items-center justify-center">
-                          <span className="bg-black/60 backdrop-blur-md text-white text-xs font-medium px-4 py-2 rounded-full">
-                            {paperImageSrcs.length === 0 ? "1-bet qog'ozini romga to'g'rilang" : `${paperImageSrcs.length + 1}-bet qog'ozini to'g'rilang`}
-                          </span>
-                        </div>
-
-                        {/* Action overlay buttons */}
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 z-10 w-full px-4 justify-center">
-                          <button
-                            type="button"
-                            onClick={handleCapturePhoto}
-                            className="px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg flex items-center gap-2 transition-transform active:scale-95 cursor-pointer"
-                          >
-                            <Camera size={16} /> {paperImageSrcs.length === 0 ? "Rasmga Olish (1-Bet)" : `➕ ${paperImageSrcs.length + 1}-Betni Qo'shish`}
-                          </button>
-                          <label className="px-3.5 py-3 bg-white/90 hover:bg-white text-zinc-800 font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg flex items-center gap-2 cursor-pointer transition-colors backdrop-blur-md">
-                            <Upload size={16} /> Fayllar
-                            <input type="file" accept="image/*" multiple onChange={handleFileUpload} className="hidden" />
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Submit Button */}
-                    <button
-                      type="button"
-                      disabled={isScanningPaper || paperImageSrcs.length === 0 || !paperStudentName.trim()}
-                      onClick={handleGradePaperTest}
-                      className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      {isScanningPaper ? (
-                        <>
-                          <Loader2 size={16} className="animate-spin" /> AI {paperImageSrcs.length} ta sahifani tekshirmoqda...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle2 size={16} /> AI Bilan {paperImageSrcs.length > 0 ? `${paperImageSrcs.length} ta Sahifani` : ''} Tekshirish va Saqlash
-                        </>
-                      )}
-                    </button>
-                  </>
-                ) : (
-                  /* Graded Result View */
-                  <div className="space-y-6">
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center relative overflow-hidden">
-                      <div className="text-xs font-bold uppercase tracking-wider text-emerald-800 mb-1">Muvaffaqiyatli Tekshirildi va Saqlandi!</div>
-                      <h4 className="text-2xl font-bold text-emerald-950 mb-4">{paperGradingResult.studentName}</h4>
-
-                      <div className="inline-flex items-center gap-3 bg-white px-6 py-3 rounded-xl border border-emerald-200 shadow-xs mb-2">
-                        <div className="text-3xl font-extrabold text-emerald-600">
-                          {paperGradingResult.score} / {paperGradingResult.totalScore}
-                        </div>
-                        <div className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
-                          ({Math.round((paperGradingResult.score / paperGradingResult.totalScore) * 100)}%)
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* AI Diagnostic Summary Card */}
-                    {paperGradingResult.summaryText && (
-                      <div className="bg-amber-50/80 border border-amber-200/90 rounded-2xl p-5 shadow-xs">
-                        <div className="flex items-center gap-2 text-xs font-bold text-amber-900 uppercase tracking-wider mb-2">
-                          <Sparkles size={15} className="text-amber-600" /> AI Diagnostik Xulosa va Tavsiya
-                        </div>
-                        <p className="text-xs text-amber-950 font-medium leading-relaxed mb-3">
-                          {paperGradingResult.summaryText}
-                        </p>
-                        {paperGradingResult.weakTopics && paperGradingResult.weakTopics.length > 0 && (
-                          <div className="pt-2 border-t border-amber-200/60">
-                            <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block mb-1.5">
-                              Xato qilingan asosiy mavzular:
-                            </span>
-                            <div className="flex flex-wrap gap-1.5">
-                              {paperGradingResult.weakTopics.slice(0, 4).map((topic, i) => (
-                                <span key={i} className="text-[10px] font-semibold bg-white border border-amber-300 text-amber-900 px-2.5 py-1 rounded-lg shadow-xs">
-                                  {topic}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Answers Breakdown */}
-                    <div>
-                      <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-700 mb-3">Savollar Bo'yicha Tahlil:</h5>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        {paperGradingResult.answers.map((ans, idx) => (
-                          <div
-                            key={idx}
-                            className={`p-3 rounded-xl border flex items-center justify-between text-xs font-semibold ${
-                              ans.isCorrect ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900' : 'bg-rose-50/60 border-rose-200 text-rose-900'
-                            }`}
-                          >
-                            <span>#{idx + 1} savol</span>
-                            <div className="flex items-center gap-1 font-bold">
-                              {ans.selectedOption !== null ? String.fromCharCode(65 + ans.selectedOption) : '—'}
-                              {ans.isCorrect ? <Check size={14} className="text-emerald-600" /> : <XCircle size={14} className="text-rose-600" />}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={resetPaperScanner}
-                      className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm shadow-indigo-600/20 cursor-pointer"
-                    >
-                      Keyingi O'quvchi Qog'ozini Tekshirish ➕
-                    </button>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
