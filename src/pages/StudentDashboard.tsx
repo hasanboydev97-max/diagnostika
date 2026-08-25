@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, Award, Calendar, ChevronRight, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Loader2, Award, Calendar, ChevronRight, TrendingUp, Bell } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import MeshGradient from '../components/ui/MeshGradient';
@@ -114,6 +114,28 @@ export default function StudentDashboard() {
             <div className="text-4xl font-bold">{results.length} <span className="text-xl text-gray-400 font-medium">ta</span></div>
           </motion.div>
         </div>
+
+                {/* Telegram Connect Card */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.25 }} className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-6 rounded-3xl shadow-sm relative overflow-hidden">
+          <div className="absolute -right-10 -top-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl"></div>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
+                <Bell className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">Telegram Bildirishnomalari</h3>
+                <p className="text-sm text-gray-600 leading-relaxed max-w-lg">Yangi test natijalari chiqqanda avtomatik ravishda Telegram orqali xabar oling. Botga kirib quyidagi buyruqni yuboring:</p>
+                <div className="mt-3 inline-block bg-white border border-blue-200 px-4 py-2 rounded-xl text-sm font-mono text-blue-700 font-medium selection:bg-blue-100">
+                  /obuna {studentName}
+                </div>
+              </div>
+            </div>
+            <a href="https://t.me/maktab_diagnostika_bot" target="_blank" rel="noopener noreferrer" className="w-full md:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors text-center shadow-sm shadow-blue-200">
+              Botga o'tish
+            </a>
+          </div>
+        </motion.div>
 
         {results.length > 1 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="bg-white/80 backdrop-blur-xl border border-black/10 p-6 md:p-8 rounded-3xl shadow-sm">
