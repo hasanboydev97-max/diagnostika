@@ -92,6 +92,17 @@ app.get('/api/results/:id', async (req, res) => {
   }
 });
 
+app.get('/api/student-results/:studentName', async (req, res) => {
+  try {
+    const results = await Result.find({
+      studentName: new RegExp('^' + req.params.studentName + '$', 'i')
+    }).sort({ createdAt: -1 }).lean();
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/results', async (req, res) => {
   try {
     const data = req.body;

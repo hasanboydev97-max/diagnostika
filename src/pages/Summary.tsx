@@ -233,6 +233,16 @@ export default function Summary() {
                 onClick={() => {
                   document.body.style.overflow = 'unset';
                   window.scrollTo(0, 0);
+                  navigate(`/student-dashboard/${encodeURIComponent(studentData.studentName)}`);
+                }}
+                className="print-hide flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-neutral-100 text-neutral-900 border border-black/10 rounded-lg text-[10px] md:text-xs font-semibold uppercase tracking-wider hover:bg-neutral-200 transition-colors shadow-sm"
+              >
+                Mening Natijalarim
+              </button>
+              <button
+                onClick={() => {
+                  document.body.style.overflow = 'unset';
+                  window.scrollTo(0, 0);
                   navigate('/');
                 }}
                 className="print-hide flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-neutral-main text-white rounded-lg text-[10px] md:text-xs font-semibold uppercase tracking-wider hover:bg-neutral-900 transition-colors shadow-sm"

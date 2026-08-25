@@ -9,6 +9,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 const Landing = lazy(() => import('./pages/Landing'));
 const Login = lazy(() => import('./pages/Login'));
 const Summary = lazy(() => import('./pages/Summary'));
+const StudentDashboard = lazy(() => import('./pages/StudentDashboard'));
 const Admin = lazy(() => import('./pages/Admin'));
 const SuperAdmin = lazy(() => import('./pages/SuperAdmin'));
 const OnlineTestsDashboard = lazy(() => import('./pages/OnlineTests/Dashboard'));
@@ -59,6 +60,7 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/summary/:resultId" element={<Summary />} />
+            <Route path="/student-dashboard/:studentName" element={<StudentDashboard />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/superadmin" element={<SuperAdmin />} />
             <Route path="/admin/omr-generator" element={<OMRGenerator />} />
