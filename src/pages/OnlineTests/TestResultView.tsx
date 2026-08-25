@@ -5,6 +5,8 @@ import confetti from 'canvas-confetti';
 import { motion } from 'framer-motion';
 import FormattedText from '../../components/FormattedText';
 import MeshGradient from '../../components/ui/MeshGradient';
+// ✅ 11. DRY: isAnswerCorrect umumiy moduldan import qilinadi — takrorlanmaydi
+import { isAnswerCorrect } from '../../utils/scoring';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -20,20 +22,6 @@ function formatStudentName(name: string) {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
-function isAnswerCorrect(userAns: string | undefined, correctOpt: string | undefined, options: string[] = []): boolean {
-  if (!userAns || !correctOpt) return false;
-  const u = String(userAns).trim().toLowerCase();
-  const c = String(correctOpt).trim().toLowerCase();
-  if (u === c) return true;
-  const lm: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
-  if (lm[c] !== undefined && options[lm[c]]) {
-    if (String(options[lm[c]]).trim().toLowerCase() === u) return true;
-  }
-  if (lm[u] !== undefined && options[lm[u]]) {
-    if (String(options[lm[u]]).trim().toLowerCase() === c) return true;
-  }
-  return false;
-}
 
 export default function TestResultView() {
   const { resultId } = useParams();
@@ -67,6 +55,8 @@ export default function TestResultView() {
 
   const [loading, setLoading] = useState(!result);
   const [displayedScore, setDisplayedScore] = useState(0);
+  // ✅ 15. Xato holati — foydalanuvchiga ko'rsatish uchun
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const confettiFired = useRef(false);
 
   useEffect(() => { fetchResult(); }, [resultId]);
@@ -105,6 +95,7 @@ export default function TestResultView() {
       let res = await fetch(`${API_URL}/online-test-results/${resultId}`);
       if (!res.ok) {
         res = await fetch(`${API_URL}/results/${resultId}`);
+
       }
       if (res.ok) {
         const data = await res.json();
@@ -133,8 +124,9 @@ export default function TestResultView() {
         setTimeout(() => fetchResult(retryCount + 1), 800);
         return;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      setFetchError(error.message || 'Xatolik yuz berdi');
     } finally {
       setLoading(false);
     }
@@ -144,6 +136,21 @@ export default function TestResultView() {
     <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex items-center justify-center">
       <MeshGradient />
       <Loader2 className="animate-spin text-gray-400 relative z-10" size={32} />
+    </div>
+  );
+
+  // ✅ 15. Foydalanuvchiga xatoni aniq ko'rsatish
+  if (fetchError && !result) return (
+    <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex flex-col items-center justify-center text-[#111111]">
+      <MeshGradient />
+      <div className="bg-red-50 backdrop-blur-xl border border-red-200 shadow-md p-4 md:p-8 rounded-2xl relative z-10 text-center">
+        <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+        <h2 className="text-xl font-medium mb-2 text-red-700">Xatolik yuz berdi</h2>
+        <p className="text-red-600 mb-4">{fetchError}</p>
+        <button onClick={() => window.location.reload()} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+          Qayta urinish
+        </button>
+      </div>
     </div>
   );
 

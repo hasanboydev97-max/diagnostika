@@ -1,8 +1,8 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Teacher } from '../models/index.js';
-import dotenv from 'dotenv';
-dotenv.config();
+import { escapeRegex } from '../utils/regexUtils.js';
+// ✅ 14. dotenv.config() olib tashlandi — faqat server/index.js da bir marta chaqiriladi
 
 const getJwtSecret = () => {
   return process.env.JWT_SECRET || 'hb-diagnostika-secure-jwt-key-2026-production';
@@ -21,7 +21,8 @@ export const register = async (req, res) => {
       return res.status(400).json({ error: 'Parol kamida 6 ta belgidan iborat bo\'lishi kerak.' });
     }
     
-    const existing = await Teacher.findOne({ email: new RegExp(`^${email}$`, 'i') });
+    // ✅ 3. ReDoS tuzatish — escapeRegex ishlatish
+    const existing = await Teacher.findOne({ email: new RegExp(`^${escapeRegex(email)}$`, 'i') });
     if (existing) return res.status(400).json({ error: 'Ushbu email allaqachon ro\'yxatdan o\'tgan.' });
     
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -45,8 +46,9 @@ export const login = async (req, res) => {
       return res.status(400).json({ error: 'Email va parolni kiriting.' });
     }
     
+    // ✅ 3. ReDoS tuzatish — escapeRegex ishlatish
     // Case-insensitive lookup so accounts created with uppercase or lowercase emails match reliably
-    const teacher = await Teacher.findOne({ email: new RegExp(`^${rawEmail}$`, 'i') });
+    const teacher = await Teacher.findOne({ email: new RegExp(`^${escapeRegex(rawEmail)}$`, 'i') });
     if (!teacher) return res.status(400).json({ error: 'Email yoki parol xato.' });
     
     const isMatch = await bcrypt.compare(password, teacher.password);

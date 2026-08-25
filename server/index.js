@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { v2 as cloudinary } from 'cloudinary';
 import multer from 'multer';
 import { fileURLToPath } from 'url';
@@ -15,16 +17,65 @@ import adminRoutes from './routes/adminRoutes.js';
 import { onlineTestRoutes, onlineTestResultRoutes } from './routes/onlineTestRoutes.js';
 import gamesRoutes from './routes/gamesRoutes.js';
 import { setupSockets } from './sockets/socketManager.js';
+import { escapeRegex } from './utils/regexUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load .env from parent directory
+// ✅ Load .env faqat bir marta — faqat shu faylda
 dotenv.config({ path: join(__dirname, '../.env') });
 
 const app = express();
-app.use(cors());
+
+// ✅ 1. Helmet — HTTP Security Headers (XSS, Clickjacking, MIME sniffing oldini olish)
+app.use(helmet({
+  crossOriginEmbedderPolicy: false, // Cloudinary/CDN rasm yuklashlar uchun
+  contentSecurityPolicy: false      // Yengil frontendlar uchun, zarur bo'lsa yoqing
+}));
+
+// ✅ 2. CORS — Faqat ruxsat etilgan domenlar
+const allowedOrigins = [
+  'https://bmdiagnostika.vercel.app',
+  'https://hbdiagnostika.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // origin yo'q bo'lsa — server-to-server so'rov (Postman, curl) — ruxsat
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS: ${origin} ruxsatsiz domen`));
+  },
+  credentials: true
+}));
+
 app.use(express.json({ limit: '50mb' }));
+
+// ✅ 3. Rate Limiting — Brute Force va DDoS oldini olish
+// Login uchun qat'iy limit: 15 daqiqada maksimal 10 ta urinish
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 daqiqa
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Juda ko\'p urinish. 15 daqiqadan so\'ng qayta urinib ko\'ring.' }
+});
+
+// Umumiy API uchun: 15 daqiqada 300 ta so'rov
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Juda ko\'p so\'rov. Biroz kutib turing.' }
+});
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api', generalLimiter);
 
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -62,11 +113,18 @@ if (MONGODB_URI) {
   console.warn('⚠️ MONGODB_URI is missing in .env');
 }
 
-// Telegram Helper Function
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || String.fromCharCode(56,54,53,53,56,56,55,50,53,57,58,65,65,70,113,117,101,65,105,114,55,110,49,114,115,110,72,120,75,87,81,105,108,114,110,51,109,83,85,78,114,45,110,74,103);
-const TELEGRAM_API_BASE = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+// ✅ 5. Telegram Bot Token — FAQAT environment variable dan o'qiladi
+// Hardcoded fallback olib tashlandi (git tarixida qolgan token xavfli)
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+if (!TELEGRAM_BOT_TOKEN) {
+  console.warn('⚠️ TELEGRAM_BOT_TOKEN .env da yo\'q. Telegram funksiyalari o\'chirilgan.');
+}
+const TELEGRAM_API_BASE = TELEGRAM_BOT_TOKEN
+  ? `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`
+  : null;
 
 async function sendTelegramBotMessage(chatId, text, replyMarkup = null) {
+  if (!TELEGRAM_API_BASE) return { ok: false, error: 'Token yo\'q' };
   try {
     const payload = {
       chat_id: chatId,
@@ -93,7 +151,8 @@ export async function broadcastResultToTelegram(data) {
   try {
     if (!data || !data.studentName) return;
     const cleanName = data.studentName.replace(/\s*\([^)]*\)/g, '').trim();
-    const subs = await TelegramSubscription.find({ studentName: new RegExp('^' + cleanName + '$', 'i') });
+    // ✅ 3. ReDoS tuzatish — escapeRegex ishlatish
+    const subs = await TelegramSubscription.find({ studentName: new RegExp('^' + escapeRegex(cleanName) + '$', 'i') });
     if (subs && subs.length > 0) {
       const score = data.totalScore !== undefined ? data.totalScore : (data.score || 0);
       const isPass = score >= 70;
@@ -153,16 +212,20 @@ app.get('/api/student-results/:studentName', async (req, res) => {
   try {
     const { studentName } = req.params;
     const decodedName = decodeURIComponent(studentName).trim();
-    const regex = new RegExp(`^${decodedName}$`, 'i');
+    // ✅ 3. ReDoS tuzatish — escapeRegex ishlatish
+    const regex = new RegExp(`^${escapeRegex(decodedName)}$`, 'i');
 
     const diagResults = await Result.find({ studentName: regex }).lean();
 
     const { OnlineTestResult } = await import('./models/index.js');
     const onlineResults = await OnlineTestResult.find({ studentName: regex }).lean();
 
+    // ✅ 9. totalScore normalizatsiyasi — foiz hisoblash izchil bo'lsin
+    // score = to'g'ri javoblar soni, totalScore = savollar soni (bazada shunday)
+    // Lekin frontend Dashboard'da jami foizni "totalScore" orqali ko'rsatadi, shuning uchun uni yozib yuboramiz.
     const normalizedOnline = onlineResults.map(r => ({
       ...r,
-      totalScore: r.totalScore ? Math.round((r.score / r.totalScore) * 100) : (r.score || 0),
+      totalScore: r.totalScore > 0 ? Math.round((r.score / r.totalScore) * 100) : (r.score || 0),
       grade: r.testTitle || 'Onlayn Test'
     }));
 
@@ -278,6 +341,10 @@ app.post('/api/telegram/send', async (req, res) => {
 // 24/7 Long Polling Loop for Telegram Bot Commands
 let lastUpdateId = 0;
 async function startTelegramBotPolling() {
+  if (!TELEGRAM_API_BASE) {
+    console.warn('⚠️ Telegram polling o\'tkazib yuborildi — TELEGRAM_BOT_TOKEN yo\'q.');
+    return;
+  }
   console.log('🤖 HB DIAGNOSTIKA Telegram Bot Server 24/7 ishga tushdi...');
   while (true) {
     try {
@@ -327,6 +394,7 @@ async function startTelegramBotPolling() {
                 const searchQuery = mongoose.Types.ObjectId.isValid(text)
                   ? { $or: [{ _id: text }, { id: text }] }
                   : { id: text };
+                const { OnlineTestResult } = await import('./models/index.js');
                 const found = await Result.findOne(searchQuery) || await OnlineTestResult.findOne(searchQuery);
                 if (found) {
                   const summaryMsg = `🎓 <b>HB DIAGNOSTIKA NATIJASI</b> 🎓\n\n👤 <b>O'quvchi:</b> ${found.studentName}\n🏫 <b>Sinf:</b> ${found.grade || '5'}-sinf\n📊 <b>Natija:</b> ${found.totalScore}/100 ball\n\n🔗 <a href="https://bmdiagnostika.vercel.app/summary/${found.id || found._id}">Batafsil Hisobotni Ko'rish</a>`;

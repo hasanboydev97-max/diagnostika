@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
-dotenv.config();
+// ✅ 14. dotenv.config() olib tashlandi — faqat server/index.js da bir marta chaqiriladi
 
 let warnedJwt = false;
 const getJwtSecret = () => {
@@ -32,4 +31,3 @@ export const adminMiddleware = (req, res, next) => {
   }
   next();
 };
-

@@ -16,19 +16,42 @@ export default function FormattedText({ content, className = '' }: FormattedText
   // Shunchaki o'zbek alifbosidagi o' va g' uchun qo'shimcha xavfsizlik (ixtiyoriy).
   let safeContent = String(content);
 
-  // --- Senior Level: AI tomonidan generatsiya qilingan noto'g'ri matematik ifodalarni to'g'irlash ---
-  // 1. Noto'g'ri kasr vergulini to'g'irlash: ,frac{...} -> \frac{...}
+  // --- Senior Level Robust Frontend Sanitization (Fallback for old DB entries) ---
+  
+  // 1. Fix ,frac to \frac
   safeContent = safeContent.replace(/,frac\{/g, '\\frac{');
 
-  // 2. Chala qolib ketgan blok ifodalarni yopish: $$ ... $ -> $$ ... $$
-  safeContent = safeContent.replace(/\$\$([^$]+?)\$(?!\$)/g, '$$$$$1$$$$');
+  // 2. Fix $inner$$ -> $$inner$$
+  safeContent = safeContent.replace(/(?<!\$)\$(?!\$)([^$\n]{1,300}?)\$\$(?!\$)/g, (_, inner) => `$$${inner}$$`);
 
-  // 3. Ochiq dollar belgisi unutilgan qismlarni yopish: masalan 42\text{ da}$ yoki 2\frac{1}{2}$
-  // (\d+...) orqali raqam bilan boshlanib, $ bilan tugaydigan so'zlarni $...$ ichiga olamiz.
-  safeContent = safeContent.replace(/(?<!\$)(?<!\d)(\d+(?:,\d+)?(?:\\frac\{[^}]*\}\{[^}]*\})?(?:\s*\\text\{[^}]*\})?)\$(?!\$)/g, '$$$1$$');
-  
-  // 4. Huddi shunday, agar $$ bilan tugasa: 12\text{ da}$$ -> $$12\text{ da}$$
-  safeContent = safeContent.replace(/(?<!\$)(?<!\d)(\d+(?:,\d+)?(?:\\frac\{[^}]*\}\{[^}]*\})?(?:\s*\\text\{[^}]*\})?)\$\$/g, '$$$$$1$$$$');
+  // 3. Remove orphan trailing $$ like `=0$$` -> `=0`
+  const allDoubles = safeContent.match(/\$\$/g) || [];
+  if (allDoubles.length % 2 !== 0) {
+    safeContent = safeContent.replace(/\$\$(?=[^$]*$)/, '');
+  }
+
+  // 4. Ensure space around block math
+  safeContent = safeContent.replace(/(\$\$)([^\s$\\.,!?;:\n\d([{'\-])/gu, '$1 $2');
+  safeContent = safeContent.replace(/([^\s$\\])(\$\$)/gu, '$1 $2');
+
+  // 5. Ensure space around inline math
+  safeContent = safeContent.replace(/((?<!\$)\$(?!\$)(?:[^$\n\\]|\\.){1,150}?\$(?!\$))([^\s$.,!?;:\n([{'\-])/gu, '$1 $3');
+  safeContent = safeContent.replace(/([^\s$\\])(\$(?!\$))/gu, '$1 $2');
+
+  // 6. Fix merged text after digit or brace (e.g. =0tenglama -> =0 tenglama)
+  safeContent = safeContent.replace(/(=\s*-?\d+(?:\.\d+)?)([\u0400-\u04FF\u02BCa-zA-Zʻʼ'])/gu, '$1 $2');
+  safeContent = safeContent.replace(/([}\]])([\u0400-\u04FF\u02BCa-zA-Zʻʼ'])/gu, '$1 $2');
+
+  // 7. Fix odd single $ count by escaping the last one
+  const singleCount = (safeContent.match(/(?<!\$)\$(?!\$)/g) || []).length;
+  if (singleCount % 2 !== 0) {
+    safeContent = safeContent.replace(/(?<!\$)\$(?!\$)(?=[^$]*$)/, '\\$');
+  }
+
+  // 8. Remove empty delimiters
+  safeContent = safeContent.replace(/\$\$\s*\$\$/g, '');
+  safeContent = safeContent.replace(/(?<!\$)\$\s*\$(?!\$)/g, '');
+
   // --------------------------------------------------------------------------------------------------
 
   return (

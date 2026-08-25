@@ -1,8 +1,11 @@
 import mongoose from 'mongoose';
+import fs from 'fs';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { OnlineTest, OnlineTestResult, Teacher } from '../models/index.js';
 import { buildDocxBuffer, sanitizePdfText } from '../utils/exportUtils.js';
 import PDFDocument from 'pdfkit';
+import { isAnswerCorrect, computeScore } from '../utils/scoring.js';
+import { sanitizeQuestions, sanitizeQuestion, isQuestionMalformed } from '../utils/mathSanitizer.js';
 
 export const getTests = async (req, res) => {
   try {
@@ -55,7 +58,7 @@ export const getTestResults = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
-import fs from 'fs';
+
 
 export const exportToDocx = async (req, res) => {
   try {
@@ -258,6 +261,15 @@ export const submitTestResult = async (req, res) => {
           }
         }
       }
+
+      // ✅ 6. KRITIK: Score serverda qayta hisoblanadi — klientdan kelgan qiymatga ishonilmaydi
+      // Hacker score=100 yuborsa ham, DB ga to'g'ri hisoblangan qiymat yoziladi
+      if (test.questions && Array.isArray(test.questions) && data.answers) {
+        const { score: serverScore, totalScore: serverTotal } = computeScore(test.questions, data.answers);
+        data.score = serverScore;
+        data.totalScore = serverTotal;
+        console.log(`✅ Score serverda hisoblandi: ${serverScore}/${serverTotal} (klientdan: ${req.body.score}/${req.body.totalScore})`);
+      }
     }
 
     // Attempt AI Generation safely
@@ -314,6 +326,7 @@ Ushbu natijalarga asosan o'quvchiga o'zbek tilida qisqa (2-3 ta gap) dalda beruv
     res.status(500).json({ error: error.message });
   }
 };
+
 export const deleteTest = async (req, res) => {
   try {
     const testId = req.params.id;
@@ -392,21 +405,48 @@ export const generateAITest = async (req, res) => {
 
       if (isExactScience) {
         formatRules = `
-LaTeX YOZISH QOIDALARI:
-- Alohida formula: $$...$$   |   Matn ichida: $...$
-- Kasr: $$\\\\frac{a}{b}$$   |   Daraja: $x^{2}$   |   Ildiz: $\\\\sqrt{x}$, $\\\\sqrt[3]{8}$
-- Indeks: $x_{1}$, $a_{n}$   |   Trigonometriya: $\\\\sin\\\\alpha$, $\\\\cos x$, $\\\\tan\\\\beta$
-- Gradus: $60^{\\\\circ}$
+LaTeX YOZISH QOIDALARI (QATTIQ BAJARISH SHART):
+
+▶ FORMULA TURLARI:
+  - Alohida (blok) formula: $$...$$
+  - Matn ichidagi kichik formula yoki belgi: $...$
+
+▶ QOIDA 1 — BO'SH JOY (ENG MUHIM):
+  Har doim $$...$$  yoki $...$ atrofida BO'SH JOY bo'lishi SHART.
+  NOTO'G'RI: "Tenglamani yeching:$$x^{2}-9=0$$toping."
+  TO'G'RI:   "Tenglamani yeching: $$x^{2}-9=0$$ ning ildizlarini toping."
+  NOTO'G'RI: "$x_1$va$x_2$"
+  TO'G'RI:   "$x_1$ va $x_2$"
+
+▶ QOIDA 2 — DOLLAR BALANSI:
+  Har bir ochuvchi $ yoki $$ uchun aynan bir yopuvchi bo'lishi SHART.
+  NOTO'G'RI: "$x^2-9=0$$"   (bitta ochuvchi, ikkita yopuvchi)
+  TO'G'RI:   "$$x^2-9=0$$"  (ikkita ochuvchi, ikkita yopuvchi)
+  NOTO'G'RI: "x^2-9=0$$"    (ochuvchisiz yopuvchi)
+  TO'G'RI:   "$$x^2-9=0$$"
+
+▶ QOIDA 3 — INDEKSLAR:
+  x₁, x₂ kabi indekslarni har doim matematik ichida yozing:
+  NOTO'G'RI: "x_1vax_2 sonlari"
+  TO'G'RI:   "$x_1$ va $x_2$ sonlari"
+
+▶ QOIDA 4 — BACKSLASH:
+  LaTeX buyruqlari uchun ikkita backslash: \\\\frac, \\\\sqrt, \\\\sin
+  (JSON string ichida bu \\\\\\\\frac bo'ladi)
+
+- Kasr: $$\\\\frac{a}{b}$$   |   Daraja: $x^{2}$   |   Ildiz: $\\\\sqrt{x}$
+- Gradus: $60^{\\\\circ}$    |   Trigon: $\\\\sin x$, $\\\\cos\\\\alpha$
 - Tenglamalar sistemasi: $$\\\\begin{cases} x+y=5\\\\\\\\ x-y=1 \\\\end{cases}$$
-- Fizika birliklari oddiy matnda: "5 m/s", "10 N", "220 V"
+- Fizika birliklari oddiy matnda: "5 m/s", "10 N"
 MAJBURIY: questionText ichida to'liq, aniq son/formula bo'lsin. Hech qachon "___" yoki bo'sh joy qoldirmang.`;
 
         examples = `{"questionText":"Hisoblang: $$\\\\sqrt{144}-\\\\sqrt{49}+\\\\sqrt{25}$$","options":["$10$","$8$","$12$","$14$"],"correctOption":"$10$","type":"multiple_choice","subtopic":"Ildizlar","difficulty":"oson"}
 {"questionText":"Tenglamani yeching: $$x^{2}-5x+6=0$$","options":["$x_1=1,\\\\, x_2=6$","$x_1=2,\\\\, x_2=3$","$x_1=-2,\\\\, x_2=-3$","$x_1=3,\\\\, x_2=4$"],"correctOption":"$x_1=2,\\\\, x_2=3$","type":"multiple_choice","subtopic":"Kvadrat tenglamalar","difficulty":"o'rta"}
-{"questionText":"Soddalashtiring: $$\\\\sin^{2}\\\\alpha+\\\\cos^{2}\\\\alpha$$","options":["$1$","$0$","$2\\\\sin\\\\alpha$","$\\\\sin\\\\alpha\\\\cos\\\\alpha$"],"correctOption":"$1$","type":"multiple_choice","subtopic":"Trigonometrik ayniyatlar","difficulty":"oson"}
+{"questionText":"Tenglamaning ildizlarini toping: $$x^{2}-9=0$$","options":["$x_1=9,\\\\, x_2=-9$","$x_1=3,\\\\, x_2=-3$","$x=-9$","$x=3$"],"correctOption":"$x_1=3,\\\\, x_2=-3$","type":"multiple_choice","subtopic":"Kvadrat tenglamalar","difficulty":"oson"}
+{"questionText":"Viyet teoremasiga ko'ra, $$x^{2}-5x+6=0$$ tenglamaning ildizlari yig'indisini toping.","options":["$-5$","$5$","$6$","$-6$"],"correctOption":"$5$","type":"multiple_choice","subtopic":"Viyet teoremasi","difficulty":"o'rta"}
+{"questionText":"$x_1$ va $x_2$ sonlari $$x^{2}-4x-1=0$$ tenglamaning ildizlari bo'lsa, $\\\\dfrac{1}{x_1^{2}}+\\\\dfrac{1}{x_2^{2}}$ ning qiymatini toping.","options":["$18$","$14$","$16$","$12$"],"correctOption":"$14$","type":"multiple_choice","subtopic":"Viyet teoremasi","difficulty":"qiyin"}
 {"questionText":"Kasrning maxrajini irratsionallikdan qutqaring: $$\\\\frac{1}{\\\\sqrt{5}-\\\\sqrt{2}}$$","options":["$\\\\sqrt{5}+\\\\sqrt{2}$","$\\\\frac{\\\\sqrt{5}+\\\\sqrt{2}}{3}$","$\\\\sqrt{5}-\\\\sqrt{2}$","$3$"],"correctOption":"$\\\\frac{\\\\sqrt{5}+\\\\sqrt{2}}{3}$","type":"multiple_choice","subtopic":"Irratsional ifodalar","difficulty":"qiyin"}
-{"questionText":"Viyet teoremasiga ko'ra, $$x^{2}-5x+6=0$$ tenglamaning ildizlari yig'indisi va ko'paytmasini toping.","options":["Yig'indisi: $5$, Ko'paytmasi: $6$","Yig'indisi: $-5$, Ko'paytmasi: $6$","Yig'indisi: $6$, Ko'paytmasi: $5$","Yig'indisi: $5$, Ko'paytmasi: $-6$"],"correctOption":"Yig'indisi: $5$, Ko'paytmasi: $6$","type":"multiple_choice","subtopic":"Viyet teoremasi","difficulty":"o'rta"}
-{"questionText":"$$[0^{\\\\circ}, 90^{\\\\circ}]$$ oralig'idagi $$2\\\\sin x-\\\\sqrt{3}=0$$ tenglamaning ildizini toping.","options":["$60^{\\\\circ}$","$30^{\\\\circ}$","$45^{\\\\circ}$","$90^{\\\\circ}$"],"correctOption":"$60^{\\\\circ}$","type":"multiple_choice","subtopic":"Trigonometrik tenglamalar","difficulty":"o'rta"}`;
+{"questionText":"$$[0^{\\\\circ},\\\\, 90^{\\\\circ}]$$ oralig'idagi $$2\\\\sin x-\\\\sqrt{3}=0$$ tenglamaning ildizini toping.","options":["$60^{\\\\circ}$","$30^{\\\\circ}$","$45^{\\\\circ}$","$90^{\\\\circ}$"],"correctOption":"$60^{\\\\circ}$","type":"multiple_choice","subtopic":"Trigonometrik tenglamalar","difficulty":"o'rta"}`;
 
       } else if (isLanguage) {
         formatRules = `
@@ -469,15 +509,6 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
 
     const prompt = buildTestPrompt({ topic, subject, questionCount: questionCount || 5, difficulty: req.body.difficulty || 'aralash' });
 
-    // ─── Detect broken question (formula replaced with bare '1') ───
-    function isQuestionBroken(qText) {
-      if (!qText) return true;
-      if (qText.includes('$') || qText.includes('`')) return false;
-      const hasMathVerb = /hisoblang|hisobla|soddalashtir|yeching|toping|topingiz|qutqaring|irratsional|ildiz|tenglama|viyet|sistemasini|sistemasidan|oralig|qiymatini|yig.indisini|ko.paytmasini|arifmetigi|diskriminant|karrali/i.test(qText);
-      if (!hasMathVerb) return false;
-      return /\b1\b/.test(qText) || /:\s*\d+\s*[+\-*\/]?\s*$/.test(qText);
-    }
-
     // ─── generateWithRetry: JSON mode + retry on broken formulas ───
     async function generateWithRetry() {
       for (const modelName of modelsToTry) {
@@ -494,12 +525,17 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
             // Fix unescaped backslashes (e.g. \frac -> \\frac) so JSON.parse doesn't fail or create \f (form-feed)
             const safeRaw = raw.replace(/(?<!\\)\\([^nrtb"\\])/g, '\\\\$1');
             
-            const questions = JSON.parse(safeRaw);
+            let questions = JSON.parse(safeRaw);
             if (!Array.isArray(questions) || questions.length === 0) {
               console.warn(`  ↩ Bo'sh array, qayta urinilmoqda...`);
               continue;
             }
-            const broken = questions.filter(q => isQuestionBroken(q.questionText));
+            
+            // ✅ Sanitize AI output before validation
+            questions = sanitizeQuestions(questions);
+
+            // ✅ Use strict validation
+            const broken = questions.filter(isQuestionMalformed);
             if (broken.length > 0) {
               console.warn(`  ↩ ${broken.length}/${questions.length} ta savol buzilgan, qayta urinilmoqda...`);
               continue;
@@ -577,20 +613,7 @@ export const classAnalysis = async (req, res) => {
       }
     });
 
-    function isAnswerCorrect(userAns, correctOpt, options = []) {
-      if (!userAns || !correctOpt) return false;
-      const u = String(userAns).trim().toLowerCase();
-      const c = String(correctOpt).trim().toLowerCase();
-      if (u === c) return true;
-      const lm = { a: 0, b: 1, c: 2, d: 3 };
-      if (lm[c] !== undefined && options[lm[c]]) {
-        if (String(options[lm[c]]).trim().toLowerCase() === u) return true;
-      }
-      if (lm[u] !== undefined && options[lm[u]]) {
-        if (String(options[lm[u]]).trim().toLowerCase() === c) return true;
-      }
-      return false;
-    }
+    // ✅ 11. DRY: isAnswerCorrect artiq bu yerda takrorlanmaydi — server/utils/scoring.js dan import qilingan
 
     // Calculate stats per question
     const stats = test.questions.map((q, i) => {
@@ -657,7 +680,15 @@ Qoidalar:
     const aiRes = await model.generateContent(prompt);
     let text = aiRes.response.text();
     text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    const data = JSON.parse(text);
+
+    // ✅ 12. JSON.parse try/catch — AI noto'g'ri JSON qaytarsa server crash bo'lmaydi
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (parseErr) {
+      console.error('AI JSON parse xatosi:', parseErr.message, '\nAI javobi:', text.substring(0, 200));
+      return res.status(500).json({ error: 'AI javobini tahlil qilishda xatolik. Qayta urinib ko\'ring.' });
+    }
     
     res.json(data);
   } catch (err) {

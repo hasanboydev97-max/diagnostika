@@ -63,10 +63,18 @@ export const getTeachers = async (req, res) => {
   try {
     const teachers = await Teacher.find().select('-password').sort({ _id: -1 });
     
-    // Annotate with their test count
-    const teachersWithStats = await Promise.all(teachers.map(async (t) => {
-      const testCount = await OnlineTest.countDocuments({ teacherId: t._id });
-      return { ...t.toObject(), testCount };
+    // ✅ 8. N+1 Query tuzatish — bitta aggregate so'rov bilan barcha teacher testlarini hisoblaymiz
+    // Ilgari: 100 ta teacher = 101 ta DB so'rov. Endi: 1 ta aggregate so'rov.
+    const testCountsRaw = await OnlineTest.aggregate([
+      { $group: { _id: '$teacherId', count: { $sum: 1 } } }
+    ]);
+    const testCountMap = Object.fromEntries(
+      testCountsRaw.map(({ _id, count }) => [String(_id), count])
+    );
+
+    const teachersWithStats = teachers.map(t => ({
+      ...t.toObject(),
+      testCount: testCountMap[String(t._id)] || 0
     }));
     
     res.json(teachersWithStats);
@@ -74,6 +82,7 @@ export const getTeachers = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 export const getTests = async (req, res) => {
   try {

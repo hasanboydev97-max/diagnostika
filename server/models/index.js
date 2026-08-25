@@ -12,8 +12,10 @@ const ResultSchema = new mongoose.Schema({
   questionResults: Object,
   aiSummaryText: String,
   aiAdviceText: String,
-  createdAt: String
+  // ✅ 13. createdAt String emas Date — sort va date comparison to'g'ri ishlaydi
+  createdAt: { type: Date, default: Date.now }
 }, { strict: false });
+
 
 export const Result = mongoose.model('Result', ResultSchema);
 
@@ -26,8 +28,9 @@ const OnlineTestSchema = new mongoose.Schema({
   startTime: String,
   endTime: String,
   durationMinutes: Number,
-  createdAt: String
+  createdAt: { type: Date, default: Date.now }
 }, { strict: false });
+
 
 OnlineTestSchema.index({ teacherId: 1, createdAt: -1 });
 
@@ -41,8 +44,9 @@ const OnlineTestResultSchema = new mongoose.Schema({
   score: Number,
   totalScore: Number,
   aiFeedback: String,
-  createdAt: String
+  createdAt: { type: Date, default: Date.now }
 }, { strict: false });
+
 
 OnlineTestResultSchema.index({ testId: 1, createdAt: -1 });
 
