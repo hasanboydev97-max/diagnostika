@@ -70,3 +70,12 @@ const TeacherSchema = new mongoose.Schema({
 
 export const Teacher = mongoose.model('Teacher', TeacherSchema);
 
+// Telegram Subscription Schema
+const TelegramSubscriptionSchema = new mongoose.Schema({
+  chatId: { type: String, required: true },
+  studentName: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now }
+});
+TelegramSubscriptionSchema.index({ chatId: 1, studentName: 1 }, { unique: true });
+export const TelegramSubscription = mongoose.model('TelegramSubscription', TelegramSubscriptionSchema);
+

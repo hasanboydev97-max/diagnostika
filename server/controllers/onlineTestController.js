@@ -306,6 +306,9 @@ Ushbu natijalarga asosan o'quvchiga o'zbek tilida qisqa (2-3 ta gap) dalda beruv
     const resultDoc = new OnlineTestResult(data);
     await resultDoc.save();
     
+    // Broadcast to Telegram subscribers
+    import('../index.js').then(m => m.broadcastResultToTelegram?.(data)).catch(() => {});
+
     res.status(201).json({ message: 'Result saved successfully', id: data.id, aiFeedback });
   } catch (error) {
     res.status(500).json({ error: error.message });
