@@ -2,9 +2,11 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 
+let warnedJwt = false;
 const getJwtSecret = () => {
   const secret = process.env.JWT_SECRET;
-  if (!secret) {
+  if (!secret && !warnedJwt) {
+    warnedJwt = true;
     console.warn('⚠️ WARNING: JWT_SECRET is not set in environment variables. Using default fallback key.');
   }
   return secret || 'hb-diagnostika-secure-jwt-key-2026-production';
