@@ -500,7 +500,7 @@ export default function TestDetails() {
           
           {/* Left Sidebar Test Action Card */}
           <div className="lg:col-span-4 flex flex-col gap-6">
-            <div className="bg-white/80 backdrop-blur-md rounded-3xl border border-black/10 shadow-[0_8px_30px_rgb(0,0,0,0.03)] p-6 md:p-8 flex flex-col gap-6">
+            <div className="bg-white/80 backdrop-blur-md rounded-3xl border border-black/10 shadow-[0_8px_30px_rgb(0,0,0,0.03)] p-4 md:p-8 flex flex-col gap-6">
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full bg-white border border-black/10 text-neutral-800 shadow-xs">
@@ -594,7 +594,7 @@ export default function TestDetails() {
             </div>
 
             {/* Quick Metrics */}
-            <div className="bg-white/80 backdrop-blur-md p-6 rounded-3xl border border-black/10 shadow-[0_8px_30px_rgb(0,0,0,0.03)] grid grid-cols-2 gap-4 divide-x divide-black/10">
+            <div className="bg-white/80 backdrop-blur-md p-4 md:p-6 rounded-3xl border border-black/10 shadow-[0_8px_30px_rgb(0,0,0,0.03)] grid grid-cols-2 gap-4 divide-x divide-black/10">
                <div className="pr-4">
                  <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1 flex items-center gap-1.5">
                    <Users size={13} className="text-neutral-500"/> Qatnashuvchilar
@@ -1142,7 +1142,7 @@ export default function TestDetails() {
                   </div>
                 ) : analysisResult ? (
                   <div className="space-y-6">
-                    <div className="bg-neutral-50 border border-black/5 p-6 rounded-3xl">
+                    <div className="bg-neutral-50 border border-black/5 p-4 md:p-6 rounded-3xl">
                       <h4 className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-2">Umumiy Sinf bo'yicha Xulosa:</h4>
                       <p className="text-xs text-neutral-800 leading-relaxed">{analysisResult.recommendation}</p>
                     </div>

@@ -233,6 +233,16 @@ export default function Summary() {
                 onClick={() => {
                   document.body.style.overflow = 'unset';
                   window.scrollTo(0, 0);
+                  navigate(`/student-dashboard/${encodeURIComponent(studentData.studentName)}`);
+                }}
+                className="print-hide flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-neutral-100 text-neutral-900 border border-black/10 rounded-lg text-[10px] md:text-xs font-semibold uppercase tracking-wider hover:bg-neutral-200 transition-colors shadow-sm"
+              >
+                Mening Natijalarim
+              </button>
+              <button
+                onClick={() => {
+                  document.body.style.overflow = 'unset';
+                  window.scrollTo(0, 0);
                   navigate('/');
                 }}
                 className="print-hide flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-neutral-main text-white rounded-lg text-[10px] md:text-xs font-semibold uppercase tracking-wider hover:bg-neutral-900 transition-colors shadow-sm"
@@ -345,7 +355,7 @@ export default function Summary() {
               
               <div className="h-5 md:h-6 w-full bg-gradient-to-r from-red-500 via-yellow-400 to-green-500 rounded-full relative shadow-[inset_0_2px_4px_rgba(0,0,0,0.15)]"></div>
               
-              <div className="flex justify-between text-[9px] sm:text-xs font-bold mt-3 px-1 tracking-widest uppercase">
+              <div className="flex justify-between text-[8px] sm:text-[10px] md:text-xs font-bold mt-3 px-1 tracking-widest uppercase">
                 <span className="text-danger w-[35%] text-left md:text-center">Sayoz</span>
                 <span className="text-warning w-[15%] text-left md:text-center">Zaif</span>
                 <span className="text-yellow-600 w-[17%] text-left md:text-center">O'rta</span>
@@ -386,7 +396,7 @@ export default function Summary() {
               </button>
             )}
           </div>
-          <div className="bg-slate-50 p-4 md:p-8 rounded-2xl md:rounded-3xl shadow-[0_2px_20px_rgb(0,0,0,0.02)] relative overflow-hidden">
+          <div className="bg-slate-50 p-4 sm:p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-[0_2px_20px_rgb(0,0,0,0.02)] relative overflow-hidden">
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-black/5 rounded-full blur-3xl"></div>
             <div className="relative z-10">
               <h3 className="font-bold text-base md:text-lg text-neutral-900 mb-2 md:mb-3">Tahlil</h3>

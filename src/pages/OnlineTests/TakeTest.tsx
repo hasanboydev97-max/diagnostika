@@ -576,7 +576,7 @@ export default function TakeTest() {
               <span className="text-[10px] font-bold text-zinc-500">{Object.keys(answers).length} / {test.questions.length}</span>
             </div>
 
-            <div className="grid grid-cols-5 gap-1.5">
+            <div className="grid grid-cols-5 gap-1 md:gap-1.5">
               {test.questions.map((_: any, idx: number) => {
                 const isAnswered = answers[idx] !== undefined;
                 const isCurrent = idx === currentQIndex;
@@ -646,7 +646,7 @@ export default function TakeTest() {
             <button
               onClick={() => setCurrentQIndex(prev => Math.max(0, prev - 1))}
               disabled={currentQIndex === 0}
-              className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 disabled:opacity-30 hover:text-zinc-900 transition-colors cursor-pointer"
+              className="px-4 py-3 md:py-1.5 min-h-[44px] text-xs font-semibold uppercase tracking-wider text-zinc-500 disabled:opacity-30 hover:text-zinc-900 transition-colors cursor-pointer"
             >
               Oldingi
             </button>
@@ -654,7 +654,7 @@ export default function TakeTest() {
             {currentQIndex < test.questions.length - 1 ? (
               <button
                 onClick={() => setCurrentQIndex(prev => prev + 1)}
-                className="px-5 py-2 bg-zinc-100 border border-zinc-200 text-zinc-900 rounded-md text-xs font-semibold uppercase tracking-wider hover:bg-zinc-200 transition-colors cursor-pointer"
+                className="px-5 py-3 md:py-2 min-h-[44px] bg-zinc-100 border border-zinc-200 text-zinc-900 rounded-md text-xs font-semibold uppercase tracking-wider hover:bg-zinc-200 transition-colors cursor-pointer"
               >
                 Keyingi
               </button>
@@ -662,7 +662,7 @@ export default function TakeTest() {
               <button
                 onClick={() => handleSubmit(false)}
                 disabled={submitting}
-                className="inline-flex items-center gap-2 px-5 py-2 bg-zinc-900 text-white rounded-md text-xs font-semibold uppercase tracking-wider hover:bg-zinc-800 transition-colors cursor-pointer disabled:opacity-70"
+                className="inline-flex items-center gap-2 px-5 py-3 md:py-2 min-h-[44px] bg-zinc-900 text-white rounded-md text-xs font-semibold uppercase tracking-wider hover:bg-zinc-800 transition-colors cursor-pointer disabled:opacity-70"
               >
                 {submitting ? <Loader2 size={14} className="animate-spin" /> : null}
                 {submitting ? 'Yuborilmoqda...' : 'Yakunlash'}
