@@ -169,7 +169,7 @@ export default function SuperAdmin() {
                   <button 
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`flex items-center justify-between border-b border-black/10 py-5 md:py-6 text-left group transition-all duration-300 ${isActive ? 'text-black pl-4 border-black/30' : 'text-gray-400 hover:text-black hover:pl-2'}`}
+                    className={`flex items-center justify-between border-b border-black/10 py-4 md:py-6 text-left group transition-all duration-300 ${isActive ? 'text-black pl-4 border-black/30' : 'text-gray-400 hover:text-black hover:pl-2'}`}
                   >
                     <span className="flex items-center gap-4 text-sm font-semibold tracking-[0.1em] uppercase">
                       <Icon className="w-4 h-4" strokeWidth={isActive ? 2 : 1.5} />
@@ -186,7 +186,7 @@ export default function SuperAdmin() {
               })}
               <button 
                 onClick={() => navigate('/')}
-                className="flex items-center justify-between border-b border-black/10 py-5 md:py-6 text-left group transition-all duration-300 text-gray-400 hover:text-black hover:pl-2"
+                className="flex items-center justify-between border-b border-black/10 py-4 md:py-6 text-left group transition-all duration-300 text-gray-400 hover:text-black hover:pl-2"
               >
                 <span className="flex items-center gap-4 text-sm font-semibold tracking-[0.1em] uppercase">
                   <LogOut className="w-4 h-4" strokeWidth={1.5} />
@@ -326,13 +326,13 @@ export default function SuperAdmin() {
                                 return (
                                   <tr key={s._id} className="group hover:bg-black/[0.02] transition-colors border-b border-black/10">
                                     {/* User Details */}
-                                    <td className="py-6 pl-4 md:pl-0 group-hover:pl-4 transition-all duration-300">
+                                    <td className="py-4 md:py-6 pl-4 md:pl-0 group-hover:pl-4 transition-all duration-300">
                                       <div className="text-lg md:text-xl font-medium tracking-tight text-neutral-900">{s.name}</div>
                                       <div className="text-xs font-mono tracking-wider text-gray-400 mt-0.5">{s.email}</div>
                                     </td>
                                     
                                     {/* Current Plan Badge */}
-                                    <td className="py-6 pl-6">
+                                    <td className="py-4 md:py-6 pl-6">
                                       {s.plan === 'premium' ? (
                                         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-white bg-black px-3 py-1 rounded-full shadow-sm">
                                           Premium 👑
@@ -349,7 +349,7 @@ export default function SuperAdmin() {
                                     </td>
 
                                     {/* Requested Plan / Payment Note */}
-                                    <td className="py-6 pl-6">
+                                    <td className="py-4 md:py-6 pl-6">
                                       {s.requestedPlan ? (
                                         <div className="flex flex-col gap-0.5">
                                           <span className="text-xs font-semibold tracking-wide text-neutral-900 uppercase">
@@ -369,7 +369,7 @@ export default function SuperAdmin() {
                                     </td>
 
                                     {/* Status */}
-                                    <td className="py-6 pl-6">
+                                    <td className="py-4 md:py-6 pl-6">
                                       {isPending ? (
                                         <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-amber-600 border border-amber-500/30 px-3 py-1 rounded-full bg-amber-500/5">
                                           Kutilmoqda ⏳
@@ -382,7 +382,7 @@ export default function SuperAdmin() {
                                     </td>
 
                                     {/* Dostup Action Buttons */}
-                                    <td className="py-6 pr-4 md:pr-0 text-right">
+                                    <td className="py-4 md:py-6 pr-4 md:pr-0 text-right">
                                       <div className="flex items-center justify-end gap-3">
                                         {isPending && s.requestedPlan && (
                                           <button
@@ -449,13 +449,13 @@ export default function SuperAdmin() {
                           <tbody>
                             {filteredTeachers.map(t => (
                               <tr key={t._id} className="group hover:bg-[#f8f8f8] transition-colors border-b border-black/10">
-                                <td className="py-6 pl-4 md:pl-0 group-hover:pl-4 transition-all duration-300">
+                                <td className="py-4 md:py-6 pl-4 md:pl-0 group-hover:pl-4 transition-all duration-300">
                                   <div className="text-lg md:text-xl font-medium tracking-tight">{t.name}</div>
                                   <div className="text-xs tracking-wider text-gray-500 mt-1 uppercase">{t.email}</div>
                                 </td>
-                                <td className="py-6 pl-6 text-gray-600 font-medium">{t.subject || '—'}</td>
-                                <td className="py-6 pl-6 text-xl font-medium">{t.testCount || 0}</td>
-                                <td className="py-6 pr-4 md:pr-0 text-right">
+                                <td className="py-4 md:py-6 pl-6 text-gray-600 font-medium">{t.subject || '—'}</td>
+                                <td className="py-4 md:py-6 pl-6 text-xl font-medium">{t.testCount || 0}</td>
+                                <td className="py-4 md:py-6 pr-4 md:pr-0 text-right">
                                   {t.role === 'admin' ? (
                                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-black border border-black/10 px-3 py-1 rounded-full">Admin</span>
                                   ) : (
@@ -504,16 +504,16 @@ export default function SuperAdmin() {
                           <tbody>
                             {filteredTests.map(t => (
                               <tr key={t._id} className="group hover:bg-[#f8f8f8] transition-colors border-b border-black/10">
-                                <td className="py-6 pl-4 md:pl-0 group-hover:pl-4 transition-all duration-300">
+                                <td className="py-4 md:py-6 pl-4 md:pl-0 group-hover:pl-4 transition-all duration-300">
                                   <div className="text-lg md:text-xl font-medium tracking-tight">{t.title}</div>
                                   <div className="text-[11px] font-mono tracking-widest text-gray-400 mt-1 uppercase">#{t.id}</div>
                                 </td>
-                                <td className="py-6 pl-6">
+                                <td className="py-4 md:py-6 pl-6">
                                   <div className="text-base text-black font-medium">{t.teacher?.name || 'Noma\'lum'}</div>
                                   <div className="text-xs text-gray-500 mt-1 tracking-wider uppercase">{t.teacher?.subject || t.subject}</div>
                                 </td>
-                                <td className="py-6 pl-6 text-xl font-medium">{t.questions?.length || 0}</td>
-                                <td className="py-6 pr-4 md:pr-0 text-right text-gray-500 text-sm tracking-wider">
+                                <td className="py-4 md:py-6 pl-6 text-xl font-medium">{t.questions?.length || 0}</td>
+                                <td className="py-4 md:py-6 pr-4 md:pr-0 text-right text-gray-500 text-sm tracking-wider">
                                   {new Date(t.createdAt).toLocaleDateString()}
                                 </td>
                               </tr>
@@ -558,15 +558,15 @@ export default function SuperAdmin() {
                           <tbody>
                             {filteredResults.map((r, idx) => (
                               <tr key={r._id || idx} className="group hover:bg-[#f8f8f8] transition-colors border-b border-black/10">
-                                <td className="py-6 pl-4 md:pl-0 group-hover:pl-4 transition-all duration-300 text-lg md:text-xl font-medium tracking-tight text-black capitalize">
+                                <td className="py-4 md:py-6 pl-4 md:pl-0 group-hover:pl-4 transition-all duration-300 text-lg md:text-xl font-medium tracking-tight text-black capitalize">
                                   {r.studentName}
                                 </td>
-                                <td className="py-6 pl-6">
+                                <td className="py-4 md:py-6 pl-6">
                                   <div className="text-base font-medium text-black">{r.test?.title || 'Oflayn Test'}</div>
                                   <div className="text-[11px] font-mono tracking-widest text-gray-400 mt-1 uppercase">#{r.testId || r.id}</div>
                                 </td>
-                                <td className="py-6 pl-6 text-base text-gray-500 font-medium">{r.teacher?.name || '—'}</td>
-                                <td className="py-6 pr-4 md:pr-0 text-right">
+                                <td className="py-4 md:py-6 pl-6 text-base text-gray-500 font-medium">{r.teacher?.name || '—'}</td>
+                                <td className="py-4 md:py-6 pr-4 md:pr-0 text-right">
                                   <span className={`text-2xl md:text-3xl font-medium tracking-tight ${
                                     r.totalScore >= 70 ? 'text-black' : 
                                     r.totalScore >= 50 ? 'text-gray-500' : 
