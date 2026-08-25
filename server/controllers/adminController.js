@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Teacher, OnlineTest, OnlineTestResult, Result } from '../models/index.js';
 
 export const getSubscriptions = async (req, res) => {
@@ -99,7 +100,13 @@ export const getResults = async (req, res) => {
     const results = await OnlineTestResult.find().sort({ createdAt: -1 }).limit(100).lean();
     
     const resultsWithTestInfo = await Promise.all(results.map(async (res) => {
-      const test = await OnlineTest.findOne({ id: res.testId }).select('title subject teacherId').lean();
+      let test = null;
+      if (res.testId) {
+        const testQuery = mongoose.Types.ObjectId.isValid(res.testId)
+          ? { $or: [{ _id: res.testId }, { id: res.testId }] }
+          : { id: res.testId };
+        test = await OnlineTest.findOne(testQuery).select('title subject teacherId').lean();
+      }
       let teacher = null;
       if (test && test.teacherId) {
         teacher = await Teacher.findById(test.teacherId).select('name').lean();

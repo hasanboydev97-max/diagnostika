@@ -84,7 +84,15 @@ app.get('/api/results', async (req, res) => {
 
 app.get('/api/results/:id', async (req, res) => {
   try {
-    const result = await Result.findOne({ id: req.params.id }).lean();
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ _id: id }, { id: id }] }
+      : { id: id };
+    let result = await Result.findOne(query).lean();
+    if (!result) {
+      const { OnlineTestResult } = await import('./models/index.js');
+      result = await OnlineTestResult.findOne(query).lean();
+    }
     if (!result) return res.status(404).json({ error: 'Not found' });
     res.json(result);
   } catch (error) {
@@ -261,11 +269,14 @@ async function startTelegramBotPolling() {
                 ]
               };
               await sendTelegramBotMessage(chatId, welcomeMsg, keyboard);
-            } else if (/^\d{5,6}$/.test(text) || text.startsWith('res_')) {
+            } else if (/^\d{5,6}$/.test(text) || text.startsWith('res_') || /^[a-f0-9]{24}$/i.test(text)) {
               try {
-                const found = await Result.findOne({ id: text }) || await OnlineTestResult.findOne({ id: text });
+                const searchQuery = mongoose.Types.ObjectId.isValid(text)
+                  ? { $or: [{ _id: text }, { id: text }] }
+                  : { id: text };
+                const found = await Result.findOne(searchQuery) || await OnlineTestResult.findOne(searchQuery);
                 if (found) {
-                  const summaryMsg = `🎓 <b>HB DIAGNOSTIKA NATIJASI</b> 🎓\n\n👤 <b>O'quvchi:</b> ${found.studentName}\n🏫 <b>Sinf:</b> ${found.grade || '5'}-sinf\n📊 <b>Natija:</b> ${found.totalScore}/100 ball\n\n🔗 <a href="https://bmdiagnostika.vercel.app/summary/${found.id}">Batafsil Hisobotni Ko'rish</a>`;
+                  const summaryMsg = `🎓 <b>HB DIAGNOSTIKA NATIJASI</b> 🎓\n\n👤 <b>O'quvchi:</b> ${found.studentName}\n🏫 <b>Sinf:</b> ${found.grade || '5'}-sinf\n📊 <b>Natija:</b> ${found.totalScore}/100 ball\n\n🔗 <a href="https://bmdiagnostika.vercel.app/summary/${found.id || found._id}">Batafsil Hisobotni Ko'rish</a>`;
                   await sendTelegramBotMessage(chatId, summaryMsg);
                 } else {
                   await sendTelegramBotMessage(chatId, `⚠️ <code>${text}</code> ID bo'yicha diagnostika natijasi topilmadi.`);

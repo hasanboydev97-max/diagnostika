@@ -34,7 +34,7 @@ OnlineTestSchema.index({ teacherId: 1, createdAt: -1 });
 export const OnlineTest = mongoose.model('OnlineTest', OnlineTestSchema);
 
 const OnlineTestResultSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true, index: true },
+  id: { type: String, index: true },
   testId: { type: String, index: true },
   studentName: String,
   answers: Object,

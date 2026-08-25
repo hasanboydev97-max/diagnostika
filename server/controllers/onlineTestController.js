@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { OnlineTest, OnlineTestResult, Teacher } from '../models/index.js';
 import { buildDocxBuffer, sanitizePdfText } from '../utils/exportUtils.js';
@@ -13,7 +14,11 @@ export const getTests = async (req, res) => {
 };
 export const getTestById = async (req, res) => {
   try {
-    const test = await OnlineTest.findOne({ id: req.params.id }).lean();
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ _id: id }, { id: id }] }
+      : { id: id };
+    const test = await OnlineTest.findOne(query).lean();
     if (!test) return res.status(404).json({ error: 'Not found' });
     res.json(test);
   } catch (error) {
@@ -22,15 +27,21 @@ export const getTestById = async (req, res) => {
 };
 export const getTestResults = async (req, res) => {
   try {
-    const test = await OnlineTest.findOne({ id: req.params.id, teacherId: req.teacherId });
+    const { id } = req.params;
+    const testQuery = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ _id: id }, { id: id }], teacherId: req.teacherId }
+      : { id: id, teacherId: req.teacherId };
+    const test = await OnlineTest.findOne(testQuery);
     if (!test) return res.status(403).json({ error: 'Forbidden' });
     
+    const testIds = [test.id, test._id?.toString(), id].filter(Boolean);
+
     // 1. Fetch from new architecture
-    const newResults = await OnlineTestResult.find({ testId: req.params.id }).lean();
+    const newResults = await OnlineTestResult.find({ testId: { $in: testIds } }).lean();
     
     // 2. Fetch from old legacy architecture (in case student used old cached frontend)
     const { Result } = await import('../models/index.js');
-    const oldResults = await Result.find({ testId: req.params.id }).lean();
+    const oldResults = await Result.find({ testId: { $in: testIds } }).lean();
     
     // Merge, deduplicate by ID just in case, and sort by date descending
     const merged = [...newResults, ...oldResults];
@@ -48,7 +59,11 @@ import fs from 'fs';
 
 export const exportToDocx = async (req, res) => {
   try {
-    const test = await OnlineTest.findOne({ id: req.params.id });
+    const { id } = req.params;
+    const testQuery = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ _id: id }, { id: id }] }
+      : { id: id };
+    const test = await OnlineTest.findOne(testQuery);
     if (!test) return res.status(404).json({ error: 'Test not found' });
 
     const buffer = await buildDocxBuffer(test.title, test.subject, test.questions);
@@ -63,12 +78,17 @@ export const exportToDocx = async (req, res) => {
 };
 export const exportToExcel = async (req, res) => {
   try {
-    const test = await OnlineTest.findOne({ id: req.params.id });
+    const { id } = req.params;
+    const testQuery = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ _id: id }, { id: id }] }
+      : { id: id };
+    const test = await OnlineTest.findOne(testQuery);
     if (!test) return res.status(404).json({ error: 'Test topilmadi' });
 
-    const newResults = await OnlineTestResult.find({ testId: req.params.id }).lean();
+    const testIds = [test.id, test._id?.toString(), id].filter(Boolean);
+    const newResults = await OnlineTestResult.find({ testId: { $in: testIds } }).lean();
     const { Result } = await import('../models/index.js');
-    const oldResults = await Result.find({ testId: req.params.id }).lean();
+    const oldResults = await Result.find({ testId: { $in: testIds } }).lean();
     const merged = [...newResults, ...oldResults];
     const uniqueMap = new Map();
     merged.forEach(r => uniqueMap.set(r.id || r._id.toString(), r));
@@ -92,7 +112,11 @@ export const exportToExcel = async (req, res) => {
 };
 export const exportToPdf = async (req, res) => {
   try {
-    const test = await OnlineTest.findOne({ id: req.params.id });
+    const { id } = req.params;
+    const testQuery = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ _id: id }, { id: id }] }
+      : { id: id };
+    const test = await OnlineTest.findOne(testQuery);
     if (!test) return res.status(404).json({ error: 'Test not found' });
 
     const doc = new PDFDocument({
@@ -202,9 +226,15 @@ export const createTest = async (req, res) => {
 export const submitTestResult = async (req, res) => {
   try {
     const data = req.body;
+    if (!data.id) {
+      data.id = 'res_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+    }
     
     // Verify time limit on backend to prevent bypassing
-    const test = await OnlineTest.findOne({ id: data.testId });
+    const testQuery = mongoose.Types.ObjectId.isValid(data.testId)
+      ? { $or: [{ _id: data.testId }, { id: data.testId }] }
+      : { id: data.testId };
+    const test = await OnlineTest.findOne(testQuery);
     if (test) {
       const now = new Date();
       if (test.startTime && now < new Date(test.startTime)) {
@@ -218,7 +248,8 @@ export const submitTestResult = async (req, res) => {
       if (test.teacherId) {
         const creator = await Teacher.findById(test.teacherId);
         if (creator) {
-          const studentCount = await OnlineTestResult.countDocuments({ testId: data.testId });
+          const testIds = [test.id, test._id?.toString(), data.testId].filter(Boolean);
+          const studentCount = await OnlineTestResult.countDocuments({ testId: { $in: testIds } });
           const maxStudents = creator.plan === 'premium' ? Infinity : (creator.plan === 'standard' ? 50 : 15);
           if (studentCount >= maxStudents) {
             return res.status(403).json({
@@ -275,7 +306,7 @@ Ushbu natijalarga asosan o'quvchiga o'zbek tilida qisqa (2-3 ta gap) dalda beruv
     const resultDoc = new OnlineTestResult(data);
     await resultDoc.save();
     
-    res.status(201).json({ message: 'Result saved successfully', aiFeedback });
+    res.status(201).json({ message: 'Result saved successfully', id: data.id, aiFeedback });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -283,13 +314,17 @@ Ushbu natijalarga asosan o'quvchiga o'zbek tilida qisqa (2-3 ta gap) dalda beruv
 export const deleteTest = async (req, res) => {
   try {
     const testId = req.params.id;
+    const testQuery = mongoose.Types.ObjectId.isValid(testId)
+      ? { $or: [{ _id: testId }, { id: testId }], teacherId: req.teacherId }
+      : { id: testId, teacherId: req.teacherId };
     // Delete the test itself IF it belongs to the teacher
-    const deletedTest = await OnlineTest.findOneAndDelete({ id: testId, teacherId: req.teacherId });
+    const deletedTest = await OnlineTest.findOneAndDelete(testQuery);
     if (!deletedTest) {
       return res.status(404).json({ error: 'Test not found or unauthorized' });
     }
     // Delete all results associated with this test
-    await OnlineTestResult.deleteMany({ testId });
+    const testIds = [deletedTest.id, deletedTest._id?.toString(), testId].filter(Boolean);
+    await OnlineTestResult.deleteMany({ testId: { $in: testIds } });
     
     res.json({ message: 'Test and associated results deleted successfully' });
   } catch (error) {
@@ -298,7 +333,16 @@ export const deleteTest = async (req, res) => {
 };
 export const getTestResultById = async (req, res) => {
   try {
-    const result = await OnlineTestResult.findOne({ id: req.params.id });
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ _id: id }, { id: id }] }
+      : { id: id };
+    
+    let result = await OnlineTestResult.findOne(query).lean();
+    if (!result) {
+      const { Result } = await import('../models/index.js');
+      result = await Result.findOne(query).lean();
+    }
     if (!result) return res.status(404).json({ error: 'Not found' });
     res.json(result);
   } catch (error) {
@@ -500,7 +544,11 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
 };
 export const classAnalysis = async (req, res) => {
   try {
-    const test = await OnlineTest.findOne({ id: req.params.id });
+    const { id } = req.params;
+    const testQuery = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ _id: id }, { id: id }] }
+      : { id: id };
+    const test = await OnlineTest.findOne(testQuery);
     if (!test) return res.status(404).json({ error: 'Test topilmadi' });
     
     const teacher = await Teacher.findById(req.teacherId);
@@ -508,7 +556,8 @@ export const classAnalysis = async (req, res) => {
       return res.status(403).json({ error: 'AI Sinf Tahlili faqat Standard yoki Premium tariflarda mavjud. Iltimos tarifni oshiring.' });
     }
 
-    const results = await OnlineTestResult.find({ testId: test.id });
+    const testIds = [test.id, test._id?.toString(), id].filter(Boolean);
+    const results = await OnlineTestResult.find({ testId: { $in: testIds } });
     if (results.length === 0) {
       return res.status(400).json({ error: 'Tahlil qilish uchun yetarlicha natijalar yo\'q' });
     }

@@ -102,7 +102,10 @@ export default function TestResultView() {
 
   const fetchResult = async (retryCount = 0) => {
     try {
-      const res = await fetch(`${API_URL}/online-test-results/${resultId}`);
+      let res = await fetch(`${API_URL}/online-test-results/${resultId}`);
+      if (!res.ok) {
+        res = await fetch(`${API_URL}/results/${resultId}`);
+      }
       if (res.ok) {
         const data = await res.json();
         setResult(data);
@@ -114,6 +117,16 @@ export default function TestResultView() {
             const tr = await fetch(`${API_URL}/online-tests/${data.testId}`);
             if (tr.ok) testData = await tr.json();
           } catch (e) { console.warn("Test fetch failed", e); }
+        } else if (data.blueprintSnapshot && data.blueprintSnapshot.length > 0) {
+          testData = {
+            title: data.grade ? `${data.grade}-sinf Diagnostikasi` : 'Diagnostika',
+            questions: data.blueprintSnapshot.map((b: any) => ({
+              questionText: b.topic,
+              subtopic: b.category,
+              correctOption: 'A',
+              options: ['A', 'B', 'C', 'D']
+            }))
+          };
         }
         setTest(testData);
       } else if (retryCount < 2) {
@@ -134,9 +147,7 @@ export default function TestResultView() {
     </div>
   );
 
-  const activeTest = test || (result?.questions ? { title: result.testTitle || 'Onlayn Test', questions: result.questions } : null);
-
-  if (!result || !activeTest) return (
+  if (!result) return (
     <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex flex-col items-center justify-center text-[#111111]">
       <MeshGradient />
       <div className="bg-white/60 backdrop-blur-xl border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-4 md:p-8 rounded-2xl relative z-10 text-center">
@@ -148,6 +159,7 @@ export default function TestResultView() {
     </div>
   );
 
+  const activeTest = test || (result?.questions ? { title: result.testTitle || 'Onlayn Test', questions: result.questions } : { title: result?.testTitle || 'Onlayn Test', questions: [] });
   const percentage = Math.round((result.score / (result.totalScore || 1)) * 100);
   const scoreLabel = getScoreLabel(percentage);
 
@@ -277,71 +289,73 @@ export default function TestResultView() {
         </div>
 
         {/* ── Staggered Question Results ── */}
-        <div className="mt-12">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Savollar Bo'yicha Natijalar</h2>
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 gap-6"
-            initial="hidden"
-            animate="visible"
-            variants={{ visible: { transition: { staggerChildren: 0.045, delayChildren: 0.25 } } }}
-          >
-            {(activeTest?.questions || []).map((q: any, i: number) => {
-              const studentAns = (result.answers || {})[i];
-              const isCorrect = isAnswerCorrect(studentAns, q.correctOption, q.options || []);
+        {(activeTest?.questions || []).length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">Savollar Bo'yicha Natijalar</h2>
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              initial="hidden"
+              animate="visible"
+              variants={{ visible: { transition: { staggerChildren: 0.045, delayChildren: 0.25 } } }}
+            >
+              {(activeTest?.questions || []).map((q: any, i: number) => {
+                const studentAns = (result.answers || {})[i];
+                const isCorrect = isAnswerCorrect(studentAns, q.correctOption, q.options || []);
 
-              return (
-                <motion.div
-                  key={i}
-                  variants={{
-                    hidden: { opacity: 0, y: 18 },
-                    visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 130, damping: 22 } }
-                  }}
-                  className={`bg-white p-4 md:p-6 rounded-xl border shadow-sm flex flex-col ${
-                    isCorrect ? 'border-green-100' : 'border-red-100'
-                  }`}
-                >
-                  <div className="flex gap-4 items-start mb-4">
-                    <motion.div
-                      className="mt-0.5 shrink-0"
-                      initial={{ scale: 0, rotate: -30 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      transition={{ type: "spring", stiffness: 350, damping: 18, delay: 0.1 + i * 0.04 }}
-                    >
-                      {isCorrect
-                        ? <CheckCircle2 className="text-green-500" size={20} />
-                        : <XCircle className="text-red-500" size={20} />
-                      }
-                    </motion.div>
-                    <div>
-                      <span className="text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-1 block">
-                        {q.subtopic || 'Umumiy'}
-                      </span>
-                      <h4 className="text-base font-sans font-medium text-gray-900 leading-snug">
-                        {i + 1}. <FormattedText content={q.questionText} />
-                      </h4>
+                return (
+                  <motion.div
+                    key={i}
+                    variants={{
+                      hidden: { opacity: 0, y: 18 },
+                      visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 130, damping: 22 } }
+                    }}
+                    className={`bg-white p-4 md:p-6 rounded-xl border shadow-sm flex flex-col ${
+                      isCorrect ? 'border-green-100' : 'border-red-100'
+                    }`}
+                  >
+                    <div className="flex gap-4 items-start mb-4">
+                      <motion.div
+                        className="mt-0.5 shrink-0"
+                        initial={{ scale: 0, rotate: -30 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ type: "spring", stiffness: 350, damping: 18, delay: 0.1 + i * 0.04 }}
+                      >
+                        {isCorrect
+                          ? <CheckCircle2 className="text-green-500" size={20} />
+                          : <XCircle className="text-red-500" size={20} />
+                        }
+                      </motion.div>
+                      <div>
+                        <span className="text-[10px] font-bold tracking-wider uppercase text-gray-400 mb-1 block">
+                          {q.subtopic || 'Umumiy'}
+                        </span>
+                        <h4 className="text-base font-sans font-medium text-gray-900 leading-snug">
+                          {i + 1}. <FormattedText content={q.questionText} />
+                        </h4>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-auto pl-9">
-                    {(q.options || []).map((opt: string, oIndex: number) => {
-                      const isStudentChoice = studentAns !== undefined && String(studentAns).trim().toLowerCase() === String(opt).trim().toLowerCase();
-                      const isActuallyCorrect = isAnswerCorrect(opt, q.correctOption, q.options || []);
-                      let cls = "px-3 py-2 rounded-md border text-sm transition-colors ";
-                      if (isActuallyCorrect) cls += "bg-green-50 border-green-200 text-green-800 font-medium";
-                      else if (isStudentChoice && !isCorrect) cls += "bg-red-50 border-red-200 text-red-800 font-medium";
-                      else cls += "bg-white border-gray-100 text-gray-500";
-                      return (
-                        <div key={oIndex} className={cls}>
-                          <FormattedText content={opt} />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-auto pl-9">
+                      {(q.options || []).map((opt: string, oIndex: number) => {
+                        const isStudentChoice = studentAns !== undefined && String(studentAns).trim().toLowerCase() === String(opt).trim().toLowerCase();
+                        const isActuallyCorrect = isAnswerCorrect(opt, q.correctOption, q.options || []);
+                        let cls = "px-3 py-2 rounded-md border text-sm transition-colors ";
+                        if (isActuallyCorrect) cls += "bg-green-50 border-green-200 text-green-800 font-medium";
+                        else if (isStudentChoice && !isCorrect) cls += "bg-red-50 border-red-200 text-red-800 font-medium";
+                        else cls += "bg-white border-gray-100 text-gray-500";
+                        return (
+                          <div key={oIndex} className={cls}>
+                            <FormattedText content={opt} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          </div>
+        )}
       </div>
     </div>
   );
