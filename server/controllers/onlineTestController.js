@@ -298,7 +298,7 @@ Ushbu natijalarga asosan o'quvchiga o'zbek tilida qisqa (2-3 ta gap) dalda beruv
           try {
             console.log(`AI Feedback uchun model sinab ko'rilmoqda: ${modelName}...`);
             const model = genAI.getGenerativeModel({ model: modelName });
-            const result = await model.generateContent(prompt);
+            const result = await model.generateContent("Start generation.");
             const response = await result.response;
             aiFeedback = response.text();
             console.log(`Muvaffaqiyatli! ${modelName} orqali javob olindi.`);
@@ -394,101 +394,102 @@ export const generateAITest = async (req, res) => {
     const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
     const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-8b'];
 
-    // ═══════════════════════════════════════════════════════════════
-    // FAN-AWARE PROMPT BUILDER — har bir fan turi uchun alohida qoida
-    // ═══════════════════════════════════════════════════════════════
+        const aiSchema = {
+      type: "object",
+      properties: {
+        questions: {
+          type: "array",
+          minItems: 1,
+          items: {
+            type: "object",
+            properties: {
+              questionText: { type: "string" },
+              options: {
+                type: "array",
+                items: { type: "string" },
+                minItems: 4,
+                maxItems: 4
+              },
+              correctAnswerIndex: { type: "integer", minimum: 0, maximum: 3 }
+            },
+            required: ["questionText", "options", "correctAnswerIndex"]
+          }
+        }
+      },
+      required: ["questions"]
+    };
+
     function buildTestPrompt({ topic, subject, questionCount = 5, difficulty = 'aralash' }) {
-      const s = (subject || '').toLowerCase();
-      const isExactScience = /matematika|fizika|kimyo|algebra|geometriya|trigonometriya|analitik/i.test(s);
-      const isLanguage     = /ingliz|rus|nemis|o.zbek tili|ona tili|adabiyot|fransuz|arab/i.test(s);
-      const isInformatics  = /informatika|dasturlash|excel|python|javascript|algoritmlar/i.test(s);
+      return `You are a question-bank generator for a MERN-based online testing platform.
+Your ONLY output is a JSON object matching the provided schema. Do not
+explain, do not think out loud, do not add commentary before or after the
+JSON. Every extra sentence you generate costs latency — output the JSON and
+nothing else.
 
-      let formatRules, examples;
+TASK
+Generate exactly ${questionCount} multiple-choice questions for:
+  Subject: ${subject}
+  Topic: ${topic}
+  Difficulty: ${difficulty}
 
-      if (isExactScience) {
-        formatRules = `
-LATEX FORMATTING RULES (STRICT — remark-math compatible):
-1. Inline math: $expression$  — NO space after the opening $ or before the closing $.
+OUTPUT DISCIPLINE (for speed — follow strictly)
+- No preamble ("Here are your questions:"), no postamble, no markdown code
+  fences around the JSON.
+- Do not restate the instructions.
+- Do not add an "explanation" field unless explicitly requested — it roughly
+  doubles output length for no benefit in a timed test context.
+- Do not second-guess or revise your own answer inside the output. Generate
+  once, directly, correctly.
+
+LATEX FORMATTING (strict — remark-math compatible, zero tolerance)
+1. Inline math: $expression$ — NEVER a space right after the opening $ or
+   right before the closing $.
    Correct:   $x_1 + x_2 = 5$
-   Incorrect: $ x_1 + x_2 = 5 $
+   Incorrect: $ x_1 + x_2 = 5 $          <- will break the renderer
 
-2. Block math: $$expression$$ — NO space after opening $$ or before closing $$.
-   Correct:   $$\\sqrt{50} = 5\\sqrt{2}$$
-   Incorrect: $$ \\sqrt{50} = 5\\sqrt{2} $$
+2. Block math: $expression$ — same rule, no inner-edge spaces.
+   Correct:   $\sqrt{50} = 5\sqrt{2}$
+   Incorrect: $ \sqrt{50} = 5\sqrt{2} $
 
-3. Never nest $ inside $$ or vice versa.
+3. Every $ and every $ you open MUST close within the SAME string field.
+   Never split one expression across questionText and an option, and never
+   leave a trailing unclosed $ or $ at the end of a field.
 
-4. Never use $ for currency in these questions. Use "so'm" or "USD" instead.
+4. Every { you open MUST have a matching }. Double-check nested \\frac{}{},
+   \\sqrt{}, and subscript/superscript groups before finalizing each question.
 
-5. Every $ and $$ you open MUST be closed within the SAME field (questionText or a single option).
+5. Never use $ for currency. If a dollar amount is needed in a word problem,
+   write "so'm" or "dollar" as a word — never a $ symbol outside of math.
 
-6. Use standard KaTeX-supported macros only: \\frac, \\sqrt, \\sum, \\int, \\left(, \\right), \\cdot, \\times, \\leq, \\geq, \\neq, \\infty, \\pi, subscripts (_), superscripts (^).
+6. Use ONLY standard KaTeX-supported syntax: \\frac, \\sqrt, \\sum, \\int,
+   \\left( \\right), \\cdot, \\times, \\div, \\leq, \\geq, \\neq, \\infty, \\pi,
+   \\sin \\cos \\tan, subscripts (_), superscripts (^). No custom macros, no
+   \\newcommand, no \\text{} unless strictly necessary.
 
-MAJBURIY: Barcha qoidalarga qat'iy rioya qiling.`;
+7. Do not double-escape backslashes. Write \\sqrt{50}, never \\\\sqrt{50}.
 
-        examples = `{"questionText":"Tenglamani yeching: $$x^{2}-5x+6=0$$","options":["$x_1=1, x_2=6$","$x_1=2, x_2=3$","$x_1=-2, x_2=-3$","$x_1=3, x_2=4$"],"correctOption":"$x_1=2, x_2=3$","type":"multiple_choice","subtopic":"Kvadrat tenglamalar","difficulty":"o'rta"}
-{"questionText":"$x_1$ va $x_2$ sonlari $$x^{2}-4x-1=0$$ tenglamaning ildizlari bo'lsa, $\\frac{1}{x_1^{2}}+\\frac{1}{x_2^{2}}$ ni toping.","options":["$18$","$14$","$16$","$12$"],"correctOption":"$14$","type":"multiple_choice","subtopic":"Viyet teoremasi","difficulty":"qiyin"}`;
+FEW-SHOT REFERENCE (follow this exact pattern)
+GOOD:
+  "questionText": "Tenglamani yeching: $2x + 3 = 11$"
+GOOD:
+  "questionText": "Integralni hisoblang: $\\int_0^1 x^2\\,dx$"
+BAD — never produce this:
+  "questionText": "Tenglamani yeching: $ 2x + 3 = 11 $"
+BAD — never produce this (unclosed brace):
+  "questionText": "Soddalashtiring: $\\frac{1}{2"
 
-      } else if (isLanguage) {
-        formatRules = `
-QOIDA: Formula kerak emas. Har bir savol aniq gap, so'z yoki matn parchasi ustida qurilsin.
-- Grammatika: to'liq gapni keltiring — "Choose the correct form: She ___ to school every day."
-- Matn tushunish: qisqa (3-5 gapli) parcha keltirib, keyin savol bering.
-- Lug'at/tarjima: so'zni aniq tirnoq ichida ko'rsating.
-MAJBURIY: savol matnida bo'sh joy yoki noaniqlik qoldirmang — hamma narsa aniq va to'liq yozilsin.`;
+ANSWER QUALITY RULES
+- Exactly 4 options per question, only ONE mathematically correct.
+- Distractors (wrong options) must be plausible — typical calculation
+  mistakes a student would make, not random numbers.
+- correctAnswerIndex must be a 0-based integer matching the correct option.
+- Do not repeat the same numeric setup across questions in this batch —
+  vary coefficients/values even within the same topic.
 
-        examples = `{"questionText":"Choose the correct form: 'She ___ to school every day.'","options":["go","goes","going","gone"],"correctOption":"goes","type":"multiple_choice","subtopic":"Present Simple","difficulty":"oson"}
-{"questionText":"'Bright' so'ziga eng yaqin ma'nodagi sinonimni tanlang.","options":["dull","shiny","dark","quiet"],"correctOption":"shiny","type":"multiple_choice","subtopic":"Vocabulary","difficulty":"o'rta"}
-{"questionText":"Quyidagi gapda qaysi so'z noto'g'ri ishlatilgan? 'Yesterday I have seen a good film.'","options":["Yesterday","have seen","good","film"],"correctOption":"have seen","type":"multiple_choice","subtopic":"Past Simple vs Present Perfect","difficulty":"qiyin"}`;
-
-      } else if (isInformatics) {
-        formatRules = `
-QOIDA: Kod yoki Excel formulasi backtick (\`) ichida yoziladi, LaTeX EMAS.
-- Excel: \`=SUM(A1:B5)\`, \`=IF(A1>10,"Katta","Kichik")\`
-- Kod: \`for i in range(10): print(i)\`
-MAJBURIY: savol ichida aniq formula/kod bo'lsin — "quyidagi formula" deb umumiy yozmang, formulaning o'zini keltiring.`;
-
-        examples = `{"questionText":"Quyidagi \`=IF(A1>50,\\"O'tdi\\",\\"Yiqildi\\")\` formulasi A1=60 bo'lganda qanday natija beradi?","options":["O'tdi","Yiqildi","60","Xato"],"correctOption":"O'tdi","type":"multiple_choice","subtopic":"Excel IF funksiyasi","difficulty":"o'rta"}
-{"questionText":"Python'da \`len([1, 2, 3, 4, 5])\` ifodasi qanday natija qaytaradi?","options":["4","5","6","Xato"],"correctOption":"5","type":"multiple_choice","subtopic":"Python ro'yxatlar","difficulty":"oson"}`;
-
-      } else {
-        // Tarix, Biologiya, Geografiya, Iqtisod, Huquq va boshqalar
-        formatRules = `
-QOIDA: Formula kerak emas. Savolda aniq fakt, sana, atama yoki tushuncha bo'lsin.
-- Sanalar aniq yozilsin: "1991-yil 1-sentyabr", "milodiy III asr"
-- Atama va tushunchalar to'liq, bo'sh joysiz yozilsin.
-MAJBURIY: savol o'zida barcha kerakli faktni to'liq saqlasin — tashqi kontekstga muhtoj bo'lmasin.`;
-
-        examples = `{"questionText":"O'zbekiston Respublikasi qachon mustaqillikka erishdi?","options":["1991-yil 1-sentyabr","1990-yil 20-iyun","1992-yil 8-dekabr","1989-yil 21-oktyabr"],"correctOption":"1991-yil 1-sentyabr","type":"multiple_choice","subtopic":"Yangi tarix","difficulty":"oson"}
-{"questionText":"Inson tanasidagi eng katta bez qaysi?","options":["Jigar","Buyrak","Me'da osti bezi","Qalqonsimon bez"],"correctOption":"Jigar","type":"multiple_choice","subtopic":"Anatomiya","difficulty":"o'rta"}`;
-      }
-
-      return `Siz O'zbekiston maktablari uchun professional ${subject} fanidan test tuzuvchi sun'iy intellektsiz. Vazifangiz — pedagogik jihatdan sifatli, xilma-xil va xatosiz test savollarini yaratish.
-
-MAVZU: ${topic}
-SAVOLLAR SONI: ${questionCount}
-QIYINLIK DARAJASI: ${difficulty} (aralash bo'lsa — oson/o'rta/qiyin taxminan teng taqsimlansin)
-
-${formatRules}
-
-SIFAT MEZONLARI (har bir savolni yaratishdan oldin o'zingizni shu bo'yicha qattiq tekshiring va 100% amal qiling):
-1. QAT'IY SHART - SINTAKSIS VA IMLO: Savollar oliy darajadagi o'zbek tilida, mukammal sintaksis va grammatika bilan yozilishi SHART. Hech qanday imlo, grammatik yoki sintaksis xatolarga umuman yo'l qo'yilmasin! Savol matnining ohanggi, gap qurilishi va mantiqiy qismi uzilishlarsiz, to'liq bo'lishi kerak. Savol oxiriga tegishli tinish belgisi (masalan, so'roq belgisi "?") qo'yishni unutmang.
-2. QAT'IY SHART - MANTIQ VA CHUQURLIK: Savollar yuzaki bo'lmasin. 4 ta variant: 1 ta to'g'ri, 3 ta noto'g'ri. Noto'g'ri variantlar o'ta chalg'ituvchi, reallikka juda yaqin (lekin aynan noto'g'ri) bo'lishi kerak.
-3. QAT'IY SHART - ILMIY ANIQLIK: Barcha faktlar, formulalar, ma'lumotlar, ismlar va sanalar 100% ilmiy to'g'ri va xatosiz bo'lishi KAFOLATLANSIN. Taxminlarga yo'l qo'ymang.
-4. QAT'IY SHART - FORMATLASH: Kodlar, formulalar yoki texnik so'zlar to'liq ishlaydigan formatda bo'lishi shart. Maxsus belgilarni (masalan, qo'shtirnoqlar, qavslar, belgilashlar) chala qoldirmang. Yozuv uzilib qolmasin.
-5. To'g'ri javob pozitsiyasi savoldan savolga tasodifiy taqsimlansin.
-6. Bir xil savol yoki bir xil variantlar mutlaqo takrorlanmasin. Har bir savol aniq bitta o'ziga xos subtopic'ga tegishli bo'lsin.
-7. XATOGA O'RIN YO'Q: Siz o'ta professional va xatosiz generatorsiz. Biror harf, biror vergul xato ketsa, dastur ishdan chiqadi deb tasavvur qiling. Mutlaqo mukammal test bazasi yarating.
-
-TO'G'RI FORMATLANGAN NAMUNALAR (aynan shu uslub va aniqlikda yozing):
-${examples}
-
-CHIQISH FORMATI:
-Faqat xom (raw) JSON massiv qaytaring. Markdown code fence (\`\`\`) ishlatmang, boshida yoki oxirida hech qanday matn/izoh yozmang.
-Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, difficulty maydonlari bo'lsin.`;
+Return ONLY the JSON object. Begin generation now.`;
     }
 
-    const prompt = buildTestPrompt({ topic, subject, questionCount: questionCount || 5, difficulty: req.body.difficulty || 'aralash' });
+    const prompt = buildTestPrompt({ topic, subject, questionCount: questionCount || 10, difficulty: req.body.difficulty || 'aralash' });
 
     // ─── generateWithRetry: Groq (Llama-3) + Gemini Fallback ───
     async function generateWithRetry() {
@@ -522,9 +523,12 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
                 },
                 body: JSON.stringify({
                   model: task.model,
-                  messages: [{ role: "user", content: prompt }],
+                  messages: [
+                    { role: "system", content: prompt + "\n\nJSON Schema:\n" + JSON.stringify(aiSchema) },
+                    { role: "user", content: "Generate questions." }
+                  ],
                   temperature: 0.2,
-                  response_format: { type: "json_object" } // Groq JSON format
+                  response_format: { type: "json_object" }
                 })
               });
               const data = await res.json();
@@ -559,6 +563,14 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
             } else {
               questions = [parsedObj];
             }
+            
+            // Map correctAnswerIndex to correctOption
+            questions = questions.map(q => {
+              if (q.correctAnswerIndex !== undefined && Array.isArray(q.options)) {
+                q.correctOption = q.options[q.correctAnswerIndex];
+              }
+              return q;
+            });
 
             if (questions.length === 0) {
               console.warn(`  ⚠️ Bo'sh ro'yxat...`);
