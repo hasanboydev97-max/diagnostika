@@ -34,9 +34,9 @@ function fixBlockDollarBalance(text) {
  * Inline $ balansi: toq soni bo'lsa oxiridagi $ ni escape qilish
  */
 function fixInlineDollarBalance(text) {
-  const singleCount = (text.match(/(?<!\$)\$(?!\$)/g) || []).length;
+  const singleCount = (text.match(/(?<![\\$])\$(?!\$)/g) || []).length;
   if (singleCount % 2 !== 0) {
-    return text.replace(/(?<!\$)\$(?!\$)(?=[^$]*$)/, '\\$');
+    return text.replace(/(?<![\\$])\$(?!\$)(?=[^$]*$)/, '\\$');
   }
   return text;
 }
@@ -84,6 +84,20 @@ function removeEmptyMathDelimiters(text) {
   return t;
 }
 
+/**
+ * Markdown math parsing buzilmasligi uchun dollar ichidagi boshlang'ich va oxirgi bo'sh joylarni kesib tashlash.
+ * $ x $ -> $x$
+ */
+function fixSpacesInsideMath(text) {
+  let t = text.replace(/(?<!\$)\$(?!\$)([^$\n]+?)(?<!\$)\$(?!\$)/g, (match, inner) => {
+    return '$' + inner.trim() + '$';
+  });
+  t = t.replace(/\$\$([^$]+?)\$\$/g, (match, inner) => {
+    return '$$' + inner.trim() + '$$';
+  });
+  return t;
+}
+
 // ─── Eksport funksiyalari ─────────────────────────────────────────────────────
 
 /**
@@ -95,6 +109,7 @@ export function sanitizeMathText(text) {
   if (!text || typeof text !== 'string') return String(text ?? '');
 
   let t = text;
+  t = fixSpacesInsideMath(t);
   t = fixBlockDollarBalance(t);
   t = ensureSpaceAroundBlockMath(t);
   t = ensureSpaceAroundInlineMath(t);
@@ -157,7 +172,7 @@ export function isQuestionMalformed(q) {
   if (/=\s*-?\d+[\u0400-\u04FF\u02BC]/u.test(text)) return true;
 
   // Toq inline $
-  const singleDollars = (text.match(/(?<!\$)\$(?!\$)/g) ?? []).length;
+  const singleDollars = (text.match(/(?<![\\$])\$(?!\$)/g) ?? []).length;
   if (singleDollars % 2 !== 0) return true;
 
   // Toq $$

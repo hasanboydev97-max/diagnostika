@@ -30,6 +30,14 @@ export default function FormattedText({ content, className = '' }: FormattedText
     safeContent = safeContent.replace(/\$\$(?=[^$]*$)/, '');
   }
 
+  // 0. Fix spaces INSIDE math blocks which breaks remark-math parsing
+  safeContent = safeContent.replace(/(?<!\$)\$(?!\$)([^$\n]+?)(?<!\$)\$(?!\$)/g, (match, inner) => {
+    return '$' + inner.trim() + '$';
+  });
+  safeContent = safeContent.replace(/\$\$([^$]+?)\$\$/g, (match, inner) => {
+    return '$$' + inner.trim() + '$$';
+  });
+
   // 4. Ensure space around block math
   safeContent = safeContent.replace(/(\$\$)([^\s$\\.,!?;:\n\d([{'\-])/gu, '$1 $2');
   safeContent = safeContent.replace(/([^\s$\\])(\$\$)/gu, '$1 $2');

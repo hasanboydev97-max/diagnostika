@@ -414,10 +414,14 @@ LaTeX YOZISH QOIDALARI (QATTIQ BAJARISH SHART):
   - Matn ichidagi kichik formula yoki belgi: $...$
 
 ▶ QOIDA 1 — BO'SH JOY (ENG MUHIM):
-  Har doim $$...$$  yoki $...$ atrofida BO'SH JOY bo'lishi SHART.
+  Har doim $$...$$ yoki $...$ atrofida BO'SH JOY bo'lishi SHART.
+  Lekin dollar ICHIDA (boshida yoki oxirida) bo'sh joy QOLDIRMANG!
+  NOTO'G'RI: "$ x_1 $ va $ x_2 $" (Dollar ichida bo'sh joy bor)
+  TO'G'RI:   "$x_1$ va $x_2$" (Dollar ichida bo'sh joy yo'q)
   NOTO'G'RI: "Tenglamani yeching:$$x^{2}-9=0$$toping."
   TO'G'RI:   "Tenglamani yeching: $$x^{2}-9=0$$ ning ildizlarini toping."
   NOTO'G'RI: "$x_1$va$x_2$"
+  TO'G'RI:   "$x_1$ va $x_2$"
   TO'G'RI:   "$x_1$ va $x_2$"
 
 ▶ QOIDA 2 — DOLLAR BALANSI:
