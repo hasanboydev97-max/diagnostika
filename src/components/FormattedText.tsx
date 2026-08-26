@@ -35,7 +35,7 @@ export default function FormattedText({ content, className = '' }: FormattedText
   safeContent = safeContent.replace(/([^\s$\\])(\$\$)/gu, '$1 $2');
 
   // 5. Ensure space around inline math
-  safeContent = safeContent.replace(/((?<!\$)\$(?!\$)(?:[^$\n\\]|\\.){1,150}?\$(?!\$))([^\s$.,!?;:\n([{'\-])/gu, '$1 $3');
+  safeContent = safeContent.replace(/((?<!\$)\$(?!\$)(?:[^$\n\\]|\\.){1,150}?\$(?!\$))([^\s$.,!?;:\n([{'\-])/gu, '$1 $2');
   safeContent = safeContent.replace(/([^\s$\\])(\$(?!\$))/gu, '$1 $2');
 
   // 6. Fix merged text after digit or brace (e.g. =0tenglama -> =0 tenglama)
@@ -50,7 +50,6 @@ export default function FormattedText({ content, className = '' }: FormattedText
 
   // 8. Remove empty delimiters
   safeContent = safeContent.replace(/\$\$\s*\$\$/g, '');
-  safeContent = safeContent.replace(/(?<!\$)\$\s+\$(?!\$)/g, '');
 
   // --------------------------------------------------------------------------------------------------
 

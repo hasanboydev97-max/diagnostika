@@ -21,9 +21,7 @@
  * - Odd $$ count bo'lsa — oxiridagi yolg'iz $$ ni olib tashla
  */
 function fixBlockDollarBalance(text) {
-  // Pass 1: $inner$$ (1 ta ochuvchi, 2 ta yopuvchi) → $$inner$$
-  let t = text.replace(/(?<!\$)\$(?!\$)([^$\n]{1,300}?)\$\$(?!\$)/g, (_, inner) => `$$${inner}$$`);
-
+  let t = text;
   // Pass 2: Toq $$ count bo'lsa — oxiridagi orphan $$ olib tashlanadi
   const allDoubles = t.match(/\$\$/g) || [];
   if (allDoubles.length % 2 !== 0) {
@@ -62,7 +60,7 @@ function ensureSpaceAroundInlineMath(text) {
   // Process: after a complete $...$ pattern, if non-space follows
   let t = text.replace(
     /((?<!\$)\$(?!\$)(?:[^$\n\\]|\\.){1,150}?\$(?!\$))([^\s$.,!?;:\n([{'\-])/gu,
-    '$1 $3'
+    '$1 $2'
   );
   // word$x$ → word $x$
   t = t.replace(/([^\s$\\])(\$(?!\$))/gu, '$1 $2');
@@ -82,7 +80,7 @@ function fixMergedTextAfterMath(text) {
 /** Bo'sh dollar belgilarini olib tashlash */
 function removeEmptyMathDelimiters(text) {
   let t = text.replace(/\$\$\s*\$\$/g, ''); // removes empty block math like $$ $$
-  t = t.replace(/(?<!\$)\$\s+\$(?!\$)/g, ''); // removes empty inline math like $ $ (but not $$)
+  // WARNING: Do NOT remove \$\s+\$ because it will cross boundaries (e.g. $x$ $y$ becomes $x y$)
   return t;
 }
 
