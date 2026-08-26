@@ -512,6 +512,7 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
     // ─── generateWithRetry: JSON mode + retry on broken formulas ───
     async function generateWithRetry() {
       const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-8b'];
+      let lastError = "";
       for (const modelName of modelsToTry) {
         for (let attempt = 1; attempt <= 3; attempt++) {
           try {
@@ -529,6 +530,7 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
             let questions = JSON.parse(safeRaw);
             if (!Array.isArray(questions) || questions.length === 0) {
               console.warn(`  ↩ Bo'sh array, qayta urinilmoqda...`);
+              lastError = "AI bo'sh ro'yxat qaytardi";
               continue;
             }
             
@@ -540,6 +542,7 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
             
             if (validQuestions.length === 0) {
               console.warn(`  ↩ Barcha savollar buzilgan, qayta urinilmoqda...`);
+              lastError = "Barcha savollar validatsiyadan o'ta olmadi";
               continue;
             }
             
@@ -548,20 +551,23 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
             } else {
               console.log(`  ✅ ${modelName} (urinish ${attempt}): barcha ${validQuestions.length} ta savol sifatli.`);
             }
-            return validQuestions;
+            return { success: true, data: validQuestions };
           } catch (err) {
             console.warn(`  ✗ ${modelName} urinish ${attempt}: ${err.message}`);
+            lastError = err.message;
           }
         }
       }
-      return null;
+      return { success: false, error: lastError };
     }
 
-    const rawQuestions = await generateWithRetry();
+    const aiResult = await generateWithRetry();
 
-    if (!rawQuestions) {
-      return res.status(500).json({ error: "AI sifatli savol yarata olmadi. Keyinroq qayta urinib ko'ring." });
+    if (!aiResult.success) {
+      return res.status(500).json({ error: `AI xatosi: ${aiResult.error}` });
     }
+    
+    const rawQuestions = aiResult.data;
 
     // Removed sanitizeQuestions. The robust generation handles quality now.
     // Shuffle options to ensure the correct answer is randomly distributed among options (A, B, C, D)
