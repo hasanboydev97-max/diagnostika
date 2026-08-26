@@ -81,8 +81,8 @@ function fixMergedTextAfterMath(text) {
 
 /** Bo'sh dollar belgilarini olib tashlash */
 function removeEmptyMathDelimiters(text) {
-  let t = text.replace(/\$\$\s*\$\$/g, '');
-  t = t.replace(/(?<!\$)\$\s*\$(?!\$)/g, '');
+  let t = text.replace(/\$\$\s*\$\$/g, ''); // removes empty block math like $$ $$
+  t = t.replace(/(?<!\$)\$\s+\$(?!\$)/g, ''); // removes empty inline math like $ $ (but not $$)
   return t;
 }
 

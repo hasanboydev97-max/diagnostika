@@ -1,19 +1,4 @@
-const questions = [
-  "Hisoblang: 1",
-  "Ifodani soddalashtiring: 1",
-  "Kvadrat tenglamaning diskriminantini toping: 1",
-  "Agar 1 tenglama karrali bo'lsa...",
-  "Viyet teoremasiga ko'ra, 1 tenglamaning..."
-];
-
-function isQuestionBroken(qText) {
-  if (!qText) return true;
-  if (qText.includes('$') || qText.includes('`')) return false;
-  const hasMathVerb = /hisoblang|hisobla|soddalashtir|yeching|toping|topingiz|qutqaring|irratsional|ildiz|tenglama|viyet|sistemasini|sistemasidan|oralig|qiymatini|yig.indisini|ko.paytmasini|arifmetigi|diskriminant|karrali/i.test(qText);
-  if (!hasMathVerb) return false;
-  return /\\b1\\b/.test(qText) || /:\\s*\\d+\\s*[+\\-*\\/]?\\s*$/.test(qText);
-}
-
-for (const q of questions) {
-  console.log(`"${q}" -> Broken? ${isQuestionBroken(q)}`);
-}
+import { sanitizeMathText } from './server/utils/mathSanitizer.js';
+console.log('1:', sanitizeMathText('Tenglamaning ildizlarini toping: \$\^{2}-16=0\$\$'));
+console.log('2:', sanitizeMathText('Hisoblang: \$\$\\sqrt{81}-\\sqrt{25}+\\sqrt{16}\$\$'));
+console.log('3:', sanitizeMathText('\$\$[0^{\\circ}, 90^{\\circ}]\$\$ oraligidagi \$\\\sin x-\\sqrt{3}=0\$\$'));

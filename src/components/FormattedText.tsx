@@ -50,7 +50,7 @@ export default function FormattedText({ content, className = '' }: FormattedText
 
   // 8. Remove empty delimiters
   safeContent = safeContent.replace(/\$\$\s*\$\$/g, '');
-  safeContent = safeContent.replace(/(?<!\$)\$\s*\$(?!\$)/g, '');
+  safeContent = safeContent.replace(/(?<!\$)\$\s+\$(?!\$)/g, '');
 
   // --------------------------------------------------------------------------------------------------
 
