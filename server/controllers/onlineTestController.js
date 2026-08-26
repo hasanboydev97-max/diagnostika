@@ -384,12 +384,14 @@ export const generateAITest = async (req, res) => {
     }
 
     const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    const groqKey = process.env.GROQ_API_KEY;
     
-    if (!apiKey) {
-      return res.status(500).json({ error: 'Gemini API key is missing' });
+    if (!apiKey && !groqKey) {
+      return res.status(500).json({ error: 'Nafaqat Gemini, balki Groq API kaliti ham topilmadi. Lutfan .env faylni tekshiring.' });
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
+    // Initialize genAI only if apiKey exists
+    const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
     const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-8b'];
 
     // ═══════════════════════════════════════════════════════════════
@@ -509,51 +511,87 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
 
     const prompt = buildTestPrompt({ topic, subject, questionCount: questionCount || 5, difficulty: req.body.difficulty || 'aralash' });
 
-    // ─── generateWithRetry: JSON mode + retry on broken formulas ───
+    // ─── generateWithRetry: Groq (Llama-3) + Gemini Fallback ───
     async function generateWithRetry() {
-      const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-8b'];
       let lastError = "";
-      for (const modelName of modelsToTry) {
-        for (let attempt = 1; attempt <= 3; attempt++) {
+      
+      const groqKey = process.env.GROQ_API_KEY;
+      const geminiModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-8b'];
+      const groqModels = ['llama-3.3-70b-versatile', 'llama3-70b-8192', 'mixtral-8x7b-32768'];
+
+      // Qaysi API orqali chaqirishni belgilaymiz
+      const attempts = [];
+      if (groqKey) groqModels.forEach(m => attempts.push({ provider: 'groq', model: m }));
+      if (apiKey) geminiModels.forEach(m => attempts.push({ provider: 'gemini', model: m }));
+
+      if (attempts.length === 0) {
+        return { success: false, error: "Nafaqat Gemini, balki Groq API kaliti ham kiritilmagan!" };
+      }
+
+      for (const task of attempts) {
+        for (let attempt = 1; attempt <= 2; attempt++) { // har biriga 2 martadan urinish
           try {
-            console.log(`[AI Gen] ${modelName} — urinish ${attempt}/3...`);
-            const model = genAI.getGenerativeModel({
-              model: modelName,
-              generationConfig: { responseMimeType: 'application/json' }
-            });
-            const result = await model.generateContent(prompt);
-            const raw = result.response.text().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
-            
-            // Fix unescaped backslashes (e.g. \frac -> \\frac) so JSON.parse doesn't fail or create \f (form-feed)
+            console.log(`[AI Gen] ${task.provider.toUpperCase()} (${task.model}) — urinish ${attempt}/2...`);
+            let rawText = "";
+
+            if (task.provider === 'groq') {
+              // 🚀 Groq API orqali
+              const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${groqKey}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  model: task.model,
+                  messages: [{ role: "user", content: prompt }],
+                  temperature: 0.5,
+                  response_format: { type: "json_object" } // Groq JSON format
+                })
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error?.message || "Groq xatosi");
+              // Agar obyekt qaytsa, ichidan massivni qidiramiz
+              const content = data.choices[0].message.content;
+              const jsonParsed = JSON.parse(content);
+              // Groq ba'zan { questions: [...] } shaklida qaytaradi
+              if (Array.isArray(jsonParsed)) rawText = content;
+              else if (jsonParsed.questions) rawText = JSON.stringify(jsonParsed.questions);
+              else rawText = content;
+
+            } else {
+              // 🌐 Gemini API orqali
+              const model = genAI.getGenerativeModel({
+                model: task.model,
+                generationConfig: { responseMimeType: 'application/json' }
+              });
+              const result = await model.generateContent(prompt);
+              rawText = result.response.text();
+            }
+
+            const raw = rawText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
             const safeRaw = raw.replace(/(?<!\\)\\([^nrtb"\\])/g, '\\\\$1');
             
             let questions = JSON.parse(safeRaw);
             if (!Array.isArray(questions) || questions.length === 0) {
-              console.warn(`  ↩ Bo'sh array, qayta urinilmoqda...`);
+              console.warn(`  ↩ Bo'sh array qaytdi...`);
               lastError = "AI bo'sh ro'yxat qaytardi";
               continue;
             }
             
-            // ✅ Sanitize AI output before validation
             questions = sanitizeQuestions(questions);
-
-            // ✅ Use strict validation but KEEP valid questions
             const validQuestions = questions.filter(q => !isQuestionMalformed(q));
             
             if (validQuestions.length === 0) {
-              console.warn(`  ↩ Barcha savollar buzilgan, qayta urinilmoqda...`);
+              console.warn(`  ↩ Barcha savollar buzilgan...`);
               lastError = "Barcha savollar validatsiyadan o'ta olmadi";
               continue;
             }
             
-            if (validQuestions.length < questions.length) {
-              console.warn(`  ⚠️ ${questions.length - validQuestions.length} ta savol yaroqsiz chiqdi, qolgan ${validQuestions.length} tasi qabul qilindi.`);
-            } else {
-              console.log(`  ✅ ${modelName} (urinish ${attempt}): barcha ${validQuestions.length} ta savol sifatli.`);
-            }
+            console.log(`  ✅ ${task.provider} (${task.model}) muvaffaqiyatli: ${validQuestions.length} ta savol.`);
             return { success: true, data: validQuestions };
           } catch (err) {
-            console.warn(`  ✗ ${modelName} urinish ${attempt}: ${err.message}`);
+            console.warn(`  ✗ ${task.provider} (${task.model}) xatosi: ${err.message}`);
             lastError = err.message;
           }
         }
