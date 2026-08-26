@@ -168,3 +168,43 @@ export function isQuestionMalformed(q) {
 
   return false;
 }
+
+/**
+ * processQuestionBatch - AIning natijalarini tozalash va sifat nazorati (batch processing)
+ * @param {Array} rawQuestions
+ * @param {Object} options - { minAcceptable, targetCount }
+ * @returns {Object} { shouldFallbackToNextProvider, stats, questions }
+ */
+export function processQuestionBatch(rawQuestions, options = {}) {
+  const { minAcceptable = 5, targetCount = 30 } = options;
+  const stats = { received: rawQuestions.length, valid: 0, repaired: 0, dropped: 0 };
+  const validQuestions = [];
+
+  for (const raw of rawQuestions) {
+    const originalText = String(raw.questionText ?? '');
+    
+    // Repair with sanitizer
+    const repairedQ = sanitizeQuestion(raw);
+    
+    // Validate the repaired version
+    if (!isQuestionMalformed(repairedQ)) {
+      validQuestions.push(repairedQ);
+      stats.valid++;
+      
+      // If it changed, count as repaired
+      if (originalText !== repairedQ.questionText) {
+        stats.repaired++;
+      }
+    } else {
+      stats.dropped++;
+    }
+  }
+
+  const shouldFallbackToNextProvider = validQuestions.length < minAcceptable;
+
+  return {
+    shouldFallbackToNextProvider,
+    stats,
+    questions: validQuestions
+  };
+}
