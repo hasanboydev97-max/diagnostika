@@ -407,52 +407,28 @@ export const generateAITest = async (req, res) => {
 
       if (isExactScience) {
         formatRules = `
-LaTeX YOZISH QOIDALARI (QATTIQ BAJARISH SHART):
+        formatRules = `
+LATEX FORMATTING RULES (STRICT — remark-math compatible):
+1. Inline math: $expression$  — NO space after the opening $ or before the closing $.
+   Correct:   $x_1 + x_2 = 5$
+   Incorrect: $ x_1 + x_2 = 5 $
 
-▶ FORMULA TURLARI:
-  - Alohida (blok) formula: $$...$$
-  - Matn ichidagi kichik formula yoki belgi: $...$
+2. Block math: $$expression$$ — NO space after opening $$ or before closing $$.
+   Correct:   $$\\sqrt{50} = 5\\sqrt{2}$$
+   Incorrect: $$ \\sqrt{50} = 5\\sqrt{2} $$
 
-▶ QOIDA 1 — BO'SH JOY (ENG MUHIM):
-  Har doim $$...$$ yoki $...$ atrofida BO'SH JOY bo'lishi SHART.
-  Lekin dollar ICHIDA (boshida yoki oxirida) bo'sh joy QOLDIRMANG!
-  NOTO'G'RI: "$ x_1 $ va $ x_2 $" (Dollar ichida bo'sh joy bor)
-  TO'G'RI:   "$x_1$ va $x_2$" (Dollar ichida bo'sh joy yo'q)
-  NOTO'G'RI: "Tenglamani yeching:$$x^{2}-9=0$$toping."
-  TO'G'RI:   "Tenglamani yeching: $$x^{2}-9=0$$ ning ildizlarini toping."
-  NOTO'G'RI: "$x_1$va$x_2$"
-  TO'G'RI:   "$x_1$ va $x_2$"
-  TO'G'RI:   "$x_1$ va $x_2$"
+3. Never nest $ inside $$ or vice versa.
 
-▶ QOIDA 2 — DOLLAR BALANSI:
-  Har bir ochuvchi $ yoki $$ uchun aynan bir yopuvchi bo'lishi SHART.
-  NOTO'G'RI: "$x^2-9=0$$"   (bitta ochuvchi, ikkita yopuvchi)
-  TO'G'RI:   "$$x^2-9=0$$"  (ikkita ochuvchi, ikkita yopuvchi)
-  NOTO'G'RI: "x^2-9=0$$"    (ochuvchisiz yopuvchi)
-  TO'G'RI:   "$$x^2-9=0$$"
+4. Never use $ for currency in these questions. Use "so'm" or "USD" instead.
 
-▶ QOIDA 3 — INDEKSLAR:
-  x₁, x₂ kabi indekslarni har doim matematik ichida yozing:
-  NOTO'G'RI: "x_1vax_2 sonlari"
-  TO'G'RI:   "$x_1$ va $x_2$ sonlari"
+5. Every $ and $$ you open MUST be closed within the SAME field (questionText or a single option).
 
-▶ QOIDA 4 — BACKSLASH:
-  LaTeX buyruqlari uchun ikkita backslash: \\\\frac, \\\\sqrt, \\\\sin
-  (JSON string ichida bu \\\\\\\\frac bo'ladi)
+6. Use standard KaTeX-supported macros only: \\frac, \\sqrt, \\sum, \\int, \\left(, \\right), \\cdot, \\times, \\leq, \\geq, \\neq, \\infty, \\pi, subscripts (_), superscripts (^).
 
-- Kasr: $$\\\\frac{a}{b}$$   |   Daraja: $x^{2}$   |   Ildiz: $\\\\sqrt{x}$
-- Gradus: $60^{\\\\circ}$    |   Trigon: $\\\\sin x$, $\\\\cos\\\\alpha$
-- Tenglamalar sistemasi: $$\\\\begin{cases} x+y=5\\\\\\\\ x-y=1 \\\\end{cases}$$
-- Fizika birliklari oddiy matnda: "5 m/s", "10 N"
-MAJBURIY: questionText ichida to'liq, aniq son/formula bo'lsin. Hech qachon "___" yoki bo'sh joy qoldirmang.`;
+MAJBURIY: Barcha qoidalarga qat'iy rioya qiling.`;
 
-        examples = `{"questionText":"Hisoblang: $$\\\\sqrt{144}-\\\\sqrt{49}+\\\\sqrt{25}$$","options":["$10$","$8$","$12$","$14$"],"correctOption":"$10$","type":"multiple_choice","subtopic":"Ildizlar","difficulty":"oson"}
-{"questionText":"Tenglamani yeching: $$x^{2}-5x+6=0$$","options":["$x_1=1,\\\\, x_2=6$","$x_1=2,\\\\, x_2=3$","$x_1=-2,\\\\, x_2=-3$","$x_1=3,\\\\, x_2=4$"],"correctOption":"$x_1=2,\\\\, x_2=3$","type":"multiple_choice","subtopic":"Kvadrat tenglamalar","difficulty":"o'rta"}
-{"questionText":"Tenglamaning ildizlarini toping: $$x^{2}-9=0$$","options":["$x_1=9,\\\\, x_2=-9$","$x_1=3,\\\\, x_2=-3$","$x=-9$","$x=3$"],"correctOption":"$x_1=3,\\\\, x_2=-3$","type":"multiple_choice","subtopic":"Kvadrat tenglamalar","difficulty":"oson"}
-{"questionText":"Viyet teoremasiga ko'ra, $$x^{2}-5x+6=0$$ tenglamaning ildizlari yig'indisini toping.","options":["$-5$","$5$","$6$","$-6$"],"correctOption":"$5$","type":"multiple_choice","subtopic":"Viyet teoremasi","difficulty":"o'rta"}
-{"questionText":"$x_1$ va $x_2$ sonlari $$x^{2}-4x-1=0$$ tenglamaning ildizlari bo'lsa, $\\\\dfrac{1}{x_1^{2}}+\\\\dfrac{1}{x_2^{2}}$ ning qiymatini toping.","options":["$18$","$14$","$16$","$12$"],"correctOption":"$14$","type":"multiple_choice","subtopic":"Viyet teoremasi","difficulty":"qiyin"}
-{"questionText":"Kasrning maxrajini irratsionallikdan qutqaring: $$\\\\frac{1}{\\\\sqrt{5}-\\\\sqrt{2}}$$","options":["$\\\\sqrt{5}+\\\\sqrt{2}$","$\\\\frac{\\\\sqrt{5}+\\\\sqrt{2}}{3}$","$\\\\sqrt{5}-\\\\sqrt{2}$","$3$"],"correctOption":"$\\\\frac{\\\\sqrt{5}+\\\\sqrt{2}}{3}$","type":"multiple_choice","subtopic":"Irratsional ifodalar","difficulty":"qiyin"}
-{"questionText":"$$[0^{\\\\circ},\\\\, 90^{\\\\circ}]$$ oralig'idagi $$2\\\\sin x-\\\\sqrt{3}=0$$ tenglamaning ildizini toping.","options":["$60^{\\\\circ}$","$30^{\\\\circ}$","$45^{\\\\circ}$","$90^{\\\\circ}$"],"correctOption":"$60^{\\\\circ}$","type":"multiple_choice","subtopic":"Trigonometrik tenglamalar","difficulty":"o'rta"}`;
+        examples = `{"questionText":"Tenglamani yeching: $$x^{2}-5x+6=0$$","options":["$x_1=1, x_2=6$","$x_1=2, x_2=3$","$x_1=-2, x_2=-3$","$x_1=3, x_2=4$"],"correctOption":"$x_1=2, x_2=3$","type":"multiple_choice","subtopic":"Kvadrat tenglamalar","difficulty":"o'rta"}
+{"questionText":"$x_1$ va $x_2$ sonlari $$x^{2}-4x-1=0$$ tenglamaning ildizlari bo'lsa, $\\frac{1}{x_1^{2}}+\\frac{1}{x_2^{2}}$ ni toping.","options":["$18$","$14$","$16$","$12$"],"correctOption":"$14$","type":"multiple_choice","subtopic":"Viyet teoremasi","difficulty":"qiyin"}`;
 
       } else if (isLanguage) {
         formatRules = `
@@ -548,7 +524,7 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
                 body: JSON.stringify({
                   model: task.model,
                   messages: [{ role: "user", content: prompt }],
-                  temperature: 0.5,
+                  temperature: 0.2,
                   response_format: { type: "json_object" } // Groq JSON format
                 })
               });
@@ -566,7 +542,7 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
               // 🌐 Gemini API orqali
               const model = genAI.getGenerativeModel({
                 model: task.model,
-                generationConfig: { responseMimeType: 'application/json' }
+                generationConfig: { responseMimeType: 'application/json', temperature: 0.2 }
               });
               const result = await model.generateContent(prompt);
               rawText = result.response.text();
