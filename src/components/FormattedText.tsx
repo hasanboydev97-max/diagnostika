@@ -38,14 +38,6 @@ export default function FormattedText({ content, className = '' }: FormattedText
     return '$$' + inner.trim() + '$$';
   });
 
-  // 4. Ensure space around block math
-  safeContent = safeContent.replace(/(\$\$)([^\s$\\.,!?;:\n\d([{'\-])/gu, '$1 $2');
-  safeContent = safeContent.replace(/([^\s$\\])(\$\$)/gu, '$1 $2');
-
-  // 5. Ensure space around inline math
-  safeContent = safeContent.replace(/((?<!\$)\$(?!\$)(?:[^$\n\\]|\\.){1,150}?\$(?!\$))([^\s$.,!?;:\n([{'\-])/gu, '$1 $2');
-  safeContent = safeContent.replace(/([^\s$\\])(\$(?!\$))/gu, '$1 $2');
-
   // 6. Fix merged text after digit or brace (e.g. =0tenglama -> =0 tenglama)
   safeContent = safeContent.replace(/(=\s*-?\d+(?:\.\d+)?)([\u0400-\u04FF\u02BCa-zA-Zʻʼ'])/gu, '$1 $2');
   safeContent = safeContent.replace(/([}\]])([\u0400-\u04FF\u02BCa-zA-Zʻʼ'])/gu, '$1 $2');

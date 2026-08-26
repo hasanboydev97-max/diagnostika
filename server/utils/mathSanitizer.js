@@ -41,16 +41,7 @@ function fixInlineDollarBalance(text) {
   return text;
 }
 
-/**
- * Math blok ($$...$$) bilan atrofdagi matn orasiga bo'sh joy qo'yish.
- */
-function ensureSpaceAroundBlockMath(text) {
-  // $$formula$$text  →  $$formula$$ text
-  let t = text.replace(/(\$\$)([^\s$\\.,!?;:\n\d([{'\-])/gu, '$1 $2');
-  // text$$formula  →  text $$formula
-  t = t.replace(/([^\s$\\])(\$\$)/gu, '$1 $2');
-  return t;
-}
+
 
 
 /**
@@ -97,7 +88,7 @@ export function sanitizeMathText(text) {
   let t = text;
   t = fixSpacesInsideMath(t);
   t = fixBlockDollarBalance(t);
-  t = ensureSpaceAroundBlockMath(t);
+  
   t = fixMergedTextAfterMath(t);
   t = fixInlineDollarBalance(t);
   t = removeEmptyMathDelimiters(t);
