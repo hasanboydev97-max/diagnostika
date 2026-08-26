@@ -52,20 +52,6 @@ function ensureSpaceAroundBlockMath(text) {
   return t;
 }
 
-/**
- * Inline math ($...$) bilan atrofdagi matn orasiga bo'sh joy qo'yish.
- */
-function ensureSpaceAroundInlineMath(text) {
-  // $x$ text(nospace) → $x$ text
-  // Process: after a complete $...$ pattern, if non-space follows
-  let t = text.replace(
-    /((?<!\$)\$(?!\$)(?:[^$\n\\]|\\.){1,150}?\$(?!\$))([^\s$.,!?;:\n([{'\-])/gu,
-    '$1 $2'
-  );
-  // word$x$ → word $x$
-  t = t.replace(/([^\s$\\])(\$(?!\$))/gu, '$1 $2');
-  return t;
-}
 
 /**
  * Raqam yoki yopuvchi belgidan keyin darhol Kiril/lotin harf kelsa bo'sh joy qo'sh.
@@ -112,7 +98,6 @@ export function sanitizeMathText(text) {
   t = fixSpacesInsideMath(t);
   t = fixBlockDollarBalance(t);
   t = ensureSpaceAroundBlockMath(t);
-  t = ensureSpaceAroundInlineMath(t);
   t = fixMergedTextAfterMath(t);
   t = fixInlineDollarBalance(t);
   t = removeEmptyMathDelimiters(t);
@@ -163,10 +148,6 @@ export function isQuestionMalformed(q) {
   const text = String(q.questionText ?? '');
 
   if (text.trim().length < 5) return true;
-
-  // Orphan trailing $$
-  if (/=\s*-?\d+\s*\$\$$/.test(text)) return true;
-  if (/[^$]\$\$\s*$/.test(text)) return true;
 
   // Merged text (digit immediately followed by Cyrillic)
   if (/=\s*-?\d+[\u0400-\u04FF\u02BC]/u.test(text)) return true;
