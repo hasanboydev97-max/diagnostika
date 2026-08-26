@@ -534,14 +534,20 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
             // ✅ Sanitize AI output before validation
             questions = sanitizeQuestions(questions);
 
-            // ✅ Use strict validation
-            const broken = questions.filter(isQuestionMalformed);
-            if (broken.length > 0) {
-              console.warn(`  ↩ ${broken.length}/${questions.length} ta savol buzilgan, qayta urinilmoqda...`);
+            // ✅ Use strict validation but KEEP valid questions
+            const validQuestions = questions.filter(q => !isQuestionMalformed(q));
+            
+            if (validQuestions.length === 0) {
+              console.warn(`  ↩ Barcha savollar buzilgan, qayta urinilmoqda...`);
               continue;
             }
-            console.log(`  ✅ ${modelName} (urinish ${attempt}): ${questions.length} ta sifatli savol.`);
-            return questions;
+            
+            if (validQuestions.length < questions.length) {
+              console.warn(`  ⚠️ ${questions.length - validQuestions.length} ta savol yaroqsiz chiqdi, qolgan ${validQuestions.length} tasi qabul qilindi.`);
+            } else {
+              console.log(`  ✅ ${modelName} (urinish ${attempt}): barcha ${validQuestions.length} ta savol sifatli.`);
+            }
+            return validQuestions;
           } catch (err) {
             console.warn(`  ✗ ${modelName} urinish ${attempt}: ${err.message}`);
           }
