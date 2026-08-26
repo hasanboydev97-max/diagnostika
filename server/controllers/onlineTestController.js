@@ -5,7 +5,7 @@ import { OnlineTest, OnlineTestResult, Teacher } from '../models/index.js';
 import { buildDocxBuffer, sanitizePdfText } from '../utils/exportUtils.js';
 import PDFDocument from 'pdfkit';
 import { isAnswerCorrect, computeScore } from '../utils/scoring.js';
-import { sanitizeQuestions, sanitizeQuestion, isQuestionMalformed } from '../utils/mathSanitizer.js';
+import { processQuestionBatch } from '../utils/mathSanitizer.js';
 
 export const getTests = async (req, res) => {
   try {
@@ -407,7 +407,6 @@ export const generateAITest = async (req, res) => {
 
       if (isExactScience) {
         formatRules = `
-        formatRules = `
 LATEX FORMATTING RULES (STRICT — remark-math compatible):
 1. Inline math: $expression$  — NO space after the opening $ or before the closing $.
    Correct:   $x_1 + x_2 = 5$
@@ -551,24 +550,35 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
             const raw = rawText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
             const safeRaw = raw.replace(/(?<!\\)\\([^nrtb"\\])/g, '\\\\$1');
             
-            let questions = JSON.parse(safeRaw);
-            if (!Array.isArray(questions) || questions.length === 0) {
-              console.warn(`  ↩ Bo'sh array qaytdi...`);
+                        let parsedObj = JSON.parse(safeRaw);
+            let questions = [];
+            if (Array.isArray(parsedObj)) {
+              questions = parsedObj;
+            } else if (parsedObj.questions && Array.isArray(parsedObj.questions)) {
+              questions = parsedObj.questions;
+            } else {
+              questions = [parsedObj];
+            }
+
+            if (questions.length === 0) {
+              console.warn(`  ⚠️ Bo'sh ro'yxat...`);
               lastError = "AI bo'sh ro'yxat qaytardi";
               continue;
             }
             
-            questions = sanitizeQuestions(questions);
-            const validQuestions = questions.filter(q => !isQuestionMalformed(q));
+            const batchResult = processQuestionBatch(questions, { 
+              minAcceptable: Math.min(10, Math.floor((questionCount || 30) * 0.5)), 
+              targetCount: questionCount || 30 
+            });
             
-            if (validQuestions.length === 0) {
-              console.warn(`  ↩ Barcha savollar buzilgan...`);
-              lastError = "Barcha savollar validatsiyadan o'ta olmadi";
+            if (batchResult.shouldFallbackToNextProvider) {
+              console.warn(`  ⚠️ Yaroqsiz savollar ko'p. Qolgan: ${batchResult.stats.valid}/${batchResult.stats.received}`);
+              lastError = "Savollar sifatsiz yoki juda ko'p qismi validatsiyadan o'ta olmadi";
               continue;
             }
             
-            console.log(`  ✅ ${task.provider} (${task.model}) muvaffaqiyatli: ${validQuestions.length} ta savol.`);
-            return { success: true, data: validQuestions };
+            console.log(`  ✅ ${task.provider} (${task.model}) muvaffaqiyatli: ${batchResult.stats.valid} ta savol (Tuzatildi: ${batchResult.stats.repaired}, O'chirildi: ${batchResult.stats.dropped}).`);
+            return { success: true, data: batchResult.questions };
           } catch (err) {
             console.warn(`  ✗ ${task.provider} (${task.model}) xatosi: ${err.message}`);
             lastError = err.message;
