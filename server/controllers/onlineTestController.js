@@ -278,7 +278,7 @@ export const submitTestResult = async (req, res) => {
       const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
       if (apiKey && test && data.questions) {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const modelsToTry = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-flash-latest'];
+        const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-8b'];
         
         const prompt = `O'quvchi test ishladi. 
 Test nomi: ${test.title}
@@ -390,7 +390,7 @@ export const generateAITest = async (req, res) => {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const modelsToTry = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-flash-latest'];
+    const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-8b'];
 
     // ═══════════════════════════════════════════════════════════════
     // FAN-AWARE PROMPT BUILDER — har bir fan turi uchun alohida qoida
@@ -511,6 +511,7 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
 
     // ─── generateWithRetry: JSON mode + retry on broken formulas ───
     async function generateWithRetry() {
+      const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-8b'];
       for (const modelName of modelsToTry) {
         for (let attempt = 1; attempt <= 3; attempt++) {
           try {
