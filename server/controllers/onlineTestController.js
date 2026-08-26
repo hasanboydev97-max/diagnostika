@@ -381,6 +381,8 @@ export const generateAITest = async (req, res) => {
       return res.status(403).json({
         error: `Sizning ${teacher.plan.toUpperCase()} tarifingiz bo'yicha kunlik AI test yaratish limiti (${maxAllowed} ta) to'lgan. Davom etish uchun tarifni oshiring.`
       });
+    } // ✅ Xato tuzatildi: bu yopuvchi qavs qolib ketgan ekan
+    
     const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
     const groqKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
     
@@ -514,7 +516,7 @@ Har bir obyektda: questionText, options (4 ta), correctOption, type, subtopic, d
       let lastError = "";
       const groqKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
       const geminiModels = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-flash-latest'];
-      const groqModels = ['llama-3.3-70b-versatile', 'llama3-70b-8192', 'mixtral-8x7b-32768'];
+      const groqModels = ['qwen/qwen3.8-27b', 'groq/compound', 'openai/gpt-oss-120b'];
 
       // Qaysi API orqali chaqirishni belgilaymiz
       const attempts = [];
