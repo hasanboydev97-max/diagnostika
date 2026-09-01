@@ -421,7 +421,7 @@ export const generateAITest = async (req, res) => {
     };
 
     function buildTestPrompt({ topic, subject, questionCount = 5, difficulty = 'aralash' }) {
-      return `You are a question-bank generator for a MERN-based online testing platform.
+      return String.raw`You are a question-bank generator for a MERN-based online testing platform.
 Your ONLY output is a JSON object matching the provided schema. Do not
 explain, do not think out loud, do not add commentary before or after the
 JSON. Every extra sentence you generate costs latency — output the JSON and
@@ -452,13 +452,13 @@ LATEX FORMATTING (strict — remark-math compatible, zero tolerance)
    Correct:   $x_1 + x_2 = 5$
    Incorrect: $ x_1 + x_2 = 5 $          <- will break the renderer
 
-2. Block math: $$expression$$ — same rule, no inner-edge spaces.
-   Correct:   $$\sqrt{50} = 5\sqrt{2}$$
-   Incorrect: $$ \sqrt{50} = 5\sqrt{2} $$
+2. Block math: $expression$ — same rule, no inner-edge spaces.
+   Correct:   $\sqrt{50} = 5\sqrt{2}$
+   Incorrect: $ \sqrt{50} = 5\sqrt{2} $
 
-3. Every $ and every $$ you open MUST close within the SAME string field.
+3. Every $ and every $ you open MUST close within the SAME string field.
    Never split one expression across questionText and an option, and never
-   leave a trailing unclosed $ or $$ at the end of a field.
+   leave a trailing unclosed $ or $ at the end of a field.
 
 4. Every { you open MUST have a matching }. Double-check nested \frac{}{},
    \sqrt{}, and subscript/superscript groups before finalizing each question.
@@ -473,18 +473,26 @@ LATEX FORMATTING (strict — remark-math compatible, zero tolerance)
 
 7. Do not double-escape backslashes. Write \sqrt{50}, never \\\sqrt{50}.
 
+8. Systems of equations MUST use \begin{cases} ... \end{cases}.
+   Correct: $\begin{cases} x+y=5 \\\\ x-y=1 \end{cases}$
+   Incorrect: $x+y=5x-y=1$ or $x+y=5, x-y=1$
+
 FEW-SHOT REFERENCE (follow this exact pattern)
 GOOD:
   "questionNumber": 1,
   "questionText": "Tenglamani yeching: $2x + 3 = 11$"
 GOOD:
-  "questionText": "Integralni hisoblang: $$\int_0^1 x^2\,dx$$"
+  "questionNumber": 2,
+  "questionText": "Integralni hisoblang: $\int_0^1 x^2\\,dx$"
 BAD — never produce this:
   "questionNumber": 3,
   "questionText": "Tenglamani yeching: $ 2x + 3 = 11 $"
 BAD — never produce this (unclosed brace):
   "questionNumber": 4,
   "questionText": "Soddalashtiring: $\frac{1}{2"
+GOOD:
+  "questionNumber": 5,
+  "questionText": "Tenglamalar sistemasini yeching: $\begin{cases} x+y=5 \\\\ x-y=1 \end{cases}$"
 
 ANSWER QUALITY RULES
 - Exactly 4 options per question, only ONE mathematically correct.
@@ -605,26 +613,36 @@ Return ONLY the JSON object. Begin generation now.`;
     let rawQuestions = [];
     const targetTotal = questionCount || 10;
     const topicsArray = topic.split(',').map(t => t.trim()).filter(Boolean);
-    let topicIndex = 0;
     
-    // Chunk size is 10 questions max per request to guarantee high-quality generation
-    while (rawQuestions.length < targetTotal) {
-      const remaining = targetTotal - rawQuestions.length;
-      const chunkCount = Math.min(remaining, 10);
-      const chunkTopic = topicsArray[topicIndex % topicsArray.length] || topic;
-      
-      const aiResult = await generateChunkWithRetry(chunkTopic, chunkCount);
-      if (!aiResult.success) {
-        if (rawQuestions.length === 0) {
-          return res.status(500).json({ error: `AI xatosi: ${aiResult.error}` });
-        }
-        break; // If we already have some questions, we can stop and return what we have, or we can just break
-      }
-      rawQuestions = rawQuestions.concat(aiResult.data);
-      topicIndex++;
+    // Exact distribution calculation
+    let neededPerTopic = {};
+    topicsArray.forEach(t => neededPerTopic[t] = 0);
+    for (let i = 0; i < targetTotal; i++) {
+      neededPerTopic[topicsArray[i % topicsArray.length]]++;
     }
     
-    // Trim exactly to requested count just in case
+    // Generate questions for each topic until its quota is met
+    for (const currentTopic of topicsArray) {
+      let needed = neededPerTopic[currentTopic];
+      let failsafe = 0;
+      
+      while (needed > 0 && failsafe < 5) {
+        const chunkCount = Math.min(needed, 10);
+        const aiResult = await generateChunkWithRetry(currentTopic, chunkCount);
+        
+        if (aiResult.success && aiResult.data && aiResult.data.length > 0) {
+          rawQuestions = rawQuestions.concat(aiResult.data);
+          needed -= aiResult.data.length; // decrement by successfully generated amount
+        } else {
+          failsafe++; // prevent infinite loops if AI completely fails
+          if (failsafe >= 5 && rawQuestions.length === 0) {
+             return res.status(500).json({ error: `AI xatosi: ${aiResult.error}` });
+          }
+        }
+      }
+    }
+    
+    // Trim to exactly targetTotal just in case of slight over-generation
     rawQuestions = rawQuestions.slice(0, targetTotal);
 
     // Removed sanitizeQuestions. The robust generation handles quality now.
