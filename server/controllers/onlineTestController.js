@@ -447,36 +447,36 @@ LATEX FORMATTING (strict — remark-math compatible, zero tolerance)
    Correct:   $x_1 + x_2 = 5$
    Incorrect: $ x_1 + x_2 = 5 $          <- will break the renderer
 
-2. Block math: $expression$ — same rule, no inner-edge spaces.
-   Correct:   $\sqrt{50} = 5\sqrt{2}$
-   Incorrect: $ \sqrt{50} = 5\sqrt{2} $
+2. Block math: $$expression$$ — same rule, no inner-edge spaces.
+   Correct:   $$\sqrt{50} = 5\sqrt{2}$$
+   Incorrect: $$ \sqrt{50} = 5\sqrt{2} $$
 
-3. Every $ and every $ you open MUST close within the SAME string field.
+3. Every $ and every $$ you open MUST close within the SAME string field.
    Never split one expression across questionText and an option, and never
-   leave a trailing unclosed $ or $ at the end of a field.
+   leave a trailing unclosed $ or $$ at the end of a field.
 
-4. Every { you open MUST have a matching }. Double-check nested \\frac{}{},
-   \\sqrt{}, and subscript/superscript groups before finalizing each question.
+4. Every { you open MUST have a matching }. Double-check nested \frac{}{},
+   \sqrt{}, and subscript/superscript groups before finalizing each question.
 
 5. Never use $ for currency. If a dollar amount is needed in a word problem,
    write "so'm" or "dollar" as a word — never a $ symbol outside of math.
 
-6. Use ONLY standard KaTeX-supported syntax: \\frac, \\sqrt, \\sum, \\int,
-   \\left( \\right), \\cdot, \\times, \\div, \\leq, \\geq, \\neq, \\infty, \\pi,
-   \\sin \\cos \\tan, subscripts (_), superscripts (^). No custom macros, no
-   \\newcommand, no \\text{} unless strictly necessary.
+6. Use ONLY standard KaTeX-supported syntax: \frac, \sqrt, \sum, \int,
+   \left( \right), \cdot, \times, \div, \leq, \geq, \neq, \infty, \pi,
+   \sin \cos \tan, subscripts (_), superscripts (^). No custom macros, no
+   \newcommand, no \text{} unless strictly necessary.
 
-7. Do not double-escape backslashes. Write \\sqrt{50}, never \\\\sqrt{50}.
+7. Do not double-escape backslashes. Write \sqrt{50}, never \\\sqrt{50}.
 
 FEW-SHOT REFERENCE (follow this exact pattern)
 GOOD:
   "questionText": "Tenglamani yeching: $2x + 3 = 11$"
 GOOD:
-  "questionText": "Integralni hisoblang: $\\int_0^1 x^2\\,dx$"
+  "questionText": "Integralni hisoblang: $$\int_0^1 x^2\,dx$$"
 BAD — never produce this:
   "questionText": "Tenglamani yeching: $ 2x + 3 = 11 $"
 BAD — never produce this (unclosed brace):
-  "questionText": "Soddalashtiring: $\\frac{1}{2"
+  "questionText": "Soddalashtiring: $\frac{1}{2"
 
 ANSWER QUALITY RULES
 - Exactly 4 options per question, only ONE mathematically correct.
