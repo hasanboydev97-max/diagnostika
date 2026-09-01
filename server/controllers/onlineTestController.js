@@ -497,16 +497,20 @@ ANSWER QUALITY RULES
 Return ONLY the JSON object. Begin generation now.`;
     }
 
-    const prompt = buildTestPrompt({ topic, subject, questionCount: questionCount || 10, difficulty: req.body.difficulty || 'aralash' });
+    // --- Senior Level Batching Logic ---
+    async function generateChunkWithRetry(chunkTopic, chunkCount) {
+      const prompt = buildTestPrompt({ 
+        topic: chunkTopic, 
+        subject, 
+        questionCount: chunkCount, 
+        difficulty: req.body.difficulty || 'aralash' 
+      });
 
-    // ─── generateWithRetry: Groq (Llama-3) + Gemini Fallback ───
-    async function generateWithRetry() {
       let lastError = "";
       const groqKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
-      const geminiModels = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-flash-latest'];
+      const geminiModels = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-flash-latest', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
       const groqModels = ['qwen/qwen3.8-27b', 'groq/compound', 'openai/gpt-oss-120b'];
 
-      // Qaysi API orqali chaqirishni belgilaymiz
       const attempts = [];
       if (groqKey) groqModels.forEach(m => attempts.push({ provider: 'groq', model: m }));
       if (apiKey) geminiModels.forEach(m => attempts.push({ provider: 'gemini', model: m }));
@@ -516,13 +520,12 @@ Return ONLY the JSON object. Begin generation now.`;
       }
 
       for (const task of attempts) {
-        for (let attempt = 1; attempt <= 2; attempt++) { // har biriga 2 martadan urinish
+        for (let attempt = 1; attempt <= 2; attempt++) {
           try {
             console.log(`[AI Gen] ${task.provider.toUpperCase()} (${task.model}) — urinish ${attempt}/2...`);
             let rawText = "";
 
             if (task.provider === 'groq') {
-              // 🚀 Groq API orqali
               const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -541,16 +544,12 @@ Return ONLY the JSON object. Begin generation now.`;
               });
               const data = await res.json();
               if (!res.ok) throw new Error(data.error?.message || "Groq xatosi");
-              // Agar obyekt qaytsa, ichidan massivni qidiramiz
               const content = data.choices[0].message.content;
               const jsonParsed = JSON.parse(content);
-              // Groq ba'zan { questions: [...] } shaklida qaytaradi
               if (Array.isArray(jsonParsed)) rawText = content;
               else if (jsonParsed.questions) rawText = JSON.stringify(jsonParsed.questions);
               else rawText = content;
-
             } else {
-              // 🌐 Gemini API orqali
               const model = genAI.getGenerativeModel({
                 model: task.model,
                 generationConfig: { responseMimeType: 'application/json', temperature: 0.2 }
@@ -562,7 +561,7 @@ Return ONLY the JSON object. Begin generation now.`;
             const raw = rawText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
             const safeRaw = raw.replace(/(?<!\\)\\([^nrtb"\\])/g, '\\\\$1');
             
-                        let parsedObj = JSON.parse(safeRaw);
+            let parsedObj = JSON.parse(safeRaw);
             let questions = [];
             if (Array.isArray(parsedObj)) {
               questions = parsedObj;
@@ -572,7 +571,6 @@ Return ONLY the JSON object. Begin generation now.`;
               questions = [parsedObj];
             }
             
-            // Map correctAnswerIndex to correctOption
             questions = questions.map(q => {
               if (q.correctAnswerIndex !== undefined && Array.isArray(q.options)) {
                 q.correctOption = q.options[q.correctAnswerIndex];
@@ -581,26 +579,22 @@ Return ONLY the JSON object. Begin generation now.`;
             });
 
             if (questions.length === 0) {
-              console.warn(`  ⚠️ Bo'sh ro'yxat...`);
               lastError = "AI bo'sh ro'yxat qaytardi";
               continue;
             }
             
             const batchResult = processQuestionBatch(questions, { 
-              minAcceptable: Math.min(10, Math.floor((questionCount || 30) * 0.5)), 
-              targetCount: questionCount || 30 
+              minAcceptable: Math.min(2, Math.floor(chunkCount * 0.5)), 
+              targetCount: chunkCount 
             });
             
             if (batchResult.shouldFallbackToNextProvider) {
-              console.warn(`  ⚠️ Yaroqsiz savollar ko'p. Qolgan: ${batchResult.stats.valid}/${batchResult.stats.received}`);
               lastError = "Savollar sifatsiz yoki juda ko'p qismi validatsiyadan o'ta olmadi";
               continue;
             }
             
-            console.log(`  ✅ ${task.provider} (${task.model}) muvaffaqiyatli: ${batchResult.stats.valid} ta savol (Tuzatildi: ${batchResult.stats.repaired}, O'chirildi: ${batchResult.stats.dropped}).`);
             return { success: true, data: batchResult.questions };
           } catch (err) {
-            console.warn(`  ✗ ${task.provider} (${task.model}) xatosi: ${err.message}`);
             lastError = err.message;
           }
         }
@@ -608,13 +602,30 @@ Return ONLY the JSON object. Begin generation now.`;
       return { success: false, error: lastError };
     }
 
-    const aiResult = await generateWithRetry();
-
-    if (!aiResult.success) {
-      return res.status(500).json({ error: `AI xatosi: ${aiResult.error}` });
+    let rawQuestions = [];
+    const targetTotal = questionCount || 10;
+    const topicsArray = topic.split(',').map(t => t.trim()).filter(Boolean);
+    let topicIndex = 0;
+    
+    // Chunk size is 10 questions max per request to guarantee high-quality generation
+    while (rawQuestions.length < targetTotal) {
+      const remaining = targetTotal - rawQuestions.length;
+      const chunkCount = Math.min(remaining, 10);
+      const chunkTopic = topicsArray[topicIndex % topicsArray.length] || topic;
+      
+      const aiResult = await generateChunkWithRetry(chunkTopic, chunkCount);
+      if (!aiResult.success) {
+        if (rawQuestions.length === 0) {
+          return res.status(500).json({ error: `AI xatosi: ${aiResult.error}` });
+        }
+        break; // If we already have some questions, we can stop and return what we have, or we can just break
+      }
+      rawQuestions = rawQuestions.concat(aiResult.data);
+      topicIndex++;
     }
     
-    const rawQuestions = aiResult.data;
+    // Trim exactly to requested count just in case
+    rawQuestions = rawQuestions.slice(0, targetTotal);
 
     // Removed sanitizeQuestions. The robust generation handles quality now.
     // Shuffle options to ensure the correct answer is randomly distributed among options (A, B, C, D)
