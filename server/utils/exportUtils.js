@@ -64,7 +64,7 @@ export function cleanMathForText(text) {
     .replace(/\^\{3\}/g, '\u00b3')
     .replace(/\^{([^}]+)}/g, '^($1)')
     .replace(/_{([^}]+)}/g, '_($1)')
-    .replace(/<[^>]*>/g, '')
+    
     .replace(/\$/g, '')
     .replace(/\\/g, '')
     .replace(/\{|\}/g, '');
@@ -102,7 +102,7 @@ export function buildDocxChildren(content, options = {}) {
   let text = String(content)
     .replace(/<\s*code\s*>/gi, '`')
     .replace(/<\s*\/\s*code\s*>/gi, '`')
-    .replace(/<[^>]*>/g, '');
+    ;
     
   // Normalize $$ to $ for split
   text = text.replace(/\$\$\s*=\s*/g, '$$').replace(/\$\s*=\s*\\frac/g, '$\\frac');
