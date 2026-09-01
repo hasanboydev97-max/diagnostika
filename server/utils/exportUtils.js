@@ -1,5 +1,5 @@
 import katex from 'katex';
-import { Document, Paragraph, TextRun, Packer, HeadingLevel, AlignmentType, ImportedXmlComponent } from 'docx';
+import { Document, Paragraph, TextRun, Packer, HeadingLevel, AlignmentType, ImportedXmlComponent, BorderStyle, UnderlineType } from 'docx';
 import * as mml2ommlModule from 'mathml2omml';
 const { mml2omml } = mml2ommlModule;
 
@@ -148,19 +148,33 @@ export function buildDocxChildren(content, options = {}) {
 
 export async function buildDocxBuffer(title, subject, questions) {
   const children = [
-    // Title
-    new Paragraph({
-      text: title || 'Test',
-      heading: HeadingLevel.HEADING_1,
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 200 }
-    }),
-    // Subject
+    // Header Section
     new Paragraph({
       children: [
-        new TextRun({ text: `Fan: ${subject || ''}`, italic: true, size: 24 })
+        new TextRun({ text: "O'quvchi: _______________________________   Sana: ___/___/20__ yil", size: 24, bold: true })
+      ],
+      alignment: AlignmentType.RIGHT,
+      spacing: { after: 300 }
+    }),
+    
+    // Title
+    new Paragraph({
+      children: [
+        new TextRun({ text: (title || 'Test').toUpperCase(), size: 32, bold: true, color: "1F4E79" })
       ],
       alignment: AlignmentType.CENTER,
+      spacing: { after: 120 }
+    }),
+    
+    // Subject with bottom border
+    new Paragraph({
+      children: [
+        new TextRun({ text: `Fan: ${subject || ''}`, italic: true, size: 28, bold: true, color: "333333" })
+      ],
+      alignment: AlignmentType.CENTER,
+      border: {
+        bottom: { color: "1F4E79", space: 10, style: BorderStyle.SINGLE, size: 12 }
+      },
       spacing: { after: 400 }
     })
   ];
@@ -182,8 +196,8 @@ export async function buildDocxBuffer(title, subject, questions) {
       children.push(
         new Paragraph({
           children: [
-            new TextRun({ text: `    ${letter}) `, bold: true, size: 22 }),
-            ...buildDocxChildren(opt || '', { size: 22 })
+            new TextRun({ text: `   ${letter}) `, bold: true, size: 24 }),
+            ...buildDocxChildren(opt || '', { size: 24 })
           ],
           spacing: { after: 80 }
         })
@@ -194,28 +208,65 @@ export async function buildDocxBuffer(title, subject, questions) {
   // Answer Key Section
   children.push(
     new Paragraph({
-      text: 'Kalit Javoblar:',
-      heading: HeadingLevel.HEADING_2,
-      spacing: { before: 400, after: 200 }
+      children: [
+        new TextRun({ text: 'Kalit Javoblar', size: 28, bold: true, color: "1F4E79" })
+      ],
+      alignment: AlignmentType.CENTER,
+      border: {
+        top: { color: "1F4E79", space: 10, style: BorderStyle.SINGLE, size: 12 },
+        bottom: { color: "1F4E79", space: 10, style: BorderStyle.SINGLE, size: 12 }
+      },
+      spacing: { before: 600, after: 300 }
     })
   );
 
   const answerRuns = (questions || []).map((q, index) => {
     const correctIdx = (q.options || []).findIndex(o => o === q.correctOption);
     const letter = correctIdx >= 0 ? optionLetters[correctIdx] : (q.correctOption || '?');
-    return new TextRun({ text: `${index + 1}.${letter}   `, bold: true, size: 22 });
+    return new TextRun({ text: `${index + 1}-${letter}    `, bold: true, size: 24 });
   });
 
   children.push(
     new Paragraph({
       children: answerRuns,
+      alignment: AlignmentType.JUSTIFIED,
       spacing: { after: 200 }
     })
   );
 
   const doc = new Document({
+    creator: "Diagnostika AI Platform",
+    title: title || 'Test',
+    styles: {
+      default: {
+        document: {
+          run: {
+            font: "Calibri",
+            size: 24 // 12pt
+          }
+        }
+      }
+    },
     sections: [{
-      properties: {},
+      properties: {
+        page: {
+          margin: {
+            top: 1000,
+            right: 1000,
+            bottom: 1000,
+            left: 1000,
+          },
+          borders: {
+            pageBorders: {
+              display: "allPages",
+              left: { style: BorderStyle.DOUBLE, size: 12, color: "1F4E79", space: 24 },
+              right: { style: BorderStyle.DOUBLE, size: 12, color: "1F4E79", space: 24 },
+              top: { style: BorderStyle.DOUBLE, size: 12, color: "1F4E79", space: 24 },
+              bottom: { style: BorderStyle.DOUBLE, size: 12, color: "1F4E79", space: 24 },
+            }
+          }
+        }
+      },
       children
     }]
   });
