@@ -403,6 +403,7 @@ export const generateAITest = async (req, res) => {
           items: {
             type: "object",
             properties: {
+              questionNumber: { type: "integer" },
               questionText: { type: "string" },
               options: {
                 type: "array",
@@ -412,7 +413,7 @@ export const generateAITest = async (req, res) => {
               },
               correctAnswerIndex: { type: "integer", minimum: 0, maximum: 3 }
             },
-            required: ["questionText", "options", "correctAnswerIndex"]
+            required: ["questionNumber", "questionText", "options", "correctAnswerIndex"]
           }
         }
       },
@@ -429,8 +430,12 @@ nothing else.
 TASK
 Generate exactly ${questionCount} multiple-choice questions for:
   Subject: ${subject}
-  Topic: ${topic}
+  Topic(s): ${topic}
   Difficulty: ${difficulty}
+
+CRITICAL INSTRUCTIONS:
+- You MUST generate EXACTLY ${questionCount} questions. Use the "questionNumber" field to count from 1 to ${questionCount}. Do not stop until you reach ${questionCount}.
+- If multiple topics are provided (separated by commas), you MUST distribute the questions evenly across all the topics. Do not focus on just one topic.
 
 OUTPUT DISCIPLINE (for speed — follow strictly)
 - No preamble ("Here are your questions:"), no postamble, no markdown code
@@ -470,12 +475,15 @@ LATEX FORMATTING (strict — remark-math compatible, zero tolerance)
 
 FEW-SHOT REFERENCE (follow this exact pattern)
 GOOD:
+  "questionNumber": 1,
   "questionText": "Tenglamani yeching: $2x + 3 = 11$"
 GOOD:
   "questionText": "Integralni hisoblang: $$\int_0^1 x^2\,dx$$"
 BAD — never produce this:
+  "questionNumber": 3,
   "questionText": "Tenglamani yeching: $ 2x + 3 = 11 $"
 BAD — never produce this (unclosed brace):
+  "questionNumber": 4,
   "questionText": "Soddalashtiring: $\frac{1}{2"
 
 ANSWER QUALITY RULES
