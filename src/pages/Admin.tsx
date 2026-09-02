@@ -175,7 +175,282 @@ export default function Admin() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 md:mb-8 gap-8 border-b border-black/10 pb-8">
           <div>
             <div className="flex items-center gap-4">
+              <button 
+                onClick={() => navigate('/dashboard')}
+                className="p-2 border border-black/10 hover:border-black rounded-lg transition-colors group"
+                title="Dashboardga qaytish"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 group-hover:text-black transition-colors">
+                  <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <h1 className="text-4xl md:text-5xl font-medium tracking-tight">Admin Panel</h1>
+            </div>
+            <p className="text-sm text-gray-500 mt-2 ml-14">O'quvchi natijalarini boshqarish va diagnostika yaratish.</p>
+          </div>
+          
+          <div className="flex flex-wrap w-full md:w-auto gap-2">
+            <button 
+              onClick={() => navigate('/admin/omr-scanner')}
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 rounded-xl font-bold text-xs uppercase tracking-wider transition-all"
+              title="Kamera va ZipGrade orqali testlarni tekshirish"
+            >
+              <Scan className="w-4 h-4" /> OMR Skanner
+            </button>
+            <button 
+              onClick={() => navigate('/admin/omr-generator')}
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-black/10 text-neutral-700 hover:bg-neutral-50 rounded-xl font-bold text-xs uppercase tracking-wider transition-all"
+              title="Test blankasini chop etish (PDF)"
+            >
+              <Printer className="w-4 h-4 text-neutral-500" /> Varaqa PDF
+            </button>
+            <button 
+              onClick={() => setActiveTab('new')}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-5 py-3 font-semibold text-xs uppercase tracking-widest transition-all duration-300 rounded-xl border ${activeTab === 'new' ? 'bg-black text-white border-black shadow-sm' : 'bg-transparent text-gray-400 border-black/10 hover:border-black hover:text-black'}`}
+            >
+              <PlusCircle className="w-4 h-4" /> Qo'shish
+            </button>
+            <button 
+              onClick={() => setActiveTab('dashboard')}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-3 px-5 py-3 font-semibold text-xs uppercase tracking-widest transition-all duration-300 rounded-xl border ${activeTab === 'dashboard' ? 'bg-black text-white border-black shadow-sm' : 'bg-transparent text-gray-400 border-black/10 hover:border-black hover:text-black'}`}
+            >
+              <Users className="w-4 h-4" /> Barchasi
+            </button>
+          </div>
+        </div>
+
+        {activeTab === 'dashboard' ? (
+          <div className="space-y-4">
+            {allResults.length === 0 ? (
+              <div className="text-center py-16 text-[10px] tracking-widest uppercase font-semibold text-gray-400 border-b border-black/10">Hozircha natijalar yo'q.</div>
+            ) : (
+              <>
+                {/* Mobile Cards View */}
+                <div className="grid grid-cols-1 gap-6 md:hidden">
+                  {allResults.map(r => (
+                    <div key={r.id} className="border-b border-black/10 pb-6 flex flex-col gap-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="text-lg font-medium">{r.studentName}</div>
+                          <div className="text-xs text-gray-500 tracking-wider uppercase mt-1">{new Date(r.createdAt).toLocaleDateString()} &bull; {r.grade}-sinf</div>
+                        </div>
+                        <span className={`text-xl font-medium ${r.totalScore >= 50 ? 'text-black' : 'text-gray-400'}`}>
+                          {r.totalScore}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center bg-white/50 backdrop-blur-sm p-4 rounded-xl border border-white/50">
+                        <div>
+                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">ID / LOGIN</div>
+                          <div className="font-mono text-sm tracking-wider text-black">{r.id}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">PAROL (PIN)</div>
+                          <div className="font-mono text-sm tracking-wider text-black">{r.pin || '---'}</div>
+                        </div>
+                      </div>
+                      <button onClick={() => navigate('/summary/' + r.id)} className="w-full mt-2 border border-black text-black hover:bg-black hover:text-white py-3 text-xs tracking-[0.2em] uppercase font-bold transition-colors">
+                        Xulosani Ko'rish
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left whitespace-nowrap border-collapse">
+                    <thead>
+                      <tr>
+                        <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">O'quvchi</th>
+                        <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Sinf / Sana</th>
+                        <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Natija</th>
+                        <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Login (ID)</th>
+                        <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Parol (PIN)</th>
+                        <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest text-right">Amallar</th>
+                      </tr>
+                    </thead>
+                    <motion.tbody
+                      initial="hidden"
+                      animate="show"
+                      variants={{
+                        hidden: { opacity: 0 },
+                        show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+                      }}
+                    >
+                      {allResults.map(r => (
+                        <motion.tr 
+                          variants={{
+                            hidden: { opacity: 0, y: 10 },
+                            show: { opacity: 1, y: 0, transition: { duration: 0.3 } }
+                          }}
+                          key={r.id} 
+                          className="group hover:bg-white/50 transition-colors border-b border-black/10"
+                        >
+                          <td className="py-6 pl-4 md:pl-0 group-hover:pl-4 transition-all duration-300">
+                            <div className="text-lg md:text-xl font-medium tracking-tight capitalize">{r.studentName}</div>
+                          </td>
+                          <td className="py-6 pl-6">
+                            <div className="text-base text-black">{r.grade}-sinf</div>
+                            <div className="text-xs text-gray-500 mt-1 tracking-wider uppercase">{new Date(r.createdAt).toLocaleDateString()}</div>
+                          </td>
+                          <td className="py-6 pl-6">
+                            <span className={`text-2xl font-medium tracking-tight ${r.totalScore >= 50 ? 'text-black' : 'text-gray-400'}`}>
+                              {r.totalScore}<span className="text-sm font-normal text-gray-400 ml-1">%</span>
+                            </span>
+                          </td>
+                          <td className="py-6 pl-6 font-mono text-sm tracking-widest text-black">{r.id}</td>
+                          <td className="py-6 pl-6 font-mono text-sm tracking-widest text-gray-500">{r.pin || '---'}</td>
+                          <td className="py-6 pr-4 md:pr-0 text-right">
+                            <button onClick={() => navigate('/summary/' + r.id)} className="border border-black/10 hover:border-black text-black px-4 py-2 text-[10px] uppercase tracking-widest font-bold transition-colors rounded-lg">
+                              Ko'rish
+                            </button>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </motion.tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          /* New Result Tab */
+          generatedCredentials ? (
+            <div className="border border-black/10 p-8 md:p-16 text-center space-y-12">
+              <div>
+                <div className="w-16 h-16 border border-black/10 text-black flex items-center justify-center mx-auto mb-6">
+                  <Check className="w-6 h-6" />
+                </div>
+                <h2 className="text-3xl md:text-4xl font-medium tracking-tight">Muvaffaqiyatli saqlandi</h2>
+                <p className="text-gray-500 text-sm mt-4 tracking-wider uppercase">O'quvchiga quyidagi ma'lumotlarni taqdim eting</p>
+              </div>
               
+              <div className="flex flex-col sm:flex-row justify-center gap-6">
+                <div className="p-6 md:p-8 border border-white/50 bg-white/50 backdrop-blur-md rounded-2xl flex-1 max-w-[280px] mx-auto sm:mx-0 w-full shadow-sm">
+                  <div className="text-[10px] font-bold text-gray-500 mb-3 uppercase tracking-[0.3em]">Login (ID)</div>
+                  <div className="text-4xl md:text-5xl font-medium tracking-widest text-black select-all">{generatedCredentials.id}</div>
+                </div>
+                <div className="p-6 md:p-8 border border-white/50 bg-white/50 backdrop-blur-md rounded-2xl flex-1 max-w-[280px] mx-auto sm:mx-0 w-full shadow-sm">
+                  <div className="text-[10px] font-bold text-gray-500 mb-3 uppercase tracking-[0.3em]">Parol (PIN)</div>
+                  <div className="text-4xl md:text-5xl font-medium tracking-widest text-black select-all">{generatedCredentials.pin}</div>
+                </div>
+              </div>
+              
+              <div className="pt-8 border-t border-black/10 flex flex-col sm:flex-row justify-center gap-4">
+                <button onClick={() => navigate('/summary/' + generatedCredentials.id)} className="w-full sm:w-auto bg-black text-white px-8 py-4 text-xs font-bold tracking-[0.2em] uppercase hover:bg-black/80 transition-colors">
+                  Xulosani ko'rish
+                </button>
+                <button 
+                  onClick={() => {
+                    setStudentName('');
+                    setGrade('5');
+                    const initial: Record<number, boolean> = {};
+                    currentBlueprint.forEach(q => initial[q.id] = false);
+                    setQuestionResults(initial);
+                    setGeneratedCredentials(null);
+                  }} 
+                  className="w-full sm:w-auto bg-transparent text-black border border-black/20 px-8 py-4 text-xs font-bold tracking-[0.2em] uppercase hover:border-black transition-colors"
+                >
+                  Yangi qo'shish
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="flex flex-col gap-16 md:gap-24">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-24">
+                <div className="md:col-span-4">
+                  <h2 className="text-[10px] font-semibold tracking-[0.3em] uppercase text-gray-500 mb-6">O'quvchi ma'lumotlari</h2>
+                </div>
+                <div className="md:col-span-8 flex flex-col md:flex-row gap-8 md:gap-12">
+                  <div className="flex-1">
+                    <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-4">Ism-familiya</label>
+                    <input 
+                      type="text" 
+                      value={studentName}
+                      onChange={e => setStudentName(e.target.value)}
+                      placeholder="Masalan: Abdulaziz Telmonov"
+                      className="w-full border-b border-black/20 pb-3 bg-transparent text-lg md:text-xl focus:outline-none focus:border-black transition-colors placeholder:text-gray-300"
+                      required
+                    />
+                  </div>
+                  <div className="w-full md:w-48 relative">
+                    <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-gray-400 mb-4">Sinf</label>
+                    <div 
+                      onClick={() => setIsSelectOpen(!isSelectOpen)}
+                      className="w-full border-b border-black/20 pb-3 bg-transparent text-lg md:text-xl cursor-pointer flex justify-between items-center transition-colors hover:border-black"
+                    >
+                      <span>{grade}-sinf</span>
+                      <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isSelectOpen ? 'rotate-180' : ''}`} />
+                    </div>
+                    
+                    {isSelectOpen && (
+                      <div className="absolute top-full left-0 w-full mt-2 bg-white border border-black/10 shadow-xl z-50">
+                        {[5, 6, 7, 8, 9, 10, 11].map(g => (
+                          <div 
+                            key={g}
+                            onClick={() => {
+                              setGrade(String(g));
+                              setIsSelectOpen(false);
+                            }}
+                            className="px-6 py-4 text-lg hover:bg-[#f8f8f8] hover:pl-8 transition-all cursor-pointer border-b border-black/5 last:border-0"
+                          >
+                            {g}-sinf
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Questions Section */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-24 border-t border-black/10 pt-16">
+                <div className="md:col-span-4">
+                  <div className="md:sticky md:top-32 flex flex-col gap-6">
+                    <div>
+                      <h2 className="text-[10px] font-semibold tracking-[0.3em] uppercase text-gray-500 mb-2">Imtihon savollari</h2>
+                      <p className="text-xl font-medium tracking-tight">O'quvchi to'g'ri topgan savollarni belgilang</p>
+                    </div>
+                    
+                    <div className="flex flex-col gap-3 mt-4">
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const all: Record<number, boolean> = {};
+                          currentBlueprint.forEach(q => all[q.id] = true);
+                          setQuestionResults(all);
+                        }}
+                        className="w-full text-left py-3 border-b border-black/10 text-xs font-bold uppercase tracking-[0.2em] hover:pl-2 hover:border-black transition-all text-gray-400 hover:text-black"
+                      >
+                        Barchasini belgilash
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const none: Record<number, boolean> = {};
+                          currentBlueprint.forEach(q => none[q.id] = false);
+                          setQuestionResults(none);
+                        }}
+                        className="w-full text-left py-3 border-b border-black/10 text-xs font-bold uppercase tracking-[0.2em] hover:pl-2 hover:border-black transition-all text-gray-400 hover:text-black"
+                      >
+                        Barchasini tozalash
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => setFastMode(!fastMode)}
+                        className={`w-full text-left py-3 border-b border-black/10 text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-between mt-4 ${fastMode ? 'text-black border-black' : 'text-gray-400 hover:text-black hover:pl-2 hover:border-black'}`}
+                      >
+                        <span>Tezkor kiritish {fastMode && '(ON)'}</span>
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => setIsEditorOpen(true)}
+                        className="w-full text-left py-3 border-b border-black/10 text-xs font-bold uppercase tracking-[0.2em] hover:pl-2 hover:border-black transition-all text-gray-400 hover:text-black flex items-center justify-between mt-4"
+                      >
+                        <span>Shablonni o'zgartirish</span>
+                        <Settings2 className="w-4 h-4" />
+                      </button>
+                      
+                      
                     </div>
                   </div>
                 </div>
