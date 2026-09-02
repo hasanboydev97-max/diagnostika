@@ -281,7 +281,7 @@ export const submitTestResult = async (req, res) => {
         
         if ((anthropicKey || apiKey || groqKey) && test && data.questions) {
           const attempts = [];
-          if (anthropicKey) attempts.push({ provider: 'anthropic', model: 'claude-3-5-sonnet-20240620' });
+          if (anthropicKey) attempts.push({ provider: 'anthropic', model: 'claude-sonnet-4-6' });
           if (apiKey) attempts.push({ provider: 'gemini', model: 'gemini-1.5-flash' });
           if (groqKey) attempts.push({ provider: 'groq', model: 'llama3-70b-8192' });
           
@@ -564,7 +564,7 @@ Return ONLY the JSON object. Begin generation now.`;
       const groqKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
       const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 
-      const anthropicModels = ['claude-3-5-sonnet-20240620'];
+      const anthropicModels = ['claude-sonnet-4-6'];
       const geminiModels = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'];
       const groqModels = ['llama3-70b-8192', 'llama3-8b-8192'];
 
@@ -772,7 +772,7 @@ export const classAnalysis = async (req, res) => {
     const { GoogleGenerativeAI } = await import("@google/generative-ai");
 
     const attempts = [];
-    if (anthropicKey) attempts.push({ provider: 'anthropic', model: 'claude-3-5-sonnet-20240620' });
+    if (anthropicKey) attempts.push({ provider: 'anthropic', model: 'claude-sonnet-4-6' });
     if (apiKey) attempts.push({ provider: 'gemini', model: 'gemini-1.5-flash' });
     if (groqKey) attempts.push({ provider: 'groq', model: 'llama3-70b-8192' });
 
