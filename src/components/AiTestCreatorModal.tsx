@@ -15,6 +15,7 @@ interface Props {
   initialGrade: string;
   blueprint: QuestionBlueprint[];
   onClose: () => void;
+  teacherSubject?: string;
 }
 
 interface SubjectCount {
@@ -23,7 +24,7 @@ interface SubjectCount {
   selected: boolean;
 }
 
-export default function AiTestCreatorModal({ initialGrade, blueprint, onClose }: Props) {
+export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, teacherSubject }: Props) {
   const navigate = useNavigate();
   const [activeMode, setActiveMode] = useState<'simple' | 'matrix'>('matrix');
   
@@ -32,7 +33,7 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose }:
   const [topic, setTopic] = useState('');
   
   // Simple Mode state
-  const [simpleSubject, setSimpleSubject] = useState('Barchasi (Diagnostika)');
+  const [simpleSubject, setSimpleSubject] = useState(teacherSubject || 'Barchasi (Diagnostika)');
   const [simpleQuestionCount, setSimpleQuestionCount] = useState<number>(15);
   const [simpleDifficulty, setSimpleDifficulty] = useState<string>('Aralash');
 

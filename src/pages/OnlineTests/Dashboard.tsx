@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { Sparkles,  useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChevronRight, FileText, Search, Trash2, ShieldAlert, Crown, Gamepad2, Scan, Printer } from 'lucide-react';
+import { Plus, ChevronRight, FileText, Search, Trash2, ShieldAlert, Crown, Gamepad2, Scan, Printer  } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { getAuthHeaders, getToken, getTeacher, fetchCurrentTeacher } from '../../lib/auth';
 import MeshGradient from '../../components/ui/MeshGradient';
 import TeacherProfileModal from '../../components/TeacherProfileModal';
+import AiTestCreatorModal from '../../components/AiTestCreatorModal';
 import MagicButton from '../../components/MagicButton';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -21,6 +22,7 @@ interface OnlineTest {
 export default function OnlineTestsDashboard() {
   const [tests, setTests] = useState<OnlineTest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
@@ -182,8 +184,16 @@ export default function OnlineTestsDashboard() {
             />
           </div>
           <div className="w-full md:w-auto flex flex-wrap sm:flex-nowrap gap-2.5">
-            <button
-              onClick={() => navigate('/admin/omr-scanner')}
+                          <button
+                onClick={() => setIsAiModalOpen(true)}
+                className="bg-black border border-black/80 text-white hover:bg-neutral-800 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-xs"
+                title="AI orqali sizning faningizga mos test yaratish"
+              >
+                <Sparkles size={16} className="text-amber-300" />
+                AI Test Yaratish
+              </button>
+              <button
+                onClick={() => navigate('/admin/omr-scanner')}
               className="bg-indigo-50 border border-indigo-200/80 text-indigo-700 hover:bg-indigo-100/80 px-4 py-3 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-xs"
               title="Kamera va ZipGrade orqali testlarni tekshirish"
             >
@@ -315,6 +325,18 @@ export default function OnlineTestsDashboard() {
         teacher={teacher}
         onTeacherUpdate={(updatedTeacher) => setTeacher(updatedTeacher)}
       />
+    
+      {isAiModalOpen && (
+        <AiTestCreatorModal
+          initialGrade="5"
+          blueprint={[]}
+          teacherSubject={teacher?.subject || ''}
+          onClose={() => {
+            setIsAiModalOpen(false);
+            fetchTests(); // Refresh the list in case a test was saved!
+          }}
+        />
+      )}
     </div>
   );
 }
