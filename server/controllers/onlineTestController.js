@@ -275,12 +275,17 @@ export const submitTestResult = async (req, res) => {
     // Attempt AI Generation safely
     let aiFeedback = "Ajoyib natija! AI tizimi hozirda band bo'lgani sababli batafsil xulosa berolmadi, ammo yechimlaringiz muvaffaqiyatli saqlandi.";
     try {
-      const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-      if (apiKey && test && data.questions) {
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-8b'];
+      const anthropicKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
+        const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+        const groqKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
         
-        const prompt = `O'quvchi test ishladi. 
+        if ((anthropicKey || apiKey || groqKey) && test && data.questions) {
+          const attempts = [];
+          if (anthropicKey) attempts.push({ provider: 'anthropic', model: 'claude-3-5-sonnet-20240620' });
+          if (apiKey) attempts.push({ provider: 'gemini', model: 'gemini-1.5-flash' });
+          if (groqKey) attempts.push({ provider: 'groq', model: 'llama3-70b-8192' });
+          
+          const prompt = `O'quvchi test ishladi. 
 Test nomi: ${test.title}
 O'quvchi: ${data.studentName}
 Natija: ${data.score} / ${data.totalScore}
@@ -294,20 +299,60 @@ ${JSON.stringify(data.questions.map((q, i) => ({
 
 Ushbu natijalarga asosan o'quvchiga o'zbek tilida qisqa (2-3 ta gap) dalda beruvchi va qaysi mavzularda e'tiborli bo'lishi kerakligi haqida maslahat (feedback) yozing. Hech qanday JSON yozmang, faqat matn.`;
 
-        for (const modelName of modelsToTry) {
-          try {
-            console.log(`AI Feedback uchun model sinab ko'rilmoqda: ${modelName}...`);
-            const model = genAI.getGenerativeModel({ model: modelName });
-            const result = await model.generateContent("Start generation.");
-            const response = await result.response;
-            aiFeedback = response.text();
-            console.log(`Muvaffaqiyatli! ${modelName} orqali javob olindi.`);
-            break;
-          } catch (modelError) {
-            console.warn(`Model xatosi (${modelName}):`, modelError.message);
+          for (const task of attempts) {
+            try {
+              console.log(`[Feedback AI] ${task.provider.toUpperCase()} orqali fikr olinmoqda...`);
+              if (task.provider === 'anthropic') {
+                const res = await fetch('https://api.anthropic.com/v1/messages', {
+                  method: 'POST',
+                  headers: {
+                    'x-api-key': anthropicKey,
+                    'anthropic-version': '2023-06-01',
+                    'content-type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    model: task.model,
+                    max_tokens: 1024,
+                    temperature: 0.7,
+                    system: "Sen tajribali ustozsan. O'quvchiga dalda ber va maslahat yoz. Matn qisqa bo'lsin.",
+                    messages: [{ role: "user", content: prompt }]
+                  })
+                });
+                const responseData = await res.json();
+                if (!res.ok) throw new Error(responseData.error?.message || "Anthropic xatosi");
+                aiFeedback = responseData.content[0].text;
+              } else if (task.provider === 'groq') {
+                const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${groqKey}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    model: task.model,
+                    messages: [
+                      { role: "system", content: "Sen tajribali ustozsan. Faqat matnli maslahat yoz." },
+                      { role: "user", content: prompt }
+                    ],
+                    temperature: 0.7
+                  })
+                });
+                const responseData = await res.json();
+                if (!res.ok) throw new Error(responseData.error?.message || "Groq xatosi");
+                aiFeedback = responseData.choices[0].message.content;
+              } else {
+                const genAI = new GoogleGenerativeAI(apiKey);
+                const model = genAI.getGenerativeModel({ model: task.model });
+                const result = await model.generateContent(prompt);
+                aiFeedback = result.response.text();
+              }
+              console.log(`Muvaffaqiyatli! ${task.provider} orqali javob olindi.`);
+              break;
+            } catch (modelError) {
+              console.warn(`Model xatosi (${task.provider}):`, modelError.message);
+            }
           }
         }
-      }
     } catch (aiError) {
       console.error('AI Feedback skipped/failed:', aiError.message);
     }
@@ -505,7 +550,7 @@ ANSWER QUALITY RULES
 Return ONLY the JSON object. Begin generation now.`;
     }
 
-    // --- Senior Level Batching Logic ---
+    // --- Senior Level Batching Logic (Anthropic -> Gemini -> Groq) ---
     async function generateChunkWithRetry(chunkTopic, chunkCount) {
       const prompt = buildTestPrompt({ 
         topic: chunkTopic, 
@@ -515,16 +560,21 @@ Return ONLY the JSON object. Begin generation now.`;
       });
 
       let lastError = "";
+      const anthropicKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
       const groqKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
-      const geminiModels = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash', 'gemini-flash-latest', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
-      const groqModels = ['qwen/qwen3.8-27b', 'groq/compound', 'openai/gpt-oss-120b'];
+      const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+
+      const anthropicModels = ['claude-3-5-sonnet-20240620'];
+      const geminiModels = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'];
+      const groqModels = ['llama3-70b-8192', 'llama3-8b-8192'];
 
       const attempts = [];
-      if (groqKey) groqModels.forEach(m => attempts.push({ provider: 'groq', model: m }));
+      if (anthropicKey) anthropicModels.forEach(m => attempts.push({ provider: 'anthropic', model: m }));
       if (apiKey) geminiModels.forEach(m => attempts.push({ provider: 'gemini', model: m }));
+      if (groqKey) groqModels.forEach(m => attempts.push({ provider: 'groq', model: m }));
 
       if (attempts.length === 0) {
-        return { success: false, error: "Nafaqat Gemini, balki Groq API kaliti ham kiritilmagan!" };
+        return { success: false, error: "Anthropic, Gemini yoki Groq API kalitlaridan biri kiritilishi shart!" };
       }
 
       for (const task of attempts) {
@@ -533,7 +583,28 @@ Return ONLY the JSON object. Begin generation now.`;
             console.log(`[AI Gen] ${task.provider.toUpperCase()} (${task.model}) — urinish ${attempt}/2...`);
             let rawText = "";
 
-            if (task.provider === 'groq') {
+            if (task.provider === 'anthropic') {
+              const res = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                  'x-api-key': anthropicKey,
+                  'anthropic-version': '2023-06-01',
+                  'content-type': 'application/json'
+                },
+                body: JSON.stringify({
+                  model: task.model,
+                  max_tokens: 4096,
+                  temperature: 0.2,
+                  system: "RETURN ONLY A VALID JSON OBJECT MATCHING THE REQUESTED SCHEMA. NO MARKDOWN, NO EXPLANATIONS.\n\n" + prompt + "\n\nJSON Schema:\n" + JSON.stringify(aiSchema),
+                  messages: [
+                    { role: "user", content: "Generate the questions now. Output strictly raw JSON, nothing else." }
+                  ]
+                })
+              });
+              const data = await res.json();
+              if (!res.ok) throw new Error(data.error?.message || "Anthropic xatosi");
+              rawText = data.content[0].text;
+            } else if (task.provider === 'groq') {
               const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -690,84 +761,88 @@ export const classAnalysis = async (req, res) => {
       return res.status(400).json({ error: 'Tahlil qilish uchun yetarlicha natijalar yo\'q' });
     }
 
+    const anthropicKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
     const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: 'Gemini API key is missing' });
-    
-    const { GoogleGenerativeAI } = await import("@google/generative-ai");
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash',
-      generationConfig: {
-        responseMimeType: "application/json"
-      }
-    });
+    const groqKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
 
-    // ✅ 11. DRY: isAnswerCorrect artiq bu yerda takrorlanmaydi — server/utils/scoring.js dan import qilingan
-
-    // Calculate stats per question
-    const stats = test.questions.map((q, i) => {
-      let correct = 0;
-      results.forEach(r => {
-        if (!r.questions) return;
-        const shuffledIndex = r.questions.findIndex(rq => rq.questionText === q.questionText);
-        if (shuffledIndex !== -1) {
-          const studentAns = (r.answers || {})[shuffledIndex];
-          const rq = r.questions[shuffledIndex];
-          if (isAnswerCorrect(studentAns, rq.correctOption, rq.options || [])) {
-            correct++;
-          }
-        }
-      });
-      const perc = Math.round((correct / results.length) * 100);
-      return {
-        questionText: q.questionText,
-        correctOption: q.correctOption,
-        percentage: perc,
-        errorPercentage: 100 - perc
-      };
-    });
-
-    const weakStudentsList = results
-      .filter(r => (r.score / (r.totalScore || test.questions.length)) < 0.7)
-      .map(r => r.studentName)
-      .join(', ');
-
-    const prompt = `Siz maktab o'qituvchilari uchun yordamchi sun'iy intellektsiz.
-Quyida "${test.title}" (${test.subject}) testi bo'yicha o'quvchilarning natijalari berilgan. Jami ${results.length} ta o'quvchi ishtirok etgan.
-
-Savollar va o'zlashtirish foizlari:
-${stats.map((s, i) => `${i+1}. ${s.questionText.substring(0, 50)}... - Xato qilish ko'rsatkichi: ${s.errorPercentage}%`).join('\n')}
-
-Zaif natija ko'rsatgan o'quvchilar: ${weakStudentsList || "Yo'q"}
-
-Iltimos, quyidagi JSON formatida qat'iy javob qaytaring (Boshqa matn yozmang!):
-{
-  "weakTopics": [
-    { "topic": "Mavzu nomi (masalan: Diskriminant formulasi)", "errorPercentage": 68 }
-  ],
-  "recommendation": "O'qituvchiga qisqa, aniq maslahat (1 gap)",
-  "studentPlans": [
-    { "studentName": "Ism", "plan": "O'quvchiga atalgan 1 ta shaxsiy maslahat gap" }
-  ],
-  "generatedQuestions": [
-    {
-      "questionText": "Yangi savol matni (faqat zaif mavzularga oid bo'lishi shart)",
-      "options": ["A variant", "B variant", "C variant", "D variant"],
-      "correctOption": "A variant",
-      "subtopic": "qaysi zaif mavzuga tegishliligi"
+    if (!anthropicKey && !apiKey && !groqKey) {
+      return res.status(500).json({ error: 'Hech qanday AI API kaliti (Anthropic, Gemini, Groq) topilmadi' });
     }
-  ],
-  "studentGuide": "Markdown formatidagi batafsil umumiy o'quv qo'llanma matni..."
-}
-Qoidalar:
-1. "weakTopics" ichida eng yuqori "Xato qilish ko'rsatkichi"ga ega bo'lgan 2-3 ta mavzuni foizi bilan yozing.
-2. "studentPlans" ro'yxatida faqatgina yuqorida nomi keltirilgan zaif o'quvchilarga (agar mavjud bo'lsa) nima qilishlari kerakligini aniq ko'rsating.
-3. "generatedQuestions" ichida aynan xato qilingan zaif mavzular bo'yicha jami 5 ta yepyangi savol bo'lsin.
-4. "studentGuide" ichida ushbu testdagi eng muhim mavzular, o'quvchilar eng ko'p xato qilgan joylar tahlili, qisqacha nazariy tushuntirishlar va o'rganish bo'yicha amaliy maslahatlarni qamrab oluvchi Mukammal (Senior level) kengaytirilgan qo'llanmani Markdown formatida yozing. Kamida 300 so'zdan iborat bo'lsin.
-`;
 
-    const aiRes = await model.generateContent(prompt);
-    let text = aiRes.response.text();
+    const { GoogleGenerativeAI } = await import("@google/generative-ai");
+
+    const attempts = [];
+    if (anthropicKey) attempts.push({ provider: 'anthropic', model: 'claude-3-5-sonnet-20240620' });
+    if (apiKey) attempts.push({ provider: 'gemini', model: 'gemini-1.5-flash' });
+    if (groqKey) attempts.push({ provider: 'groq', model: 'llama3-70b-8192' });
+
+    let text = "";
+    let aiSuccess = false;
+
+    for (const task of attempts) {
+      try {
+        console.log(`[Class Analysis] ${task.provider.toUpperCase()} orqali tahlil qilinmoqda...`);
+        if (task.provider === 'anthropic') {
+          const res = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'x-api-key': anthropicKey,
+              'anthropic-version': '2023-06-01',
+              'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: task.model,
+              max_tokens: 4096,
+              temperature: 0.2,
+              system: "RETURN ONLY A VALID JSON OBJECT MATCHING THE REQUESTED FORMAT. NO MARKDOWN, NO EXPLANATIONS.",
+              messages: [{ role: "user", content: prompt }]
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error?.message || "Anthropic xatosi");
+          text = data.content[0].text;
+        } else if (task.provider === 'groq') {
+          const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${groqKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: task.model,
+              messages: [
+                { role: "system", content: "RETURN ONLY A VALID JSON OBJECT." },
+                { role: "user", content: prompt }
+              ],
+              temperature: 0.2,
+              response_format: { type: "json_object" }
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error?.message || "Groq xatosi");
+          text = data.choices[0].message.content;
+        } else {
+          const genAI = new GoogleGenerativeAI(apiKey);
+          const model = genAI.getGenerativeModel({ 
+            model: task.model,
+            generationConfig: { responseMimeType: "application/json", temperature: 0.2 }
+          });
+          const aiRes = await model.generateContent(prompt);
+          text = aiRes.response.text();
+        }
+
+        if (text && text.trim().length > 10) {
+          aiSuccess = true;
+          break; // Muvaffaqiyatli bo'lsa, loopni to'xtatamiz
+        }
+      } catch (err) {
+        console.warn(`  ✗ [Class Analysis] ${task.provider} xatosi:`, err.message);
+      }
+    }
+
+    if (!aiSuccess) {
+      return res.status(500).json({ error: 'Barcha AI taʼminotchilari (Anthropic, Gemini, Groq) javob berishdan bosh tortdi.' });
+    }
     text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
     // ✅ 12. JSON.parse try/catch — AI noto'g'ri JSON qaytarsa server crash bo'lmaydi
