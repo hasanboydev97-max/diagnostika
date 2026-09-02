@@ -478,16 +478,19 @@ Generate exactly ${questionCount} multiple-choice questions for:
   Topic(s): ${topic}
   Difficulty: ${difficulty}
 
-CRITICAL INSTRUCTIONS:
-- You MUST generate EXACTLY ${questionCount} questions. Use the "questionNumber" field to count from 1 to ${questionCount}. Do not stop until you reach ${questionCount}.
-- If multiple topics are provided (separated by commas), you MUST distribute the questions evenly across all the topics. Do not focus on just one topic.
+CRITICAL QUALITY INSTRUCTIONS (SENIOR LEVEL):
+1. ZERO DUPLICATION: You MUST NOT generate similar or duplicate questions. Every single question must test a completely unique concept, feature, or scenario within the topics. Do not repeat the same question phrasing, logic, or options.
+2. ZERO SYNTAX ERRORS: If generating questions about programming, HTML, CSS, Excel formulas, or technical tools, all code snippets MUST be 100% syntactically perfect. No missing brackets, no incorrect tags, no typos. Use standard conventions.
+3. EXACT COUNT: You MUST generate EXACTLY ${questionCount} questions. Use the "questionNumber" field to count from 1 to ${questionCount}. Do not stop until you reach ${questionCount}.
+4. EVEN DISTRIBUTION: If multiple topics are provided (separated by commas), distribute the questions evenly. Do not focus heavily on just one topic.
+5. PLAUSIBLE DISTRACTORS: Wrong options (distractors) must be realistic and challenging. Do not make them obvious jokes or entirely unrelated concepts.
+6. CLARITY: Questions must be formulated clearly and unambiguously in the Uzbek language.
 
 OUTPUT DISCIPLINE (for speed — follow strictly)
 - No preamble ("Here are your questions:"), no postamble, no markdown code
   fences around the JSON.
 - Do not restate the instructions.
-- Do not add an "explanation" field unless explicitly requested — it roughly
-  doubles output length for no benefit in a timed test context.
+- Do not add an "explanation" field unless explicitly requested.
 - Do not second-guess or revise your own answer inside the output. Generate
   once, directly, correctly.
 
@@ -540,12 +543,10 @@ GOOD:
   "questionText": "Tenglamalar sistemasini yeching: $\begin{cases} x+y=5 \\\\ x-y=1 \end{cases}$"
 
 ANSWER QUALITY RULES
-- Exactly 4 options per question, only ONE mathematically correct.
-- Distractors (wrong options) must be plausible — typical calculation
-  mistakes a student would make, not random numbers.
+- Exactly 4 options per question, only ONE mathematically and factually correct.
+- Distractors (wrong options) must be plausible — typical mistakes a student would make, not random numbers or words.
 - correctAnswerIndex must be a 0-based integer matching the correct option.
-- Do not repeat the same numeric setup across questions in this batch —
-  vary coefficients/values even within the same topic.
+- Do not repeat the same numeric setup or logic across questions in this batch — vary concepts deeply even within the same topic.
 
 Return ONLY the JSON object. Begin generation now.`;
     }
@@ -594,7 +595,7 @@ Return ONLY the JSON object. Begin generation now.`;
                 body: JSON.stringify({
                   model: task.model,
                   max_tokens: 4096,
-                  temperature: 0.2,
+                  temperature: 0.5,
                   system: "RETURN ONLY A VALID JSON OBJECT MATCHING THE REQUESTED SCHEMA. NO MARKDOWN, NO EXPLANATIONS.\n\n" + prompt + "\n\nJSON Schema:\n" + JSON.stringify(aiSchema),
                   messages: [
                     { role: "user", content: "Generate the questions now. Output strictly raw JSON, nothing else." }
@@ -617,7 +618,7 @@ Return ONLY the JSON object. Begin generation now.`;
                     { role: "system", content: prompt + "\n\nJSON Schema:\n" + JSON.stringify(aiSchema) },
                     { role: "user", content: "Generate questions." }
                   ],
-                  temperature: 0.2,
+                  temperature: 0.5,
                   response_format: { type: "json_object" }
                 })
               });
@@ -631,7 +632,7 @@ Return ONLY the JSON object. Begin generation now.`;
             } else {
               const model = genAI.getGenerativeModel({
                 model: task.model,
-                generationConfig: { responseMimeType: 'application/json', temperature: 0.2 }
+                generationConfig: { responseMimeType: 'application/json', temperature: 0.5 }
               });
               const result = await model.generateContent(prompt);
               rawText = result.response.text();
