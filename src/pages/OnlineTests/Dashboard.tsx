@@ -1,6 +1,6 @@
-import { Sparkles,  useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChevronRight, FileText, Search, Trash2, ShieldAlert, Crown, Gamepad2, Scan, Printer  } from 'lucide-react';
+import { Sparkles, Plus, ChevronRight, FileText, Search, Trash2, ShieldAlert, Crown, Gamepad2, Scan, Printer  } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { getAuthHeaders, getToken, getTeacher, fetchCurrentTeacher } from '../../lib/auth';

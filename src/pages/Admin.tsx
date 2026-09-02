@@ -5,7 +5,7 @@ import { generateDiagnosticSummary } from '../lib/gemini';
 import { useNavigate } from 'react-router-dom';
 import type { QuestionBlueprint } from '../lib/blueprint';
 import { GRADE_BLUEPRINTS } from '../lib/gradeBlueprints';
-import { Check, Settings2, Users, PlusCircle, ChevronDown, Sparkles, Scan, Printer } from 'lucide-react';
+import { Check, Settings2, Users, PlusCircle, ChevronDown, Scan, Printer } from 'lucide-react';
 import BlueprintEditorModal from '../components/BlueprintEditorModal';
 import MeshGradient from '../components/ui/MeshGradient';
 
