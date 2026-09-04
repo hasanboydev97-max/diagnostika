@@ -116,7 +116,7 @@ export default function TakeTest() {
     }
   }, [answers, timeLeft, started, studentName, currentQIndex, test?.questions]);
 
-  const fetchTest = async () => {
+  const fetchTest = async (attempt = 0) => {
     try {
       let fetchedTest = null;
       if (testId) {
@@ -132,9 +132,25 @@ export default function TakeTest() {
       }
       
       if (!fetchedTest) {
-        const res = await fetch(`${API_URL}/online-tests/${testId}`);
-        if (!res.ok) throw new Error('Test not found');
-        fetchedTest = await res.json();
+        // ✅ FIX: AbortController bilan timeout — server uyg'onishini kutamiz
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+        try {
+          const res = await fetch(`${API_URL}/online-tests/${testId}`, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (!res.ok) throw new Error(`Server xatosi: ${res.status}`);
+          fetchedTest = await res.json();
+        } catch (fetchErr: any) {
+          clearTimeout(timeoutId);
+          // ✅ RETRY: Cold start yoki vaqtinchalik xato bo'lsa, 3 marta qayta urinib ko'ramiz
+          if (attempt < 3) {
+            const delay = (attempt + 1) * 1500; // 1.5s, 3s, 4.5s
+            console.warn(`Test yuklashda xato, ${delay}ms kutib qayta urinilmoqda... (${attempt + 1}/3)`);
+            setTimeout(() => fetchTest(attempt + 1), delay);
+            return; // setLoading(false) chaqirmaymiz — hali urinmoqdamiz
+          }
+          throw fetchErr;
+        }
       }
 
       // Check localStorage for previously shuffled questions
@@ -172,12 +188,13 @@ export default function TakeTest() {
       checkTimeLimit(fetchedTest);
     } catch (error) {
       console.error(error);
-      toast.error('Test topilmadi');
+      toast.error('Test yuklanmadi. Iltimos, sahifani yangilang.');
       navigate('/online-tests');
     } finally {
       setLoading(false);
     }
   };
+
 
   const checkTimeLimit = (testData: any) => {
     const now = new Date();
@@ -395,14 +412,34 @@ export default function TakeTest() {
     };
 
     try {
-      const res = await fetch(`${API_URL}/online-test-results`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(resultPayload)
-      });
-      if (!res.ok) {
+      // ✅ FIX: 30 soniyalik timeout — server javob bermasa qayta urinamiz
+      let submitRes = null;
+      let lastErr = null;
+      for (let retry = 0; retry <= 2; retry++) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000);
+          submitRes = await fetch(`${API_URL}/online-test-results`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(resultPayload),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          break; // Muvaffaqiyatli — loopdan chiqamiz
+        } catch (retryErr: any) {
+          lastErr = retryErr;
+          if (retry < 2) {
+            console.warn(`Submit urinish ${retry + 1} muvaffaqiyatsiz, qayta urinilmoqda...`);
+            await new Promise(r => setTimeout(r, (retry + 1) * 2000));
+          }
+        }
+      }
+      if (!submitRes) throw lastErr || new Error('Server bilan aloqa o\'rnatilmadi');
+
+      if (!submitRes.ok) {
         let errMsg = 'Server xatosi';
-        try { const d = await res.json(); errMsg = d.error || errMsg; } catch { errMsg = `Server xatosi (${res.status})`; }
+        try { const d = await submitRes.json(); errMsg = d.error || errMsg; } catch { errMsg = `Server xatosi (${submitRes.status})`; }
         throw new Error(errMsg);
       }
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
@@ -410,6 +447,7 @@ export default function TakeTest() {
       try { sessionStorage.setItem(`result_${resultId}`, JSON.stringify(resultPayload)); } catch {}
       toast.success('Test muvaffaqiyatli yakunlandi!', { id: toastId });
       navigate(`/online-tests/results/${resultId}`, { state: { resultData: resultPayload } });
+
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Xatolik yuz berdi. Iltimos qayta urinib ko'ring.", { id: toastId });

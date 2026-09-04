@@ -288,20 +288,40 @@ export const submitTestResult = async (req, res) => {
       }
     }
 
-    // Attempt AI Generation safely
-    let aiFeedback = "Ajoyib natija! AI tizimi hozirda band bo'lgani sababli batafsil xulosa berolmadi, ammo yechimlaringiz muvaffaqiyatli saqlandi.";
-    try {
-      const anthropicKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
+    // ✅ KRITIK FIX: Natijani BIRINCHI tez saqlaymiz, AI feedbackni background'da ishlaymiz.
+    // Bu "qotib qolish" va "Failed" muammolarini hal qiladi.
+
+    // Upsert: agar bir xil id bilan ikki marta so'rov kelsa (foydalanuvchi qayta bosganida),
+    // MongoServerError: duplicate key o'rniga — shunchaki yangilaydi. Bu "Failed" xatosini to'xtatadi.
+    const defaultFeedback = "Natijangiz saqlandi! AI batafsil tavsiyalarni tayyorlayapti, natijangizni yangilasangiz ko'rishingiz mumkin.";
+    data.aiFeedback = defaultFeedback;
+
+    await OnlineTestResult.findOneAndUpdate(
+      { id: data.id },
+      { $setOnInsert: data },
+      { upsert: true, new: true }
+    );
+
+    // Foydalanuvchiga DARHOL javob qaytaramiz — AI ni kutmaymiz!
+    res.status(201).json({ message: 'Result saved successfully', id: data.id, aiFeedback: defaultFeedback });
+
+    // ── AI feedback background'da ishlaydi (fire-and-forget) ──────────────
+    // Bu blok foydalanuvchiga javob berilgandan KEYIN ishlaydi.
+    // Xato bo'lsa ham foydalanuvchiga ta'siri yo'q.
+    (async () => {
+      try {
+        const anthropicKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
         const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
         const groqKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
-        
-        if ((anthropicKey || apiKey || groqKey) && test && data.questions) {
-          const attempts = [];
-          if (anthropicKey) attempts.push({ provider: 'anthropic', model: 'claude-sonnet-4-6' });
-          if (apiKey) attempts.push({ provider: 'gemini', model: 'gemini-1.5-flash' });
-          if (groqKey) attempts.push({ provider: 'groq', model: 'llama3-70b-8192' });
-          
-          const prompt = `O'quvchi test ishladi. 
+
+        if (!((anthropicKey || apiKey || groqKey) && test && data.questions)) return;
+
+        const attempts = [];
+        if (anthropicKey) attempts.push({ provider: 'anthropic', model: 'claude-sonnet-4-6' });
+        if (apiKey) attempts.push({ provider: 'gemini', model: 'gemini-1.5-flash' });
+        if (groqKey) attempts.push({ provider: 'groq', model: 'llama3-70b-8192' });
+
+        const prompt = `O'quvchi test ishladi. 
 Test nomi: ${test.title}
 O'quvchi: ${data.studentName}
 Natija: ${data.score} / ${data.totalScore}
@@ -315,74 +335,55 @@ ${JSON.stringify(data.questions.map((q, i) => ({
 
 Ushbu natijalarga asosan o'quvchiga o'zbek tilida qisqa (2-3 ta gap) dalda beruvchi va qaysi mavzularda e'tiborli bo'lishi kerakligi haqida maslahat (feedback) yozing. Hech qanday JSON yozmang, faqat matn.`;
 
-          for (const task of attempts) {
-            try {
-              console.log(`[Feedback AI] ${task.provider.toUpperCase()} orqali fikr olinmoqda...`);
-              if (task.provider === 'anthropic') {
-                const res = await fetch('https://api.anthropic.com/v1/messages', {
-                  method: 'POST',
-                  headers: {
-                    'x-api-key': anthropicKey,
-                    'anthropic-version': '2023-06-01',
-                    'content-type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    model: task.model,
-                    max_tokens: 1024,
-                    temperature: 0.7,
-                    system: "Sen tajribali ustozsan. O'quvchiga dalda ber va maslahat yoz. Matn qisqa bo'lsin.",
-                    messages: [{ role: "user", content: prompt }]
-                  })
-                });
-                const responseData = await res.json();
-                if (!res.ok) throw new Error(responseData.error?.message || "Anthropic xatosi");
-                aiFeedback = responseData.content[0].text;
-              } else if (task.provider === 'groq') {
-                const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                  method: 'POST',
-                  headers: {
-                    'Authorization': `Bearer ${groqKey}`,
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    model: task.model,
-                    messages: [
-                      { role: "system", content: "Sen tajribali ustozsan. Faqat matnli maslahat yoz." },
-                      { role: "user", content: prompt }
-                    ],
-                    temperature: 0.7
-                  })
-                });
-                const responseData = await res.json();
-                if (!res.ok) throw new Error(responseData.error?.message || "Groq xatosi");
-                aiFeedback = responseData.choices[0].message.content;
-              } else {
-                const genAI = new GoogleGenerativeAI(apiKey);
-                const model = genAI.getGenerativeModel({ model: task.model });
-                const result = await model.generateContent(prompt);
-                aiFeedback = result.response.text();
-              }
-              console.log(`Muvaffaqiyatli! ${task.provider} orqali javob olindi.`);
-              break;
-            } catch (modelError) {
-              console.warn(`Model xatosi (${task.provider}):`, modelError.message);
+        let aiFeedback = null;
+        for (const task of attempts) {
+          try {
+            console.log(`[BG AI] ${task.provider.toUpperCase()} orqali fikr olinmoqda...`);
+            if (task.provider === 'anthropic') {
+              const r = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: { 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+                body: JSON.stringify({ model: task.model, max_tokens: 1024, temperature: 0.7,
+                  system: "Sen tajribali ustozsan. O'quvchiga dalda ber va maslahat yoz. Matn qisqa bo'lsin.",
+                  messages: [{ role: 'user', content: prompt }] })
+              });
+              const rd = await r.json();
+              if (!r.ok) throw new Error(rd.error?.message || 'Anthropic xatosi');
+              aiFeedback = rd.content[0].text;
+            } else if (task.provider === 'groq') {
+              const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: task.model, temperature: 0.7,
+                  messages: [{ role: 'system', content: "Sen tajribali ustozsan. Faqat matnli maslahat yoz." }, { role: 'user', content: prompt }] })
+              });
+              const rd = await r.json();
+              if (!r.ok) throw new Error(rd.error?.message || 'Groq xatosi');
+              aiFeedback = rd.choices[0].message.content;
+            } else {
+              const genAI = new GoogleGenerativeAI(apiKey);
+              const model = genAI.getGenerativeModel({ model: task.model });
+              const result = await model.generateContent(prompt);
+              aiFeedback = result.response.text();
             }
+            console.log(`[BG AI] Muvaffaqiyatli! ${task.provider} orqali javob olindi.`);
+            break;
+          } catch (modelError) {
+            console.warn(`[BG AI] Model xatosi (${task.provider}):`, modelError.message);
           }
         }
-    } catch (aiError) {
-      console.error('AI Feedback skipped/failed:', aiError.message);
-    }
 
-    data.aiFeedback = aiFeedback;
+        if (aiFeedback) {
+          await OnlineTestResult.findOneAndUpdate({ id: data.id }, { $set: { aiFeedback } });
+          console.log(`[BG AI] aiFeedback DB ga yozildi. id=${data.id}`);
+        }
+      } catch (bgErr) {
+        console.error('[BG AI] Background AI xatosi:', bgErr.message);
+      }
 
-    // Securely save to MongoDB FIRST before sending success response
-    const resultDoc = new OnlineTestResult(data);
-    await resultDoc.save();
-    
-    // Broadcast to Telegram subscribers
-    import('../index.js').then(m => m.broadcastResultToTelegram?.(data)).catch(() => {});
-
-    res.status(201).json({ message: 'Result saved successfully', id: data.id, aiFeedback });
+      // Telegram broadcast ham background'da
+      import('../index.js').then(m => m.broadcastResultToTelegram?.(data)).catch(() => {});
+    })();
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

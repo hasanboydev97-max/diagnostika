@@ -65,10 +65,11 @@ const authLimiter = rateLimit({
   message: { error: 'Juda ko\'p urinish. 15 daqiqadan so\'ng qayta urinib ko\'ring.' }
 });
 
-// Umumiy API uchun: 15 daqiqada 300 ta so'rov
+// Umumiy API uchun: 15 daqiqada 1500 ta so'rov
+// (30+ o'quvchi bir vaqtda test ishlaganda rate limit muammosi bo'lmasin)
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: 1500,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Juda ko\'p so\'rov. Biroz kutib turing.' }
