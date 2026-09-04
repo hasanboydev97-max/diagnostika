@@ -737,13 +737,16 @@ Return ONLY the JSON object. Begin generation now.`;
     // Removed sanitizeQuestions. The robust generation handles quality now.
     // Shuffle options to ensure the correct answer is randomly distributed among options (A, B, C, D)
     const sanitizedQuestions = rawQuestions.map(q => {
-      if (Array.isArray(q.options)) {
+      if (Array.isArray(q.options) && q.correctOption !== undefined) {
         const shuffled = [...q.options];
         for (let i = shuffled.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
         q.options = shuffled;
+        // ✅ FIX: correctOption matn sifatida saqlanadi (to'g'ri),
+        // lekin correctAnswerIndex ham yangilanishi kerak — izchillik uchun
+        q.correctAnswerIndex = shuffled.findIndex(opt => opt === q.correctOption);
       }
       return q;
     });
