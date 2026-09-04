@@ -82,7 +82,28 @@ export const getTeachers = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+export const deleteTeacher = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const teacher = await Teacher.findById(id);
+    if (!teacher) {
+      return res.status(404).json({ error: 'O\'qituvchi topilmadi' });
+    }
+    
+    if (teacher.role === 'admin') {
+      return res.status(403).json({ error: 'Admin huquqiga ega foydalanuvchini o\'chirish mumkin emas' });
+    }
 
+    // Delete associated data (Optional but good practice)
+    await OnlineTest.deleteMany({ teacherId: id });
+    
+    await Teacher.findByIdAndDelete(id);
+    res.json({ success: true, message: 'O\'qituvchi muvaffaqiyatli o\'chirildi' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
 export const getTests = async (req, res) => {
   try {

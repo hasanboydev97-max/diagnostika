@@ -11,11 +11,14 @@ import {
   LogOut,
   Search,
   ArrowRight,
-  Crown
+  Crown,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getToken, getTeacher, fetchCurrentTeacher } from '../lib/auth';
+import { getToken, getTeacher, fetchCurrentTeacher, getAuthHeaders } from '../lib/auth';
 import MeshGradient from '../components/ui/MeshGradient';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const containerVariants: any = {
   hidden: { opacity: 0 },
@@ -104,16 +107,45 @@ export default function SuperAdmin() {
     return subscriptions.filter(s => s.planStatus === 'pending').length;
   }, [subscriptions]);
 
-  const handleUpdateTeacherPlan = async (teacherId: string, plan: string, status: string = 'active', durationDays: number = 30) => {
-    const token = getToken();
-    if (!token) return;
+  const handleUpdateTeacherPlan = async (teacherId: string, plan: string, status: string, durationDays: number = 30) => {
     try {
-      await db.updateTeacherPlan(token, teacherId, plan, status, durationDays);
-      toast.success(`Dostup faollashtirildi! Tarif: ${plan.toUpperCase()}`);
-      await fetchCurrentTeacher();
-      fetchAdminData();
+      const res = await fetch(`${API_URL}/admin/subscriptions/update-plan`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ teacherId, plan, status, durationDays })
+      });
+      if (res.ok) {
+        toast.success(`Tarif yangilandi: ${plan.toUpperCase()}`);
+        await fetchCurrentTeacher();
+        fetchAdminData();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Xatolik yuz berdi');
+      }
     } catch (err: any) {
-      toast.error(err.message || "Xatolik yuz berdi");
+      toast.error('Xatolik: ' + err.message);
+    }
+  };
+
+  const handleDeleteTeacher = async (teacherId: string, name: string) => {
+    if (!window.confirm(`Siz rostdan ham "${name}" nomli o'qituvchini va unga tegishli barcha testlarni o'chirishni xohlaysizmi? Bu amalni ortga qaytarib bo'lmaydi.`)) return;
+    
+    const toastId = toast.loading('Ustoz o\'chirilmoqda...');
+    try {
+      const res = await fetch(`${API_URL}/admin/teachers/${teacherId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      
+      if (res.ok) {
+        toast.success('O\'qituvchi muvaffaqiyatli o\'chirildi', { id: toastId });
+        fetchAdminData();
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Xatolik yuz berdi', { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error('Xatolik: ' + err.message, { id: toastId });
     }
   };
 
@@ -315,7 +347,7 @@ export default function SuperAdmin() {
                               <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Joriy Tarif</th>
                               <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">So'rov / Chek kodi</th>
                               <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Holat</th>
-                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest text-right">Dostup Ochish</th>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest text-right pr-6">Amallar</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -382,7 +414,7 @@ export default function SuperAdmin() {
                                     </td>
 
                                     {/* Dostup Action Buttons */}
-                                    <td className="py-4 md:py-6 pr-4 md:pr-0 text-right">
+                                    <td className="py-4 md:py-6 pr-6 text-right">
                                       <div className="flex items-center justify-end gap-3">
                                         {isPending && s.requestedPlan && (
                                           <button
@@ -401,9 +433,17 @@ export default function SuperAdmin() {
                                           className="text-xs font-semibold uppercase tracking-wider bg-transparent border border-black/10 rounded-xl px-3 py-2 focus:outline-none hover:border-black/30 transition-all text-neutral-800"
                                         >
                                           <option value="free">Free</option>
-                                          <option value="standard">Standard (30 kun)</option>
-                                          <option value="premium">Premium (30 kun)</option>
+                                          <option value="standard">Standard (30k)</option>
+                                          <option value="premium">Premium (30k)</option>
                                         </select>
+                                        
+                                        <button
+                                          onClick={() => handleDeleteTeacher(s._id, s.name)}
+                                          className="p-2.5 rounded-xl bg-white hover:bg-rose-50 border border-black/10 text-gray-400 hover:text-rose-500 hover:border-rose-200 transition-all shadow-sm group-hover:shadow flex-shrink-0"
+                                          title="Ustozni o'chirish"
+                                        >
+                                          <Trash2 size={16} />
+                                        </button>
                                       </div>
                                     </td>
                                   </tr>
@@ -443,7 +483,7 @@ export default function SuperAdmin() {
                               <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Ustoz</th>
                               <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Fan</th>
                               <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest pl-6">Testlar</th>
-                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest text-right">Holat</th>
+                              <th className="py-4 border-b border-black/10 text-[10px] font-semibold text-gray-400 uppercase tracking-widest text-right pr-6">Holat / Amal</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -455,11 +495,20 @@ export default function SuperAdmin() {
                                 </td>
                                 <td className="py-4 md:py-6 pl-6 text-gray-600 font-medium">{t.subject || '—'}</td>
                                 <td className="py-4 md:py-6 pl-6 text-xl font-medium">{t.testCount || 0}</td>
-                                <td className="py-4 md:py-6 pr-4 md:pr-0 text-right">
+                                <td className="py-4 md:py-6 pr-6 text-right">
                                   {t.role === 'admin' ? (
                                     <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-black border border-black/10 px-3 py-1 rounded-full">Admin</span>
                                   ) : (
-                                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-500 border border-black/10 px-3 py-1 rounded-full">Ustoz</span>
+                                    <div className="flex items-center justify-end gap-3">
+                                      <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-gray-500 border border-black/10 px-3 py-1 rounded-full">Ustoz</span>
+                                      <button
+                                        onClick={() => handleDeleteTeacher(t._id, t.name)}
+                                        className="p-2 rounded-xl bg-white hover:bg-rose-50 border border-black/10 text-gray-400 hover:text-rose-500 hover:border-rose-200 transition-all shadow-sm flex-shrink-0"
+                                        title="Ustozni o'chirish"
+                                      >
+                                        <Trash2 size={16} />
+                                      </button>
+                                    </div>
                                   )}
                                 </td>
                               </tr>

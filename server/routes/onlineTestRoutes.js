@@ -11,6 +11,7 @@ import {
   submitTestResult,
   deleteTest,
   getTestResultById,
+  deleteTestResult,
   generateAITest,
   classAnalysis
 } from '../controllers/onlineTestController.js';
@@ -36,5 +37,6 @@ router.get('/:id/export/excel', authMiddleware, exportToExcel);
 // --- /api/online-test-results ---
 resultsRouter.post('/', submitTestResult);
 resultsRouter.get('/:id', getTestResultById);
+resultsRouter.delete('/:id', authMiddleware, deleteTestResult);
 
 export { router as onlineTestRoutes, resultsRouter as onlineTestResultRoutes };

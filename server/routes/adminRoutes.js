@@ -4,6 +4,7 @@ import {
   updateSubscriptionPlan, 
   getStats, 
   getTeachers, 
+  deleteTeacher,
   getTests, 
   getResults 
 } from '../controllers/adminController.js';
@@ -19,6 +20,7 @@ router.post('/subscriptions/update-plan', updateSubscriptionPlan);
 
 router.get('/stats', getStats);
 router.get('/teachers', getTeachers);
+router.delete('/teachers/:id', deleteTeacher);
 router.get('/tests', getTests);
 router.get('/results', getResults);
 

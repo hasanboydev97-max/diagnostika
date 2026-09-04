@@ -5,7 +5,7 @@ import {
   ArrowLeft, Loader2, Copy, Users, BrainCircuit, Calendar, 
   ExternalLink, FileText, Download, X, Sparkles, Play, 
   Scan, Camera, Upload, CheckCircle2, RefreshCw,
-  Printer, FileSpreadsheet
+  Printer, FileSpreadsheet, Trash2
 } from 'lucide-react';
 import { getAuthHeaders, getToken, getTeacher } from '../../lib/auth';
 import { toast } from 'sonner';
@@ -96,6 +96,30 @@ export default function TestDetails() {
       toast.error("Ma'lumotlarni yuklashda xatolik yuz berdi");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteResult = async (id: string, studentName: string) => {
+    if (!window.confirm(`"${studentName}" ning natijasini o'chirib tashlamoqchimisiz? Bu amalni orqaga qaytarib bo'lmaydi.`)) {
+      return;
+    }
+    
+    const toastId = toast.loading('Natija o\'chirilmoqda...');
+    try {
+      const res = await fetch(`${API_URL}/online-test-results/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'O\'chirishda xatolik');
+      }
+      
+      toast.success('Natija muvaffaqiyatli o\'chirildi', { id: toastId });
+      fetchData(); // Refresh the list
+    } catch (err: any) {
+      toast.error(err.message, { id: toastId });
     }
   };
 
@@ -669,12 +693,19 @@ export default function TestDetails() {
                             <td className="px-6 py-4 text-xs text-neutral-400 font-medium">
                               {new Date(r.createdAt).toLocaleString('uz-UZ', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                             </td>
-                            <td className="px-8 py-4 text-right">
+                            <td className="px-8 py-4 text-right flex items-center justify-end gap-2">
                               <button
                                 onClick={() => navigate(`/online-tests/results/${r._id || r.id}`)}
                                 className="text-xs font-bold text-neutral-800 hover:text-black bg-white hover:bg-neutral-100 border border-black/10 px-3.5 py-1.5 rounded-xl transition-all shadow-xs cursor-pointer uppercase tracking-wider"
                               >
                                 Ko'rish
+                              </button>
+                              <button
+                                onClick={() => handleDeleteResult(r._id || r.id || '', r.studentName)}
+                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white hover:bg-rose-50 border border-black/10 text-neutral-400 hover:text-rose-500 hover:border-rose-200 transition-all shadow-xs cursor-pointer"
+                                title="Natijani o'chirish"
+                              >
+                                <Trash2 size={14} />
                               </button>
                             </td>
                           </tr>

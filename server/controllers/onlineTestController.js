@@ -7,6 +7,7 @@ import PDFDocument from 'pdfkit';
 import { isAnswerCorrect, computeScore } from '../utils/scoring.js';
 import { processQuestionBatch } from '../utils/mathSanitizer.js';
 import pLimit from 'p-limit';
+import xlsx from 'xlsx';
 
 const aiLimit = pLimit(1);
 
@@ -100,18 +101,39 @@ export const exportToExcel = async (req, res) => {
     merged.forEach(r => uniqueMap.set(r.id || r._id.toString(), r));
     const results = Array.from(uniqueMap.values()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    let csvContent = '\uFEFF'; // UTF-8 BOM for Excel Uzbek characters
-    csvContent += 'O\'quvchi F.I.SH,Ball,Maksimal Ball,Foiz,Sana\n';
-
-    results.forEach(r => {
+    // True Excel file generation via xlsx
+    const excelData = results.map((r, index) => {
       const percent = Math.round((r.score / (r.totalScore || 1)) * 100);
-      const dateStr = r.createdAt ? new Date(r.createdAt).toLocaleString() : '';
-      csvContent += `"${r.studentName || ''}","${r.score || 0}","${r.totalScore || 0}","${percent}%","${dateStr}"\n`;
+      return {
+        "T/r": index + 1,
+        "O'quvchi ism-familiyasi": r.studentName || 'Noma\'lum',
+        "To'g'ri javoblar": r.score || 0,
+        "Jami savollar": r.totalScore || 0,
+        "O'zlashtirish (%)": `${percent}%`,
+        "Topshirilgan sana": r.createdAt ? new Date(r.createdAt).toLocaleString('uz-UZ') : ''
+      };
     });
 
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(test.title || 'Test')}_Natijalar.csv"`);
-    res.send(csvContent);
+    const worksheet = xlsx.utils.json_to_sheet(excelData);
+    
+    // Ustunlar kengligini chiroyli qilish (Senior level touch)
+    worksheet['!cols'] = [
+      { wch: 5 },  // T/r
+      { wch: 30 }, // Ism
+      { wch: 15 }, // To'g'ri
+      { wch: 15 }, // Jami
+      { wch: 15 }, // Foiz
+      { wch: 20 }  // Sana
+    ];
+
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Natijalar");
+
+    const excelBuffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(test.title || 'Test')}_Natijalar.xlsx"`);
+    res.send(excelBuffer);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -429,6 +451,42 @@ export const deleteTest = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const deleteTestResult = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ _id: id }, { id: id }] }
+      : { id: id };
+      
+    let result = await OnlineTestResult.findOne(query);
+    let ModelToUse = OnlineTestResult;
+    
+    if (!result) {
+      const { Result } = await import('../models/index.js');
+      result = await Result.findOne(query);
+      ModelToUse = Result;
+    }
+    
+    if (!result) return res.status(404).json({ error: 'Natija topilmadi' });
+    
+    // O'qituvchining aynan shu testga egasi ekanligini tasdiqlash
+    const testQuery = mongoose.Types.ObjectId.isValid(result.testId)
+      ? { $or: [{ _id: result.testId }, { id: result.testId }], teacherId: req.teacherId }
+      : { id: result.testId, teacherId: req.teacherId };
+      
+    const test = await OnlineTest.findOne(testQuery);
+    if (!test) {
+       return res.status(403).json({ error: 'Ushbu natijani o\'chirish huquqiga ega emassiz' });
+    }
+    
+    await ModelToUse.findOneAndDelete(query);
+    res.json({ message: 'Natija o\'chirildi' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const getTestResultById = async (req, res) => {
   try {
     const { id } = req.params;
