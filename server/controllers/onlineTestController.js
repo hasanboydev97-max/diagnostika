@@ -6,6 +6,9 @@ import { buildDocxBuffer, sanitizePdfText } from '../utils/exportUtils.js';
 import PDFDocument from 'pdfkit';
 import { isAnswerCorrect, computeScore } from '../utils/scoring.js';
 import { processQuestionBatch } from '../utils/mathSanitizer.js';
+import pLimit from 'p-limit';
+
+const aiLimit = pLimit(1);
 
 export const getTests = async (req, res) => {
   try {
@@ -270,9 +273,15 @@ export const submitTestResult = async (req, res) => {
 
         if (data.questions && Array.isArray(data.questions)) {
           // Frontend questions are shuffled. Match by questionText to find the original question securely.
+          const answeredIds = new Set();
           serverScore = data.questions.reduce((acc, q, i) => {
-            const originalQ = test.questions.find(tq => (tq.questionText || '').trim() === (q.questionText || '').trim());
+            const originalQ = test.questions.find(tq => {
+              const matchesText = (tq.questionText || '').trim() === (q.questionText || '').trim();
+              const uniqueKey = tq._id ? tq._id.toString() : tq.questionText;
+              return matchesText && !answeredIds.has(uniqueKey);
+            });
             if (originalQ) {
+              answeredIds.add(originalQ._id ? originalQ._id.toString() : originalQ.questionText);
               return acc + (isAnswerCorrect(data.answers[i], originalQ.correctOption, originalQ.options || []) ? 1 : 0);
             }
             return acc;
@@ -316,7 +325,7 @@ export const submitTestResult = async (req, res) => {
     // ── AI feedback background'da ishlaydi (fire-and-forget) ──────────────
     // Bu blok foydalanuvchiga javob berilgandan KEYIN ishlaydi.
     // Xato bo'lsa ham foydalanuvchiga ta'siri yo'q.
-    (async () => {
+    aiLimit(async () => {
       try {
         const anthropicKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
         const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
@@ -389,9 +398,12 @@ Ushbu natijalarga asosan o'quvchiga o'zbek tilida qisqa (2-3 ta gap) dalda beruv
         console.error('[BG AI] Background AI xatosi:', bgErr.message);
       }
 
+      // API limitlarga tushmaslik uchun 4 soniya kutamiz (Gemini 15 RPM = ~4s)
+      await new Promise(resolve => setTimeout(resolve, 4000));
+
       // Telegram broadcast ham background'da
       import('../index.js').then(m => m.broadcastResultToTelegram?.(data)).catch(() => {});
-    })();
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -789,6 +801,26 @@ export const classAnalysis = async (req, res) => {
     if (results.length === 0) {
       return res.status(400).json({ error: 'Tahlil qilish uchun yetarlicha natijalar yo\'q' });
     }
+
+    const totalStudents = results.length;
+    const maxScore = results[0]?.totalScore || test.questions?.length || 0;
+    const averageScore = results.reduce((acc, curr) => acc + (curr.score || 0), 0) / totalStudents;
+    const formattedResults = results.map(r => `${r.studentName}: ${r.score}/${r.totalScore || maxScore}`).join(', ');
+
+    const prompt = `Siz tajribali metodist-o'qituvchi va ta'lim ekspertisiz (Senior Level). "${test.title || 'Test'}" mavzusida o'quvchilar test ishlashdi.
+Testda jami ${totalStudents} ta o'quvchi qatnashdi.
+O'rtacha ball: ${averageScore.toFixed(1)} / ${maxScore}.
+O'quvchilarning natijalari: ${formattedResults}.
+
+Vazifangiz: Sinfning umumiy o'zlashtirish darajasini chuqur kognitiv-pedagogik tahlil qilish.
+1. O'zlashtirishi past o'quvchilar va umumiy tendensiyalardagi kamchiliklarni ochib bering.
+2. O'qituvchiga keyingi darslar uchun amaliy, aniq, zamonaviy va SENIOR LEVEL darajasidagi metodik tavsiyalar bering (ilg'or pedagogik texnologiyalar, differensial yondashuv va aniq qadamlar).
+Javobingiz mukammal, professional, xulosali va juda yuqori saviyada bo'lishi shart.
+
+Javobni FAQAT quyidagi JSON formatida qaytaring (boshqa hech qanday so'z yoki markdown qo'shmang):
+{
+  "recommendation": "Sinfning mukammal pedagogik tahlili va yuqori darajadagi metodik tavsiyalar matni (kamida 3-4 ta xat boshidan iborat bo'lsin)..."
+}`;
 
     const anthropicKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
     const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;

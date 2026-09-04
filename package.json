@@ -41,6 +41,7 @@
     "mathml2omml": "^0.5.0",
     "mongoose": "^9.9.2",
     "multer": "^2.2.0",
+    "p-limit": "^7.3.2",
     "pdfkit": "^0.19.1",
     "postcss": "^8.5.25",
     "puppeteer": "^25.5.0",
