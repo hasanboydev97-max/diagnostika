@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, Copy, Play } from 'lucide-react';
 import FormattedText from '../../components/FormattedText';
 import { toast } from 'sonner';
+import { isAnswerCorrect } from '../../utils/scoring';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const SOCKET_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000';
@@ -232,22 +233,8 @@ export default function DuelPlayer() {
     
     const question = test.questions[currentQIndex];
     const selectedOption = question.options[optionIndex];
-    // ✅ FIX: harf (a/b/c/d) yoki matn asosida to'g'ri solishtirish
-    const isCorrect = (() => {
-      if (!selectedOption || !question.correctOption) return false;
-      const u = String(selectedOption).trim().toLowerCase();
-      const c = String(question.correctOption).trim().toLowerCase();
-      if (u === c) return true;
-      const lm: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
-      const opts = question.options || [];
-      if (lm[c] !== undefined && opts[lm[c]]) {
-        if (String(opts[lm[c]]).trim().toLowerCase() === u) return true;
-      }
-      if (lm[u] !== undefined && opts[lm[u]]) {
-        if (String(opts[lm[u]]).trim().toLowerCase() === c) return true;
-      }
-      return false;
-    })();
+    // ✅ DRY: umumiy scoring utility ishlatiladi — harf (a/b/c/d) ham, matn ham to'g'ri aniqlaydi
+    const isCorrect = isAnswerCorrect(selectedOption, question.correctOption, question.options || []);
     
     const newScore = isCorrect ? myScore + 1 : myScore;
     if (isCorrect) setMyScore(newScore);
@@ -458,7 +445,9 @@ export default function DuelPlayer() {
                 {/* Options */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mt-auto flex-1 w-full auto-rows-fr pb-4 md:pb-8">
                   {test.questions[currentQIndex]?.options.map((opt: string, i: number) => {
-                    const isCorrect = opt === test.questions[currentQIndex]?.correctOption;
+                    // ✅ DRY: umumiy scoring utility — harf ham, matn ham to'g'ri variantni aniqlaydi
+                    const q = test.questions[currentQIndex];
+                    const isCorrect = isAnswerCorrect(opt, q?.correctOption, q?.options || []);
                     const isSelected = selectedOptionIndex === i;
                     
                     let btnClass = "border p-6 md:p-8 text-center text-xl md:text-2xl font-bold rounded-xl transition-all duration-150 flex items-center justify-center w-full h-full min-h-[120px] ";

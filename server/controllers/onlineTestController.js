@@ -269,7 +269,7 @@ export const submitTestResult = async (req, res) => {
         let serverTotal = test.questions.length;
 
         if (data.questions && Array.isArray(data.questions)) {
-          // Frontend questions are likely shuffled. Match by questionText to find the original question securely.
+          // Frontend questions are shuffled. Match by questionText to find the original question securely.
           serverScore = data.questions.reduce((acc, q, i) => {
             const originalQ = test.questions.find(tq => (tq.questionText || '').trim() === (q.questionText || '').trim());
             if (originalQ) {
@@ -278,8 +278,16 @@ export const submitTestResult = async (req, res) => {
             return acc;
           }, 0);
         } else {
-          const res = computeScore(test.questions, data.answers);
-          serverScore = res.score;
+          // Fallback: data.questions yo'q. data.answers indekslari noaniq bo'lishi mumkin,
+          // shu sababli matn bo'yicha qayta moslashtirish imkonsiz.
+          // Xavfsiz yechim: faqat matn-matn solishtirish (harf indeksiga ishonmaymiz).
+          serverScore = test.questions.reduce((acc, q, i) => {
+            const userAns = data.answers[i];
+            if (!userAns) return acc;
+            // Faqat to'g'ridan-to'g'ri matn taqqoslash — indeks muammosini oldini olish uchun
+            const isCorrect = String(userAns).trim().toLowerCase() === String(q.correctOption || '').trim().toLowerCase();
+            return acc + (isCorrect ? 1 : 0);
+          }, 0);
         }
 
         data.score = serverScore;

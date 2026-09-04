@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, CheckCircle2, XCircle, Trophy } from 'lucide-react';
 import FormattedText from '../../components/FormattedText';
 import { toast } from 'sonner';
+import { isAnswerCorrect } from '../../utils/scoring';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 const SOCKET_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000';
@@ -75,22 +76,8 @@ export default function LivePlayer() {
     
     const question = test.questions[currentQuestionIndex];
     const selectedOption = question.options[optionIndex];
-    // ✅ FIX: harf (a/b/c/d) yoki matn asosida to'g'ri solishtirish
-    const isCorrect = (() => {
-      if (!selectedOption || !question.correctOption) return false;
-      const u = String(selectedOption).trim().toLowerCase();
-      const c = String(question.correctOption).trim().toLowerCase();
-      if (u === c) return true;
-      const lm: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
-      const opts = question.options || [];
-      if (lm[c] !== undefined && opts[lm[c]]) {
-        if (String(opts[lm[c]]).trim().toLowerCase() === u) return true;
-      }
-      if (lm[u] !== undefined && opts[lm[u]]) {
-        if (String(opts[lm[u]]).trim().toLowerCase() === c) return true;
-      }
-      return false;
-    })();
+    // ✅ DRY: umumiy scoring utility ishlatiladi — harf (a/b/c/d) ham, matn ham to'g'ri aniqlaydi
+    const isCorrect = isAnswerCorrect(selectedOption, question.correctOption, question.options || []);
     
     setIsCorrectLast(isCorrect);
     socket?.emit('submit_answer', { pin, isCorrect });

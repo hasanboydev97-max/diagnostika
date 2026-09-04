@@ -10,6 +10,8 @@ import MeshGradient from '../../components/ui/MeshGradient';
 
 import { db } from '../../lib/db';
 import { generateDiagnosticSummary } from '../../lib/gemini';
+import { isAnswerCorrect } from '../../utils/scoring';
+
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -308,20 +310,7 @@ export default function TakeTest() {
     setAnswers(prev => ({ ...prev, [currentQIndex]: option }));
   };
 
-  const isAnswerCorrect = (userAns: string | undefined, correctOpt: string | undefined, options: string[] = []): boolean => {
-    if (!userAns || !correctOpt) return false;
-    const u = String(userAns).trim().toLowerCase();
-    const c = String(correctOpt).trim().toLowerCase();
-    if (u === c) return true;
-    const lm: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
-    if (lm[c] !== undefined && options[lm[c]]) {
-      if (String(options[lm[c]]).trim().toLowerCase() === u) return true;
-    }
-    if (lm[u] !== undefined && options[lm[u]]) {
-      if (String(options[lm[u]]).trim().toLowerCase() === c) return true;
-    }
-    return false;
-  };
+
 
   const handleSubmit = async (isForced = false) => {
     if (submitRef.current) return;
