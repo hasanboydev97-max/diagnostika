@@ -257,6 +257,7 @@ MUHIM QOIDALAR:
 4. Noto'g'ri variantlar ham mantiqan ishonchli bo'lsin (tasodifiy emas)
 5. "Oson" savollar oddiy, "O'rta" chuqurroq, "Qiyin" murakkab bo'lsin
 6. Matematik va informatikaga oid barcha formulalar (masalan Excel formulalari, kasrlar, ildizlar) toza LaTeX ko'rinishida yozilsin: inline formulalar uchun $...$ belgisidan foydalanilsin (masalan: $A1 = 10$, $\\frac{A1+B1+C1}{2}$). Formulalarni backtick \`...\` yoki $$...$$ ichiga olmang.
+7. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing. Barcha hadlar ($a_1, a_n, b_n, S_n, d, q, 1, 3, 5, \\dots$) mutlaqo Math rejimida ($...$) bo'lishi shart. Yetarlicha parametrlar bering.
 
 Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
 [
@@ -362,6 +363,8 @@ QAT'IY SIFAT MEZONLARI (100% AMAL QILING):
 1. QAT'IY SHART: Savollar juda chuqur mantiqiy asoslangan, mukammal va oliy darajadagi sintaksis bilan yozilsin. Hech qanday imlo, grammatik yoki sintaksis xatolarga yo'l qo'yilmasin!
 2. QAT'IY SHART: Savollar yuzaki bo'lmasin. Noto'g'ri variantlar o'ta chalg'ituvchi va haqiqatga juda yaqin (mantiqiy) bo'lsin.
 3. Barcha faktlar, formulalar va ma'lumotlar 100% ilmiy to'g'ri va aniq bo'lishi KAFOLATLANSIN. Umuman xato qilmang!
+4. Matematik va informatikaga oid barcha formulalar toza LaTeX ko'rinishida yozilsin: inline formulalar uchun $...$ belgisidan foydalanilsin.
+5. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing. Barcha hadlar ($a_1, a_n, b_n, S_n, d, q, 1, 3, 5, \\dots$) mutlaqo Math rejimida ($...$) bo'lishi shart. Yetarlicha parametrlar bering.
 
 Har bir savolda quyidagilar bo'lishi shart:
 - Savol matni (aniq, tushunarli, chuqur ma'noli va mutlaqo xatosiz)
@@ -446,6 +449,8 @@ MUHIM SHARTLAR:
 1. Har bir savol tegishli faniga ("category") va ko'rsatilgan qiyinlik darajasiga ("difficulty") aniq mos kelsin.
 2. Savollar O'zbek tilida bo'lsin.
 3. Har bir savolda 4 ta variant (A, B, C, D) va 1 ta to'g'ri javob ("correctOption") bo'lsin.
+4. Matematik va informatikaga oid barcha formulalar toza LaTeX ko'rinishida yozilsin: inline formulalar uchun $...$ belgisidan foydalanilsin.
+5. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing. Barcha hadlar ($a_1, a_n, b_n, S_n, d, q, 1, 3, 5, \\dots$) mutlaqo Math rejimida ($...$) bo'lishi shart. Yetarlicha parametrlar bering.
 
 Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
 [

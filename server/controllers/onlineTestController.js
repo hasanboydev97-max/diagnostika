@@ -573,13 +573,14 @@ Generate exactly ${questionCount} multiple-choice questions for:
   Topic(s): ${topic}
   Difficulty: ${difficulty}
 
-CRITICAL QUALITY INSTRUCTIONS (SENIOR LEVEL):
+CRITICAL QUALITY INSTRUCTIONS (SENIOR Level):
 1. ZERO DUPLICATION: You MUST NOT generate similar or duplicate questions. Every single question must test a completely unique concept, feature, or scenario within the topics. Do not repeat the same question phrasing, logic, or options.
 2. ZERO SYNTAX ERRORS: If generating questions about programming, HTML, CSS, Excel formulas, or technical tools, all code snippets MUST be 100% syntactically perfect. No missing brackets, no incorrect tags, no typos. Use standard conventions.
 3. EXACT COUNT: You MUST generate EXACTLY ${questionCount} questions. Use the "questionNumber" field to count from 1 to ${questionCount}. Do not stop until you reach ${questionCount}.
 4. EVEN DISTRIBUTION: If multiple topics are provided (separated by commas), distribute the questions evenly. Do not focus heavily on just one topic.
 5. PLAUSIBLE DISTRACTORS: Wrong options (distractors) must be realistic and challenging. Do not make them obvious jokes or entirely unrelated concepts.
 6. CLARITY: Questions must be formulated clearly and unambiguously in the Uzbek language.
+7. PROGRESSIONS (PROGRESSIYA): If the topic is Arithmetic or Geometric Progressions, ALWAYS specify the type ("Arifmetik progressiya" or "Geometrik progressiya"). Wrap all sequence terms, parameters, and formulas in Math mode (e.g., $a_1$, $b_n$, $S_n$, $d$, $q$, $1, 3, 5, \dots$). Never write a1, bn, Sn as plain text. Ensure the problem has enough given values to be mathematically solvable.
 
 OUTPUT DISCIPLINE (for speed — follow strictly)
 - No preamble ("Here are your questions:"), no postamble, no markdown code
