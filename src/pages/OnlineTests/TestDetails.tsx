@@ -658,7 +658,7 @@ export default function TestDetails() {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
+                  <table className="w-full text-left text-sm whitespace-nowrap">
                     <thead className="bg-neutral-50/70 border-b border-black/5 text-[10px] uppercase font-bold text-neutral-400 tracking-widest">
                       <tr>
                         <th className="px-8 py-4">O'quvchi</th>
@@ -1005,7 +1005,7 @@ export default function TestDetails() {
                         </div>
 
                         <div className="max-h-60 overflow-y-auto rounded-2xl border border-black/5 bg-neutral-50/50">
-                          <table className="w-full text-left text-xs">
+                          <table className="w-full text-left text-xs whitespace-nowrap">
                             <thead className="bg-neutral-100/70 font-bold text-neutral-500 uppercase text-[10px] tracking-wider">
                               <tr>
                                 <th className="p-3.5">#</th>

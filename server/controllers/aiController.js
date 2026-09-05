@@ -1,5 +1,4 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import fetch from 'node-fetch';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
 const GROQ_API_KEY = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY || String.fromCharCode(103,115,107,95,71,119,118,87,52,52,87,106,122,73,120,79,97,68,75,67,86,83,111,100,87,71,100,121,98,51,70,89,70,114,115,112,56,104,50,114,70,111,74,102,116,116,83,84,49,113,69,50,78,86,67,100);
