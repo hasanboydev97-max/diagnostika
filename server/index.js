@@ -16,6 +16,7 @@ import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import { onlineTestRoutes, onlineTestResultRoutes } from './routes/onlineTestRoutes.js';
 import gamesRoutes from './routes/gamesRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 import { setupSockets } from './sockets/socketManager.js';
 import { escapeRegex } from './utils/regexUtils.js';
 
@@ -27,6 +28,14 @@ dotenv.config({ path: join(__dirname, '../.env') });
 
 const app = express();
 app.set('trust proxy', 1); // ✅ Required for rate limiter to work behind Render/Vercel proxy
+
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION! Shutting down...', err);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION! Shutting down...', err);
+});
 
 // ✅ 1. Helmet — HTTP Security Headers (XSS, Clickjacking, MIME sniffing oldini olish)
 app.use(helmet({
@@ -92,7 +101,7 @@ if (process.env.CLOUDINARY_CLOUD_NAME) {
 }
 
 const upload = multer({
-  dest: 'uploads/',
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/') || file.mimetype === 'application/pdf' || file.mimetype.includes('word')) {
@@ -260,22 +269,20 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
       return res.status(500).json({ error: 'Cloudinary sozlamalari mavjud emas' });
     }
 
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: 'maktab-diagnostika'
-    });
-
-    res.json({ url: result.secure_url });
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder: 'maktab-diagnostika' },
+      (error, result) => {
+        if (error) {
+          console.error('Cloudinary upload error:', error);
+          return res.status(500).json({ error: error.message });
+        }
+        res.json({ url: result.secure_url });
+      }
+    );
+    uploadStream.end(req.file.buffer);
   } catch (error) {
     console.error('Upload Error:', error);
     res.status(500).json({ error: error.message });
-  } finally {
-    if (req.file && fs.existsSync(req.file.path)) {
-      try {
-        fs.unlinkSync(req.file.path);
-      } catch (err) {
-        console.error('File cleanup error:', err);
-      }
-    }
   }
 });
 
@@ -312,6 +319,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/online-tests', onlineTestRoutes);
 app.use('/api/online-test-results', onlineTestResultRoutes);
 app.use('/api/games', gamesRoutes);
+app.use('/api/ai', aiRoutes);
 
 // --- Telegram Bot Logic ---
 // Backend API endpoint for sending Telegram notifications from Vercel web app

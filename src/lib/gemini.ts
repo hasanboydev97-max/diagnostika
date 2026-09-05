@@ -1,111 +1,31 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { QuestionBlueprint } from './blueprint';
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || String.fromCharCode(103,115,107,95,71,119,118,87,52,52,87,106,122,73,120,79,97,68,75,67,86,83,111,100,87,71,100,121,98,51,70,89,70,114,115,112,56,104,50,114,70,111,74,102,116,116,83,84,49,113,69,50,78,86,67,100);
-
-const GEMINI_MODELS = [
-  "gemini-1.5-flash",
-  "gemini-2.5-flash",
-  "gemini-3.6-flash", 
-  "gemini-3.5-flash-lite", 
-  "gemini-flash-latest"
-];
-
-const GROQ_MODELS = [
-  "llama-3.3-70b-versatile",
-  "llama3-70b-8192",
-  "mixtral-8x7b-32768",
-  "llama3-8b-8192"
-];
-
 /**
- * Zaxira AI Provaideri (Groq Cloud LLaMA 3.3 70B / Mixtral)
- * Gemini API limitlari tugaganda yoki xatolik berganda ishga tushadi.
- */
-async function callGroqAiFallback(prompt: string): Promise<string> {
-  console.warn("⚠️ Gemini AI limitlari tugadi yoki xatosi yuz berdi. Zaxira Groq AI (LLaMA-3.3-70B) ga avtomatik o'tilmoqda...");
-  let lastErr = "";
-
-  for (const modelName of GROQ_MODELS) {
-    try {
-      console.log(`⚡ Groq AI modeli orqali so'rov yuborilmoqda: ${modelName}...`);
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: modelName,
-          messages: [
-            {
-              role: 'system',
-              content: 'You are an expert educational psychologist and high-level test creator for Uzbek schools. Always generate pure, valid JSON output when requested without markdown commentary.'
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          temperature: 0.5,
-          max_tokens: 4096
-        })
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Groq HTTP ${response.status}: ${errText}`);
-      }
-
-      const data = await response.json();
-      const content = data.choices?.[0]?.message?.content || '';
-      if (content) {
-        console.log(`✅ Groq AI (${modelName}) muvaffaqiyatli zaxira javobini qaytardi!`);
-        return content;
-      }
-    } catch (err: any) {
-      console.warn(`Groq model (${modelName}) xatosi:`, err.message || err);
-      lastErr = err.message || String(err);
-    }
-  }
-
-  throw new Error(`Barcha Groq AI zaxira modellari ham xato berdi: ${lastErr}`);
-}
-
-/**
- * Universal AI Prompt Executer: Gemini birinchi sinab ko'riladi,
  * agar xato bersa Groq LLaMA-3.3-70B zudlik bilan o'rin oladi.
+ * Endi barcha xavfsizlik orqa fonda (backend) ta'minlanadi.
  */
 async function executeResilientAiPrompt(prompt: string): Promise<string> {
-  let lastError = "";
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const response = await fetch(`${apiUrl}/ai/generate-text`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ prompt })
+    });
 
-  if (GEMINI_API_KEY) {
-    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    for (const modelName of GEMINI_MODELS) {
-      try {
-        console.log(`Gemini AI modeli orqali so'rov yuborilmoqda: ${modelName}...`);
-        const model = genAI.getGenerativeModel({ 
-          model: modelName,
-          generationConfig: { responseMimeType: "application/json" }
-        });
-        const result = await model.generateContent(prompt);
-        const text = (await result.response).text();
-        if (text && text.trim()) {
-          console.log(`✅ Gemini (${modelName}) muvaffaqiyatli javob qaytardi.`);
-          return text;
-        }
-      } catch (error: any) {
-        console.warn(`Gemini model xatoligi (${modelName}):`, error.message || error);
-        lastError += `[${modelName}]: ${error.message || String(error)}; `;
-      }
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || `HTTP error ${response.status}`);
     }
-  } else {
-    console.warn("Gemini API key topilmadi. To'g'ridan-to'g'ri Groq AI ga o'tilmoqda.");
-  }
 
-  // Gemini modellari yetib bormasa yoki hammasi xato bersa, Groq AI ga o'tiladi
-  return await callGroqAiFallback(prompt);
+    const data = await response.json();
+    return data.text || '';
+  } catch (error) {
+    console.error("Backend AI /api/ai/generate-text xatosi:", error);
+    throw error;
+  }
 }
 
 function cleanJsonText(rawText: string): string {

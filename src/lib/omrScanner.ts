@@ -1,6 +1,5 @@
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
-
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+// Removed direct Gemini SDK usage for security.
+// Using backend `/api/ai` endpoints.
 
 export interface OMRResult {
   studentName?: string;
@@ -34,60 +33,39 @@ function base64ToGenerativePart(base64String: string, mimeType: string) {
   };
 }
 
-const GEMINI_VISION_MODELS = [
-  "gemini-2.5-flash",
-  "gemini-2.0-flash",
-  "gemini-1.5-flash-latest",
-  "gemini-1.5-flash",
-  "gemini-1.5-pro"
-];
-
 async function executeVisionAiModel(
-  genAI: GoogleGenerativeAI,
   prompt: string,
   imageParts: any[],
-  schemaProps?: any
+  requireJson: boolean = false
 ): Promise<string> {
-  let lastError = "";
-
-  for (const modelName of GEMINI_VISION_MODELS) {
-    try {
-      console.log(`Gemini Vision AI yuborilmoqda: ${modelName}...`);
-      const config: any = {};
-      if (schemaProps) {
-        config.responseMimeType = "application/json";
-      }
-      const model = genAI.getGenerativeModel({ model: modelName, generationConfig: config });
-      const result = await model.generateContent([prompt, ...imageParts]);
-      const responseText = await result.response.text();
-      if (responseText && responseText.trim()) {
-        console.log(`✅ Gemini Vision (${modelName}) muvaffaqiyatli tahlil qildi.`);
-        return responseText;
-      }
-    } catch (err: any) {
-      const msg = err.message || String(err);
-      console.warn(`Gemini Vision (${modelName}) xatoligi:`, msg);
-      if (msg.includes("leaked") || msg.includes("API key") || msg.includes("403")) {
-        throw new Error("Gemini API key bekor qilingan (leaked key error). Iltimos Vercel Sozlamalarida (Environment Variables) VITE_GEMINI_API_KEY ga yangi kalit qo'ying!");
-      }
-      lastError += `[${modelName}]: ${msg}; `;
-    }
-  }
-
-  // Fallback: try without schema on gemini-2.0-flash or gemini-1.5-flash
   try {
-    const fallbackModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-    const result = await fallbackModel.generateContent([prompt + "\nMUHIM: FAQAT to'g'ridan-to'g'ri JSON qaytar, markdown bloklarisiz.", ...imageParts]);
-    const text = await result.response.text();
-    if (text && text.trim()) return text;
-  } catch (err: any) {
-    const msg = err.message || String(err);
-    if (msg.includes("leaked") || msg.includes("403")) {
-      throw new Error("Gemini API key bekor qilingan (leaked key). Iltimos Vercel (Environment Variables) ga yangi VITE_GEMINI_API_KEY kiriting!");
-    }
-  }
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    
+    // Convert inlineData back to flat structure for the backend API
+    const images = imageParts.map(part => ({
+      data: part.inlineData.data,
+      mimeType: part.inlineData.mimeType
+    }));
 
-  throw new Error(`Gemini Vision AI xatoligi: Model javob bermadi. (${lastError})`);
+    const response = await fetch(`${apiUrl}/ai/generate-vision`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ prompt, images, requireJson })
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || `HTTP error ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.text || '';
+  } catch (error) {
+    console.error("Backend AI /api/ai/generate-vision xatosi:", error);
+    throw error;
+  }
 }
 
 /**
@@ -102,12 +80,7 @@ export async function gradeOMRFromImage(
     testTitle?: string;
   }
 ): Promise<OMRResult> {
-  if (!GEMINI_API_KEY) {
-    throw new Error("Gemini API kaliti topilmadi (.env faylida VITE_GEMINI_API_KEY ni tekshiring).");
-  }
-
   const { totalQuestions, optionsCount = 4 } = options;
-  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
   // Normalize answer key to Record<number, string>
   const keyMap: Record<number, string> = {};
@@ -150,29 +123,9 @@ export async function gradeOMRFromImage(
   const imagePart = base64ToGenerativePart(base64Image, 'image/jpeg');
 
   const text = await executeVisionAiModel(
-    genAI,
     prompt,
     [imagePart],
-    {
-      type: SchemaType.OBJECT,
-      properties: {
-        studentName: { type: SchemaType.STRING, nullable: true },
-        studentClass: { type: SchemaType.STRING, nullable: true },
-        studentId: { type: SchemaType.STRING, nullable: true },
-        answers: {
-          type: SchemaType.ARRAY,
-          items: {
-            type: SchemaType.OBJECT,
-            properties: {
-              q: { type: SchemaType.INTEGER },
-              ans: { type: SchemaType.STRING, nullable: true }
-            },
-            required: ["q"]
-          }
-        }
-      },
-      required: ["answers"]
-    }
+    true // requireJson = true
   );
 
   let cleanJson = text.trim();
@@ -323,16 +276,11 @@ export async function gradeTestFromPhoto(
   questions: { questionText: string; options: string[]; correctOption: number }[],
   studentName: string
 ): Promise<PaperGradingResult> {
-  if (!GEMINI_API_KEY) {
-    throw new Error("Gemini API kaliti sozlangan bo'lishi kerak.");
-  }
-
   const imagesArray = Array.isArray(base64Images) ? base64Images : [base64Images];
   if (imagesArray.length === 0) {
     throw new Error("Kamida 1 ta rasm taqdim etilishi kerak.");
   }
 
-  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
   const questionPrompts = questions.map((q, idx) => {
     const opts = (q.options || []).map((o, i) => `${String.fromCharCode(65 + i)}: ${o}`).join(', ');
@@ -356,24 +304,9 @@ export async function gradeTestFromPhoto(
   try {
     const imageParts = imagesArray.map(img => base64ToGenerativePart(img, 'image/jpeg'));
     const responseText = await executeVisionAiModel(
-      genAI,
       prompt,
       imageParts,
-      {
-        type: SchemaType.ARRAY,
-        items: {
-          type: SchemaType.OBJECT,
-          properties: {
-            q: { type: SchemaType.INTEGER, description: "Savol raqami (1 dan boshlab)" },
-            ansIndex: { 
-              type: SchemaType.INTEGER, 
-              nullable: true, 
-              description: "O'quvchi tanlagan javob indeksi: 0 = A, 1 = B, 2 = C, 3 = D. Agar belgilamagan yoki tushunarsiz bo'lsa null" 
-            }
-          },
-          required: ["q", "ansIndex"]
-        }
-      }
+      true // requireJson = true
     );
     const parsed = JSON.parse(responseText);
 
