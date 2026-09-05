@@ -356,9 +356,11 @@ export const submitTestResult = async (req, res) => {
         if (!((anthropicKey || apiKey || groqKey) && test && data.questions)) return;
 
         const attempts = [];
-        if (anthropicKey) attempts.push({ provider: 'anthropic', model: 'claude-sonnet-4-6' });
+        // [OPTIMIZATSIYA]: O'quvchilarga avtomat yoziladigan fikrlar (feedback) uchun qimmat Claude o'chirib qo'yildi.
+        // O'rniga eng arzon/tekin Gemini Flash va Groq ishlatiladi. Bu xarajatni 90% ga tejaydi.
         if (apiKey) attempts.push({ provider: 'gemini', model: 'gemini-1.5-flash' });
         if (groqKey) attempts.push({ provider: 'groq', model: 'llama3-70b-8192' });
+        if (attempts.length === 0) return; // Agar Gemini/Groq bo'lmasa, pul ketkazmaslik uchun jim to'xtaydi.
 
         const prompt = `O'quvchi test ishladi. 
 Test nomi: ${test.title}
@@ -661,12 +663,19 @@ Return ONLY the JSON object. Begin generation now.`;
       const groqKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
       const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 
-      const anthropicModels = ['claude-sonnet-4-6'];
+      const anthropicModels = ['claude-3-5-sonnet-20241022'];
       const geminiModels = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'];
       const groqModels = ['llama3-70b-8192', 'llama3-8b-8192'];
 
       const attempts = [];
-      if (anthropicKey) anthropicModels.forEach(m => attempts.push({ provider: 'anthropic', model: m }));
+      // [SENIOR ARCHITECTURE]: AI marshrutlash (Routing).
+      // Faqat 'premium' ustozlar uchungina qimmatbaho Claude 3.5 Sonnet ishga tushadi.
+      // Qolgan tariflar (free/standard) uchun deyarli tekin va mukammal Gemini Flash ishlatiladi.
+      if (anthropicKey && teacher && teacher.plan === 'premium') {
+        anthropicModels.forEach(m => attempts.push({ provider: 'anthropic', model: m }));
+      }
+      
+      // Gemini barcha uchun ishlaydi (Premiumda zaxira sifatida, boshqalarda asosiy)
       if (apiKey) geminiModels.forEach(m => attempts.push({ provider: 'gemini', model: m }));
       if (groqKey) groqModels.forEach(m => attempts.push({ provider: 'groq', model: m }));
 
@@ -795,7 +804,9 @@ Return ONLY the JSON object. Begin generation now.`;
       let failsafe = 0;
       
       while (needed > 0 && failsafe < 5) {
-        const chunkCount = Math.min(needed, 10);
+        // [OPTIMIZATSIYA]: Katta so'rovlarda API (Prompt) narxini 2 baravar kamaytirish 
+        // uchun 10 talik bo'laklash 20 taga ko'tarildi.
+        const chunkCount = Math.min(needed, 20);
         const aiResult = await generateChunkWithRetry(currentTopic, chunkCount);
         
         if (aiResult.success && aiResult.data && aiResult.data.length > 0) {
@@ -892,7 +903,10 @@ Javobni FAQAT quyidagi JSON formatida qaytaring (boshqa hech qanday so'z yoki ma
     const { GoogleGenerativeAI } = await import("@google/generative-ai");
 
     const attempts = [];
-    if (anthropicKey) attempts.push({ provider: 'anthropic', model: 'claude-sonnet-4-6' });
+    // [SENIOR ARCHITECTURE]: Sinf tahlili uchun ham xuddi shunday biznes logika
+    if (anthropicKey && teacher && teacher.plan === 'premium') {
+      attempts.push({ provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' });
+    }
     if (apiKey) attempts.push({ provider: 'gemini', model: 'gemini-1.5-flash' });
     if (groqKey) attempts.push({ provider: 'groq', model: 'llama3-70b-8192' });
 
