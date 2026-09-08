@@ -287,7 +287,7 @@ export const submitTestResult = async (req, res) => {
         }
       }
 
-      // ✅ 6. KRITIK: Score serverda qayta hisoblanadi — klientdan kelgan qiymatga ishonilmaydi
+      // ✅ KRITIK: Score serverda qayta hisoblanadi — klientdan kelgan qiymatga ishonilmaydi
       // Hacker score=100 yuborsa ham, DB ga to'g'ri hisoblangan qiymat yoziladi
       if (test.questions && Array.isArray(test.questions) && data.answers) {
         let serverScore = 0;
@@ -295,28 +295,72 @@ export const submitTestResult = async (req, res) => {
 
         if (data.questions && Array.isArray(data.questions)) {
           // Frontend questions are shuffled. Match by questionText to find the original question securely.
+          // correctAnswerText — frontend shuffle qilingan options dan olingan to'g'ri matn.
+          // Agar mavjud bo'lsa — eng ishonchli yo'l (harf indeksiga bog'liq emas).
           const answeredIds = new Set();
+
+          // HTML teglarni tozalovchi yordamchi funksiya (server tomoni)
+          const stripHtml = (text) => {
+            if (!text) return '';
+            return String(text)
+              .replace(/<[^>]*>/g, '')
+              .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+              .replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ')
+              .trim().toLowerCase();
+          };
+
           serverScore = data.questions.reduce((acc, q, i) => {
             const originalQ = test.questions.find(tq => {
-              const matchesText = (tq.questionText || '').trim() === (q.questionText || '').trim();
-              const uniqueKey = tq._id ? tq._id.toString() : tq.questionText;
+              const matchesText = stripHtml(tq.questionText || '') === stripHtml(q.questionText || '');
+              const uniqueKey = tq._id ? tq._id.toString() : stripHtml(tq.questionText);
               return matchesText && !answeredIds.has(uniqueKey);
             });
+
             if (originalQ) {
-              answeredIds.add(originalQ._id ? originalQ._id.toString() : originalQ.questionText);
-              return acc + (isAnswerCorrect(data.answers[i], originalQ.correctOption, originalQ.options || []) ? 1 : 0);
+              const uniqueKey = originalQ._id ? originalQ._id.toString() : stripHtml(originalQ.questionText);
+              answeredIds.add(uniqueKey);
+
+              const userAns = data.answers[i];
+              if (!userAns) return acc;
+
+              const uText = stripHtml(String(userAns));
+
+              // 1. correctAnswerText mavjud bo'lsa — eng ishonchli yo'l (shuffle-safe)
+              if (q.correctAnswerText) {
+                const ctText = stripHtml(String(q.correctAnswerText));
+                if (ctText && uText === ctText) return acc + 1;
+                // correctAnswerText bilan mos kelmasa — quyidagi fallbacklarni ham sinab ko'r
+              }
+
+              // 2. originalQ.correctOption matn bo'lsa — to'g'ridan taqqosla
+              const cText = stripHtml(String(originalQ.correctOption || ''));
+              if (uText && cText && uText === cText) return acc + 1;
+
+              // 3. correctOption harf (a/b/c/d) bo'lsa — originalQ.options dan matn ol
+              const letterMap = { a: 0, b: 1, c: 2, d: 3 };
+              if (letterMap[cText] !== undefined && originalQ.options?.[letterMap[cText]] !== undefined) {
+                const correctText = stripHtml(String(originalQ.options[letterMap[cText]]));
+                if (correctText && uText === correctText) return acc + 1;
+              }
+
+              return acc;
             }
             return acc;
           }, 0);
         } else {
-          // Fallback: data.questions yo'q. data.answers indekslari noaniq bo'lishi mumkin,
-          // shu sababli matn bo'yicha qayta moslashtirish imkonsiz.
-          // Xavfsiz yechim: faqat matn-matn solishtirish (harf indeksiga ishonmaymiz).
+          // Fallback: data.questions yo'q — faqat matn-matn taqqoslash
+          const stripHtml = (text) => {
+            if (!text) return '';
+            return String(text)
+              .replace(/<[^>]*>/g, '')
+              .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+              .replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ')
+              .trim().toLowerCase();
+          };
           serverScore = test.questions.reduce((acc, q, i) => {
             const userAns = data.answers[i];
             if (!userAns) return acc;
-            // Faqat to'g'ridan-to'g'ri matn taqqoslash — indeks muammosini oldini olish uchun
-            const isCorrect = String(userAns).trim().toLowerCase() === String(q.correctOption || '').trim().toLowerCase();
+            const isCorrect = stripHtml(userAns) === stripHtml(q.correctOption || '');
             return acc + (isCorrect ? 1 : 0);
           }, 0);
         }
@@ -325,6 +369,7 @@ export const submitTestResult = async (req, res) => {
         data.totalScore = serverTotal;
         console.log(`✅ Score serverda hisoblandi: ${serverScore}/${serverTotal} (klientdan: ${req.body.score}/${req.body.totalScore})`);
       }
+
     }
 
     // ✅ KRITIK FIX: Natijani BIRINCHI tez saqlaymiz, AI feedbackni background'da ishlaymiz.

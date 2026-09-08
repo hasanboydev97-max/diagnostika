@@ -386,9 +386,29 @@ export default function TakeTest() {
     }
 
     // Regular test path
+    // ✅ SHUFFLE-SAFE SCORING: to'g'ri javob matni (correctAnswerText) shuffle qilingan
+    // options dan olinadi — harf indeksiga bog'liq emas
     let score = 0;
-    test.questions.forEach((q: any, i: number) => {
-      if (isAnswerCorrect(answers[i], q.correctOption, q.options || [])) score++;
+    const questionsWithMeta = test.questions.map((q: any, i: number) => {
+      // correctAnswerText: shuffle qilingan options dan to'g'ri matnni aniqlaymiz
+      let correctAnswerText = q.correctOption; // default: correctOption ni ishlatamiz
+      const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
+      const cLower = String(q.correctOption || '').trim().toLowerCase();
+      if (letterMap[cLower] !== undefined && q.options?.[letterMap[cLower]]) {
+        // correctOption harf (a/b/c/d) → options dan to'g'ri matnni ol
+        // MUHIM: bu yerda q.options — shuffle qilingan, lekin correctOption harf sifatida
+        // asl DB tartibiga tegishli. Shuning uchun asl tartib kerak.
+        // Eng xavfsiz: isAnswerCorrect ishlatamiz (u options dan qat'i nazar matnni taqqoslaydi)
+        correctAnswerText = q.correctOption; // server asl options bilan solishtiradi
+      }
+      const isCorrect = isAnswerCorrect(answers[i], q.correctOption, q.options || []);
+      if (isCorrect) score++;
+      return {
+        ...q,
+        // correctAnswerText: server scoring uchun shuffle-safe matn
+        // Server bu maydonni ko'rsa — harf indeksiga ishonmaydi, to'g'ridan matn taqqoslaydi
+        correctAnswerText: correctAnswerText,
+      };
     });
 
     const resultId = 'res_' + Date.now().toString();
@@ -396,9 +416,10 @@ export default function TakeTest() {
       id: resultId, testId,
       studentName: studentName + (isForced ? ' (Qoidabuzarlik)' : ''),
       answers, score, totalScore: test.questions.length,
-      questions: test.questions, testTitle: test.title,
+      questions: questionsWithMeta, testTitle: test.title,
       createdAt: new Date().toISOString()
     };
+
 
     try {
       // ✅ FIX: 30 soniyalik timeout — server javob bermasa qayta urinamiz

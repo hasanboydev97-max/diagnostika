@@ -37,21 +37,61 @@ export const setupSockets = (httpServer) => {
     // Student joins a room
     socket.on('join_room', ({ pin, name }) => {
       const room = liveRooms.get(pin);
+
+      // 1. Xona mavjudligini tekshir
       if (!room) {
-        return socket.emit('error', 'Xona topilmadi');
+        return socket.emit('error', 'Xona topilmadi. PIN kodni tekshiring.');
       }
+
+      // 2. Bir xil socket.id bilan ikki marta join qilishni bloklash (double-click)
+      const alreadyById = room.players.find(p => p.id === socket.id);
+      if (alreadyById) {
+        // Allaqachon ulanilgan — shunchaki 'joined' qayta yubor (idempotent)
+        return socket.emit('joined', { pin, name: alreadyById.name, testId: room.testId });
+      }
+
+      // 3. Reconnect: bir xil ism bilan qayta ulanish (yangi socket.id, lekin avvalgi o'quvchi)
+      //    Tarmoq muammosi yoki sahifa refresh bo'lganda socket.id o'zgaradi.
+      //    Agar bir xil ism bo'lsa — eski yozuvni yangi socket.id bilan yangilaymiz.
+      const existingByName = room.players.find(
+        p => p.name.trim().toLowerCase() === (name || '').trim().toLowerCase()
+      );
+      if (existingByName) {
+        if (room.status === 'waiting') {
+          // Waiting holatida — eski yozuvni yangi socket.id bilan yangilash (reconnect)
+          existingByName.id = socket.id;
+          if (room.scores[existingByName.id] === undefined) {
+            room.scores[socket.id] = existingByName.score || 0;
+          }
+          socket.join(pin);
+          io.to(room.hostId).emit('player_joined', { players: room.players });
+          return socket.emit('joined', { pin, name: existingByName.name, testId: room.testId });
+        } else {
+          // O'yin boshlangan — bir xil ism bilan qayta urinish, lekin boshqa odam ham bo'lishi mumkin
+          return socket.emit('error', `"${existingByName.name}" ismi allaqachon band. Boshqa ism kiriting.`);
+        }
+      }
+
+      // 4. O'yin boshlangan bo'lsa — yangi o'quvchi kira olmaydi
       if (room.status !== 'waiting') {
-        return socket.emit('error', 'O\'yin allaqachon boshlangan');
+        return socket.emit('error', 'O\'yin allaqachon boshlangan. Keyingi o\'yinni kuting.');
       }
-      
-      room.players.push({ id: socket.id, name, score: 0 });
+
+      // 5. Ism bo'sh bo'lsa — bloklash
+      if (!name || !name.trim()) {
+        return socket.emit('error', 'Iltimos, ismingizni kiriting.');
+      }
+
+      // 6. Normal qo'shish
+      room.players.push({ id: socket.id, name: name.trim(), score: 0 });
       room.scores[socket.id] = 0;
       socket.join(pin);
-      
-      // Notify host
+
+      // Hostga xabar berish
       io.to(room.hostId).emit('player_joined', { players: room.players });
-      socket.emit('joined', { pin, name, testId: room.testId });
+      socket.emit('joined', { pin, name: name.trim(), testId: room.testId });
     });
+
 
     // Host starts the game
     socket.on('start_game', ({ pin }) => {
@@ -59,6 +99,7 @@ export const setupSockets = (httpServer) => {
       if (room && room.hostId === socket.id) {
         room.status = 'active';
         room.currentQuestion = 0;
+        room.answeredMap = {}; // Har bir savolga javob berilganini kuzatish uchun yangi Map
         io.to(pin).emit('game_started');
         io.to(pin).emit('new_question', { questionIndex: room.currentQuestion });
       }
@@ -69,26 +110,44 @@ export const setupSockets = (httpServer) => {
       const room = liveRooms.get(pin);
       if (room && room.hostId === socket.id) {
         room.currentQuestion++;
+        // Yangi savolda barcha o'quvchilarning "answered" holatini tozala
+        room.answeredMap = {};
         io.to(pin).emit('new_question', { questionIndex: room.currentQuestion });
       }
     });
 
+
     // Student submits answer
     socket.on('submit_answer', ({ pin, isCorrect }) => {
       const room = liveRooms.get(pin);
-      if (room && room.status === 'active') {
-        if (isCorrect) {
-          // Simple scoring based on being correct, could add time-based scoring
-          if (room.scores[socket.id] === undefined) room.scores[socket.id] = 0;
-          room.scores[socket.id] += 100;
-          const player = room.players.find(p => p.id === socket.id);
-          if (player) player.score = room.scores[socket.id];
-        }
-        
-        // Notify host to update leaderboard
-        io.to(room.hostId).emit('leaderboard_update', { players: room.players });
+      if (!room || room.status !== 'active') return;
+
+      // O'quvchi ro'yxatda ekanligini tekshir
+      const player = room.players.find(p => p.id === socket.id);
+      if (!player) return;
+
+      // Duplicate answer bloklash: har bir o'quvchi uchun qaysi savollarga javob berganini kuzat
+      if (!room.answeredMap) room.answeredMap = {}; // { socketId: Set<questionIndex> }
+      if (!room.answeredMap[socket.id]) room.answeredMap[socket.id] = new Set();
+
+      const currentQ = room.currentQuestion;
+      if (room.answeredMap[socket.id].has(currentQ)) {
+        // Allaqachon javob berilgan — ikkinchi emit ni e'tiborsiz qoldirish
+        return;
       }
+      room.answeredMap[socket.id].add(currentQ);
+
+      // Ball hisoblash (faqat to'g'ri javobda)
+      if (isCorrect) {
+        if (room.scores[socket.id] === undefined) room.scores[socket.id] = 0;
+        room.scores[socket.id] += 100;
+        player.score = room.scores[socket.id];
+      }
+
+      // Hostga leaderboard yangilash
+      io.to(room.hostId).emit('leaderboard_update', { players: room.players });
     });
+
 
     socket.on('end_game', ({ pin }) => {
       const room = liveRooms.get(pin);

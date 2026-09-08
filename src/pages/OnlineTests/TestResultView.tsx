@@ -59,7 +59,18 @@ export default function TestResultView() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const confettiFired = useRef(false);
 
-  useEffect(() => { fetchResult(); }, [resultId]);
+  useEffect(() => {
+    // ✅ FIX: Agar result allaqachon mavjud bo'lsa (location.state yoki sessionStorage) —
+    // sahifa darhol ochiladi. fetchResult faqat background'da yangilanish uchun ishga tushadi.
+    // Bu "uzoq kutish" muammosini butunlay bartaraf etadi.
+    if (result) {
+      setLoading(false);
+      // Background'da serverdan yangilangan ma'lumot (masalan aiFeedback) olish
+      fetchResultInBackground();
+    } else {
+      fetchResult();
+    }
+  }, [resultId]);
 
   // ── Animated score counter (0 → target in ~1.2s) ─────────────────────────
   useEffect(() => {
@@ -89,6 +100,25 @@ export default function TestResultView() {
       confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#000', '#333', '#666'] });
     }
   }, [result]);
+
+  // Background fetch: result mavjud, lekin serverdan yangilangan ma'lumot (aiFeedback) olamiz
+  const fetchResultInBackground = async () => {
+    if (!resultId) return;
+    try {
+      let res = await fetch(`${API_URL}/online-test-results/${resultId}`);
+      if (!res.ok) res = await fetch(`${API_URL}/results/${resultId}`);
+      if (res.ok) {
+        const data = await res.json();
+        // Faqat yangi ma'lumotlarni birlashtir — mavjud state ni o'chirib yuborma
+        setResult((prev: any) => ({ ...prev, ...data }));
+        if (data.questions && data.questions.length > 0) {
+          setTest({ title: data.testTitle || 'Onlayn Test', questions: data.questions });
+        }
+      }
+    } catch {
+      // Background fetch xatosi — foydalanuvchiga ko'rsatilmaydi, mavjud ma'lumot qoladi
+    }
+  };
 
   const fetchResult = async (retryCount = 0) => {
     try {
@@ -131,6 +161,7 @@ export default function TestResultView() {
       setLoading(false);
     }
   };
+
 
   if (loading && !result) return (
     <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex items-center justify-center">
@@ -307,7 +338,8 @@ export default function TestResultView() {
             >
               {(activeTest?.questions || []).map((q: any, i: number) => {
                 const studentAns = (result.answers || {})[i];
-                const isCorrect = isAnswerCorrect(studentAns, q.correctOption, q.options || []);
+                // correctAnswerText mavjud bo'lsa — eng ishonchli taqqoslash
+                const isCorrect = isAnswerCorrect(studentAns, q.correctOption, q.options || [], q.correctAnswerText);
 
                 return (
                   <motion.div
@@ -344,8 +376,16 @@ export default function TestResultView() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-auto pl-9">
                       {(q.options || []).map((opt: string, oIndex: number) => {
-                        const isStudentChoice = studentAns !== undefined && String(studentAns).trim().toLowerCase() === String(opt).trim().toLowerCase();
-                        const isActuallyCorrect = isAnswerCorrect(opt, q.correctOption, q.options || []);
+                        // HTML teglarni tozalab taqqoslaymiz — FormattedText render farqini yo'qotadi
+                        const stripForCompare = (s: string) =>
+                          String(s || '').replace(/<[^>]*>/g, '').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim().toLowerCase();
+
+                        const isStudentChoice = studentAns !== undefined &&
+                          stripForCompare(String(studentAns)) === stripForCompare(String(opt));
+
+                        // correctAnswerText mavjud bo'lsa — uni asosiy to'g'ri javob sifatida ishlatamiz
+                        const isActuallyCorrect = isAnswerCorrect(opt, q.correctOption, q.options || [], q.correctAnswerText);
+
                         let cls = "px-3 py-2 rounded-md border text-sm transition-colors ";
                         if (isActuallyCorrect) cls += "bg-green-50 border-green-200 text-green-800 font-medium";
                         else if (isStudentChoice && !isCorrect) cls += "bg-red-50 border-red-200 text-red-800 font-medium";
@@ -360,6 +400,7 @@ export default function TestResultView() {
                   </motion.div>
                 );
               })}
+
             </motion.div>
           </div>
         )}
