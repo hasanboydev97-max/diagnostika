@@ -13,6 +13,7 @@ import {
 import { toast } from 'sonner';
 import { getAuthHeaders, setTeacher, logout } from '../lib/auth';
 import { useNavigate } from 'react-router-dom';
+import { SUBJECTS } from '../pages/OnlineTests/TeacherAuth';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -343,14 +344,17 @@ export default function TeacherProfileModal({
                       <label className="block text-[10px] font-bold tracking-[0.2em] uppercase text-gray-500 mb-1">
                         Dars Beradigan Fani
                       </label>
-                      <input
-                        type="text"
+                      <select
                         value={subject}
                         onChange={(e) => setSubject(e.target.value)}
                         required
-                        placeholder="Informatika"
-                        className="w-full bg-transparent border-b border-black/20 focus:border-black py-2.5 text-sm text-[#111111] focus:outline-none transition-colors font-medium"
-                      />
+                        className="w-full bg-transparent border-b border-black/20 focus:border-black py-2.5 text-sm text-[#111111] focus:outline-none transition-colors font-medium appearance-none"
+                      >
+                        <option value="" disabled>Fanni tanlang</option>
+                        {SUBJECTS.map(sub => (
+                          <option key={sub} value={sub}>{sub}</option>
+                        ))}
+                      </select>
                     </div>
 
                     <div>

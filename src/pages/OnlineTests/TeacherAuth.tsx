@@ -9,9 +9,12 @@ import MagicButton from '../../components/MagicButton';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-const SUBJECTS = [
-  "Matematika", "Informatika", "Ona tili", "Tarix", 
-  "Ingliz tili", "Fizika", "Kimyo", "Biologiya"
+export const SUBJECTS = [
+  "Matematika", "Informatika", "Ona tili", "Adabiyot", 
+  "Rus tili", "Tarix", "Ingliz tili", "Nemis tili", "Fransuz tili",
+  "Fizika", "Kimyo", "Biologiya", "Geografiya", "Huquq", 
+  "Iqtisodiyot", "Tarbiya", "Jismoniy tarbiya", "Tasviriy san'at", 
+  "Chizmachilik", "Musiqa", "Texnologiya", "Boshlang'ich ta'lim"
 ];
 
 export default function TeacherAuth() {
