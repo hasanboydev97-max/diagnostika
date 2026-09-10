@@ -5,7 +5,14 @@ import { escapeRegex } from '../utils/regexUtils.js';
 // ✅ 14. dotenv.config() olib tashlandi — faqat server/index.js da bir marta chaqiriladi
 
 const getJwtSecret = () => {
-  return process.env.JWT_SECRET || 'hb-diagnostika-secure-jwt-key-2026-production';
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error(
+      'CRITICAL: JWT_SECRET environment variable is not set! ' +
+      'Render/hosting Environment Variables bo\'limida JWT_SECRET ni o\'rnating.'
+    );
+  }
+  return secret;
 };
 
 export const register = async (req, res) => {

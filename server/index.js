@@ -31,17 +31,63 @@ app.set('trust proxy', 1); // ✅ Required for rate limiter to work behind Rende
 
 process.on('uncaughtException', (err) => {
   console.error('UNCAUGHT EXCEPTION! Shutting down...', err);
+  // 0.5 FIX: process.exit(1) — PM2/Docker avtomatik restart qiladi
+  process.exit(1);
 });
 
-process.on('unhandledRejection', (err) => {
-  console.error('UNHANDLED REJECTION! Shutting down...', err);
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('UNHANDLED REJECTION at:', promise, 'reason:', reason);
+  // 0.5 FIX: process.exit(1) — buzilgan holatda davom etish o'rniga qayta ishga tushish
+  process.exit(1);
 });
 
-// ✅ 1. Helmet — HTTP Security Headers (XSS, Clickjacking, MIME sniffing oldini olish)
+// ✅ 1. Helmet — HTTP Security Headers
+// 2.8 FIX: contentSecurityPolicy: false o'rniga minimal, ishlaydigan CSP
 app.use(helmet({
   crossOriginEmbedderPolicy: false, // Cloudinary/CDN rasm yuklashlar uchun
-  contentSecurityPolicy: false      // Yengil frontendlar uchun, zarur bo'lsa yoqing
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com", "https://*.cloudinary.com"],
+      connectSrc: [
+        "'self'",
+        "https://bmdiagnostika.vercel.app",
+        "https://hbdiagnostika.vercel.app",
+        "https://generativelanguage.googleapis.com",
+        "https://api.groq.com",
+        "https://api.anthropic.com",
+        "wss:",
+        "ws:"
+      ],
+      frameSrc: ["'none'"],
+      objectSrc: ["'none'"],
+    }
+  }
 }));
+
+// 2.4 FIX: NoSQL injection sanitizatsiyasi (express-mongo-sanitize analog)
+// Foydalanuvchi kiritgan ma'lumotlardan MongoDB operatorlarini tozalaydi ($gt, $ne, ...)
+const mongoSanitize = (obj) => {
+  if (obj && typeof obj === 'object') {
+    for (const key of Object.keys(obj)) {
+      if (key.startsWith('$') || key.includes('.')) {
+        delete obj[key];
+      } else {
+        mongoSanitize(obj[key]);
+      }
+    }
+  }
+  return obj;
+};
+app.use((req, _res, next) => {
+  if (req.body) mongoSanitize(req.body);
+  if (req.query) mongoSanitize(req.query);
+  if (req.params) mongoSanitize(req.params);
+  next();
+});
 
 // ✅ 2. CORS — Faqat ruxsat etilgan domenlar
 const allowedOrigins = [
@@ -75,7 +121,6 @@ const authLimiter = rateLimit({
 });
 
 // Umumiy API uchun: 15 daqiqada 1500 ta so'rov
-// (30+ o'quvchi bir vaqtda test ishlaganda rate limit muammosi bo'lmasin)
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 1500,
@@ -84,8 +129,21 @@ const generalLimiter = rateLimit({
   message: { error: 'Juda ko\'p so\'rov. Biroz kutib turing.' }
 });
 
+// 1.2 FIX: AI endpointlar uchun alohida, qat'iy limit (qimmat operatsiyalar)
+// Daqiqasiga 10 ta AI so'rov — DDoS va kutilmagan xarajatdan himoya
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 daqiqa
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'AI so\'rov limiti. 1 daqiqadan so\'ng qayta urinib ko\'ring.' }
+});
+
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
+// AI va eksport endpointlari — avval qat'iy limit, keyin umumiy
+app.use('/api/ai', aiLimiter);
+app.use('/api/online-tests/generate', aiLimiter);
 app.use('/api', generalLimiter);
 
 const PORT = process.env.PORT || 5000;
@@ -116,7 +174,12 @@ const upload = multer({
 if (MONGODB_URI) {
   mongoose.connect(MONGODB_URI, {
     family: 4,
-    serverSelectionTimeoutMS: 10000
+    serverSelectionTimeoutMS: 10000,
+    // 1.3 FIX: Connection pool sozlamalari — 30+ o'qituvchi bir vaqtda ishlasa yetarli
+    maxPoolSize: 20,        // Parallel ulanishlar soni (default: 5 — yetarli emas)
+    minPoolSize: 2,         // Doim ochiq bo'ladigan minimal ulanishlar
+    connectTimeoutMS: 10000,
+    socketTimeoutMS: 45000,
   })
     .then(() => console.log('✅ Connected to MongoDB'))
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
@@ -186,20 +249,48 @@ app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
+// Eski /api/ping — orqaga moslik uchun saqlab qolindi
 app.get('/api/ping', (req, res) => {
   res.json({ status: 'ok', message: 'Pong. API is awake.' });
 });
 
-app.get('/api/results', async (req, res) => {
+// 1.4 FIX: Kengaytirilgan health check — DB holati, uptime, memory
+// UptimeRobot va boshqa monitoring tizimlari shu endpoint orqali serverning holatini tekshiradi
+app.get('/api/health', async (req, res) => {
+  const dbState = mongoose.connection.readyState;
+  const dbStatusMap = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
+  const isHealthy = dbState === 1;
+
+  const health = {
+    status: isHealthy ? 'ok' : 'degraded',
+    timestamp: new Date().toISOString(),
+    uptime: Math.floor(process.uptime()),
+    db: dbStatusMap[dbState] || 'unknown',
+    memory: {
+      rss: `${Math.round(process.memoryUsage().rss / 1024 / 1024)}MB`,
+      heapUsed: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`,
+    },
+  };
+
+  res.status(isHealthy ? 200 : 503).json(health);
+});
+
+// KRITIK-5 FIX: /api/results endpointlariga authMiddleware qo'shildi.
+// O'qituvchilar faqat o'z o'quvchilarining natijalarini, adminlar barchani ko'ra oladi.
+app.get('/api/results', authMiddleware, async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 100;
-    const results = await Result.find().sort({ _id: -1 }).limit(limit).lean();
+    const limit = Math.min(parseInt(req.query.limit) || 100, 500); // max 500
+    // Admin barcha natijalarni ko'ra oladi, o'qituvchi faqat o'zinikini
+    const filter = req.userRole === 'admin' ? {} : { teacherId: req.teacherId };
+    const results = await Result.find(filter).sort({ _id: -1 }).limit(limit).lean();
     res.json(results);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
+// /api/results/:id — natija umumiy ko'rinish (summary) uchun ochiq qoladi
+// O'quvchi o'z natijasini ko'rishi uchun auth shart emas (QR kod orqali kiradi)
 app.get('/api/results/:id', async (req, res) => {
   try {
     const { id } = req.params;

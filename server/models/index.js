@@ -37,12 +37,13 @@ OnlineTestSchema.index({ teacherId: 1, createdAt: -1 });
 export const OnlineTest = mongoose.model('OnlineTest', OnlineTestSchema);
 
 const OnlineTestResultSchema = new mongoose.Schema({
-  id: { type: String, index: true },
-  testId: { type: String, index: true },
-  studentName: String,
+  // 1.5 FIX: id maydoni unique va required — Result schema bilan izchillik
+  id: { type: String, required: true, unique: true, index: true },
+  testId: { type: String, required: true, index: true },
+  studentName: { type: String, required: true, trim: true },
   answers: Object,
-  score: Number,
-  totalScore: Number,
+  score: { type: Number, default: 0 },
+  totalScore: { type: Number, default: 0 },
   aiFeedback: String,
   createdAt: { type: Date, default: Date.now }
 }, { strict: false });

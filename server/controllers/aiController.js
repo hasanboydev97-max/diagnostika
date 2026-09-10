@@ -1,18 +1,24 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// KRITIK-2 FIX: Hardcoded GROQ_API_KEY (String.fromCharCode yashirish) olib tashlandi.
+// API kalitlar FAQAT environment variable orqali o'rnatilishi kerak.
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
-const GROQ_API_KEY = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY || String.fromCharCode(103,115,107,95,71,119,118,87,52,52,87,106,122,73,120,79,97,68,75,67,86,83,111,100,87,71,100,121,98,51,70,89,70,114,115,112,56,104,50,114,70,111,74,102,116,116,83,84,49,113,69,50,78,86,67,100);
+const GROQ_API_KEY = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
+
+if (!GEMINI_API_KEY && !GROQ_API_KEY) {
+  console.warn(
+    '⚠️ [aiController] Hech qanday AI API kaliti topilmadi (GEMINI_API_KEY, GROQ_API_KEY).\n' +
+    '   /api/ai/* endpointlari ishlamaydi. Render/hosting Environment Variables bo\'limini tekshiring.'
+  );
+}
 
 const GEMINI_MODELS = [
   "gemini-1.5-flash",
-  "gemini-2.5-flash",
-  "gemini-3.6-flash",
-  "gemini-3.5-flash-lite",
-  "gemini-flash-latest"
+  "gemini-2.0-flash",
+  "gemini-1.5-pro",
 ];
 
 const GEMINI_VISION_MODELS = [
-  "gemini-2.5-flash",
   "gemini-2.0-flash",
   "gemini-1.5-flash-latest",
   "gemini-1.5-flash",
@@ -22,10 +28,11 @@ const GEMINI_VISION_MODELS = [
 const GROQ_MODELS = [
   "llama-3.3-70b-versatile",
   "llama3-8b-8192",
-  "mixtral-8x7b-32768"
 ];
 
 async function callGroqAiFallback(prompt) {
+  if (!GROQ_API_KEY) throw new Error('GROQ_API_KEY environment variable o\'rnatilmagan.');
+
   let lastErr = "";
   for (const modelName of GROQ_MODELS) {
     try {
@@ -74,12 +81,17 @@ export const generateText = async (req, res) => {
     const { prompt } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
 
+    // Prompt injection himoyasi: foydalanuvchi kiritgan matn uzunligini cheklash
+    if (prompt.length > 10000) {
+      return res.status(400).json({ error: 'Prompt juda uzun (max 10000 belgi).' });
+    }
+
     let lastError = "";
     if (GEMINI_API_KEY) {
       const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
       for (const modelName of GEMINI_MODELS) {
         try {
-          const model = genAI.getGenerativeModel({ 
+          const model = genAI.getGenerativeModel({
             model: modelName,
             generationConfig: { responseMimeType: "application/json" }
           });
@@ -94,10 +106,17 @@ export const generateText = async (req, res) => {
       }
     }
 
+    if (!GROQ_API_KEY) {
+      return res.status(503).json({
+        error: 'AI xizmati vaqtincha mavjud emas. ' + (lastError || 'API kaliti topilmadi.')
+      });
+    }
+
     // Fallback to Groq
     const groqResponse = await callGroqAiFallback(prompt);
     res.json({ text: groqResponse });
   } catch (error) {
+    console.error('[generateText] Xato:', error.message);
     res.status(500).json({ error: error.message });
   }
 };
@@ -106,9 +125,21 @@ export const generateVision = async (req, res) => {
   try {
     const { prompt, images, requireJson } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
-    if (!GEMINI_API_KEY) return res.status(500).json({ error: 'Gemini API key is not configured' });
+    if (!GEMINI_API_KEY) {
+      return res.status(503).json({ error: 'Gemini API kaliti sozlanmagan. Admin bilan bog\'laning.' });
+    }
+
+    // Prompt uzunligi cheki
+    if (prompt.length > 10000) {
+      return res.status(400).json({ error: 'Prompt juda uzun (max 10000 belgi).' });
+    }
 
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+
+    if (!Array.isArray(images) || images.length === 0) {
+      return res.status(400).json({ error: 'Kamida bitta rasm talab qilinadi.' });
+    }
+
     const imageParts = images.map(img => ({
       inlineData: { data: img.data, mimeType: img.mimeType }
     }));
@@ -141,8 +172,9 @@ export const generateVision = async (req, res) => {
       lastError += `[Fallback]: ${err.message}; `;
     }
 
-    res.status(500).json({ error: `Vision AI failed: ${lastError}` });
+    res.status(503).json({ error: `Vision AI vaqtincha mavjud emas: ${lastError}` });
   } catch (error) {
+    console.error('[generateVision] Xato:', error.message);
     res.status(500).json({ error: error.message });
   }
 };

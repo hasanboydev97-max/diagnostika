@@ -1,10 +1,23 @@
 import { Server } from 'socket.io';
+import jwt from 'jsonwebtoken';
+
+// KRITIK-6 FIX: CORS '*' o'rniga aniq domenlar ro'yxati
+const ALLOWED_ORIGINS = [
+  'https://bmdiagnostika.vercel.app',
+  'https://hbdiagnostika.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+
+// Socket room TTL: 2 soat (O'RTA-9 fix)
+const ROOM_TTL_MS = 2 * 60 * 60 * 1000;
 
 export const setupSockets = (httpServer) => {
   const io = new Server(httpServer, {
     cors: {
-      origin: '*', // Adjust in production
-      methods: ['GET', 'POST']
+      origin: ALLOWED_ORIGINS,
+      methods: ['GET', 'POST'],
+      credentials: true
     }
   });
 
@@ -14,21 +27,66 @@ export const setupSockets = (httpServer) => {
   // Duel Rooms
   const duelRooms = new Map();
 
-  io.on('connection', (socket) => {
-    console.log('Socket connected:', socket.id);
+  // KRITIK-7 FIX: JWT middleware — o'qituvchi socketlari uchun autentifikatsiya
+  io.use((socket, next) => {
+    const token = socket.handshake.auth?.token;
+    if (token) {
+      try {
+        const secret = process.env.JWT_SECRET;
+        if (!secret) {
+          // JWT_SECRET yo'q — teacher funksiyalarini bloklash, student uchun davom etish
+          socket.isTeacher = false;
+          return next();
+        }
+        const decoded = jwt.verify(token, secret);
+        socket.teacherId = decoded.id;
+        socket.userRole = decoded.role || 'teacher';
+        socket.isTeacher = true;
+      } catch {
+        // Token xato — student sifatida davom etish (token majburiy emas students uchun)
+        socket.isTeacher = false;
+      }
+    } else {
+      socket.isTeacher = false;
+    }
+    next();
+  });
 
-    // Teacher creates a room
+  io.on('connection', (socket) => {
+    // Faqat development'da log
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Socket connected:', socket.id, socket.isTeacher ? '[Teacher]' : '[Student]');
+    }
+
+    // Teacher creates a room — KRITIK-7: faqat auth o'qituvchilar
     socket.on('host_room', ({ testId }) => {
+      // Faqat autentifikatsiyadan o'tgan o'qituvchilar xona ocha olsin
+      if (!socket.isTeacher) {
+        return socket.emit('error', 'Xona ochish uchun tizimga kirish talab qilinadi.');
+      }
+
       // Generate 6-digit pin
       const pin = Math.floor(100000 + Math.random() * 900000).toString();
+
+      // O'RTA-9 FIX: TTL mexanizmi — 2 soatdan keyin xona avtomatik yopiladi
+      const ttlTimer = setTimeout(() => {
+        if (liveRooms.has(pin)) {
+          io.to(pin).emit('error', 'Xona vaqti tugadi (2 soat). Yangi xona oching.');
+          liveRooms.delete(pin);
+        }
+      }, ROOM_TTL_MS);
+
       liveRooms.set(pin, {
         pin,
         hostId: socket.id,
+        teacherId: socket.teacherId,
         testId,
         status: 'waiting', // waiting | active | finished
         currentQuestion: -1,
         players: [],
-        scores: {}
+        scores: {},
+        createdAt: Date.now(),
+        ttlTimer
       });
       socket.join(pin);
       socket.emit('room_created', { pin });
@@ -46,19 +104,15 @@ export const setupSockets = (httpServer) => {
       // 2. Bir xil socket.id bilan ikki marta join qilishni bloklash (double-click)
       const alreadyById = room.players.find(p => p.id === socket.id);
       if (alreadyById) {
-        // Allaqachon ulanilgan — shunchaki 'joined' qayta yubor (idempotent)
         return socket.emit('joined', { pin, name: alreadyById.name, testId: room.testId });
       }
 
-      // 3. Reconnect: bir xil ism bilan qayta ulanish (yangi socket.id, lekin avvalgi o'quvchi)
-      //    Tarmoq muammosi yoki sahifa refresh bo'lganda socket.id o'zgaradi.
-      //    Agar bir xil ism bo'lsa — eski yozuvni yangi socket.id bilan yangilaymiz.
+      // 3. Reconnect: bir xil ism bilan qayta ulanish
       const existingByName = room.players.find(
         p => p.name.trim().toLowerCase() === (name || '').trim().toLowerCase()
       );
       if (existingByName) {
         if (room.status === 'waiting') {
-          // Waiting holatida — eski yozuvni yangi socket.id bilan yangilash (reconnect)
           existingByName.id = socket.id;
           if (room.scores[existingByName.id] === undefined) {
             room.scores[socket.id] = existingByName.score || 0;
@@ -67,7 +121,6 @@ export const setupSockets = (httpServer) => {
           io.to(room.hostId).emit('player_joined', { players: room.players });
           return socket.emit('joined', { pin, name: existingByName.name, testId: room.testId });
         } else {
-          // O'yin boshlangan — bir xil ism bilan qayta urinish, lekin boshqa odam ham bo'lishi mumkin
           return socket.emit('error', `"${existingByName.name}" ismi allaqachon band. Boshqa ism kiriting.`);
         }
       }
@@ -82,35 +135,36 @@ export const setupSockets = (httpServer) => {
         return socket.emit('error', 'Iltimos, ismingizni kiriting.');
       }
 
-      // 6. Normal qo'shish
-      room.players.push({ id: socket.id, name: name.trim(), score: 0 });
+      // 6. Ism sanitizatsiyasi — XSS va injectiondan himoya
+      const safeName = name.trim().replace(/[<>]/g, '').substring(0, 50);
+
+      // 7. Normal qo'shish
+      room.players.push({ id: socket.id, name: safeName, score: 0 });
       room.scores[socket.id] = 0;
       socket.join(pin);
 
-      // Hostga xabar berish
       io.to(room.hostId).emit('player_joined', { players: room.players });
-      socket.emit('joined', { pin, name: name.trim(), testId: room.testId });
+      socket.emit('joined', { pin, name: safeName, testId: room.testId });
     });
 
 
-    // Host starts the game
+    // Host starts the game — faqat xona egasi
     socket.on('start_game', ({ pin }) => {
       const room = liveRooms.get(pin);
       if (room && room.hostId === socket.id) {
         room.status = 'active';
         room.currentQuestion = 0;
-        room.answeredMap = {}; // Har bir savolga javob berilganini kuzatish uchun yangi Map
+        room.answeredMap = {};
         io.to(pin).emit('game_started');
         io.to(pin).emit('new_question', { questionIndex: room.currentQuestion });
       }
     });
 
-    // Host moves to next question
+    // Host moves to next question — faqat xona egasi
     socket.on('next_question', ({ pin }) => {
       const room = liveRooms.get(pin);
       if (room && room.hostId === socket.id) {
         room.currentQuestion++;
-        // Yangi savolda barcha o'quvchilarning "answered" holatini tozala
         room.answeredMap = {};
         io.to(pin).emit('new_question', { questionIndex: room.currentQuestion });
       }
@@ -122,29 +176,24 @@ export const setupSockets = (httpServer) => {
       const room = liveRooms.get(pin);
       if (!room || room.status !== 'active') return;
 
-      // O'quvchi ro'yxatda ekanligini tekshir
       const player = room.players.find(p => p.id === socket.id);
       if (!player) return;
 
-      // Duplicate answer bloklash: har bir o'quvchi uchun qaysi savollarga javob berganini kuzat
-      if (!room.answeredMap) room.answeredMap = {}; // { socketId: Set<questionIndex> }
+      if (!room.answeredMap) room.answeredMap = {};
       if (!room.answeredMap[socket.id]) room.answeredMap[socket.id] = new Set();
 
       const currentQ = room.currentQuestion;
       if (room.answeredMap[socket.id].has(currentQ)) {
-        // Allaqachon javob berilgan — ikkinchi emit ni e'tiborsiz qoldirish
-        return;
+        return; // Allaqachon javob berilgan
       }
       room.answeredMap[socket.id].add(currentQ);
 
-      // Ball hisoblash (faqat to'g'ri javobda)
       if (isCorrect) {
         if (room.scores[socket.id] === undefined) room.scores[socket.id] = 0;
         room.scores[socket.id] += 100;
         player.score = room.scores[socket.id];
       }
 
-      // Hostga leaderboard yangilash
       io.to(room.hostId).emit('leaderboard_update', { players: room.players });
     });
 
@@ -152,6 +201,7 @@ export const setupSockets = (httpServer) => {
     socket.on('end_game', ({ pin }) => {
       const room = liveRooms.get(pin);
       if (!room || room.hostId !== socket.id) return;
+      clearTimeout(room.ttlTimer); // TTL timerni tozalash
       io.to(pin).emit('game_ended', { players: room.players });
       liveRooms.delete(pin);
     });
@@ -173,12 +223,25 @@ export const setupSockets = (httpServer) => {
     // ==========================================
 
     socket.on('create_duel', ({ testId, name }) => {
+      if (!socket.isTeacher) {
+        return socket.emit('error', 'Duyel yaratish uchun tizimga kirish talab qilinadi.');
+      }
+
       const pin = Math.floor(100000 + Math.random() * 900000).toString();
+
+      const ttlTimer = setTimeout(() => {
+        if (duelRooms.has(pin)) {
+          io.to(pin).emit('error', 'Duyel vaqti tugadi (2 soat).');
+          duelRooms.delete(pin);
+        }
+      }, ROOM_TTL_MS);
+
       duelRooms.set(pin, {
         testId,
         player1: { id: socket.id, name, score: 0, currentQuestion: 0, finished: false },
         player2: null,
-        status: 'waiting' // waiting, active, finished
+        status: 'waiting',
+        ttlTimer
       });
       socket.join(pin);
       socket.emit('duel_created', { pin, testId });
@@ -195,13 +258,13 @@ export const setupSockets = (httpServer) => {
       if (room.status !== 'waiting') {
         return socket.emit('error', 'Duyel allaqachon boshlangan');
       }
-      
-      room.player2 = { id: socket.id, name, score: 0, currentQuestion: 0, finished: false };
+
+      const safeName = (name || '').trim().replace(/[<>]/g, '').substring(0, 50);
+      room.player2 = { id: socket.id, name: safeName, score: 0, currentQuestion: 0, finished: false };
       socket.join(pin);
-      
-      // Notify both players that duel can start
-      io.to(pin).emit('duel_ready', { 
-        player1: room.player1.name, 
+
+      io.to(pin).emit('duel_ready', {
+        player1: room.player1.name,
         player2: room.player2.name,
         testId: room.testId
       });
@@ -212,14 +275,14 @@ export const setupSockets = (httpServer) => {
       if (!room) {
         return socket.emit('error', 'Duyel xonasi topilmadi. Qaytadan boshlash uchun sahifani yangilang.');
       }
-      
+
       socket.join(pin);
       if (isCreator) {
         room.player1.id = socket.id;
       } else if (room.player2 && room.player2.name === name) {
         room.player2.id = socket.id;
       }
-      
+
       io.to(pin).emit('duel_update', {
         player1: room.player1,
         player2: room.player2
@@ -242,7 +305,6 @@ export const setupSockets = (httpServer) => {
       const room = duelRooms.get(pin);
       if (!room) return;
 
-      // Update state
       let isP1 = room.player1.id === socket.id;
       if (isP1) {
         room.player1.score = score;
@@ -252,7 +314,6 @@ export const setupSockets = (httpServer) => {
         room.player2.currentQuestion = currentQuestion;
       }
 
-      // Broadcast update to the room
       io.to(pin).emit('duel_update', {
         player1: room.player1,
         player2: room.player2
@@ -266,7 +327,6 @@ export const setupSockets = (httpServer) => {
       if (room.player1.id === socket.id) room.player1.finished = true;
       if (room.player2 && room.player2.id === socket.id) room.player2.finished = true;
 
-      // Broadcast update so both see who finished
       io.to(pin).emit('duel_update', {
         player1: room.player1,
         player2: room.player2
@@ -274,6 +334,7 @@ export const setupSockets = (httpServer) => {
 
       if (room.player1.finished && (room.player2 ? room.player2.finished : true)) {
         room.status = 'finished';
+        clearTimeout(room.ttlTimer);
         io.to(pin).emit('duel_ended', {
           player1: room.player1,
           player2: room.player2
@@ -300,6 +361,7 @@ export const setupSockets = (httpServer) => {
       });
 
       room.status = 'finished';
+      clearTimeout(room.ttlTimer);
       io.to(pin).emit('duel_ended', {
         player1: room.player1,
         player2: room.player2,
@@ -309,14 +371,17 @@ export const setupSockets = (httpServer) => {
     });
 
     socket.on('disconnect', () => {
-      console.log('Client disconnected:', socket.id);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Client disconnected:', socket.id);
+      }
+
+      // LiveRooms cleanup
       for (const [pin, room] of liveRooms.entries()) {
         if (room.hostId === socket.id) {
-          // Host disconnected
+          clearTimeout(room.ttlTimer);
           io.to(pin).emit('error', 'O\'qituvchi aloqani uzdi.');
           liveRooms.delete(pin);
         } else {
-          // Player disconnected
           const pIndex = room.players.findIndex(p => p.id === socket.id);
           if (pIndex !== -1) {
             room.players.splice(pIndex, 1);
@@ -332,6 +397,7 @@ export const setupSockets = (httpServer) => {
             room.player1.cheated = true;
             room.player1.finished = true;
             room.player1.score = 0;
+            clearTimeout(room.ttlTimer);
             io.to(pin).emit('duel_ended', {
               player1: room.player1,
               player2: room.player2,
@@ -342,6 +408,7 @@ export const setupSockets = (httpServer) => {
             room.player2.cheated = true;
             room.player2.finished = true;
             room.player2.score = 0;
+            clearTimeout(room.ttlTimer);
             io.to(pin).emit('duel_ended', {
               player1: room.player1,
               player2: room.player2,

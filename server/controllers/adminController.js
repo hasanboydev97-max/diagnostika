@@ -107,17 +107,20 @@ export const deleteTeacher = async (req, res) => {
 
 export const getTests = async (req, res) => {
   try {
-    // Populate teacher info manually since we don't have refs set up perfectly
+    // 1.1 FIX: N+1 query tuzatildi — barcha teacherlarni bitta so'rovda olamiz
     const tests = await OnlineTest.find().sort({ createdAt: -1 }).lean();
-    
-    const testsWithTeachers = await Promise.all(tests.map(async (test) => {
-      let teacher = null;
-      if (test.teacherId) {
-        teacher = await Teacher.findById(test.teacherId).select('name email subject').lean();
-      }
-      return { ...test, teacher };
+
+    // Barcha noyob teacherIdlarni olamiz
+    const teacherIds = [...new Set(tests.map(t => t.teacherId).filter(Boolean))];
+    const teachers = await Teacher.find({ _id: { $in: teacherIds } })
+      .select('name email subject').lean();
+    const teacherMap = Object.fromEntries(teachers.map(t => [t._id.toString(), t]));
+
+    const testsWithTeachers = tests.map(test => ({
+      ...test,
+      teacher: teacherMap[String(test.teacherId)] || null
     }));
-    
+
     res.json(testsWithTeachers);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -126,25 +129,38 @@ export const getTests = async (req, res) => {
 
 export const getResults = async (req, res) => {
   try {
-    // Get recent online test results
+    // 1.1 FIX: N+1 query tuzatildi — batch fetch bilan 3 ta so'rov (ilgari 200+)
     const results = await OnlineTestResult.find().sort({ createdAt: -1 }).limit(100).lean();
-    
-    const resultsWithTestInfo = await Promise.all(results.map(async (res) => {
-      let test = null;
-      if (res.testId) {
-        const testQuery = mongoose.Types.ObjectId.isValid(res.testId)
-          ? { $or: [{ _id: res.testId }, { id: res.testId }] }
-          : { id: res.testId };
-        test = await OnlineTest.findOne(testQuery).select('title subject teacherId').lean();
-      }
-      let teacher = null;
-      if (test && test.teacherId) {
-        teacher = await Teacher.findById(test.teacherId).select('name').lean();
-      }
-      return { ...res, test, teacher };
-    }));
-    
-    res.json(resultsWithTestInfo);
+
+    // Barcha testIdlarni batch'da olamiz
+    const testIds = [...new Set(results.map(r => r.testId).filter(Boolean))];
+    const validObjectIds = testIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+    const testsRaw = await OnlineTest.find({
+      $or: [
+        ...(validObjectIds.length ? [{ _id: { $in: validObjectIds } }] : []),
+        { id: { $in: testIds } }
+      ]
+    }).select('title subject teacherId id').lean();
+
+    const testMap = {};
+    testsRaw.forEach(t => {
+      if (t.id) testMap[t.id] = t;
+      testMap[t._id.toString()] = t;
+    });
+
+    // Barcha teacherIdlarni batch'da olamiz
+    const teacherIds = [...new Set(testsRaw.map(t => t.teacherId).filter(Boolean))];
+    const teachersRaw = await Teacher.find({ _id: { $in: teacherIds } })
+      .select('name').lean();
+    const teacherMap = Object.fromEntries(teachersRaw.map(t => [t._id.toString(), t]));
+
+    const enriched = results.map(r => {
+      const test = testMap[r.testId] || null;
+      const teacher = test ? teacherMap[String(test.teacherId)] : null;
+      return { ...r, test, teacher };
+    });
+
+    res.json(enriched);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
