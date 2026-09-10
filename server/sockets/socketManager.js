@@ -223,10 +223,6 @@ export const setupSockets = (httpServer) => {
     // ==========================================
 
     socket.on('create_duel', ({ testId, name }) => {
-      if (!socket.isTeacher) {
-        return socket.emit('error', 'Duyel yaratish uchun tizimga kirish talab qilinadi.');
-      }
-
       const pin = Math.floor(100000 + Math.random() * 900000).toString();
 
       const ttlTimer = setTimeout(() => {

@@ -139,7 +139,7 @@ const generalLimiter = rateLimit({
 // Daqiqasiga 10 ta AI so'rov — DDoS va kutilmagan xarajatdan himoya
 const aiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 daqiqa
-  max: 10,
+  max: 50, // 50-100 kishi (ayniqsa bir xil maktab IP-sidan) kirganda bloklanmasligi uchun oshirildi
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'AI so\'rov limiti. 1 daqiqadan so\'ng qayta urinib ko\'ring.' }

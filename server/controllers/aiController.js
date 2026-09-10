@@ -57,27 +57,20 @@ export const generateVision = async (req, res) => {
       return res.status(400).json({ error: 'Kamida bitta rasm talab qilinadi.' });
     }
 
-    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const imageParts = images.map(img => ({
-      inlineData: { data: img.data, mimeType: img.mimeType || 'image/jpeg' }
-    }));
+    // Orchestrator orqali xavfsiz chaqirish (Rate limit, fallback va concurrency queue bilan ishlaydi)
+    const result = await executeResilientVisionOCR({
+      promptText: prompt,
+      imageBase64: images[0].data,
+      imageMimeType: images[0].mimeType || 'image/jpeg'
+    });
 
-    let lastError = "";
-    for (const modelName of GEMINI_VISION_MODELS) {
-      try {
-        const config = requireJson ? { responseMimeType: "application/json" } : {};
-        const model = genAI.getGenerativeModel({ model: modelName, generationConfig: config });
-        const result = await model.generateContent([prompt, ...imageParts]);
-        const text = await result.response.text();
-        if (text && text.trim()) {
-          return res.json({ text });
-        }
-      } catch (err) {
-        lastError += `[${modelName}]: ${err.message}; `;
-      }
+    if (result.success && result.questions && result.questions.length > 0) {
+      // requireJson logic is handled inside orchestrator (it always attempts JSON if schema allows)
+      // Actually executeResilientVisionOCR returns { success: true, questions }
+      return res.json({ text: JSON.stringify(result.questions) });
     }
 
-    res.status(503).json({ error: `Vision AI vaqtincha mavjud emas: ${lastError}` });
+    res.status(503).json({ error: result.error || "Rasm formatini tahlil qilib bo'lmadi." });
   } catch (error) {
     console.error('[generateVision] Xato:', error.message);
     res.status(500).json({ error: error.message });

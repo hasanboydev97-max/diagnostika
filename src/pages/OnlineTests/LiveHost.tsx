@@ -47,7 +47,10 @@ export default function LiveHost() {
   };
 
   const initSocket = () => {
-    const newSocket = io(SOCKET_URL);
+    const token = getToken();
+    const newSocket = io(SOCKET_URL, {
+      auth: { token: token || '' }
+    });
     setSocket(newSocket);
 
     newSocket.on('connect', () => {

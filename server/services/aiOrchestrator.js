@@ -2,7 +2,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import pLimit from 'p-limit';
 
 // Concurrency queue: prevents overwhelming AI APIs when 20+ teachers create tests simultaneously
-const requestQueue = pLimit(2);
+// 15 parallel — 50-100 foydalanuvchida navbat qotib qolmasligi uchun (Global Rate Limit himoyasi)
+const requestQueue = pLimit(15);
 
 // Circuit breaker / dynamic health tracking for agents
 const agentHealth = new Map();

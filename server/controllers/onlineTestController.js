@@ -10,7 +10,8 @@ import pLimit from 'p-limit';
 import xlsx from 'xlsx';
 import { executeResilientQuestionGen, executeResilientVisionOCR, executeResilientTextGen } from '../services/aiOrchestrator.js';
 
-const aiLimit = pLimit(1);
+const testGenerationQueue = pLimit(10); // 50-100 foydalanuvchi uchun test yaratish navbati
+const backgroundFeedbackQueue = pLimit(5); // O'quvchilar natijasi fonida AI tahlili uchun navbat
 
 export const getTests = async (req, res) => {
   try {
@@ -395,7 +396,7 @@ export const submitTestResult = async (req, res) => {
     // ── AI feedback background'da ishlaydi (fire-and-forget) ──────────────
     // Bu blok foydalanuvchiga javob berilgandan KEYIN ishlaydi.
     // Xato bo'lsa ham foydalanuvchiga ta'siri yo'q.
-    aiLimit(async () => {
+    backgroundFeedbackQueue(async () => {
       try {
         const anthropicKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
         const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
@@ -766,9 +767,8 @@ Return ONLY the JSON object. Begin generation now.`;
         // [OPTIMIZATSIYA]: Katta so'rovlarda API (Prompt) narxini 2 baravar kamaytirish 
         // uchun 10 talik bo'laklash 20 taga ko'tarildi.
         const chunkCount = Math.min(needed, 20);
-        // [20 O'QITUVCHI UCHUN]: aiLimit navbati orqali bir vaqtda faqat 1 ta
-        // AI so'rovi ketadi. Qolganlar navbatda kutadi — Rate Limit xatosi yo'q.
-        const aiResult = await aiLimit(() => generateChunkWithRetry(currentTopic, chunkCount));
+        // [50-100 O'QITUVCHI UCHUN]: Kengaytirilgan navbat orqali parallel so'rovlar ketadi.
+        const aiResult = await testGenerationQueue(() => generateChunkWithRetry(currentTopic, chunkCount));
         
         if (aiResult.success && aiResult.data && aiResult.data.length > 0) {
           rawQuestions = rawQuestions.concat(aiResult.data);
