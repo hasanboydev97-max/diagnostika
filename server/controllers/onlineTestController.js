@@ -249,9 +249,11 @@ export const createTest = async (req, res) => {
     await test.save();
     res.status(201).json({ message: 'Test created successfully', id: test.id });
   } catch (error) {
+    console.error('[createTest ERROR]', error.message, error.stack);
     res.status(500).json({ error: error.message });
   }
 };
+
 export const submitTestResult = async (req, res) => {
   try {
     const data = req.body;

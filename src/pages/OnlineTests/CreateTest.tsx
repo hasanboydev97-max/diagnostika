@@ -218,19 +218,22 @@ export default function CreateTest() {
   };
 
   const handleSave = async () => {
-    if (!title.trim() || !subject.trim()) {
-      return toast.error('Title and Subject are required.');
+    if (!title.trim()) {
+      return toast.error('Test sarlavhasini kiriting.');
+    }
+    if (!subject.trim()) {
+      return toast.error('Fan nomi kiritilmagan.');
     }
     if (questions.length === 0) {
-      return toast.error('Please add at least one question.');
+      return toast.error('Kamida 1 ta savol qo\'shing.');
     }
     
     // Validate questions
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
-      if (!q.questionText.trim()) return toast.error(`Question ${i + 1} is empty.`);
-      if (!q.correctOption) return toast.error(`Select a correct option for question ${i + 1}.`);
-      if (q.options.some((opt: string) => !opt.trim())) return toast.error(`Some options in question ${i + 1} are empty.`);
+      if (!q.questionText?.trim()) return toast.error(`${i + 1}-savol matni bo'sh.`);
+      if (!q.correctOption) return toast.error(`${i + 1}-savol uchun to'g'ri javobni belgilang.`);
+      if (q.options.some((opt: string) => !opt?.trim())) return toast.error(`${i + 1}-savoldagi ba'zi variantlar bo'sh.`);
     }
 
     if (hasTimeLimit) {
@@ -257,13 +260,23 @@ export default function CreateTest() {
         body: JSON.stringify(testData)
       });
       
-      if (!res.ok) throw new Error('Save failed');
+      if (!res.ok) {
+        // Server dan kelgan haqiqiy xato xabarini o'qiymiz
+        let errMsg = `Saqlashda xatolik (${res.status})`;
+        try {
+          const errData = await res.json();
+          errMsg = errData.error || errMsg;
+        } catch {
+          // JSON parse xatosi — default xabar qoladi
+        }
+        throw new Error(errMsg);
+      }
       
-      toast.success('Test saved successfully!');
+      toast.success('Test muvaffaqiyatli saqlandi!');
       navigate('/online-tests');
-    } catch (error) {
-      console.error(error);
-      toast.error('Failed to save test.');
+    } catch (error: any) {
+      console.error('Save error:', error);
+      toast.error(error.message || 'Testni saqlashda xatolik yuz berdi.');
     } finally {
       setSaving(false);
     }

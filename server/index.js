@@ -93,6 +93,7 @@ app.use((req, _res, next) => {
 const allowedOrigins = [
   'https://bmdiagnostika.vercel.app',
   'https://hbdiagnostika.vercel.app',
+  'https://diagnostika-3jdz.onrender.com',
   'http://localhost:5173',
   'http://localhost:3000'
 ];
@@ -103,6 +104,11 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
+    // Vercel preview URL lari uchun (har deploy da yangi URL bo'lishi mumkin)
+    if (origin && origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    console.warn(`[CORS BLOCKED] Origin: ${origin}`);
     return callback(new Error(`CORS: ${origin} ruxsatsiz domen`));
   },
   credentials: true
