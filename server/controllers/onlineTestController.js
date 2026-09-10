@@ -568,22 +568,31 @@ export const generateAITest = async (req, res) => {
 
     const maxAllowed = teacherCheck.plan === 'premium' ? 999999 : (teacherCheck.plan === 'standard' ? 25 : 3);
 
-    // Atomic: bir vaqtda 2 ta so'rov kelsa ham faqat bittasi limitdan o'tadi.
-    // Shart: yangi kun YOKI dailyAiCount < maxAllowed
-    const teacher = await Teacher.findOneAndUpdate(
-      {
-        _id: req.teacherId,
-        $or: [
-          { lastAiGenDate: { $ne: todayStr } },
-          { dailyAiCount: { $lt: maxAllowed } }
-        ]
+    // 1-qadam: Agar o'qituvchi ayni shu kunning o'zida bo'lsa va limiti yetarli bo'lsa, uni oshiramiz (Atomik $inc)
+    let teacher = await Teacher.findOneAndUpdate(
+      { 
+        _id: req.teacherId, 
+        lastAiGenDate: todayStr, 
+        dailyAiCount: { $lt: maxAllowed } 
       },
-      [{ $set: {
-        dailyAiCount: { $cond: [{ $ne: ['$lastAiGenDate', todayStr] }, 1, { $add: ['$dailyAiCount', 1] }] },
-        lastAiGenDate: todayStr
-      }}],
+      { $inc: { dailyAiCount: 1 } },
       { new: true }
     );
+
+    // 2-qadam: Agar topilmasa, ehtimol bugun uchun birinchi test yoki limit tugagan. 
+    // Agar kun o'zgargan bo'lsa (yangi kun), count ni 1 qilib o'rnatamiz (Atomik $set)
+    if (!teacher) {
+      teacher = await Teacher.findOneAndUpdate(
+        { 
+          _id: req.teacherId, 
+          lastAiGenDate: { $ne: todayStr } 
+        },
+        { 
+          $set: { lastAiGenDate: todayStr, dailyAiCount: 1 } 
+        },
+        { new: true }
+      );
+    }
 
     if (!teacher) {
       const limitDisplay = maxAllowed === 999999 ? 'cheklanmagan' : `${maxAllowed} ta`;
@@ -920,6 +929,103 @@ Return ONLY the JSON object. Begin generation now.`;
     res.status(500).json({ error: error.message });
   }
 };
+export const generateOcrTest = async (req, res) => {
+  try {
+    const { rawText, imageBase64, imageMimeType, questionCount = 5 } = req.body;
+
+    if (!rawText && !imageBase64) {
+      return res.status(400).json({ error: "Matn yoki rasm kiritilishi shart." });
+    }
+
+    const teacher = await Teacher.findById(req.teacherId).select('plan');
+    if (!teacher || teacher.plan !== 'premium') {
+      return res.status(403).json({ error: 'Hujjat va rasmdan test yaratish faqat Premium tarifda mavjud! Tarifni oshiring.' });
+    }
+
+    const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: "Gemini API kaliti topilmadi." });
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      generationConfig: { responseMimeType: "application/json", temperature: 0.2 }
+    });
+
+    const aiSchema = {
+      type: "object",
+      properties: {
+        questions: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              questionNumber: { type: "integer" },
+              questionText: { type: "string" },
+              options: {
+                type: "array",
+                items: { type: "string" },
+                minItems: 4,
+                maxItems: 4
+              },
+              correctAnswerIndex: { type: "integer", minimum: 0, maximum: 3 }
+            },
+            required: ["questionNumber", "questionText", "options", "correctAnswerIndex"]
+          }
+        }
+      },
+      required: ["questions"]
+    };
+
+    const promptText = `Siz tajribali o'qituvchi va test tuzuvchisiz.
+Sizga ${imageBase64 ? "rasm va " : ""}matn beriladi. Ushbu materialdan foydalanib, EXACTLY ${questionCount} ta savol va javob variantlarini ajratib oling yoki yarating.
+Ushbu qoidalarga qat'iy rioya qiling:
+1. Faqat JSON formatida javob bering, hech qanday qo'shimcha izohlar bo'lmasin!
+2. Har bir savol uchun 4 ta variant (A, B, C, D) bo'lishi shart.
+3. To'g'ri javobni 'correctAnswerIndex' da (0, 1, 2, yoki 3) ko'rsating.
+4. Agar rasmda tayyor savollar bo'lsa, o'shalarni oling. Aks holda rasm va matn mazmunidan kelib chiqib yangi savollar tuzing.
+5. Matematik ifodalarni $ belgilari orasida LaTeX formatida yozing.
+6. JSON Schema: ${JSON.stringify(aiSchema)}
+
+Material matni:
+${rawText || "Matn yo'q, faqat rasmdan oling."}
+`;
+
+    const contentParts = [
+      { text: promptText }
+    ];
+
+    if (imageBase64) {
+      contentParts.push({
+        inlineData: {
+          data: imageBase64,
+          mimeType: imageMimeType || "image/jpeg"
+        }
+      });
+    }
+
+    const result = await model.generateContent(contentParts);
+    let text = result.response.text();
+    text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+
+    const parsedObj = JSON.parse(text);
+    let questions = parsedObj.questions || [];
+    
+    questions = questions.map(q => {
+      if (q.correctAnswerIndex !== undefined && Array.isArray(q.options)) {
+        q.correctOption = q.options[q.correctAnswerIndex];
+      }
+      return q;
+    });
+
+    res.json({ questions });
+  } catch (error) {
+    console.error('OCR Gen Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const classAnalysis = async (req, res) => {
   try {
     const { id } = req.params;

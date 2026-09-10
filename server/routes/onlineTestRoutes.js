@@ -13,6 +13,7 @@ import {
   getTestResultById,
   deleteTestResult,
   generateAITest,
+  generateOcrTest,
   classAnalysis
 } from '../controllers/onlineTestController.js';
 
@@ -23,6 +24,7 @@ const resultsRouter = express.Router();
 router.get('/', authMiddleware, getTests);
 router.post('/', authMiddleware, createTest);
 router.post('/generate', authMiddleware, generateAITest);
+router.post('/generate-ocr', authMiddleware, generateOcrTest);
 
 
 router.get('/:id', getTestById);

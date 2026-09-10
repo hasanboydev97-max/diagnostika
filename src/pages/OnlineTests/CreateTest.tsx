@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Sparkles, Plus, Trash2, Loader2, Save, Settings2, FileText, Upload, Table } from 'lucide-react';
+import { ArrowLeft, Sparkles, Plus, Trash2, Loader2, Save, Settings2, FileText, Upload, Table, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import FormattedText from '../../components/FormattedText';
 import { getAuthHeaders, getToken, getTeacher } from '../../lib/auth';
@@ -81,28 +81,48 @@ export default function CreateTest() {
     }
   };
 
+  const handleOcrImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setOcrImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleGenerateOcr = async () => {
     if (teacher?.plan !== 'premium') {
       toast.error('Hujjat va Rasmdan (OCR) test yaratish faqat Premium tarifda mavjud! Tarifni oshiring.');
       return;
     }
-    if (!ocrText.trim()) {
-      toast.error('Iltimos, matn yoki hujjat mazmunini kiriting.');
+    if (!ocrText.trim() && !ocrImage) {
+      toast.error('Iltimos, matn yoki hujjat mazmunini (rasm) kiriting.');
       return;
     }
     setGenerating(true);
-    const toastId = toast.loading('Hujjat tahlil qilinmoqda va test yaratilmoqda...');
+    const toastId = toast.loading('Hujjat/Rasm tahlil qilinmoqda va test yaratilmoqda...');
     try {
+      const payload: any = { rawText: ocrText, questionCount };
+      if (ocrImage) {
+         const base64Data = ocrImage.split(',')[1];
+         const mimeType = ocrImage.split(';')[0].split(':')[1];
+         payload.imageBase64 = base64Data;
+         payload.imageMimeType = mimeType;
+      }
+
       const res = await fetch(`${API_URL}/online-tests/generate-ocr`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ rawText: ocrText, questionCount })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (data.questions) {
         setQuestions([...questions, ...data.questions]);
         toast.success('Hujjatdan test muvaffaqiyatli yaratildi!', { id: toastId });
         setOcrText('');
+        setOcrImage(null);
       } else {
         toast.error(data.error || 'Hujjatdan test yaratishda xatolik.', { id: toastId });
       }
@@ -536,8 +556,27 @@ export default function CreateTest() {
               </span>
             </div>
             <p className="text-xs text-zinc-500 mb-4">
-              Kitob, darslik, yoki imtihon varaqasi matnini nusxalab ushbu joyga tashlang. AI avtomatik ravishda savol va javob variantlarini ajratib oladi!
+              Kitob, darslik, yoki imtihon varaqasi matnini nusxalab ushbu joyga tashlang yoki telefoningizdan rasmga oling. AI avtomatik ravishda savol va javob variantlarini ajratib oladi!
             </p>
+
+            <div className="mb-4">
+               <label className="flex items-center justify-center w-full py-4 px-4 border-2 border-dashed border-zinc-300 rounded-xl hover:bg-zinc-50 cursor-pointer transition-colors group">
+                 <input type="file" accept="image/*" onChange={handleOcrImageUpload} className="hidden" />
+                 <div className="flex items-center gap-2 text-zinc-500 group-hover:text-zinc-700">
+                    <Camera size={20} />
+                    <span className="text-sm font-medium">Rasm yuklash yoki Kameraga olish</span>
+                 </div>
+               </label>
+               {ocrImage && (
+                 <div className="mt-3 relative rounded-xl overflow-hidden border border-zinc-200">
+                   <img src={ocrImage} alt="Uploaded" className="w-full h-auto max-h-64 object-contain bg-zinc-50" />
+                   <button onClick={() => setOcrImage(null)} className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-lg hover:bg-black/70 backdrop-blur-md">
+                     <Trash2 size={16} />
+                   </button>
+                 </div>
+               )}
+            </div>
+
             <textarea
               rows={6}
               value={ocrText}
@@ -547,7 +586,7 @@ export default function CreateTest() {
             />
             <MagicButton
               onClick={handleGenerateOcr}
-              disabled={generating || !ocrText.trim()}
+              disabled={generating || (!ocrText.trim() && !ocrImage)}
               label="Hujjatdan Savollarni Ajratib Olish"
               loading={generating}
               loadingLabel="Hujjat Tahlil Qilinmoqda..."
