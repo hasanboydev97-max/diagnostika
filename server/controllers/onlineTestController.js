@@ -710,7 +710,7 @@ Return ONLY the JSON object. Begin generation now.`;
 
       const anthropicModels = ['claude-3-5-sonnet-20241022'];
       const geminiModels = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'];
-      const groqModels = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
+      const groqModels = ['llama-3.3-70b-versatile', 'llama3-8b-8192'];
 
       const attempts = [];
       // [SENIOR ARCHITECTURE]: AI marshrutlash (Routing).
