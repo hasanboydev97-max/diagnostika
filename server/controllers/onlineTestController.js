@@ -576,7 +576,7 @@ export const generateAITest = async (req, res) => {
         dailyAiCount: { $lt: maxAllowed } 
       },
       { $inc: { dailyAiCount: 1 } },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     // 2-qadam: Agar topilmasa, ehtimol bugun uchun birinchi test yoki limit tugagan. 
@@ -590,7 +590,7 @@ export const generateAITest = async (req, res) => {
         { 
           $set: { lastAiGenDate: todayStr, dailyAiCount: 1 } 
         },
-        { new: true }
+        { returnDocument: 'after' }
       );
     }
 
@@ -824,10 +824,24 @@ Return ONLY the JSON object. Begin generation now.`;
               rawText = result.response.text();
             }
 
-            const raw = rawText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+            let raw = rawText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+            
+            // Extract JSON object/array if AI included preamble/postamble
+            const jsonMatch = raw.match(/\[\s*\{.*\}\s*\]|\{\s*"questions".*\}/s);
+            if (jsonMatch) {
+              raw = jsonMatch[0];
+            }
+            
             const safeRaw = raw.replace(/(?<!\\)\\([^nrtb"\\])/g, '\\\\$1');
             
-            let parsedObj = JSON.parse(safeRaw);
+            let parsedObj;
+            try {
+              parsedObj = JSON.parse(safeRaw);
+            } catch (parseErr) {
+              console.error(`[AI Gen Parse Error] ${task.provider} JSON yaroqsiz:\n`, raw.substring(0, 150) + '...');
+              throw new Error("AI qaytargan ma'lumot JSON formatida emas.");
+            }
+            
             let questions = [];
             if (Array.isArray(parsedObj)) {
               questions = parsedObj;
@@ -846,6 +860,7 @@ Return ONLY the JSON object. Begin generation now.`;
 
             if (questions.length === 0) {
               lastError = "AI bo'sh ro'yxat qaytardi";
+              console.warn(`  ✗ [AI Gen] ${task.provider} xatosi: ${lastError}`);
               continue;
             }
             
@@ -856,12 +871,15 @@ Return ONLY the JSON object. Begin generation now.`;
             
             if (batchResult.shouldFallbackToNextProvider) {
               lastError = "Savollar sifatsiz yoki juda ko'p qismi validatsiyadan o'ta olmadi";
+              console.warn(`  ✗ [AI Gen] ${task.provider} xatosi: ${lastError}`);
               continue;
             }
             
+            console.log(`✅ [AI Gen] ${task.provider} orqali ${batchResult.questions.length} ta savol muvaffaqiyatli yaratildi.`);
             return { success: true, data: batchResult.questions };
           } catch (err) {
             lastError = err.message;
+            console.warn(`  ✗ [AI Gen] ${task.provider} xatosi (Urinish ${attempt}):`, err.message);
           }
         }
       }
@@ -1009,7 +1027,20 @@ ${rawText || "Matn yo'q, faqat rasmdan oling."}
     let text = result.response.text();
     text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
 
-    const parsedObj = JSON.parse(text);
+    // Extract JSON block in case there's preamble text
+    const jsonMatch = text.match(/\[\s*\{.*\}\s*\]|\{\s*"questions".*\}/s);
+    if (jsonMatch) {
+      text = jsonMatch[0];
+    }
+    
+    let parsedObj;
+    try {
+      parsedObj = JSON.parse(text);
+    } catch (parseErr) {
+      console.error('[OCR Gen Parse Error] JSON yaroqsiz:\n', text.substring(0, 150) + '...');
+      throw new Error("AI qaytargan ma'lumotni o'qib bo'lmadi. Qayta urinib ko'ring.");
+    }
+
     let questions = parsedObj.questions || [];
     
     questions = questions.map(q => {
