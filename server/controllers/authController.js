@@ -124,3 +124,83 @@ export const changePassword = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// 2.6 FIX: Forgot Password
+export const forgotPassword = async (req, res) => {
+  try {
+    const email = req.body.email?.toLowerCase().trim();
+    if (!email) {
+      return res.status(400).json({ error: 'Emailni kiriting' });
+    }
+
+    const teacher = await Teacher.findOne({ email });
+    if (!teacher) {
+      // Xavfsizlik: email bor yoki yo'qligini oshkor qilmaslik
+      return res.json({ message: 'Agar kiritilgan email tizimda mavjud bo\'lsa, parolni tiklash havolasi yuborildi.' });
+    }
+
+    // 15 daqiqalik yaroqli token
+    const resetToken = jwt.sign(
+      { id: teacher._id, purpose: 'password_reset' },
+      getJwtSecret(),
+      { expiresIn: '15m' }
+    );
+
+    // Nodemailer orqali jo'natish (agar ulangan bo'lsa)
+    const frontendUrl = process.env.FRONTEND_URL || 'https://bmdiagnostika.vercel.app';
+    const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
+
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      // nodemailer'ni dinamik yuklash
+      const nodemailer = await import('nodemailer');
+      const transporter = nodemailer.default.createTransport({
+        service: process.env.EMAIL_SERVICE || 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS
+        }
+      });
+      await transporter.sendMail({
+        from: `"Maktab Diagnostika" <${process.env.EMAIL_USER}>`,
+        to: teacher.email,
+        subject: 'Parolni tiklash so\'rovi',
+        html: `<h3>Parolni tiklash</h3><p>Siz (yoki kimdir) parolingizni tiklashni so'radi. Buni amalga oshirish uchun quyidagi havolaga bosing:</p><a href="${resetUrl}">Parolni tiklash</a>`
+      });
+    } else {
+      console.warn('⚠️ [Forgot Password]: EMAIL_USER yoki EMAIL_PASS yo\'q. Token:', resetUrl);
+    }
+
+    res.json({ message: 'Agar kiritilgan email tizimda mavjud bo\'lsa, parolni tiklash havolasi yuborildi.' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: 'Serverda xatolik yuz berdi.' });
+  }
+};
+
+// 2.6 FIX: Reset Password
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) return res.status(400).json({ error: 'Barcha maydonlarni to\'ldiring' });
+    if (newPassword.length < 6) return res.status(400).json({ error: 'Parol kamida 6 ta belgidan iborat bo\'lishi kerak' });
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, getJwtSecret());
+    } catch (err) {
+      return res.status(400).json({ error: 'Yaroqsiz yoki muddati o\'tgan havola.' });
+    }
+
+    if (decoded.purpose !== 'password_reset') return res.status(400).json({ error: 'Noto\'g\'ri token.' });
+
+    const teacher = await Teacher.findById(decoded.id);
+    if (!teacher) return res.status(404).json({ error: 'Foydalanuvchi topilmadi.' });
+
+    teacher.password = await bcrypt.hash(newPassword, 10);
+    await teacher.save();
+
+    res.json({ success: true, message: 'Parol muvaffaqiyatli yangilandi.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Server xatosi.' });
+  }
+};

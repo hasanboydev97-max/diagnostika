@@ -1,0 +1,48 @@
+name: CI/CD Deploy to Render
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-and-lint:
+    name: Run Linting and Build Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Check TypeScript Build (Frontend)
+        run: npm run build
+
+  deploy-to-render:
+    name: Trigger Render Deployment
+    runs-on: ubuntu-latest
+    needs: test-and-lint
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Trigger Deploy Hook
+        # RENDER_DEPLOY_HOOK github repository settings > secrets ichiga o'rnatilishi kerak
+        # Format: https://api.render.com/deploy/srv-...
+        run: |
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK }}" ]; then
+            echo "RENDER_DEPLOY_HOOK secret is not set! Skipping deployment."
+            exit 0
+          fi
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+          echo "Deployment triggered successfully on Render."

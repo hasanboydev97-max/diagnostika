@@ -40,3 +40,26 @@ export const adminMiddleware = (req, res, next) => {
   }
   next();
 };
+
+// 2.5 FIX: Plan Expiry avtomatik tekshiruvi
+// Bu middleware har safar o'qituvchi auth qilinganda uning obunasi tugaganligini tekshiradi
+export const checkPlanExpiry = async (req, res, next) => {
+  try {
+    const { Teacher } = await import('../models/index.js');
+    const teacher = await Teacher.findById(req.teacherId).select('plan planExpiresAt');
+    
+    if (teacher?.planExpiresAt && new Date() > teacher.planExpiresAt) {
+      // Obuna vaqti tugagan
+      await Teacher.findByIdAndUpdate(req.teacherId, { 
+        plan: 'free', 
+        planStatus: 'expired' 
+      });
+      console.log(`[Plan Expiry] O'qituvchi ${req.teacherId} obunasi tugadi, free rejimga o'tkazildi.`);
+    }
+    next();
+  } catch (err) {
+    console.error('[checkPlanExpiry error]:', err);
+    next();
+  }
+};
+
