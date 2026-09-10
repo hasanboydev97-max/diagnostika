@@ -404,7 +404,7 @@ export const submitTestResult = async (req, res) => {
         // [OPTIMIZATSIYA]: O'quvchilarga avtomat yoziladigan fikrlar (feedback) uchun qimmat Claude o'chirib qo'yildi.
         // O'rniga eng arzon/tekin Gemini Flash va Groq ishlatiladi. Bu xarajatni 90% ga tejaydi.
         if (apiKey) attempts.push({ provider: 'gemini', model: 'gemini-1.5-flash' });
-        if (groqKey) attempts.push({ provider: 'groq', model: 'llama3-70b-8192' });
+        if (groqKey) attempts.push({ provider: 'groq', model: 'llama-3.3-70b-versatile' });
         if (attempts.length === 0) return; // Agar Gemini/Groq bo'lmasa, pul ketkazmaslik uchun jim to'xtaydi.
 
         const prompt = `O'quvchi test ishladi. 
@@ -710,7 +710,7 @@ Return ONLY the JSON object. Begin generation now.`;
 
       const anthropicModels = ['claude-3-5-sonnet-20241022'];
       const geminiModels = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'];
-      const groqModels = ['llama3-70b-8192', 'llama3-8b-8192'];
+      const groqModels = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
 
       const attempts = [];
       // [SENIOR ARCHITECTURE]: AI marshrutlash (Routing).
@@ -953,7 +953,7 @@ Javobni FAQAT quyidagi JSON formatida qaytaring (boshqa hech qanday so'z yoki ma
       attempts.push({ provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' });
     }
     if (apiKey) attempts.push({ provider: 'gemini', model: 'gemini-1.5-flash' });
-    if (groqKey) attempts.push({ provider: 'groq', model: 'llama3-70b-8192' });
+    if (groqKey) attempts.push({ provider: 'groq', model: 'llama-3.3-70b-versatile' });
 
     let text = "";
     let aiSuccess = false;
