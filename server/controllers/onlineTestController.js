@@ -745,7 +745,7 @@ Return ONLY the JSON object. Begin generation now.`;
       const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 
       const anthropicModels = ['claude-3-5-sonnet-20241022'];
-      const geminiModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+      const geminiModels = ['gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.6-flash'];
       const groqModels = ['qwen/qwen3.6-27b', 'groq/compound-mini'];
 
       const attempts = [];
