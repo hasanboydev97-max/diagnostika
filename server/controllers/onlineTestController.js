@@ -560,46 +560,25 @@ export const generateAITest = async (req, res) => {
       return res.status(400).json({ error: 'Mavzu (topic) va fan (subject) talab qilinadi.' });
     }
 
-    // --- 0.4 FIX: Atomic dailyAiCount — race condition yo'q ---
-    // Avval plan'ni tekshirish uchun o'quvchini topamiz
+    // --- Limit TEKSHIRUVI (o'qish, o'zgartirish emas) ---
     const todayStr = new Date().toISOString().split('T')[0];
     const teacherCheck = await Teacher.findById(req.teacherId).select('plan dailyAiCount lastAiGenDate');
     if (!teacherCheck) return res.status(404).json({ error: 'O\'qituvchi topilmadi' });
 
     const maxAllowed = teacherCheck.plan === 'premium' ? 999999 : (teacherCheck.plan === 'standard' ? 25 : 3);
-
-    // 1-qadam: Agar o'qituvchi ayni shu kunning o'zida bo'lsa va limiti yetarli bo'lsa, uni oshiramiz (Atomik $inc)
-    let teacher = await Teacher.findOneAndUpdate(
-      { 
-        _id: req.teacherId, 
-        lastAiGenDate: todayStr, 
-        dailyAiCount: { $lt: maxAllowed } 
-      },
-      { $inc: { dailyAiCount: 1 } },
-      { returnDocument: 'after' }
-    );
-
-    // 2-qadam: Agar topilmasa, ehtimol bugun uchun birinchi test yoki limit tugagan. 
-    // Agar kun o'zgargan bo'lsa (yangi kun), count ni 1 qilib o'rnatamiz (Atomik $set)
-    if (!teacher) {
-      teacher = await Teacher.findOneAndUpdate(
-        { 
-          _id: req.teacherId, 
-          lastAiGenDate: { $ne: todayStr } 
-        },
-        { 
-          $set: { lastAiGenDate: todayStr, dailyAiCount: 1 } 
-        },
-        { returnDocument: 'after' }
-      );
-    }
-
-    if (!teacher) {
+    
+    // Bugun uchun necha marta ishlatilgan?
+    const todayCount = teacherCheck.lastAiGenDate === todayStr ? (teacherCheck.dailyAiCount || 0) : 0;
+    
+    if (todayCount >= maxAllowed) {
       const limitDisplay = maxAllowed === 999999 ? 'cheklanmagan' : `${maxAllowed} ta`;
       return res.status(403).json({
         error: `Sizning ${teacherCheck.plan.toUpperCase()} tarifingiz bo'yicha kunlik AI test yaratish limiti (${limitDisplay}) to'lgan. Davom etish uchun tarifni oshiring.`
       });
     }
+    // MUHIM: Counter bu yerda OSHIRILMAYDI. 
+    // Faqat AI muvaffaqiyatli javob bergandan keyin oshiriladi (pastda).
+    const teacher = teacherCheck;
 
     
     const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
@@ -947,7 +926,15 @@ Return ONLY the JSON object. Begin generation now.`;
       return q;
     });
 
-    // NOT: dailyAiCount atomic findOneAndUpdate da oshirildi — teacher.save() kerak emas.
+    // ✅ MUVAFFAQIYATLI: Faqat shu yerda (AI ishlagan taqdirda) counter oshiriladi
+    // Bu arxitektura xatosini tuzatadi: oldin counter oldin oshirilib, AI yiqilsa ham limit sarf bo'lardi
+    await Teacher.findOneAndUpdate(
+      { _id: req.teacherId },
+      teacherCheck.lastAiGenDate === todayStr
+        ? { $inc: { dailyAiCount: 1 } }
+        : { $set: { lastAiGenDate: todayStr, dailyAiCount: 1 } }
+    );
+
     res.json({ questions: sanitizedQuestions });
   } catch (error) {
     console.error('AI Gen Error:', error);
