@@ -27,7 +27,7 @@ const GEMINI_VISION_MODELS = [
 
 const GROQ_MODELS = [
   "llama-3.3-70b-versatile",
-  "llama3-8b-8192",
+  "llama-3.1-8b-instant",
 ];
 
 async function callGroqAiFallback(prompt) {
