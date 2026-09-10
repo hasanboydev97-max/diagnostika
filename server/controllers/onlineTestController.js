@@ -723,7 +723,7 @@ Return ONLY the JSON object. Begin generation now.`;
       const groqKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
       const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 
-      const anthropicModels = ['claude-3-5-sonnet-20241022'];
+      const anthropicModels = ['claude-sonnet-4-5', 'claude-haiku-4-5'];
       const geminiModels = ['gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.6-flash'];
       const groqModels = ['qwen/qwen3.6-27b', 'groq/compound-mini'];
 
@@ -1113,10 +1113,10 @@ Javobni FAQAT quyidagi JSON formatida qaytaring (boshqa hech qanday so'z yoki ma
     const attempts = [];
     // [SENIOR ARCHITECTURE]: Sinf tahlili uchun ham xuddi shunday biznes logika
     if (anthropicKey && teacher && teacher.plan === 'premium') {
-      attempts.push({ provider: 'anthropic', model: 'claude-3-5-sonnet-20241022' });
+      attempts.push({ provider: 'anthropic', model: 'claude-haiku-4-5' });
     }
-    if (apiKey) attempts.push({ provider: 'gemini', model: 'gemini-1.5-flash' });
-    if (groqKey) attempts.push({ provider: 'groq', model: 'llama-3.3-70b-versatile' });
+    if (apiKey) attempts.push({ provider: 'gemini', model: 'gemini-2.5-flash' });
+    if (groqKey) attempts.push({ provider: 'groq', model: 'qwen/qwen3.6-27b' });
 
     let text = "";
     let aiSuccess = false;
