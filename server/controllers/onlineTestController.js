@@ -554,7 +554,7 @@ export const getTestResultById = async (req, res) => {
 };
 export const generateAITest = async (req, res) => {
   try {
-    const { topic, questionCount, subject } = req.body;
+    const { topic, questionCount, subject, grade, difficulty } = req.body;
 
     if (!topic || !subject) {
       return res.status(400).json({ error: 'Mavzu (topic) va fan (subject) talab qilinadi.' });
@@ -630,8 +630,8 @@ export const generateAITest = async (req, res) => {
       required: ["questions"]
     };
 
-    function buildTestPrompt({ topic, subject, questionCount = 5, difficulty = 'aralash' }) {
-      return String.raw`You are a question-bank generator for a MERN-based online testing platform.
+    function buildTestPrompt({ topic, subject, questionCount = 5, difficulty = 'aralash', grade = 'aralash' }) {
+      return String.raw`You are an expert question-bank generator and Senior Educator for a MERN-based online testing platform.
 Your ONLY output is a JSON object matching the provided schema. Do not
 explain, do not think out loud, do not add commentary before or after the
 JSON. Every extra sentence you generate costs latency — output the JSON and
@@ -641,9 +641,12 @@ TASK
 Generate exactly ${questionCount} multiple-choice questions for:
   Subject: ${subject}
   Topic(s): ${topic}
-  Difficulty: ${difficulty}
+  Target Grade/Class: ${grade} (Adapt vocabulary, logic, and complexity specifically for this age group)
+  Difficulty: ${difficulty} (Ensure the cognitive load perfectly matches this level)
 
-CRITICAL QUALITY INSTRUCTIONS (SENIOR Level):
+CRITICAL PEDAGOGICAL INSTRUCTIONS (SENIOR Level):
+- GRADE ADAPTATION: If a specific grade (e.g. '5-sinf') is provided, ensure the concepts and formulas strictly follow that age's curriculum. Do not use high-school level concepts for primary/middle schoolers.
+- DIFFICULTY ADAPTATION: If difficulty is "Oson", test basic facts/direct applications. If "O'rtacha", test multi-step understanding. If "Qiyin" or "Olimpiada", test complex synthesis, logic, and edge cases.
 1. ZERO DUPLICATION: You MUST NOT generate similar or duplicate questions. Every single question must test a completely unique concept, feature, or scenario within the topics. Do not repeat the same question phrasing, logic, or options.
 2. ZERO SYNTAX ERRORS: If generating questions about programming, HTML, CSS, Excel formulas, or technical tools, all code snippets MUST be 100% syntactically perfect. No missing brackets, no incorrect tags, no typos. Use standard conventions.
 3. EXACT COUNT: You MUST generate EXACTLY ${questionCount} questions. Use the "questionNumber" field to count from 1 to ${questionCount}. Do not stop until you reach ${questionCount}.
@@ -723,6 +726,7 @@ Return ONLY the JSON object. Begin generation now.`;
         topic: chunkTopic, 
         subject, 
         questionCount: chunkCount, 
+        grade: req.body.grade || 'aralash',
         difficulty: req.body.difficulty || 'aralash' 
       });
 

@@ -21,6 +21,7 @@ export default function CreateTest() {
   const [endTime, setEndTime] = useState('');
   const [mode, setMode] = useState<'ai' | 'manual' | 'ocr' | 'excel'>('excel');
   const [ocrText, setOcrText] = useState('');
+  const [ocrImage, setOcrImage] = useState<string | null>(null);
   
   useEffect(() => {
     if (!getToken()) {
@@ -32,6 +33,8 @@ export default function CreateTest() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [topic, setTopic] = useState('');
   const [questionCount, setQuestionCount] = useState<number | string>(0);
+  const [grade, setGrade] = useState('');
+  const [difficulty, setDifficulty] = useState('');
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   
@@ -42,23 +45,31 @@ export default function CreateTest() {
 
   const handleGenerate = async () => {
     if (!subject.trim()) {
-      toast.error('Subject is required for AI generation');
+      toast.error('Fan nomi bo\'lishi shart');
       return;
     }
     setGenerating(true);
-    const toastId = toast.loading('AI is crafting your questions...');
+    const toastId = toast.loading('AI savollaringizni tuzmoqda (15-20 soniya kuting)...');
     
     try {
+      const payload = {
+        subject,
+        topic,
+        questionCount,
+        grade,
+        difficulty
+      };
+      
       const res = await fetch(`${API_URL}/online-tests/generate`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ subject, topic, questionCount })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       
       if (data.questions) {
         setQuestions(data.questions);
-        toast.success('Questions generated successfully!', { id: toastId });
+        toast.success('Savollar muvaffaqiyatli yaratildi!', { id: toastId });
       } else {
         toast.error(data.error || 'Failed to generate questions.', { id: toastId });
       }
@@ -472,6 +483,33 @@ export default function CreateTest() {
                   }}
                   className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-400 focus:bg-white transition-colors"
                 />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Sinf (Ixtiyoriy)</label>
+                <select 
+                  value={grade}
+                  onChange={e => setGrade(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-400 focus:bg-white transition-colors"
+                >
+                  <option value="">Aralash (Barcha sinflar)</option>
+                  {[...Array(11)].map((_, i) => (
+                    <option key={i+1} value={`${i+1}-sinf`}>{i+1}-sinf</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Qiyinlik darajasi</label>
+                <select 
+                  value={difficulty}
+                  onChange={e => setDifficulty(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-400 focus:bg-white transition-colors"
+                >
+                  <option value="">Aralash (Oson, O'rta, Qiyin)</option>
+                  <option value="Oson">Oson (Boshlang'ich tushunchalar)</option>
+                  <option value="O'rtacha">O'rtacha (Standart masalalar)</option>
+                  <option value="Qiyin">Qiyin (Murakkab, mantiqiy fikrlash)</option>
+                  <option value="Olimpiada darajasi">Olimpiada darajasi</option>
+                </select>
               </div>
             </div>
             <button
