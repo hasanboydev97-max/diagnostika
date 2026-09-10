@@ -8,6 +8,7 @@ import { isAnswerCorrect, computeScore } from '../utils/scoring.js';
 import { processQuestionBatch } from '../utils/mathSanitizer.js';
 import pLimit from 'p-limit';
 import xlsx from 'xlsx';
+import { executeResilientQuestionGen, executeResilientVisionOCR, executeResilientTextGen } from '../services/aiOrchestrator.js';
 
 const aiLimit = pLimit(1);
 
@@ -708,7 +709,7 @@ ANSWER QUALITY RULES
 Return ONLY the JSON object. Begin generation now.`;
     }
 
-    // --- Senior Level Batching Logic (Anthropic -> Gemini -> Groq) ---
+    // --- 20-Year Senior Architecture: Multi-Agent AI Orchestrator ---
     async function generateChunkWithRetry(chunkTopic, chunkCount) {
       const prompt = buildTestPrompt({ 
         topic: chunkTopic, 
@@ -718,165 +719,29 @@ Return ONLY the JSON object. Begin generation now.`;
         difficulty: req.body.difficulty || 'aralash' 
       });
 
-      let lastError = "";
-      const anthropicKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
-      const groqKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
-      const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+      const isPremium = teacher && teacher.plan === 'premium';
+      const aiResult = await executeResilientQuestionGen({
+        prompt,
+        systemPrompt: "You are an elite educational assessment engineer. Generate multiple-choice questions matching the strict JSON schema provided.",
+        aiSchema,
+        isPremium
+      });
 
-      const anthropicModels = ['claude-sonnet-4-5', 'claude-haiku-4-5'];
-      const geminiModels = ['gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.6-flash'];
-      const groqModels = ['qwen/qwen3.6-27b', 'groq/compound-mini'];
-
-      const attempts = [];
-      // [SENIOR ARCHITECTURE]: AI marshrutlash (Routing).
-      // Faqat 'premium' ustozlar uchungina qimmatbaho Claude 3.5 Sonnet ishga tushadi.
-      // Qolgan tariflar (free/standard) uchun deyarli tekin va mukammal Gemini Flash ishlatiladi.
-      if (anthropicKey && teacher && teacher.plan === 'premium') {
-        anthropicModels.forEach(m => attempts.push({ provider: 'anthropic', model: m }));
-      }
-      
-      // Gemini barcha uchun ishlaydi (Premiumda zaxira sifatida, boshqalarda asosiy)
-      if (apiKey) geminiModels.forEach(m => attempts.push({ provider: 'gemini', model: m }));
-      if (groqKey) groqModels.forEach(m => attempts.push({ provider: 'groq', model: m }));
-
-      if (attempts.length === 0) {
-        return { success: false, error: "Anthropic, Gemini yoki Groq API kalitlaridan biri kiritilishi shart!" };
+      if (!aiResult.success) {
+        return { success: false, error: aiResult.error };
       }
 
-      for (const task of attempts) {
-        for (let attempt = 1; attempt <= 2; attempt++) {
-          try {
-            console.log(`[AI Gen] ${task.provider.toUpperCase()} (${task.model}) — urinish ${attempt}/2...`);
-            let rawText = "";
+      // Quality validation & distractor verification pass
+      const batchResult = processQuestionBatch(aiResult.questions, { 
+        minAcceptable: Math.min(2, Math.floor(chunkCount * 0.5)), 
+        targetCount: chunkCount 
+      });
 
-            if (task.provider === 'anthropic') {
-              const res = await fetch('https://api.anthropic.com/v1/messages', {
-                method: 'POST',
-                headers: {
-                  'x-api-key': anthropicKey,
-                  'anthropic-version': '2023-06-01',
-                  'content-type': 'application/json'
-                },
-                body: JSON.stringify({
-                  model: task.model,
-                  max_tokens: 4096,
-                  temperature: 0.5,
-                  system: "RETURN ONLY A VALID JSON OBJECT MATCHING THE REQUESTED SCHEMA. NO MARKDOWN, NO EXPLANATIONS.\n\n" + prompt + "\n\nJSON Schema:\n" + JSON.stringify(aiSchema),
-                  messages: [
-                    { role: "user", content: "Generate the questions now. Output strictly raw JSON, nothing else." }
-                  ]
-                })
-              });
-              const data = await res.json();
-              if (!res.ok) throw new Error(data.error?.message || "Anthropic xatosi");
-              rawText = data.content[0].text;
-            } else if (task.provider === 'groq') {
-              // Qwen modellari response_format: json_object ni qabul qilmaydi
-              const supportsJsonMode = !task.model.includes('qwen') && !task.model.includes('compound');
-              const groqBody = {
-                model: task.model,
-                messages: [
-                  { role: "system", content: "You are an expert question generator. " + (supportsJsonMode ? "Return ONLY valid JSON." : "Return ONLY valid JSON matching this schema: " + JSON.stringify(aiSchema) + ". No extra text, no markdown.") },
-                  { role: "user", content: prompt }
-                ],
-                temperature: 0.5,
-                max_tokens: 4096,
-              };
-              if (supportsJsonMode) {
-                groqBody.response_format = { type: "json_object" };
-              }
-              const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${groqKey}`,
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(groqBody)
-              });
-              const data = await res.json();
-              if (!res.ok) throw new Error(data.error?.message || "Groq xatosi");
-              rawText = data.choices[0].message.content || '';
-            } else {
-              const model = genAI.getGenerativeModel({
-                model: task.model,
-                generationConfig: { responseMimeType: 'application/json', temperature: 0.5 }
-              });
-              const result = await model.generateContent(prompt);
-              rawText = result.response.text();
-            }
-
-            let raw = rawText
-              .replace(/<think>[\s\S]*?<\/think>/gi, '') // Qwen <think> blokini olib tashlash
-              .replace(/^```json\s*/i, '')
-              .replace(/^```\s*/i, '')
-              .replace(/```\s*$/i, '')
-              .trim();
-            
-            // Extract JSON object/array if AI included preamble/postamble
-            const jsonMatch = raw.match(/\[\s*\{[\s\S]*?\}\s*\]|\{\s*"questions"[\s\S]*?\}/);
-            if (jsonMatch) {
-              raw = jsonMatch[0];
-            }
-            
-            const safeRaw = raw.replace(/(?<!\\)\\([^nrtb"\\])/g, '\\\\$1');
-            
-            let parsedObj;
-            try {
-              parsedObj = JSON.parse(safeRaw);
-            } catch (parseErr) {
-              console.error(`[AI Gen Parse Error] ${task.provider} JSON yaroqsiz:\n`, raw.substring(0, 150) + '...');
-              throw new Error("AI qaytargan ma'lumot JSON formatida emas.");
-            }
-            
-            let questions = [];
-            if (Array.isArray(parsedObj)) {
-              questions = parsedObj;
-            } else if (parsedObj.questions && Array.isArray(parsedObj.questions)) {
-              questions = parsedObj.questions;
-            } else {
-              questions = [parsedObj];
-            }
-            
-            questions = questions.map(q => {
-              if (q.correctAnswerIndex !== undefined && Array.isArray(q.options)) {
-                q.correctOption = q.options[q.correctAnswerIndex];
-              }
-              return q;
-            });
-
-            if (questions.length === 0) {
-              lastError = "AI bo'sh ro'yxat qaytardi";
-              console.warn(`  ✗ [AI Gen] ${task.provider} xatosi: ${lastError}`);
-              continue;
-            }
-            
-            const batchResult = processQuestionBatch(questions, { 
-              minAcceptable: Math.min(2, Math.floor(chunkCount * 0.5)), 
-              targetCount: chunkCount 
-            });
-            
-            if (batchResult.shouldFallbackToNextProvider) {
-              lastError = "Savollar sifatsiz yoki juda ko'p qismi validatsiyadan o'ta olmadi";
-              console.warn(`  ✗ [AI Gen] ${task.provider} xatosi: ${lastError}`);
-              continue;
-            }
-            
-            console.log(`✅ [AI Gen] ${task.provider} orqali ${batchResult.questions.length} ta savol muvaffaqiyatli yaratildi.`);
-            return { success: true, data: batchResult.questions };
-          } catch (err) {
-            lastError = err.message;
-            console.warn(`  ✗ [AI Gen] ${task.provider} xatosi (Urinish ${attempt}):`, err.message);
-            // 429 Rate Limit xatosida — eksponensial kutish (backoff)
-            // 20 o'qituvchi bir vaqtda ishlasa ham navbat bilan o'tadi
-            if (err.message.includes('429') || err.message.includes('rate') || err.message.includes('quota')) {
-              const waitMs = attempt === 1 ? 3000 : 7000;
-              console.warn(`  ⏳ Rate limit. ${waitMs/1000}s kutilmoqda...`);
-              await new Promise(resolve => setTimeout(resolve, waitMs));
-            }
-          }
-        }
+      if (batchResult.shouldFallbackToNextProvider && batchResult.questions.length === 0) {
+        return { success: false, error: "Savollar sifatsiz yoki validatsiyadan o'ta olmadi" };
       }
-      return { success: false, error: lastError };
+
+      return { success: true, data: batchResult.questions };
     }
 
     let rawQuestions = [];
@@ -963,42 +828,6 @@ export const generateOcrTest = async (req, res) => {
       return res.status(403).json({ error: 'Hujjat va rasmdan test yaratish faqat Premium tarifda mavjud! Tarifni oshiring.' });
     }
 
-    const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: "Gemini API kaliti topilmadi." });
-    }
-
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
-      generationConfig: { responseMimeType: "application/json", temperature: 0.2 }
-    });
-
-    const aiSchema = {
-      type: "object",
-      properties: {
-        questions: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              questionNumber: { type: "integer" },
-              questionText: { type: "string" },
-              options: {
-                type: "array",
-                items: { type: "string" },
-                minItems: 4,
-                maxItems: 4
-              },
-              correctAnswerIndex: { type: "integer", minimum: 0, maximum: 3 }
-            },
-            required: ["questionNumber", "questionText", "options", "correctAnswerIndex"]
-          }
-        }
-      },
-      required: ["questions"]
-    };
-
     const promptText = `Siz tajribali o'qituvchi va test tuzuvchisiz.
 Sizga ${imageBase64 ? "rasm va " : ""}matn beriladi. Ushbu materialdan foydalanib, EXACTLY ${questionCount} ta savol va javob variantlarini ajratib oling yoki yarating.
 Ushbu qoidalarga qat'iy rioya qiling:
@@ -1007,46 +836,22 @@ Ushbu qoidalarga qat'iy rioya qiling:
 3. To'g'ri javobni 'correctAnswerIndex' da (0, 1, 2, yoki 3) ko'rsating.
 4. Agar rasmda tayyor savollar bo'lsa, o'shalarni oling. Aks holda rasm va matn mazmunidan kelib chiqib yangi savollar tuzing.
 5. Matematik ifodalarni $ belgilari orasida LaTeX formatida yozing.
-6. JSON Schema: ${JSON.stringify(aiSchema)}
+6. JSON Schema: {"questions":[{"questionNumber":1,"questionText":"...","options":["A","B","C","D"],"correctAnswerIndex":0}]}
 
 Material matni:
-${rawText || "Matn yo'q, faqat rasmdan oling."}
-`;
+${rawText || "Matn yo'q, faqat rasmdan oling."}`;
 
-    const contentParts = [
-      { text: promptText }
-    ];
+    const ocrResult = await executeResilientVisionOCR({
+      promptText,
+      imageBase64,
+      imageMimeType: imageMimeType || "image/jpeg"
+    });
 
-    if (imageBase64) {
-      contentParts.push({
-        inlineData: {
-          data: imageBase64,
-          mimeType: imageMimeType || "image/jpeg"
-        }
-      });
+    if (!ocrResult.success || !ocrResult.questions) {
+      return res.status(500).json({ error: ocrResult.error || "Rasmdan savollarni ajratib bo'lmadi" });
     }
 
-    const result = await model.generateContent(contentParts);
-    let text = result.response.text();
-    text = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
-
-    // Extract JSON block in case there's preamble text
-    const jsonMatch = text.match(/\[\s*\{.*\}\s*\]|\{\s*"questions".*\}/s);
-    if (jsonMatch) {
-      text = jsonMatch[0];
-    }
-    
-    let parsedObj;
-    try {
-      parsedObj = JSON.parse(text);
-    } catch (parseErr) {
-      console.error('[OCR Gen Parse Error] JSON yaroqsiz:\n', text.substring(0, 150) + '...');
-      throw new Error("AI qaytargan ma'lumotni o'qib bo'lmadi. Qayta urinib ko'ring.");
-    }
-
-    let questions = parsedObj.questions || [];
-    
-    questions = questions.map(q => {
+    const questions = ocrResult.questions.map(q => {
       if (q.correctAnswerIndex !== undefined && Array.isArray(q.options)) {
         q.correctOption = q.options[q.correctAnswerIndex];
       }
@@ -1102,101 +907,18 @@ Javobni FAQAT quyidagi JSON formatida qaytaring (boshqa hech qanday so'z yoki ma
 
     const anthropicKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
     const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-    const groqKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
+    const isPremium = teacher && teacher.plan === 'premium';
+    const analysisResult = await executeResilientTextGen({
+      prompt,
+      systemPrompt: "Siz ta'lim metodisti va pedagogik tahlil bo'yicha yuqori toifali mutaxassissiz.",
+      isPremium
+    });
 
-    if (!anthropicKey && !apiKey && !groqKey) {
-      return res.status(500).json({ error: 'Hech qanday AI API kaliti (Anthropic, Gemini, Groq) topilmadi' });
+    if (!analysisResult.success) {
+      return res.status(500).json({ error: 'Barcha AI agentlari band yoki javob bera olmadi. Iltimos qayta urinib ko\'ring.' });
     }
 
-    const { GoogleGenerativeAI } = await import("@google/generative-ai");
-
-    const attempts = [];
-    // [SENIOR ARCHITECTURE]: Sinf tahlili uchun ham xuddi shunday biznes logika
-    if (anthropicKey && teacher && teacher.plan === 'premium') {
-      attempts.push({ provider: 'anthropic', model: 'claude-haiku-4-5' });
-    }
-    if (apiKey) attempts.push({ provider: 'gemini', model: 'gemini-2.5-flash' });
-    if (groqKey) attempts.push({ provider: 'groq', model: 'qwen/qwen3.6-27b' });
-
-    let text = "";
-    let aiSuccess = false;
-
-    for (const task of attempts) {
-      try {
-        console.log(`[Class Analysis] ${task.provider.toUpperCase()} orqali tahlil qilinmoqda...`);
-        if (task.provider === 'anthropic') {
-          const res = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-              'x-api-key': anthropicKey,
-              'anthropic-version': '2023-06-01',
-              'content-type': 'application/json'
-            },
-            body: JSON.stringify({
-              model: task.model,
-              max_tokens: 4096,
-              temperature: 0.2,
-              system: "RETURN ONLY A VALID JSON OBJECT MATCHING THE REQUESTED FORMAT. NO MARKDOWN, NO EXPLANATIONS.",
-              messages: [{ role: "user", content: prompt }]
-            })
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error?.message || "Anthropic xatosi");
-          text = data.content[0].text;
-        } else if (task.provider === 'groq') {
-          const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${groqKey}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              model: task.model,
-              messages: [
-                { role: "system", content: "RETURN ONLY A VALID JSON OBJECT." },
-                { role: "user", content: prompt }
-              ],
-              temperature: 0.2,
-              response_format: { type: "json_object" }
-            })
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error?.message || "Groq xatosi");
-          text = data.choices[0].message.content;
-        } else {
-          const genAI = new GoogleGenerativeAI(apiKey);
-          const model = genAI.getGenerativeModel({ 
-            model: task.model,
-            generationConfig: { responseMimeType: "application/json", temperature: 0.2 }
-          });
-          const aiRes = await model.generateContent(prompt);
-          text = aiRes.response.text();
-        }
-
-        if (text && text.trim().length > 10) {
-          aiSuccess = true;
-          break; // Muvaffaqiyatli bo'lsa, loopni to'xtatamiz
-        }
-      } catch (err) {
-        console.warn(`  ✗ [Class Analysis] ${task.provider} xatosi:`, err.message);
-      }
-    }
-
-    if (!aiSuccess) {
-      return res.status(500).json({ error: 'Barcha AI taʼminotchilari (Anthropic, Gemini, Groq) javob berishdan bosh tortdi.' });
-    }
-    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-
-    // ✅ 12. JSON.parse try/catch — AI noto'g'ri JSON qaytarsa server crash bo'lmaydi
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (parseErr) {
-      console.error('AI JSON parse xatosi:', parseErr.message, '\nAI javobi:', text.substring(0, 200));
-      return res.status(500).json({ error: 'AI javobini tahlil qilishda xatolik. Qayta urinib ko\'ring.' });
-    }
-    
-    res.json(data);
+    res.json(analysisResult.questions[0] || analysisResult);
   } catch (err) {
     console.error('AI Analysis Error:', err);
     res.status(500).json({ error: 'AI bilan bog\'lanishda xatolik: ' + err.message });
