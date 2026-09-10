@@ -26,7 +26,8 @@ const GEMINI_VISION_MODELS = [
 ];
 
 const GROQ_MODELS = [
-  "llama-3.3-70b-versatile"
+  "qwen/qwen3.6-27b",
+  "groq/compound-mini"
 ];
 
 async function callGroqAiFallback(prompt) {

@@ -745,8 +745,8 @@ Return ONLY the JSON object. Begin generation now.`;
       const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 
       const anthropicModels = ['claude-3-5-sonnet-20241022'];
-      const geminiModels = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'];
-      const groqModels = ['llama-3.3-70b-versatile'];
+      const geminiModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+      const groqModels = ['qwen/qwen3.6-27b', 'groq/compound-mini'];
 
       const attempts = [];
       // [SENIOR ARCHITECTURE]: AI marshrutlash (Routing).
@@ -792,29 +792,31 @@ Return ONLY the JSON object. Begin generation now.`;
               if (!res.ok) throw new Error(data.error?.message || "Anthropic xatosi");
               rawText = data.content[0].text;
             } else if (task.provider === 'groq') {
+              // Qwen modellari response_format: json_object ni qabul qilmaydi
+              const supportsJsonMode = !task.model.includes('qwen') && !task.model.includes('compound');
+              const groqBody = {
+                model: task.model,
+                messages: [
+                  { role: "system", content: "You are an expert question generator. " + (supportsJsonMode ? "Return ONLY valid JSON." : "Return ONLY valid JSON matching this schema: " + JSON.stringify(aiSchema) + ". No extra text, no markdown.") },
+                  { role: "user", content: prompt }
+                ],
+                temperature: 0.5,
+                max_tokens: 4096,
+              };
+              if (supportsJsonMode) {
+                groqBody.response_format = { type: "json_object" };
+              }
               const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
                 headers: {
                   'Authorization': `Bearer ${groqKey}`,
                   'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                  model: task.model,
-                  messages: [
-                    { role: "system", content: prompt + "\n\nJSON Schema:\n" + JSON.stringify(aiSchema) },
-                    { role: "user", content: "Generate questions." }
-                  ],
-                  temperature: 0.5,
-                  response_format: { type: "json_object" }
-                })
+                body: JSON.stringify(groqBody)
               });
               const data = await res.json();
               if (!res.ok) throw new Error(data.error?.message || "Groq xatosi");
-              const content = data.choices[0].message.content;
-              const jsonParsed = JSON.parse(content);
-              if (Array.isArray(jsonParsed)) rawText = content;
-              else if (jsonParsed.questions) rawText = JSON.stringify(jsonParsed.questions);
-              else rawText = content;
+              rawText = data.choices[0].message.content || '';
             } else {
               const model = genAI.getGenerativeModel({
                 model: task.model,
@@ -824,10 +826,15 @@ Return ONLY the JSON object. Begin generation now.`;
               rawText = result.response.text();
             }
 
-            let raw = rawText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+            let raw = rawText
+              .replace(/<think>[\s\S]*?<\/think>/gi, '') // Qwen <think> blokini olib tashlash
+              .replace(/^```json\s*/i, '')
+              .replace(/^```\s*/i, '')
+              .replace(/```\s*$/i, '')
+              .trim();
             
             // Extract JSON object/array if AI included preamble/postamble
-            const jsonMatch = raw.match(/\[\s*\{.*\}\s*\]|\{\s*"questions".*\}/s);
+            const jsonMatch = raw.match(/\[\s*\{[\s\S]*?\}\s*\]|\{\s*"questions"[\s\S]*?\}/);
             if (jsonMatch) {
               raw = jsonMatch[0];
             }
