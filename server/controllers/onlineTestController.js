@@ -866,6 +866,13 @@ Return ONLY the JSON object. Begin generation now.`;
           } catch (err) {
             lastError = err.message;
             console.warn(`  ✗ [AI Gen] ${task.provider} xatosi (Urinish ${attempt}):`, err.message);
+            // 429 Rate Limit xatosida — eksponensial kutish (backoff)
+            // 20 o'qituvchi bir vaqtda ishlasa ham navbat bilan o'tadi
+            if (err.message.includes('429') || err.message.includes('rate') || err.message.includes('quota')) {
+              const waitMs = attempt === 1 ? 3000 : 7000;
+              console.warn(`  ⏳ Rate limit. ${waitMs/1000}s kutilmoqda...`);
+              await new Promise(resolve => setTimeout(resolve, waitMs));
+            }
           }
         }
       }
@@ -892,7 +899,9 @@ Return ONLY the JSON object. Begin generation now.`;
         // [OPTIMIZATSIYA]: Katta so'rovlarda API (Prompt) narxini 2 baravar kamaytirish 
         // uchun 10 talik bo'laklash 20 taga ko'tarildi.
         const chunkCount = Math.min(needed, 20);
-        const aiResult = await generateChunkWithRetry(currentTopic, chunkCount);
+        // [20 O'QITUVCHI UCHUN]: aiLimit navbati orqali bir vaqtda faqat 1 ta
+        // AI so'rovi ketadi. Qolganlar navbatda kutadi — Rate Limit xatosi yo'q.
+        const aiResult = await aiLimit(() => generateChunkWithRetry(currentTopic, chunkCount));
         
         if (aiResult.success && aiResult.data && aiResult.data.length > 0) {
           rawQuestions = rawQuestions.concat(aiResult.data);
