@@ -771,7 +771,10 @@ Return ONLY the JSON object. Begin generation now.`;
         const aiResult = await testGenerationQueue(() => generateChunkWithRetry(currentTopic, chunkCount));
         
         if (aiResult.success && aiResult.data && aiResult.data.length > 0) {
-          rawQuestions = rawQuestions.concat(aiResult.data);
+          // ✅ KRITIK FIX: har bir savolga uning tegishli mavzusini (subtopic) belgilaymiz.
+          // Bu "Mavzular Tahlili" panelining faqat "Umumiy 100%" ko'rsatish muammosini hal qiladi.
+          const withSubtopic = aiResult.data.map(q => ({ ...q, subtopic: currentTopic }));
+          rawQuestions = rawQuestions.concat(withSubtopic);
           needed -= aiResult.data.length; // decrement by successfully generated amount
         } else {
           failsafe++; // prevent infinite loops if AI completely fails

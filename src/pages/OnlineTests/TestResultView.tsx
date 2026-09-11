@@ -201,10 +201,37 @@ export default function TestResultView() {
   const percentage = Math.round((result.score / (result.totalScore || 1)) * 100);
   const scoreLabel = getScoreLabel(percentage);
 
-  // Topic data
+  // ── Smart topic inference for questions without subtopic ────────────────────
+  // Eski testlarda subtopic yo'q → question matnidan mavzuni aqlli aniqlaymiz.
+  // Priority: q.subtopic (server set) > q.topic > keyword inference > 'Umumiy'
+  const knownTopicPatterns: [RegExp, string][] = [
+    [/<[a-zA-Z]|html\s|<\/|teg\s|<a\s|<p[>\s]|<ul|<ol|<li|<div|<body|<head|<form|<img|<table|<style|<link\s|havola\s|hujjat.*tuzilma/i, 'HTML'],
+    [/css\s|style=|stylesheet|background-|font-size|color:\s|border:|margin:|padding:|\.css/i, 'CSS'],
+    [/excel|katakcha|=max\(|=min\(|=sum\(|=avg\(|=count|=large|funksiya.*diapazon|formula\s.*beradi|a\d.*katakcha/i, 'Excel'],
+    [/word\s*dastur|insert\s*→|rasm\s*qo[ʻ'']sh|font.*paragraph|layout.*margin|design.*theme/i, 'MS Word'],
+    [/ctrl\s*\+|tezkor\s*tugma|klaviatura|barcha\s*element.*tanla|windows.*tugma/i, 'Kompyuter'],
+    [/javascript|js\s|function\s|const\s|let\s|var\s|console\.|dom\.|addevent/i, 'JavaScript'],
+    [/python|print\(|def\s|import\s|list\[|dict\{|tuple/i, 'Python'],
+    [/sql|select\s|from\s|where\s|join\s|insert\s+into|create\s+table/i, 'SQL'],
+  ];
+
+  function inferSubtopic(q: any): string {
+    // 1. Serverdan kelgan subtopic — eng ishonchli
+    if (q.subtopic && q.subtopic !== 'Umumiy') return q.subtopic;
+    // 2. topic maydoni
+    if (q.topic && q.topic !== 'Umumiy') return q.topic;
+    // 3. Keyword-based inference
+    const text = (q.questionText || '') + ' ' + (q.options || []).join(' ');
+    for (const [pattern, label] of knownTopicPatterns) {
+      if (pattern.test(text)) return label;
+    }
+    return 'Umumiy';
+  }
+
+  // Topic data — aqlli inference bilan
   const topicStats: Record<string, { total: number; correct: number }> = {};
   (activeTest?.questions || []).forEach((q: any, i: number) => {
-    const topic = q.subtopic || 'Umumiy';
+    const topic = inferSubtopic(q);
     if (!topicStats[topic]) topicStats[topic] = { total: 0, correct: 0 };
     topicStats[topic].total += 1;
     if (isAnswerCorrect((result.answers || {})[i], q.correctOption, q.options || [])) topicStats[topic].correct += 1;
@@ -213,8 +240,10 @@ export default function TestResultView() {
     .map(topic => ({
       subject: topic,
       Olashtirish: Math.round((topicStats[topic].correct / (topicStats[topic].total || 1)) * 100),
+      total: topicStats[topic].total,
+      correct: topicStats[topic].correct,
     }))
-    .sort((a, b) => b.Olashtirish - a.Olashtirish);
+    .sort((a, b) => a.Olashtirish - b.Olashtirish); // Zaifdan kuchligacha — kamchiliklar birinchi
 
   return (
     <div className="min-h-screen relative overflow-x-hidden font-sans pb-20 bg-[#fdfdfd] text-[#111111]">
@@ -299,17 +328,20 @@ export default function TestResultView() {
               ) : (
                 chartData.map((entry, index) => {
                   const color = entry.Olashtirish < 50 ? 'bg-red-500' : entry.Olashtirish < 80 ? 'bg-yellow-500' : 'bg-green-500';
+                  const textColor = entry.Olashtirish < 50 ? 'text-red-600' : entry.Olashtirish < 80 ? 'text-yellow-600' : 'text-green-600';
                   return (
-                    <div key={index} className="flex flex-col gap-2">
-                      <div className="flex justify-between items-end gap-4">
-                        <span className="text-sm font-medium text-gray-700 leading-tight">{entry.subject}</span>
-                        <span className="text-xs font-bold text-gray-900">{entry.Olashtirish}%</span>
+                    <div key={index} className="flex flex-col gap-1.5">
+                      <div className="flex justify-between items-baseline gap-2">
+                        <span className="text-sm font-medium text-gray-800 leading-tight truncate">{entry.subject}</span>
+                        <span className={`text-xs font-bold shrink-0 ${textColor}`}>
+                          {entry.correct}/{entry.total} · {entry.Olashtirish}%
+                        </span>
                       </div>
                       <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                        <motion.div 
+                        <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${entry.Olashtirish}%` }}
-                          transition={{ duration: 1, delay: 0.2 + index * 0.05, ease: "easeOut" }}
+                          transition={{ duration: 1, delay: 0.15 + index * 0.08, ease: 'easeOut' }}
                           className={`h-full rounded-full ${color}`}
                         />
                       </div>
