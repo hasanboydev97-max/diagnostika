@@ -433,8 +433,8 @@ export const submitTestResult = async (req, res) => {
         const attempts = [];
         // [OPTIMIZATSIYA]: O'quvchilarga avtomat yoziladigan fikrlar (feedback) uchun qimmat Claude o'chirib qo'yildi.
         // O'rniga eng arzon/tekin Gemini Flash va Groq ishlatiladi. Bu xarajatni 90% ga tejaydi.
-        if (apiKey) attempts.push({ provider: 'gemini', model: 'gemini-1.5-flash' });
-        if (groqKey) attempts.push({ provider: 'groq', model: 'llama-3.3-70b-versatile' });
+        if (apiKey) attempts.push({ provider: 'gemini', model: 'gemini-2.5-flash' });
+        if (groqKey) attempts.push({ provider: 'groq', model: 'qwen/qwen3.6-27b' });
         
         if (attempts.length === 0) {
            await OnlineTestResult.findOneAndUpdate({ id: data.id }, { $set: { aiFeedback: "AI xizmati uchun aktiv provayder topilmadi." } });
@@ -628,7 +628,6 @@ export const generateAITest = async (req, res) => {
 
     // Initialize genAI only if apiKey exists
     const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
-    const modelsToTry = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-8b'];
 
         const aiSchema = {
       type: "object",
