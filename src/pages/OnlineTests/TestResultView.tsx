@@ -415,8 +415,34 @@ export default function TestResultView() {
                         const isStudentChoice = studentAns !== undefined &&
                           stripForCompare(String(studentAns)) === stripForCompare(String(opt));
 
-                        // correctAnswerText mavjud bo'lsa — uni asosiy to'g'ri javob sifatida ishlatamiz
-                        const isActuallyCorrect = isAnswerCorrect(opt, q.correctOption, q.options || [], q.correctAnswerText);
+                        // ✅ FIX: isAnswerCorrect(opt,...) o'rniga maxsus tekshiruv.
+                        // isAnswerCorrect "userAns vs correctOpt" uchun — u opt ni "o'quvchi javobi" deb ko'radi.
+                        // Harf-indeks lookup loop orqali noto'g'ri false-positive berishi mumkin edi.
+                        // Bu yerda faqat "bu opt to'g'ri javobmi?" ni aniq tekshiramiz:
+                        const isActuallyCorrect = (() => {
+                          // Prioritet: correctAnswerText (shuffle-safe) > correctOption
+                          const correctRef = q.correctAnswerText || q.correctOption;
+                          if (!correctRef) return false;
+                          const sOpt = stripForCompare(String(opt));
+                          const sCorrect = stripForCompare(String(correctRef));
+                          if (!sOpt || !sCorrect) return false;
+                          // 1. To'g'ridan matn taqqoslash (eng ishonchli yo'l)
+                          if (sOpt === sCorrect) return true;
+                          // 2. correctRef harf (a/b/c/d) bo'lsa — to'g'ri variant matnini indeks orqali topamiz
+                          const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
+                          const correctIdx = letterMap[sCorrect];
+                          if (correctIdx !== undefined) {
+                            const correctText = stripForCompare(String((q.options || [])[correctIdx] ?? ''));
+                            if (correctText && sOpt === correctText) return true;
+                          }
+                          // 3. opt o'zi harf bo'lsa — indeksidagi matnni correctRef bilan taqqoslaymiz
+                          const optIdx = letterMap[sOpt];
+                          if (optIdx !== undefined) {
+                            const optText = stripForCompare(String((q.options || [])[optIdx] ?? ''));
+                            if (optText && optText === sCorrect) return true;
+                          }
+                          return false;
+                        })();
 
                         let cls = "px-3 py-2 rounded-md border text-sm transition-colors ";
                         if (isActuallyCorrect) cls += "bg-green-50 border-green-200 text-green-800 font-medium";

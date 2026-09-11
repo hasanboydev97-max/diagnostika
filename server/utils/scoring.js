@@ -4,27 +4,53 @@
  * src/pages/OnlineTests/TestResultView.tsx da takrorlanmaslik uchun bu yerga chiqarildi.
  */
 
+// Matnni standartlashtirish (HTML belgilarni va ortiqcha bo'shliqlarni tozalash)
+function normalize(s) {
+  return String(s || '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+// Sof HTML teglardan tozalash
+function stripHtmlTags(s) {
+  return normalize(s).replace(/<[^>]*>/g, '').trim();
+}
+
+// Asosiy taqqoslash mantiqi
+function isEqual(ans1, ans2) {
+  const stripped1 = stripHtmlTags(ans1);
+  const stripped2 = stripHtmlTags(ans2);
+  if (stripped1 === '' && stripped2 === '') {
+    return normalize(ans1) === normalize(ans2);
+  }
+  return stripped1 === stripped2;
+}
+
 /**
  * O'quvchi javobining to'g'riligini tekshiradi.
- * Ham harf (a, b, c, d), ham matn asosida taqqoslaydi.
- *
- * @param {string|undefined} userAns   - O'quvchi tanlagan javob
- * @param {string|undefined} correctOpt - To'g'ri javob (a/b/c/d yoki to'liq matn)
- * @param {string[]} options            - Javob variantlari massivi
- * @returns {boolean}
  */
 export function isAnswerCorrect(userAns, correctOpt, options = []) {
   if (!userAns || !correctOpt) return false;
-  const u = String(userAns).trim().toLowerCase();
-  const c = String(correctOpt).trim().toLowerCase();
-  if (u === c) return true;
+
+  if (isEqual(userAns, correctOpt)) return true;
+
+  const uNorm = normalize(userAns);
+  const cNorm = normalize(correctOpt);
   const letterMap = { a: 0, b: 1, c: 2, d: 3 };
-  if (letterMap[c] !== undefined && options[letterMap[c]]) {
-    if (String(options[letterMap[c]]).trim().toLowerCase() === u) return true;
+
+  if (letterMap[cNorm] !== undefined && options[letterMap[cNorm]] !== undefined) {
+    if (isEqual(userAns, options[letterMap[cNorm]])) return true;
   }
-  if (letterMap[u] !== undefined && options[letterMap[u]]) {
-    if (String(options[letterMap[u]]).trim().toLowerCase() === c) return true;
+
+  if (letterMap[uNorm] !== undefined && options[letterMap[uNorm]] !== undefined) {
+    if (isEqual(options[letterMap[uNorm]], correctOpt)) return true;
   }
+
   return false;
 }
 

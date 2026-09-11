@@ -3,32 +3,41 @@
  * Server tomon ekvivalenti: server/utils/scoring.js
  */
 
-/**
- * HTML teglarni va ortiqcha bo'shliqlarni matndan tozalaydi.
- * FormattedText komponenti render qilgan matnlar DB da HTML teg bilan
- * saqlangan bo'lishi mumkin — taqqoslashdan oldin tozalanadi.
- */
-function stripHtml(text: string): string {
-  return text
-    .replace(/<[^>]*>/g, '')       // HTML teglarni olib tashla
-    .replace(/&amp;/g, '&')        // HTML entity lar
+// Matnni standartlashtirish (HTML belgilarni va ortiqcha bo'shliqlarni tozalash)
+function normalize(s: string): string {
+  return String(s || '')
+    .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ')          // Ko'p bo'shliqlarni birlashtir
+    .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase();
+}
+
+// Sof HTML teglardan tozalash (rich-text formatdagi javoblar uchun)
+function stripHtmlTags(s: string): string {
+  return normalize(s).replace(/<[^>]*>/g, '').trim();
+}
+
+// Asosiy taqqoslash mantiqi (Senior Level)
+function isEqual(ans1: string, ans2: string): boolean {
+  const stripped1 = stripHtmlTags(ans1);
+  const stripped2 = stripHtmlTags(ans2);
+
+  // Agar ikkala javob ham sof HTML teglardan iborat bo'lsa (masalan <link href="...">)
+  // stripHtmlTags ularni bo'sh string ("") qilib qo'yadi.
+  // Bu holatda ularning asl (tozalanmagan) qiymatlarini normalizatsiya qilib taqqoslaymiz.
+  if (stripped1 === '' && stripped2 === '') {
+    return normalize(ans1) === normalize(ans2);
+  }
+
+  return stripped1 === stripped2;
 }
 
 /**
  * O'quvchi javobining to'g'riligini tekshiradi.
  * Ham harf (a, b, c, d), ham to'liq matn asosida taqqoslaydi.
- * HTML teglar va entity lar avtomatik tozalanadi.
- *
- * Tartibi (prioritet bo'yicha):
- * 1. correctAnswerText (shuffle-safe to'g'ri matn) bilan to'g'ridan-to'g'ri taqqoslash
- * 2. Matn-matn to'g'ridan-to'g'ri taqqoslash
- * 3. Harf indeksi orqali options dan matn olib taqqoslash
  */
 export function isAnswerCorrect(
   userAns: string | undefined,
@@ -38,31 +47,25 @@ export function isAnswerCorrect(
 ): boolean {
   if (!userAns || !correctOpt) return false;
 
-  const u = stripHtml(String(userAns));
-  const c = stripHtml(String(correctOpt));
-
   // 1. Agar correctAnswerText berilgan bo'lsa — eng ishonchli yo'l
-  if (correctAnswerText) {
-    const ct = stripHtml(String(correctAnswerText));
-    if (ct && u === ct) return true;
-  }
+  if (correctAnswerText && isEqual(userAns, correctAnswerText)) return true;
 
   // 2. To'g'ridan-to'g'ri matn taqqoslash
-  if (u === c) return true;
+  if (isEqual(userAns, correctOpt)) return true;
 
   // 3. Harf indeksi orqali options dan matn olib taqqoslash
+  const uNorm = normalize(userAns);
+  const cNorm = normalize(correctOpt);
   const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
 
   // correctOpt harf bo'lsa → options dan to'g'ri matnni topib taqqosla
-  if (letterMap[c] !== undefined && options[letterMap[c]] !== undefined) {
-    const correctText = stripHtml(String(options[letterMap[c]]));
-    if (correctText && u === correctText) return true;
+  if (letterMap[cNorm] !== undefined && options[letterMap[cNorm]] !== undefined) {
+    if (isEqual(userAns, options[letterMap[cNorm]])) return true;
   }
 
   // userAns harf bo'lsa → options dan o'quvchi matni topib to'g'ri bilan taqqosla
-  if (letterMap[u] !== undefined && options[letterMap[u]] !== undefined) {
-    const userText = stripHtml(String(options[letterMap[u]]));
-    if (userText && userText === c) return true;
+  if (letterMap[uNorm] !== undefined && options[letterMap[uNorm]] !== undefined) {
+    if (isEqual(options[letterMap[uNorm]], correctOpt)) return true;
   }
 
   return false;

@@ -349,6 +349,10 @@ export default function TakeTest() {
         });
         const categories = [...new Set(blueprint.map((q: any) => q.category))] as string[];
         const scores: Record<string, number> = {};
+        
+        let globalEarned = 0;
+        let globalMax = 0;
+
         categories.forEach(cat => {
           const qs = blueprint.filter((q: any) => q.category === cat);
           let earned = 0, max = 0;
@@ -358,8 +362,11 @@ export default function TakeTest() {
             if (questionResults[q.id]) earned += w;
           });
           scores[cat] = max > 0 ? Math.round((earned / max) * 100) : 0;
+          globalEarned += earned;
+          globalMax += max;
         });
-        const totalScore = Math.round(Object.values(scores).reduce((a, b) => a + b, 0) / (Object.values(scores).length || 1));
+
+        const totalScore = globalMax > 0 ? Math.round((globalEarned / globalMax) * 100) : 0;
         toast.loading('AI Diagnostik xulosa yaratilmoqda...', { id: toastId });
         const summaryResponse = await generateDiagnosticSummary(studentName, test.grade || '5', scores, questionResults, blueprint);
         const resultId = Math.floor(100000 + Math.random() * 900000).toString();

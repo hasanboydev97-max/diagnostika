@@ -248,14 +248,26 @@ export const setupSockets = (httpServer) => {
       if (!room) {
         return socket.emit('error', 'Duyel topilmadi yoki xato PIN kod');
       }
+      
+      const safeName = (name || '').trim().replace(/[<>]/g, '').substring(0, 50);
+
       if (room.player2) {
+        // MUHIM FIX: O'yinchi kutilmaganda uzilib yana kirsa (reconnect), uni rad etmaymiz.
+        if (room.player2.name.toLowerCase() === safeName.toLowerCase()) {
+          room.player2.id = socket.id;
+          socket.join(pin);
+          return io.to(pin).emit('duel_ready', {
+            player1: room.player1.name,
+            player2: room.player2.name,
+            testId: room.testId
+          });
+        }
         return socket.emit('error', 'Ushbu duyel allaqachon to\'lgan');
       }
       if (room.status !== 'waiting') {
         return socket.emit('error', 'Duyel allaqachon boshlangan');
       }
 
-      const safeName = (name || '').trim().replace(/[<>]/g, '').substring(0, 50);
       room.player2 = { id: socket.id, name: safeName, score: 0, currentQuestion: 0, finished: false };
       socket.join(pin);
 
@@ -278,6 +290,14 @@ export const setupSockets = (httpServer) => {
       } else if (room.player2 && room.player2.name === name) {
         room.player2.id = socket.id;
       }
+
+      // MUHIM FIX: O'yinchi yangilanganda unga mavjud holatni jo'natamiz
+      socket.emit('duel_sync', {
+        status: room.status,
+        testId: room.testId,
+        player1: room.player1,
+        player2: room.player2
+      });
 
       io.to(pin).emit('duel_update', {
         player1: room.player1,
@@ -386,34 +406,9 @@ export const setupSockets = (httpServer) => {
         }
       }
 
-      // Duel disconnect handling
-      for (const [pin, room] of duelRooms.entries()) {
-        if (room.status === 'active') {
-          if (room.player1.id === socket.id) {
-            room.player1.cheated = true;
-            room.player1.finished = true;
-            room.player1.score = 0;
-            clearTimeout(room.ttlTimer);
-            io.to(pin).emit('duel_ended', {
-              player1: room.player1,
-              player2: room.player2,
-              disqualifiedPlayer: room.player1.name
-            });
-            duelRooms.delete(pin);
-          } else if (room.player2 && room.player2.id === socket.id) {
-            room.player2.cheated = true;
-            room.player2.finished = true;
-            room.player2.score = 0;
-            clearTimeout(room.ttlTimer);
-            io.to(pin).emit('duel_ended', {
-              player1: room.player1,
-              player2: room.player2,
-              disqualifiedPlayer: room.player2.name
-            });
-            duelRooms.delete(pin);
-          }
-        }
-      }
+      // MUHIM FIX: Disconnect bo'lganda o'yinchini darhol chetlashtirmaymiz!
+      // Agar o'yinchi sahifani yangilasa (refresh) yoki interneti 1 soniyaga uzilsa, u darhol yutqazib qo'ymaydi.
+      // Qoidabuzarlikni (cheating) front-end'dagi proctoring (blur, tab switch) nazorat qiladi.
     });
   });
 };

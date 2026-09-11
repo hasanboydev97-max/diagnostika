@@ -74,95 +74,109 @@ export default function DuelPlayer() {
       }
     });
 
-    const state = location.state as any;
-    if (state?.isCreator && state?.testId && state?.studentName) {
-      setIsCreator(true);
-      setName(state.studentName);
-      newSocket.emit('create_duel', { testId: state.testId, name: state.studentName });
-      // Clear location state so refresh doesn't recreate the duel
-      navigate(location.pathname + location.search, { replace: true, state: {} });
-    } else {
-      const urlPin = new URLSearchParams(location.search).get('pin');
-      const saved = localStorage.getItem('duel_state');
-      let p = null;
-      try { if (saved) p = JSON.parse(saved); } catch(e){}
-      
-      if (p && p.pin && p.name && p.status === 'lobby' && (!urlPin || urlPin === p.pin)) {
-        setPin(p.pin);
-        setName(p.name);
-        setIsCreator(p.isCreator);
-        setStatus('lobby');
-        // Update refs immediately for the connect event
-        pinRef.current = p.pin;
-        nameRef.current = p.name;
-        isCreatorRef.current = p.isCreator;
-        statusRef.current = 'lobby';
+      const state = location.state as any;
+      if (state?.isCreator && state?.testId && state?.studentName) {
+        setIsCreator(true);
+        setName(state.studentName);
+        newSocket.emit('create_duel', { testId: state.testId, name: state.studentName });
+        // Clear location state so refresh doesn't recreate the duel
+        navigate(location.pathname + location.search, { replace: true, state: {} });
       } else {
-        if (urlPin && urlPin !== p?.pin) {
-          setPin(urlPin);
-        }
-        setStatus('login');
-      }
-    }
+        const urlPin = new URLSearchParams(location.search).get('pin');
+        const saved = localStorage.getItem('duel_state');
+        let p = null;
+        try { if (saved) p = JSON.parse(saved); } catch(e){}
+        
+        // FIX: Reconnect during active game or lobby
+        if (p && p.pin && p.name && (p.status === 'lobby' || p.status === 'active') && (!urlPin || urlPin === p.pin)) {
+          setPin(p.pin);
+          setName(p.name);
+          setIsCreator(p.isCreator);
+          setStatus(p.status);
+          if (p.testId && !test) fetchTest(p.testId);
 
-    newSocket.on('error', (msg) => {
-      toast.error(msg);
-      if (statusRef.current === 'lobby') setStatus('login');
-    });
-
-    newSocket.on('duel_created', ({ pin, testId }) => {
-      setPin(pin);
-      setStatus('lobby');
-      fetchTest(testId);
-    });
-
-    newSocket.on('duel_ready', ({ player1, player2, testId: newTestId }) => {
-      if (!isCreatorRef.current) {
-        setPin(pinRef.current);
-        fetchTest(newTestId);
-        setStatus('lobby');
-      }
-      setP1(prev => ({ ...prev, name: player1 } as any));
-      setP2(prev => ({ ...prev, name: player2 } as any));
-      toast.success('Raqib ulandi!');
-    });
-
-    newSocket.on('duel_started', () => {
-      setStatus('active');
-    });
-
-    newSocket.on('duel_update', ({ player1, player2 }) => {
-      setP1(player1);
-      setP2(player2);
-    });
-
-    newSocket.on('duel_ended', ({ player1, player2, disqualifiedPlayer }) => {
-      setP1(player1);
-      setP2(player2);
-      if (disqualifiedPlayer) {
-        setDisqualifiedName(disqualifiedPlayer);
-        if (disqualifiedPlayer === nameRef.current) {
-          setDisqualificationMsg("Siz qoidabuzarlik qilganingiz (oynani tark etganingiz) sababli chetlashtirildingiz va mag'lub bo'ldingiz.");
+          // Update refs immediately for the connect event
+          pinRef.current = p.pin;
+          nameRef.current = p.name;
+          isCreatorRef.current = p.isCreator;
+          statusRef.current = p.status;
         } else {
-          setDisqualificationMsg(`Raqibingiz (${disqualifiedPlayer}) qoidabuzarlik qilgani (oynani tark etgani) sababli chetlashtirildi. Siz g'olib bo'ldingiz!`);
+          if (urlPin && urlPin !== p?.pin) {
+            setPin(urlPin);
+          }
+          setStatus('login');
         }
       }
-      setStatus('finished');
-    });
 
-    return () => {
-      newSocket.disconnect();
-    };
-  }, []);
+      newSocket.on('error', (msg) => {
+        toast.error(msg);
+        if (statusRef.current === 'lobby') setStatus('login');
+      });
 
-  // Save to localStorage when in lobby to allow rejoining on refresh
-  useEffect(() => {
-    if (status === 'lobby') {
-      localStorage.setItem('duel_state', JSON.stringify({ pin, name, isCreator, status }));
-    } else if (status === 'finished' || status === 'login') {
-      localStorage.removeItem('duel_state');
-    }
-  }, [pin, name, isCreator, status]);
+      // MUHIM FIX: Backenddan to'liq holatni olib UI ni yangilash
+      newSocket.on('duel_sync', ({ status: serverStatus, testId, player1, player2 }) => {
+        setStatus(serverStatus);
+        statusRef.current = serverStatus;
+        setP1(player1);
+        setP2(player2);
+        if (testId && !test) {
+          fetchTest(testId);
+        }
+      });
+
+      newSocket.on('duel_created', ({ pin, testId }) => {
+        setPin(pin);
+        setStatus('lobby');
+        fetchTest(testId);
+      });
+
+      newSocket.on('duel_ready', ({ player1, player2, testId: newTestId }) => {
+        if (!isCreatorRef.current) {
+          setPin(pinRef.current);
+          fetchTest(newTestId);
+          setStatus('lobby');
+        }
+        setP1(prev => ({ ...prev, name: player1 } as any));
+        setP2(prev => ({ ...prev, name: player2 } as any));
+        toast.success('Raqib ulandi!');
+      });
+
+      newSocket.on('duel_started', () => {
+        setStatus('active');
+      });
+
+      newSocket.on('duel_update', ({ player1, player2 }) => {
+        setP1(player1);
+        setP2(player2);
+      });
+
+      newSocket.on('duel_ended', ({ player1, player2, disqualifiedPlayer }) => {
+        setP1(player1);
+        setP2(player2);
+        if (disqualifiedPlayer) {
+          setDisqualifiedName(disqualifiedPlayer);
+          if (disqualifiedPlayer === nameRef.current) {
+            setDisqualificationMsg("Siz qoidabuzarlik qilganingiz (oynani tark etganingiz) sababli chetlashtirildingiz va mag'lub bo'ldingiz.");
+          } else {
+            setDisqualificationMsg(`Raqibingiz (${disqualifiedPlayer}) qoidabuzarlik qilgani (oynani tark etgani) sababli chetlashtirildi. Siz g'olib bo'ldingiz!`);
+          }
+        }
+        setStatus('finished');
+      });
+
+      return () => {
+        newSocket.disconnect();
+      };
+    }, []);
+
+    // Save to localStorage when in lobby or active to allow rejoining on refresh
+    useEffect(() => {
+      if (status === 'lobby' || status === 'active') {
+        localStorage.setItem('duel_state', JSON.stringify({ pin, name, isCreator, status, testId: test?._id || test?.id }));
+      } else if (status === 'finished' || status === 'login') {
+        localStorage.removeItem('duel_state');
+      }
+    }, [pin, name, isCreator, status, test]);
 
   const fetchTest = async (id: string) => {
     try {
@@ -377,6 +391,12 @@ export default function DuelPlayer() {
         )}
 
         {/* ACTIVE DUEL SCREEN */}
+        {status === 'active' && !test && (
+          <motion.div key="loading" className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+            <Loader2 className="animate-spin text-black mb-4 w-12 h-12 mx-auto" />
+            <p className="text-gray-500 font-medium">Jang maydoni tayyorlanmoqda...</p>
+          </motion.div>
+        )}
         {status === 'active' && test && (
           <motion.div 
             key="active"
