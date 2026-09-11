@@ -31,6 +31,7 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
   // General settings
   const [grade, setGrade] = useState(initialGrade);
   const [topic, setTopic] = useState('');
+  const [language, setLanguage] = useState('o\'zbek');
   
   // Simple Mode state
   const [simpleSubject, setSimpleSubject] = useState(teacherSubject || 'Barchasi (Diagnostika)');
@@ -101,7 +102,7 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
 
       if (activeMode === 'simple') {
         if (simpleSubject === 'Barchasi (Diagnostika)' && simpleQuestionCount === 30) {
-          const res = await generateDiagnosticTest(blueprint, grade);
+          const res = await generateDiagnosticTest(blueprint, grade, language);
           if (res) questions = res;
         } else {
           const actualSubject = simpleSubject === 'Barchasi (Diagnostika)' ? 'Matematika va Mantiq' : simpleSubject;
@@ -110,7 +111,8 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
             grade,
             questionCount: simpleQuestionCount,
             difficulty: simpleDifficulty,
-            topic
+            topic,
+            language
           });
           if (res) {
             questions = res.map((q, idx) => ({
@@ -136,7 +138,8 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
           grade,
           subjects: selectedSubjects.map(s => ({ subject: s.subject, count: s.count })),
           difficulty: difficultyBreakdown,
-          topic
+          topic,
+          language
         });
 
         if (res) {
@@ -361,6 +364,22 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
                   </div>
                 </div>
 
+                {/* Til Selector */}
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-2">Test Tili</label>
+                  <select
+                    value={language}
+                    onChange={e => setLanguage(e.target.value)}
+                    className="w-full bg-transparent border-b border-black/20 pb-3 text-base text-black focus:outline-none focus:border-black transition-colors"
+                  >
+                    <option value="o'zbek">O'zbek</option>
+                    <option value="rus">Rus (Русский)</option>
+                    <option value="ingliz">Ingliz (English)</option>
+                    <option value="qozoq">Qozoq (Қазақ)</option>
+                    <option value="tojik">Tojik (Тоҷикӣ)</option>
+                  </select>
+                </div>
+
                 {/* Multi-subject selection */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between border-b border-black/10 pb-3">
@@ -573,8 +592,8 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
                   </select>
                 </div>
 
-                {/* Sinf & Savollar Soni Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                {/* Sinf, Til & Savollar Soni Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
                   <div>
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-2">Sinf</label>
                     <select
@@ -585,6 +604,21 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
                       {['5', '6', '7', '8', '9', '10', '11'].map(g => (
                         <option key={g} value={g}>{g}-sinf</option>
                       ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-2">Til</label>
+                    <select
+                      value={language}
+                      onChange={e => setLanguage(e.target.value)}
+                      className="w-full bg-transparent border-b border-black/20 pb-3 text-base text-black focus:outline-none focus:border-black transition-colors"
+                    >
+                      <option value="o'zbek">O'zbek</option>
+                      <option value="rus">Rus</option>
+                      <option value="ingliz">Ingliz</option>
+                      <option value="qozoq">Qozoq</option>
+                      <option value="tojik">Tojik</option>
                     </select>
                   </div>
 

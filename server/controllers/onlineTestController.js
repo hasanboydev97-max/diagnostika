@@ -592,7 +592,7 @@ export const getTestResultById = async (req, res) => {
 };
 export const generateAITest = async (req, res) => {
   try {
-    const { topic, questionCount, subject, grade, difficulty } = req.body;
+    const { topic, questionCount, subject, grade, difficulty, language } = req.body;
 
     if (!topic || !subject) {
       return res.status(400).json({ error: 'Mavzu (topic) va fan (subject) talab qilinadi.' });
@@ -656,7 +656,7 @@ export const generateAITest = async (req, res) => {
       required: ["questions"]
     };
 
-    function buildTestPrompt({ topic, subject, questionCount = 5, difficulty = 'aralash', grade = 'aralash', existingQuestions = [] }) {
+    function buildTestPrompt({ topic, subject, questionCount = 5, difficulty = 'aralash', grade = 'aralash', language = 'o\'zbek', existingQuestions = [] }) {
       const existingText = existingQuestions.length > 0 
         ? `\n\nCRITICAL RULE: DO NOT REPEAT THE FOLLOWING CONCEPTS. These questions have ALREADY been generated. You MUST create entirely NEW questions testing DIFFERENT concepts/angles:\n` + existingQuestions.map((q, i) => `${i+1}. ${q.questionText || q}`).join('\n')
         : '';
@@ -673,6 +673,7 @@ Generate exactly ${questionCount} multiple-choice questions for:
   Topic(s): ${topic}
   Target Grade/Class: ${grade} (Adapt vocabulary, logic, and complexity specifically for this age group)
   Difficulty: ${difficulty} (Ensure the cognitive load perfectly matches this level)${existingText}
+  Language: ${language}
 
 CRITICAL PEDAGOGICAL INSTRUCTIONS (SENIOR Level):
 - GRADE ADAPTATION: If a specific grade (e.g. '5-sinf') is provided, ensure the concepts and formulas strictly follow that age's curriculum. Do not use high-school level concepts for primary/middle schoolers.
@@ -684,7 +685,7 @@ CRITICAL PEDAGOGICAL INSTRUCTIONS (SENIOR Level):
 5. EXACT COUNT: You MUST generate EXACTLY ${questionCount} questions. Use the "questionNumber" field to count from 1 to ${questionCount}. Do not stop until you reach ${questionCount}.
 6. EVEN DISTRIBUTION: If multiple topics are provided (separated by commas), distribute the questions evenly. Do not focus heavily on just one topic.
 7. PLAUSIBLE DISTRACTORS: Wrong options (distractors) must be realistic and challenging. Do not make them obvious jokes or entirely unrelated concepts.
-8. CLARITY: Questions must be formulated clearly and unambiguously in the Uzbek language.
+8. CLARITY: Questions must be formulated clearly and unambiguously in the ${language} language.
 7. PROGRESSIONS (PROGRESSIYA): If the topic is Arithmetic or Geometric Progressions, ALWAYS specify the type ("Arifmetik progressiya" or "Geometrik progressiya"). Wrap all sequence terms, parameters, and formulas in Math mode (e.g., $a_1$, $b_n$, $S_n$, $d$, $q$, $1, 3, 5, \dots$). Never write a1, bn, Sn as plain text. Ensure the problem has enough given values to be mathematically solvable.
 
 OUTPUT DISCIPLINE (for speed — follow strictly)
@@ -762,6 +763,7 @@ Return ONLY the JSON object. Begin generation now.`;
         questionCount: chunkCount, 
         grade: req.body.grade || 'aralash',
         difficulty: req.body.difficulty || 'aralash',
+        language: req.body.language || 'o\'zbek',
         existingQuestions
       });
 

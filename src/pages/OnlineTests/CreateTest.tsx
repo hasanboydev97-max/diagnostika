@@ -35,6 +35,7 @@ export default function CreateTest() {
   const [questionCount, setQuestionCount] = useState<number | string>(0);
   const [grade, setGrade] = useState('');
   const [difficulty, setDifficulty] = useState('');
+  const [language, setLanguage] = useState('o\'zbek');
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   
@@ -57,7 +58,8 @@ export default function CreateTest() {
         topic,
         questionCount,
         grade,
-        difficulty
+        difficulty,
+        language
       };
       
       const res = await fetch(`${API_URL}/online-tests/generate`, {
@@ -542,6 +544,20 @@ export default function CreateTest() {
                   <option value="O'rtacha">O'rtacha (Standart masalalar)</option>
                   <option value="Qiyin">Qiyin (Murakkab, mantiqiy fikrlash)</option>
                   <option value="Olimpiada darajasi">Olimpiada darajasi</option>
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Test Tili</label>
+                <select 
+                  value={language}
+                  onChange={e => setLanguage(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-400 focus:bg-white transition-colors"
+                >
+                  <option value="o'zbek">O'zbek (Uzbek)</option>
+                  <option value="rus">Rus (Russian)</option>
+                  <option value="ingliz">Ingliz (English)</option>
+                  <option value="qozoq">Qozoq (Kazakh)</option>
+                  <option value="tojik">Tojik (Tajik)</option>
                 </select>
               </div>
             </div>

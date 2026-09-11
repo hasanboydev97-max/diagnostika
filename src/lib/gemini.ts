@@ -157,7 +157,7 @@ export interface GeneratedQuestion {
   explanation?: string;
 }
 
-export const generateDiagnosticTest = async (blueprint: QuestionBlueprint[], grade: string): Promise<GeneratedQuestion[] | null> => {
+export const generateDiagnosticTest = async (blueprint: QuestionBlueprint[], grade: string, language: string = 'o\'zbek'): Promise<GeneratedQuestion[] | null> => {
   const questionsInfo = blueprint.map(q => 
     `ID:${q.id}, Mavzu:"${q.topic}", Fan:"${q.category}", Qiyinlik:"${q.difficulty}", Ko'nikma:"${q.skill}"`
   ).join('\n');
@@ -173,17 +173,25 @@ Har bir savolda:
 Savollar shabloni:
 ${questionsInfo}
 
-MUHIM QOIDALAR:
-1. Savollar O'ZBEK tilida bo'lsin
-2. Har bir savol o'zining mavzusiga va qiyinlik darajasiga mos bo'lsin
-3. Variantlar ichida faqat BITTA to'g'ri javob bo'lsin
-4. Noto'g'ri variantlar ham mantiqan ishonchli bo'lsin (tasodifiy emas)
-5. "Oson" savollar oddiy, "O'rta" chuqurroq, "Qiyin" murakkab bo'lsin
-6. Matematik va informatikaga oid barcha formulalar (masalan Excel formulalari, kasrlar, ildizlar) toza LaTeX ko'rinishida yozilsin: inline formulalar uchun $...$ belgisidan foydalanilsin (masalan: $A1 = 10$, $\\\\frac{A1+B1+C1}{2}$). Formulalarni backtick \`...\` yoki $$...$$ ichiga olmang.
-7. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing. Barcha hadlar ($a_1, a_n, b_n, S_n, d, q, 1, 3, 5, \\\\dots$) mutlaqo Math rejimida ($...$) bo'lishi shart. Yetarlicha parametrlar bering.
-8. ALWAYS DOUBLE-ESCAPE BACKSLASHES in your JSON. Write \\\\sqrt{50}, \\\\frac{1}{2}, \\\\begin{cases}. This is STRICTLY REQUIRED.
-9. NEVER put newlines (\\n) inside math mode. Inline and block math MUST be on a single line.
-10. TAKRORIYLIKKA YO'L QO'YILMASIN: Savollar, ularning matni, ishlatilgan sonlar, ismlar va variantlar bir-birini umuman takrorlamasligi SHART. Har bir savol noyob bo'lsin!
+ASOSIY QOIDALAR (Majburiy):
+1. TIL VA MOSLIK: Savollar qat'iyan ${language.toUpperCase()} tilida bo'lsin. Har bir savol o'zining mavzusiga, kognitiv ko'nikmasiga va qiyinlik darajasiga (Oson - oddiy, O'rta - chuqurroq, Qiyin - murakkab) 100% mos kelsin.
+2. YAGONA TO'G'RI JAVOB: Har bir savolning faqat bitta shubhasiz to'g'ri javobi bo'lishi shart. Agar matnda ikki xil talqin qilinadigan tushuncha (masalan, "ildiz" yoki "sarlavha") bo'lsa, uni albatta aniqlashtiring.
+3. DISTRAKTORLAR SIFATI: Noto'g'ri variantlar (distraktorlar) mantiqan yaqin, lekin aniq noto'g'ri bo'lsin. Tasodifiy emas, balki o'quvchining tipik xatosini aks ettiruvchi javoblar bo'lishi shart.
+4. TUSHUNISHNI TEKSHIRING: Berilgan ma'lumotni shunchaki qaytarib so'raydigan yuzaki savollardan qoching. O'quvchini tahlil qilishga va qoidalarni tatbiq etishga majbur qiling. Har bir savol faqat bitta aniq ko'nikmani tekshirsin.
+5. TAKRORIYLIKKA YO'L QO'YILMASIN: Savollar matni, sonlar, muammolar va variantlar 100% noyob bo'lishi KAFOLATLANSIN. Hech bir savol boshqasini takrorlamasin!
+
+O'Z-O'ZINI TEKSHIRISH (Self-Review):
+Javobni shakllantirishdan oldin har bir savolni o'zingiz tekshirib chiqing:
+- "Bu savolning boshqa asosli javobi yo'qmi?"
+- "Savol matni ko'p ma'nolimi?"
+- "Kalit javob 100% mosmi?"
+Agar kamchilik topsangiz, uni darhol to'g'rilab, keyin yakuniy natijaga qo'shing.
+
+TEXNIK QOIDALAR:
+1. Matematik/informatikaga oid formulalar toza LaTeX ko'rinishida yozilsin (inline uchun $...$). Formulalarni backtick yoki $$ ichiga olmang.
+2. PROGRESSIYA QOIDASI: Progressiya turi matnda yozilsin. Hadlar ($a_1, S_n, d, q$) Math rejimida ($...$) bo'lsin.
+3. ALWAYS DOUBLE-ESCAPE BACKSLASHES in your JSON. Write \\\\sqrt{50}, \\\\frac{1}{2}. This is STRICTLY REQUIRED.
+4. NEVER put newlines (\\n) inside math mode. Math MUST be on a single line.
 
 Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
 [
@@ -218,6 +226,7 @@ export interface GenerateCustomTestParams {
   questionCount: number;
   difficulty: string; // 'Oson' | 'O\'rta' | 'Qiyin' | 'Aralash'
   topic?: string;
+  language?: string;
 }
 
 export interface CustomGeneratedQuestion {
@@ -232,7 +241,7 @@ export interface CustomGeneratedQuestion {
 }
 
 export const generateCustomTestQuestions = async (params: GenerateCustomTestParams): Promise<CustomGeneratedQuestion[] | null> => {
-  const { subject, grade, questionCount, difficulty, topic } = params;
+  const { subject, grade, questionCount, difficulty, topic, language = 'O\'zbek' } = params;
 
   const difficultyInstruction = difficulty === 'Aralash' 
     ? "Savollar qiyinlik darajasi bo'yicha aralash bo'lsin (ba'zilari Oson, ba'zilari O'rta, ba'zilari Qiyin)."
@@ -281,19 +290,30 @@ FAN BO'YICHA MAXSUS KO'RSATMA (MATEMATIKA):
 - Fan: ${subject}
 - Sinf: ${grade}-sinf
 - Savollar soni: ${questionCount} ta
+- Til: ${language}
 - Qiyinlik darajasi sharti: ${difficultyInstruction}
 - ${topicInstruction}
 ${subjectSpecificRules}
 
-QAT'IY SIFAT MEZONLARI (100% AMAL QILING):
-1. QAT'IY SHART: Savollar juda chuqur mantiqiy asoslangan, mukammal va oliy darajadagi sintaksis bilan yozilsin. Hech qanday imlo, grammatik yoki sintaksis xatolarga yo'l qo'yilmasin!
-2. QAT'IY SHART: Savollar yuzaki bo'lmasin. Noto'g'ri variantlar o'ta chalg'ituvchi va haqiqatga juda yaqin (mantiqiy) bo'lsin.
-3. Barcha faktlar, formulalar va ma'lumotlar 100% ilmiy to'g'ri va aniq bo'lishi KAFOLATLANSIN. Umuman xato qilmang!
-4. Matematik va informatikaga oid barcha formulalar toza LaTeX ko'rinishida yozilsin: inline formulalar uchun $...$ belgisidan foydalanilsin.
-5. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing. Barcha hadlar ($a_1, a_n, b_n, S_n, d, q, 1, 3, 5, \\\\dots$) mutlaqo Math rejimida ($...$) bo'lishi shart. Yetarlicha parametrlar bering.
-6. ALWAYS DOUBLE-ESCAPE BACKSLASHES in your JSON. Write \\\\sqrt{50}, \\\\frac{1}{2}, \\\\begin{cases}. This is STRICTLY REQUIRED.
-7. NEVER put newlines (\\n) inside math mode. Inline and block math MUST be on a single line.
-8. MUTLAQO TAKRORLANMASIN: Barcha savollar matni, sonlar, muammolar va variantlar 100% noyob bo'lishi KAFOLATLANSIN. Hech bir savol boshqasini takrorlamasin!
+ASOSIY QOIDALAR (Majburiy):
+1. YAGONA TO'G'RI JAVOB: Har bir savolning faqat bitta shubhasiz to'g'ri javobi bo'lishi shart. Agar matnda ikki xil talqin qilinadigan tushuncha bo'lsa, uni albatta aniqlashtiring.
+2. DISTRAKTORLAR SIFATI: Noto'g'ri variantlar (distraktorlar) mantiqan yaqin, lekin aniq noto'g'ri bo'lsin. Tasodifiy emas, balki o'quvchining tipik xatosini aks ettiruvchi chalg'ituvchi javoblar bo'lsin.
+3. TUSHUNISHNI TEKSHIRING: O'quvchini tahlil qilishga majbur qiling, yuzaki va yodlangan faktlarni quruq so'rashdan qoching.
+4. XATOSIZLIK VA ANIKLIK: Barcha faktlar, formulalar va ma'lumotlar 100% ilmiy to'g'ri va aniq bo'lishi KAFOLATLANSIN. Umuman xato qilmang!
+5. TAKRORIYLIKKA YO'L QO'YILMASIN: Savollar matni, sonlar, muammolar va variantlar 100% noyob bo'lishi KAFOLATLANSIN. Hech bir savol boshqasini takrorlamasin!
+
+O'Z-O'ZINI TEKSHIRISH (Self-Review):
+Javobni shakllantirishdan oldin har bir savolni o'zingiz tekshirib chiqing:
+- "Bu savolning boshqa asosli javobi yo'qmi?"
+- "Savol matni ko'p ma'nolimi?"
+- "Kalit javob 100% mosmi?"
+Agar kamchilik topsangiz, uni darhol to'g'rilab, keyin yakuniy natijaga qo'shing.
+
+TEXNIK QOIDALAR:
+1. Matematik va informatikaga oid barcha formulalar toza LaTeX ko'rinishida yozilsin: inline formulalar uchun $...$ belgisidan foydalanilsin.
+2. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing. Barcha hadlar ($a_1, a_n, b_n, S_n, d, q, 1, 3, 5, \\\\dots$) mutlaqo Math rejimida ($...$) bo'lishi shart.
+3. ALWAYS DOUBLE-ESCAPE BACKSLASHES in your JSON. Write \\\\sqrt{50}, \\\\frac{1}{2}. This is STRICTLY REQUIRED.
+4. NEVER put newlines (\\n) inside math mode. Inline and block math MUST be on a single line.
 
 Har bir savolda quyidagilar bo'lishi shart:
 - Savol matni (aniq, tushunarli, chuqur ma'noli va mutlaqo xatosiz)
@@ -350,10 +370,11 @@ export interface GenerateMatrixTestParams {
   subjects: MatrixSubjectItem[];
   difficulty: MatrixDifficultyBreakdown;
   topic?: string;
+  language?: string;
 }
 
 export const generateMatrixTestQuestions = async (params: GenerateMatrixTestParams): Promise<CustomGeneratedQuestion[] | null> => {
-  const { grade, subjects, difficulty, topic } = params;
+  const { grade, subjects, difficulty, topic, language = 'O\'zbek' } = params;
 
   const totalQuestions = subjects.reduce((sum, item) => sum + item.count, 0);
   const subjectsPrompt = subjects.map(s => `- ${s.subject}: ${s.count} ta savol`).join('\n');
@@ -363,6 +384,8 @@ export const generateMatrixTestQuestions = async (params: GenerateMatrixTestPara
     : `Mavzular ${grade}-sinf darsligidagi mos mavzulardan bo'lsin.`;
 
   const prompt = `Siz malakali ta'lim ekspertisiz. ${grade}-sinf o'quvchilari uchun aniq berilgan taqsimot bo'yicha jami ${totalQuestions} ta diagnostika test savoli tuzing.
+
+Til: ${language}
 
 Fanlar va savollar soni taqsimoti:
 ${subjectsPrompt}
@@ -374,15 +397,25 @@ Qiyinlik darajalari bo'yicha taqsimot:
 
 ${topicInstruction}
 
-MUHIM SHARTLAR:
-1. Har bir savol tegishli faniga ("category") va ko'rsatilgan qiyinlik darajasiga ("difficulty") aniq mos kelsin.
-2. Savollar O'zbek tilida bo'lsin.
-3. Har bir savolda 4 ta variant (A, B, C, D) va 1 ta to'g'ri javob ("correctOption") bo'lsin.
-4. Matematik va informatikaga oid barcha formulalar toza LaTeX ko'rinishida yozilsin: inline formulalar uchun $...$ belgisidan foydalanilsin.
-5. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing. Barcha hadlar ($a_1, a_n, b_n, S_n, d, q, 1, 3, 5, \\\\dots$) mutlaqo Math rejimida ($...$) bo'lishi shart. Yetarlicha parametrlar bering.
-6. ALWAYS DOUBLE-ESCAPE BACKSLASHES in your JSON. Write \\\\sqrt{50}, \\\\frac{1}{2}, \\\\begin{cases}. This is STRICTLY REQUIRED.
-7. NEVER put newlines (\\n) inside math mode. Inline and block math MUST be on a single line.
-8. TAKRORLANMASLIK QOIDASI: Hech qaysi savol boshqa savolni takrorlamasin! Mavzular bir xil bo'lganda ham shartlar, sonlar va kontekst butunlay farq qilishi SHART.
+ASOSIY QOIDALAR (Majburiy):
+1. YAGONA TO'G'RI JAVOB: Har bir savolning faqat bitta shubhasiz to'g'ri javobi bo'lishi shart. Agar matnda ikki xil talqin qilinadigan tushuncha bo'lsa, uni albatta aniqlashtiring.
+2. DISTRAKTORLAR SIFATI: Noto'g'ri variantlar (distraktorlar) mantiqan yaqin, lekin aniq noto'g'ri bo'lsin. Tasodifiy emas, balki o'quvchining tipik xatosini aks ettiruvchi javoblar bo'lishi shart.
+3. TUSHUNISHNI TEKSHIRING: O'quvchini tahlil qilishga majbur qiling, yuzaki va yodlangan faktlarni quruq so'rashdan qoching.
+4. MOSLIK: Har bir savol tegishli faniga ("category") va ko'rsatilgan qiyinlik darajasiga ("difficulty") aniq mos kelsin. Savollar ${language} tilida bo'lsin.
+5. TAKRORIYLIKKA YO'L QO'YILMASIN: Savollar matni, sonlar, muammolar va variantlar 100% noyob bo'lishi KAFOLATLANSIN. Hech bir savol boshqasini takrorlamasin!
+
+O'Z-O'ZINI TEKSHIRISH (Self-Review):
+Javobni shakllantirishdan oldin har bir savolni o'zingiz tekshirib chiqing:
+- "Bu savolning boshqa asosli javobi yo'qmi?"
+- "Savol matni ko'p ma'nolimi?"
+- "Kalit javob 100% mosmi?"
+Agar kamchilik topsangiz, uni darhol to'g'rilab, keyin yakuniy natijaga qo'shing.
+
+TEXNIK QOIDALAR:
+1. Matematik va informatikaga oid barcha formulalar toza LaTeX ko'rinishida yozilsin: inline formulalar uchun $...$ belgisidan foydalanilsin.
+2. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing. Barcha hadlar ($a_1, a_n, b_n, S_n, d, q, 1, 3, 5, \\\\dots$) mutlaqo Math rejimida ($...$) bo'lishi shart.
+3. ALWAYS DOUBLE-ESCAPE BACKSLASHES in your JSON. Write \\\\sqrt{50}, \\\\frac{1}{2}. This is STRICTLY REQUIRED.
+4. NEVER put newlines (\\n) inside math mode. Inline and block math MUST be on a single line.
 
 Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
 [
