@@ -253,7 +253,7 @@ function normalizeQuestions(parsed) {
 /**
  * Executes an individual AI agent with a strict timeout (AbortSignal)
  */
-async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22000 }) {
+async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22000, temperature = 0.7 }) {
   const geminiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
   const anthropicKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
   const groqKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
@@ -268,7 +268,7 @@ async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22
         model: agent.model,
         generationConfig: {
           responseMimeType: 'application/json',
-          temperature: 0.4
+          temperature: temperature
         }
       });
 
@@ -288,7 +288,7 @@ async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22
         body: JSON.stringify({
           model: agent.model,
           max_tokens: 4096,
-          temperature: 0.4,
+          temperature: temperature,
           system: `${systemPrompt || 'You are an elite educational assessment engineer.'}\nStrictly output valid JSON matching this schema: ${JSON.stringify(aiSchema)}. No markdown fences, no conversational prose.`,
           messages: [{ role: 'user', content: prompt }]
         })
@@ -315,7 +315,7 @@ async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22
           },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.4,
+        temperature: temperature,
         max_tokens: maxTokens
       };
 

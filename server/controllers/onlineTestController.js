@@ -23,6 +23,52 @@ const stripHtml = (text) => {
 const testGenerationQueue = pLimit(10); // 50-100 foydalanuvchi uchun test yaratish navbati
 const backgroundFeedbackQueue = pLimit(5); // O'quvchilar natijasi fonida AI tahlili uchun navbat
 
+// ✅ 20-Year Senior Architecture: Thundering Herd (Cache Stampede) himoyasi
+// 30 ta bola bir vaqtda kirganda DB ga faqat 1 ta so'rov boradi, qolgan 29 tasi xotiradan (Promise) kutadi
+const testCache = new Map();
+const teacherCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 daqiqa
+
+const getCachedTest = (id) => {
+  const now = Date.now();
+  if (testCache.has(id)) {
+    const cached = testCache.get(id);
+    if (now - cached.timestamp < CACHE_TTL) return cached.promise;
+  }
+  
+  const query = mongoose.Types.ObjectId.isValid(id)
+    ? { $or: [{ _id: id }, { id: id }] }
+    : { id: id };
+    
+  const promise = OnlineTest.findOne(query).lean().then(doc => {
+    if (!doc) testCache.delete(id);
+    return doc;
+  }).catch(err => {
+    testCache.delete(id);
+    throw err;
+  });
+  
+  testCache.set(id, { promise, timestamp: now });
+  return promise;
+};
+
+const getCachedTeacher = (id) => {
+  const now = Date.now();
+  if (teacherCache.has(id)) {
+    const cached = teacherCache.get(id);
+    if (now - cached.timestamp < CACHE_TTL) return cached.promise;
+  }
+  const promise = Teacher.findById(id).lean().then(doc => {
+    if (!doc) teacherCache.delete(id);
+    return doc;
+  }).catch(err => {
+    teacherCache.delete(id);
+    throw err;
+  });
+  teacherCache.set(id, { promise, timestamp: now });
+  return promise;
+};
+
 
 export const getTests = async (req, res) => {
   try {
@@ -35,10 +81,8 @@ export const getTests = async (req, res) => {
 export const getTestById = async (req, res) => {
   try {
     const { id } = req.params;
-    const query = mongoose.Types.ObjectId.isValid(id)
-      ? { $or: [{ _id: id }, { id: id }] }
-      : { id: id };
-    const test = await OnlineTest.findOne(query).lean();
+    // ✅ Kesh orqali o'qiymiz, MongoDB ga bosim nolga tushadi
+    const test = await getCachedTest(id);
     if (!test) return res.status(404).json({ error: 'Not found' });
     res.json(test);
   } catch (error) {
@@ -274,10 +318,7 @@ export const submitTestResult = async (req, res) => {
     }
     
     // Verify time limit on backend to prevent bypassing
-    const testQuery = mongoose.Types.ObjectId.isValid(data.testId)
-      ? { $or: [{ _id: data.testId }, { id: data.testId }] }
-      : { id: data.testId };
-    const test = await OnlineTest.findOne(testQuery);
+    const test = await getCachedTest(data.testId);
     if (test) {
       const now = new Date();
       if (test.startTime && now < new Date(test.startTime)) {
@@ -289,7 +330,7 @@ export const submitTestResult = async (req, res) => {
 
       // Check max students limit based on teacher plan
       if (test.teacherId) {
-        const creator = await Teacher.findById(test.teacherId);
+        const creator = await getCachedTeacher(test.teacherId);
         if (creator) {
           const testIds = [test.id, test._id?.toString(), data.testId].filter(Boolean);
           const studentCount = await OnlineTestResult.countDocuments({ testId: { $in: testIds } });
@@ -314,53 +355,40 @@ export const submitTestResult = async (req, res) => {
           // Agar mavjud bo'lsa — eng ishonchli yo'l (harf indeksiga bog'liq emas).
           const answeredIds = new Set();
 
-          // ✅ DRY: modul darajasidagi stripHtml ishlatiladi (pastdagi takroriy ta'rif olib tashlandi)
-          serverScore = data.questions.reduce((acc, q, i) => {
-            const originalQ = test.questions.find(tq => {
-              const matchesText = stripHtml(tq.questionText || '') === stripHtml(q.questionText || '');
-              const uniqueKey = tq._id ? tq._id.toString() : stripHtml(tq.questionText);
-              return matchesText && !answeredIds.has(uniqueKey);
-            });
+          // ✅ SENIOR LEVEL FIX: Ball hisoblashni to'liq isAnswerCorrect (DRY) yordamchisiga yukladik.
+          // ✅ EVENT LOOP OPTIMIZATION (O(N^2) -> O(N)): 
+          // Pre-calculate stripped texts and use Map for O(1) lookups to completely prevent Event Loop blocking during high concurrency
+          const questionMap = new Map();
+          test.questions.forEach(tq => {
+            const stripped = stripHtml(tq.questionText || '');
+            if (!questionMap.has(stripped)) {
+              questionMap.set(stripped, []);
+            }
+            questionMap.get(stripped).push(tq);
+          });
 
-            if (originalQ) {
-              const uniqueKey = originalQ._id ? originalQ._id.toString() : stripHtml(originalQ.questionText);
-              answeredIds.add(uniqueKey);
+          serverScore = data.questions.reduce((acc, q, i) => {
+            const qStripped = stripHtml(q.questionText || '');
+            const availableList = questionMap.get(qStripped);
+
+            if (availableList && availableList.length > 0) {
+              const originalQ = availableList.shift(); // Olib tashlash - bu ishlatilganligini bildiradi
 
               const userAns = data.answers[i];
-              if (!userAns) return acc;
-
-              const uText = stripHtml(String(userAns));
-
-              // 1. correctAnswerText mavjud bo'lsa — eng ishonchli yo'l (shuffle-safe)
-              if (q.correctAnswerText) {
-                const ctText = stripHtml(String(q.correctAnswerText));
-                if (ctText && uText === ctText) return acc + 1;
-                // correctAnswerText bilan mos kelmasa — quyidagi fallbacklarni ham sinab ko'r
+              if (isAnswerCorrect(userAns, originalQ.correctOption, originalQ.options || [])) {
+                return acc + 1;
               }
-
-              // 2. originalQ.correctOption matn bo'lsa — to'g'ridan taqqosla
-              const cText = stripHtml(String(originalQ.correctOption || ''));
-              if (uText && cText && uText === cText) return acc + 1;
-
-              // 3. correctOption harf (a/b/c/d) bo'lsa — originalQ.options dan matn ol
-              const letterMap = { a: 0, b: 1, c: 2, d: 3 };
-              if (letterMap[cText] !== undefined && originalQ.options?.[letterMap[cText]] !== undefined) {
-                const correctText = stripHtml(String(originalQ.options[letterMap[cText]]));
-                if (correctText && uText === correctText) return acc + 1;
-              }
-
-              return acc;
             }
             return acc;
           }, 0);
         } else {
-          // Fallback: data.questions yo'q — faqat matn-matn taqqoslash
-          // ✅ DRY: modul darajasidagi stripHtml ishlatiladi
+          // Fallback: data.questions yo'q (eski format yuborilganda)
           serverScore = test.questions.reduce((acc, q, i) => {
             const userAns = data.answers[i];
-            if (!userAns) return acc;
-            const isCorrect = stripHtml(userAns) === stripHtml(q.correctOption || '');
-            return acc + (isCorrect ? 1 : 0);
+            if (isAnswerCorrect(userAns, q.correctOption, q.options || [])) {
+              return acc + 1;
+            }
+            return acc;
           }, 0);
         }
 
@@ -617,7 +645,11 @@ export const generateAITest = async (req, res) => {
       required: ["questions"]
     };
 
-    function buildTestPrompt({ topic, subject, questionCount = 5, difficulty = 'aralash', grade = 'aralash' }) {
+    function buildTestPrompt({ topic, subject, questionCount = 5, difficulty = 'aralash', grade = 'aralash', existingQuestions = [] }) {
+      const existingText = existingQuestions.length > 0 
+        ? `\n\nCRITICAL RULE: DO NOT REPEAT THE FOLLOWING CONCEPTS. These questions have ALREADY been generated. You MUST create entirely NEW questions testing DIFFERENT concepts/angles:\n` + existingQuestions.map((q, i) => `${i+1}. ${q.questionText || q}`).join('\n')
+        : '';
+
       return String.raw`You are an expert question-bank generator and Senior Educator for a MERN-based online testing platform.
 Your ONLY output is a JSON object matching the provided schema. Do not
 explain, do not think out loud, do not add commentary before or after the
@@ -629,7 +661,7 @@ Generate exactly ${questionCount} multiple-choice questions for:
   Subject: ${subject}
   Topic(s): ${topic}
   Target Grade/Class: ${grade} (Adapt vocabulary, logic, and complexity specifically for this age group)
-  Difficulty: ${difficulty} (Ensure the cognitive load perfectly matches this level)
+  Difficulty: ${difficulty} (Ensure the cognitive load perfectly matches this level)${existingText}
 
 CRITICAL PEDAGOGICAL INSTRUCTIONS (SENIOR Level):
 - GRADE ADAPTATION: If a specific grade (e.g. '5-sinf') is provided, ensure the concepts and formulas strictly follow that age's curriculum. Do not use high-school level concepts for primary/middle schoolers.
@@ -710,13 +742,14 @@ Return ONLY the JSON object. Begin generation now.`;
     }
 
     // --- 20-Year Senior Architecture: Multi-Agent AI Orchestrator ---
-    async function generateChunkWithRetry(chunkTopic, chunkCount) {
+    async function generateChunkWithRetry(chunkTopic, chunkCount, existingQuestions = []) {
       const prompt = buildTestPrompt({ 
         topic: chunkTopic, 
         subject, 
         questionCount: chunkCount, 
         grade: req.body.grade || 'aralash',
-        difficulty: req.body.difficulty || 'aralash' 
+        difficulty: req.body.difficulty || 'aralash',
+        existingQuestions
       });
 
       const isPremium = teacher && teacher.plan === 'premium';
@@ -764,15 +797,50 @@ Return ONLY the JSON object. Begin generation now.`;
         // [OPTIMIZATSIYA]: Katta so'rovlarda API (Prompt) narxini 2 baravar kamaytirish 
         // uchun 10 talik bo'laklash 20 taga ko'tarildi.
         const chunkCount = Math.min(needed, 20);
+        const existingTexts = rawQuestions.map(q => q.questionText).filter(Boolean);
+        
         // [50-100 O'QITUVCHI UCHUN]: Kengaytirilgan navbat orqali parallel so'rovlar ketadi.
-        const aiResult = await testGenerationQueue(() => generateChunkWithRetry(currentTopic, chunkCount));
+        const aiResult = await testGenerationQueue(() => generateChunkWithRetry(currentTopic, chunkCount, existingTexts));
         
         if (aiResult.success && aiResult.data && aiResult.data.length > 0) {
           // ✅ KRITIK FIX: har bir savolga uning tegishli mavzusini (subtopic) belgilaymiz.
           // Bu "Mavzular Tahlili" panelining faqat "Umumiy 100%" ko'rsatish muammosini hal qiladi.
           const withSubtopic = aiResult.data.map(q => ({ ...q, subtopic: currentTopic }));
-          rawQuestions = rawQuestions.concat(withSubtopic);
-          needed -= aiResult.data.length; // decrement by successfully generated amount
+          
+          // ✅ SENIOR LEVEL FIX: Jaccard Similarity asosida Paraphrase Deduplication
+          // AI savolning shaklini ozgina o'zgartirib bersa ham ushlab qolinadi.
+          const calculateSimilarity = (str1, str2) => {
+            const getWords = s => (s || '').toLowerCase().replace(/[^\w\sа-яёўқғҳa-z]/gi, '').split(/\s+/).filter(w => w.length > 2);
+            const words1 = new Set(getWords(str1));
+            const words2 = new Set(getWords(str2));
+            if (words1.size === 0 || words2.size === 0) return 0;
+            const intersection = new Set([...words1].filter(x => words2.has(x)));
+            const union = new Set([...words1, ...words2]);
+            return intersection.size / union.size;
+          };
+
+          const uniqueNewQuestions = [];
+          for (const q of withSubtopic) {
+            const cleanText = (q.questionText || '').replace(/\s+/g, '').toLowerCase();
+            
+            // 1. Exact match tekshiruvi
+            let isDuplicate = existingTexts.some(et => (et || '').replace(/\s+/g, '').toLowerCase() === cleanText);
+            
+            // 2. Semantic (Word overlap) tekshiruvi - agar 65% dan ortiq o'xshash bo'lsa duplicate!
+            if (!isDuplicate) {
+              isDuplicate = existingTexts.some(et => calculateSimilarity(et, q.questionText) > 0.65);
+            }
+            
+            if (!isDuplicate) {
+              uniqueNewQuestions.push(q);
+              existingTexts.push(q.questionText); // Keyingi tekshiruvlar uchun qo'shib qo'yamiz
+            } else {
+              console.warn(`[AI Deduplication] Takroriy savol ushlandi va o'chirildi: ${q.questionText.substring(0, 50)}...`);
+            }
+          }
+
+          rawQuestions = rawQuestions.concat(uniqueNewQuestions);
+          needed -= uniqueNewQuestions.length; // decrement by successfully generated and UNIQUE amount
         } else {
           failsafe++; // prevent infinite loops if AI completely fails
           if (failsafe >= 5 && rawQuestions.length === 0) {

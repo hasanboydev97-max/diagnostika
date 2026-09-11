@@ -452,29 +452,11 @@ export default function TakeTest() {
     }
 
     // Regular test path
-    // ✅ SHUFFLE-SAFE SCORING: to'g'ri javob matni (correctAnswerText) shuffle qilingan
-    // options dan olinadi — harf indeksiga bog'liq emas
     let score = 0;
     const questionsWithMeta = test.questions.map((q: any, i: number) => {
-      // correctAnswerText: shuffle qilingan options dan to'g'ri matnni aniqlaymiz
-      let correctAnswerText = q.correctOption; // default: correctOption ni ishlatamiz
-      const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
-      const cLower = String(q.correctOption || '').trim().toLowerCase();
-      if (letterMap[cLower] !== undefined && q.options?.[letterMap[cLower]]) {
-        // correctOption harf (a/b/c/d) → options dan to'g'ri matnni ol
-        // MUHIM: bu yerda q.options — shuffle qilingan, lekin correctOption harf sifatida
-        // asl DB tartibiga tegishli. Shuning uchun asl tartib kerak.
-        // Eng xavfsiz: isAnswerCorrect ishlatamiz (u options dan qat'i nazar matnni taqqoslaydi)
-        correctAnswerText = q.correctOption; // server asl options bilan solishtiradi
-      }
       const isCorrect = isAnswerCorrect(currentAnswers[i], q.correctOption, q.options || []);
       if (isCorrect) score++;
-      return {
-        ...q,
-        // correctAnswerText: server scoring uchun shuffle-safe matn
-        // Server bu maydonni ko'rsa — harf indeksiga ishonmaydi, to'g'ridan matn taqqoslaydi
-        correctAnswerText: correctAnswerText,
-      };
+      return q;
     });
 
     const resultId = 'res_' + Date.now().toString();
