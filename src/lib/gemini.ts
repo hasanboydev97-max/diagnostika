@@ -174,24 +174,25 @@ Savollar shabloni:
 ${questionsInfo}
 
 ASOSIY QOIDALAR (Majburiy):
-1. TIL VA MOSLIK: Savollar qat'iyan ${language.toUpperCase()} tilida bo'lsin. Har bir savol o'zining mavzusiga, kognitiv ko'nikmasiga va qiyinlik darajasiga (Oson - oddiy, O'rta - chuqurroq, Qiyin - murakkab) 100% mos kelsin.
-2. YAGONA TO'G'RI JAVOB: Har bir savolning faqat bitta shubhasiz to'g'ri javobi bo'lishi shart. Agar matnda ikki xil talqin qilinadigan tushuncha (masalan, "ildiz" yoki "sarlavha") bo'lsa, uni albatta aniqlashtiring.
-3. DISTRAKTORLAR SIFATI: Noto'g'ri variantlar (distraktorlar) mantiqan yaqin, lekin aniq noto'g'ri bo'lsin. Tasodifiy emas, balki o'quvchining tipik xatosini aks ettiruvchi javoblar bo'lishi shart.
-4. TUSHUNISHNI TEKSHIRING: Berilgan ma'lumotni shunchaki qaytarib so'raydigan yuzaki savollardan qoching. O'quvchini tahlil qilishga va qoidalarni tatbiq etishga majbur qiling. Har bir savol faqat bitta aniq ko'nikmani tekshirsin.
-5. TAKRORIYLIKKA YO'L QO'YILMASIN: Savollar matni, sonlar, muammolar va variantlar 100% noyob bo'lishi KAFOLATLANSIN. Hech bir savol boshqasini takrorlamasin!
+1. TIL VA MOSLIK: Savollar qat'iyan ${language.toUpperCase()} tilida bo'lsin. Har bir savol o'zining mavzusiga, kognitiv ko'nikmasiga va qiyinlik darajasiga mos kelsin.
+2. YAGONA TO'G'RI JAVOB: Har bir savolning faqat bitta shubhasiz to'g'ri javobi bo'lishi shart. Agar matnda ikki xil talqin qilinadigan tushuncha bo'lsa, aniqlashtiring.
+3. DISTRAKTORLAR SIFATI: Noto'g'ri variantlar (distraktorlar) mantiqan yaqin, lekin aniq noto'g'ri bo'lsin. Tasodifiy emas, balki tipik xatoni aks ettirsin. Barcha variantlar bir-biridan farq qilsin.
+4. TUSHUNISHNI TEKSHIRING: Berilgan ma'lumotni shunchaki qaytarib so'raydigan yuzaki savollardan qoching.
+5. NOYOB KO'NIKMA: Savollar matni, sonlar, muammolar va variantlar 100% noyob bo'lishi KAFOLATLANSIN. Hech bir savol boshqasini takrorlamasin!
 
 O'Z-O'ZINI TEKSHIRISH (Self-Review):
-Javobni shakllantirishdan oldin har bir savolni o'zingiz tekshirib chiqing:
-- "Bu savolning boshqa asosli javobi yo'qmi?"
-- "Savol matni ko'p ma'nolimi?"
-- "Kalit javob 100% mosmi?"
-Agar kamchilik topsangiz, uni darhol to'g'rilab, keyin yakuniy natijaga qo'shing.
+1. Bu savolning faqat bitta to'g'ri javobi bormi?
+2. Savol matni ko'p ma'nolimi?
+3. Kalit javob 100% mosmi?
+4. Matematik ifodalar qat'iy $...$ va qo'shaloq \\\\ (masalan \\\\sqrt) bilan yozildimi? Xato (sqrt2 kabi) yozilmadimi?
+Agar kamchilik topsangiz, uni darhol to'g'rilab JSONga kiriting.
 
-TEXNIK QOIDALAR:
-1. Matematik/informatikaga oid formulalar toza LaTeX ko'rinishida yozilsin (inline uchun $...$). Formulalarni backtick yoki $$ ichiga olmang.
-2. PROGRESSIYA QOIDASI: Progressiya turi matnda yozilsin. Hadlar ($a_1, S_n, d, q$) Math rejimida ($...$) bo'lsin.
-3. ALWAYS DOUBLE-ESCAPE BACKSLASHES in your JSON. Write \\\\sqrt{50}, \\\\frac{1}{2}. This is STRICTLY REQUIRED.
-4. NEVER put newlines (\\n) inside math mode. Math MUST be on a single line.
+TEXNIK VA FORMATLASH QOIDALARI:
+1. QAT'IY LATEX FORMATI (CRITICAL): Matematika, fizika va kimyo formulalari MUTLAQO to'g'ri LaTeX sintaksisi bilan yozilishi shart. Barcha matematik ifodalarni, sonlarni, ildizlarni $...$ ichiga oling!
+   - Noto'g'ri: 3sqrt8, sqrt18, frac1sqrt5-sqrt3, x^2, cosalpha, a_1
+   - To'g'ri: $3\\\\sqrt{8}$, $\\\\sqrt{18}$, $\\\\frac{1}{\\\\sqrt{5}} - \\\\sqrt{3}$, $x^2$, $\\\\cos\\\\alpha$, $a_1$
+2. QO'SHALOQ BACKSLASH (ESCAPE): JSON formatiga tushishi uchun barcha LaTeX buyruqlarida IKKITA backslash ishlatishingiz SHART (masalan: \\\\frac, \\\\sqrt, \\\\alpha).
+3. NEVER put newlines (\\n) inside math mode. Math MUST be on a single line.
 
 Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
 [
@@ -296,23 +297,25 @@ FAN BO'YICHA MAXSUS KO'RSATMA (MATEMATIKA):
 ${subjectSpecificRules}
 
 ASOSIY QOIDALAR (Majburiy):
-1. YAGONA TO'G'RI JAVOB: Har bir savolning faqat bitta shubhasiz to'g'ri javobi bo'lishi shart. Agar matnda ikki xil talqin qilinadigan tushuncha bo'lsa, uni albatta aniqlashtiring.
-2. DISTRAKTORLAR SIFATI: Noto'g'ri variantlar (distraktorlar) mantiqan yaqin, lekin aniq noto'g'ri bo'lsin. Tasodifiy emas, balki o'quvchining tipik xatosini aks ettiruvchi chalg'ituvchi javoblar bo'lsin.
+1. YAGONA TO'G'RI JAVOB: Har bir savolning faqat bitta shubhasiz to'g'ri javobi bo'lishi shart. Agar matnda ikki xil talqin qilinadigan tushuncha bo'lsa, aniqlashtiring.
+2. DISTRAKTORLAR SIFATI: Noto'g'ri variantlar (distraktorlar) mantiqan yaqin, lekin aniq noto'g'ri bo'lsin. Tasodifiy emas, balki tipik xatoni aks ettirsin. Barcha variantlar bir-biridan farq qilsin.
 3. TUSHUNISHNI TEKSHIRING: O'quvchini tahlil qilishga majbur qiling, yuzaki va yodlangan faktlarni quruq so'rashdan qoching.
-4. XATOSIZLIK VA ANIKLIK: Barcha faktlar, formulalar va ma'lumotlar 100% ilmiy to'g'ri va aniq bo'lishi KAFOLATLANSIN. Umuman xato qilmang!
-5. TAKRORIYLIKKA YO'L QO'YILMASIN: Savollar matni, sonlar, muammolar va variantlar 100% noyob bo'lishi KAFOLATLANSIN. Hech bir savol boshqasini takrorlamasin!
+4. XATOSIZLIK VA ANIKLIK: Barcha faktlar, formulalar va ma'lumotlar 100% ilmiy to'g'ri va aniq bo'lishi KAFOLATLANSIN.
+5. NOYOB KO'NIKMA: Savollar matni, sonlar, muammolar va variantlar 100% noyob bo'lishi KAFOLATLANSIN. Hech bir savol boshqasini takrorlamasin!
 
 O'Z-O'ZINI TEKSHIRISH (Self-Review):
-Javobni shakllantirishdan oldin har bir savolni o'zingiz tekshirib chiqing:
-- "Bu savolning boshqa asosli javobi yo'qmi?"
-- "Savol matni ko'p ma'nolimi?"
-- "Kalit javob 100% mosmi?"
-Agar kamchilik topsangiz, uni darhol to'g'rilab, keyin yakuniy natijaga qo'shing.
+1. Bu savolning faqat bitta to'g'ri javobi bormi?
+2. Savol matni ko'p ma'nolimi?
+3. Kalit javob 100% mosmi?
+4. Matematik ifodalar qat'iy $...$ va qo'shaloq \\\\ (masalan \\\\sqrt) bilan yozildimi? Xato (sqrt2 kabi) yozilmadimi?
+Agar kamchilik topsangiz, uni darhol to'g'rilab JSONga kiriting.
 
-TEXNIK QOIDALAR:
-1. Matematik va informatikaga oid barcha formulalar toza LaTeX ko'rinishida yozilsin: inline formulalar uchun $...$ belgisidan foydalanilsin.
-2. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing. Barcha hadlar ($a_1, a_n, b_n, S_n, d, q, 1, 3, 5, \\\\dots$) mutlaqo Math rejimida ($...$) bo'lishi shart.
-3. ALWAYS DOUBLE-ESCAPE BACKSLASHES in your JSON. Write \\\\sqrt{50}, \\\\frac{1}{2}. This is STRICTLY REQUIRED.
+TEXNIK VA FORMATLASH QOIDALARI:
+1. QAT'IY LATEX FORMATI (CRITICAL): Matematika, fizika va kimyo formulalari MUTLAQO to'g'ri LaTeX sintaksisi bilan yozilishi shart. Barcha matematik ifodalarni, sonlarni, ildizlarni $...$ ichiga oling!
+   - Noto'g'ri: 3sqrt8, sqrt18, frac1sqrt5-sqrt3, x^2, cosalpha, a_1
+   - To'g'ri: $3\\\\sqrt{8}$, $\\\\sqrt{18}$, $\\\\frac{1}{\\\\sqrt{5}} - \\\\sqrt{3}$, $x^2$, $\\\\cos\\\\alpha$, $a_1$
+2. QO'SHALOQ BACKSLASH (ESCAPE): JSON formatiga tushishi uchun barcha LaTeX buyruqlarida IKKITA backslash ishlatishingiz SHART (masalan: \\\\frac, \\\\sqrt, \\\\alpha).
+3. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing.
 4. NEVER put newlines (\\n) inside math mode. Inline and block math MUST be on a single line.
 
 Har bir savolda quyidagilar bo'lishi shart:
@@ -398,23 +401,25 @@ Qiyinlik darajalari bo'yicha taqsimot:
 ${topicInstruction}
 
 ASOSIY QOIDALAR (Majburiy):
-1. YAGONA TO'G'RI JAVOB: Har bir savolning faqat bitta shubhasiz to'g'ri javobi bo'lishi shart. Agar matnda ikki xil talqin qilinadigan tushuncha bo'lsa, uni albatta aniqlashtiring.
-2. DISTRAKTORLAR SIFATI: Noto'g'ri variantlar (distraktorlar) mantiqan yaqin, lekin aniq noto'g'ri bo'lsin. Tasodifiy emas, balki o'quvchining tipik xatosini aks ettiruvchi javoblar bo'lishi shart.
+1. YAGONA TO'G'RI JAVOB: Har bir savolning faqat bitta shubhasiz to'g'ri javobi bo'lishi shart. Agar matnda ikki xil talqin qilinadigan tushuncha bo'lsa, aniqlashtiring.
+2. DISTRAKTORLAR SIFATI: Noto'g'ri variantlar (distraktorlar) mantiqan yaqin, lekin aniq noto'g'ri bo'lsin. Tasodifiy emas, balki tipik xatoni aks ettirsin. Barcha variantlar bir-biridan farq qilsin.
 3. TUSHUNISHNI TEKSHIRING: O'quvchini tahlil qilishga majbur qiling, yuzaki va yodlangan faktlarni quruq so'rashdan qoching.
 4. MOSLIK: Har bir savol tegishli faniga ("category") va ko'rsatilgan qiyinlik darajasiga ("difficulty") aniq mos kelsin. Savollar ${language} tilida bo'lsin.
-5. TAKRORIYLIKKA YO'L QO'YILMASIN: Savollar matni, sonlar, muammolar va variantlar 100% noyob bo'lishi KAFOLATLANSIN. Hech bir savol boshqasini takrorlamasin!
+5. NOYOB KO'NIKMA: Savollar matni, sonlar, muammolar va variantlar 100% noyob bo'lishi KAFOLATLANSIN. Hech bir savol boshqasini takrorlamasin!
 
 O'Z-O'ZINI TEKSHIRISH (Self-Review):
-Javobni shakllantirishdan oldin har bir savolni o'zingiz tekshirib chiqing:
-- "Bu savolning boshqa asosli javobi yo'qmi?"
-- "Savol matni ko'p ma'nolimi?"
-- "Kalit javob 100% mosmi?"
-Agar kamchilik topsangiz, uni darhol to'g'rilab, keyin yakuniy natijaga qo'shing.
+1. Bu savolning faqat bitta to'g'ri javobi bormi?
+2. Savol matni ko'p ma'nolimi?
+3. Kalit javob 100% mosmi?
+4. Matematik ifodalar qat'iy $...$ va qo'shaloq \\\\ (masalan \\\\sqrt) bilan yozildimi? Xato (sqrt2 kabi) yozilmadimi?
+Agar kamchilik topsangiz, uni darhol to'g'rilab JSONga kiriting.
 
-TEXNIK QOIDALAR:
-1. Matematik va informatikaga oid barcha formulalar toza LaTeX ko'rinishida yozilsin: inline formulalar uchun $...$ belgisidan foydalanilsin.
-2. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing. Barcha hadlar ($a_1, a_n, b_n, S_n, d, q, 1, 3, 5, \\\\dots$) mutlaqo Math rejimida ($...$) bo'lishi shart.
-3. ALWAYS DOUBLE-ESCAPE BACKSLASHES in your JSON. Write \\\\sqrt{50}, \\\\frac{1}{2}. This is STRICTLY REQUIRED.
+TEXNIK VA FORMATLASH QOIDALARI:
+1. QAT'IY LATEX FORMATI (CRITICAL): Matematika, fizika va kimyo formulalari MUTLAQO to'g'ri LaTeX sintaksisi bilan yozilishi shart. Barcha matematik ifodalarni, sonlarni, ildizlarni $...$ ichiga oling!
+   - Noto'g'ri: 3sqrt8, sqrt18, frac1sqrt5-sqrt3, x^2, cosalpha, a_1
+   - To'g'ri: $3\\\\sqrt{8}$, $\\\\sqrt{18}$, $\\\\frac{1}{\\\\sqrt{5}} - \\\\sqrt{3}$, $x^2$, $\\\\cos\\\\alpha$, $a_1$
+2. QO'SHALOQ BACKSLASH (ESCAPE): JSON formatiga tushishi uchun barcha LaTeX buyruqlarida IKKITA backslash ishlatishingiz SHART (masalan: \\\\frac, \\\\sqrt, \\\\alpha).
+3. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing.
 4. NEVER put newlines (\\n) inside math mode. Inline and block math MUST be on a single line.
 
 Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
