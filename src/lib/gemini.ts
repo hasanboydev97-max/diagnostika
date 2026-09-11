@@ -184,14 +184,14 @@ O'Z-O'ZINI TEKSHIRISH (Self-Review):
 1. Bu savolning faqat bitta to'g'ri javobi bormi?
 2. Savol matni ko'p ma'nolimi?
 3. Kalit javob 100% mosmi?
-4. Matematik ifodalar qat'iy $...$ va qo'shaloq \\\\ (masalan \\\\sqrt) bilan yozildimi? Xato (sqrt2 kabi) yozilmadimi?
+4. Matematik ifodalar qat'iy $...$ va to'g'ri LaTeX escape (masalan \\sqrt) bilan yozildimi? Xato (sqrt2 kabi) yozilmadimi?
 Agar kamchilik topsangiz, uni darhol to'g'rilab JSONga kiriting.
 
 TEXNIK VA FORMATLASH QOIDALARI:
 1. QAT'IY LATEX FORMATI (CRITICAL): Matematika, fizika va kimyo formulalari MUTLAQO to'g'ri LaTeX sintaksisi bilan yozilishi shart. Barcha matematik ifodalarni, sonlarni, ildizlarni $...$ ichiga oling!
    - Noto'g'ri: 3sqrt8, sqrt18, frac1sqrt5-sqrt3, x^2, cosalpha, a_1
    - To'g'ri: $3\\\\sqrt{8}$, $\\\\sqrt{18}$, $\\\\frac{1}{\\\\sqrt{5}} - \\\\sqrt{3}$, $x^2$, $\\\\cos\\\\alpha$, $a_1$
-2. QO'SHALOQ BACKSLASH (ESCAPE): JSON formatiga tushishi uchun barcha LaTeX buyruqlarida IKKITA backslash ishlatishingiz SHART (masalan: \\\\frac, \\\\sqrt, \\\\alpha).
+2. JSON ESCAPE (LATEX): Matematik formulalarda standart bitta backslash (\\) ishlatiladi (masalan: \\frac, \\sqrt, \\alpha). Lekin siz JSON qaytarayotganingiz uchun, JSON sintaksisi buzilmasligi maqsadida ularni string ichida escape qiling (ya'ni qo'shaloq \\\\ qilib yozing). Natijada JSON parse qilingandan keyin kodda bitta backslash qolishi kerak.
 3. NEVER put newlines (\\n) inside math mode. Math MUST be on a single line.
 
 Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
@@ -307,14 +307,14 @@ O'Z-O'ZINI TEKSHIRISH (Self-Review):
 1. Bu savolning faqat bitta to'g'ri javobi bormi?
 2. Savol matni ko'p ma'nolimi?
 3. Kalit javob 100% mosmi?
-4. Matematik ifodalar qat'iy $...$ va qo'shaloq \\\\ (masalan \\\\sqrt) bilan yozildimi? Xato (sqrt2 kabi) yozilmadimi?
+4. Matematik ifodalar qat'iy $...$ va to'g'ri LaTeX escape (masalan \\sqrt) bilan yozildimi? Xato (sqrt2 kabi) yozilmadimi?
 Agar kamchilik topsangiz, uni darhol to'g'rilab JSONga kiriting.
 
 TEXNIK VA FORMATLASH QOIDALARI:
 1. QAT'IY LATEX FORMATI (CRITICAL): Matematika, fizika va kimyo formulalari MUTLAQO to'g'ri LaTeX sintaksisi bilan yozilishi shart. Barcha matematik ifodalarni, sonlarni, ildizlarni $...$ ichiga oling!
    - Noto'g'ri: 3sqrt8, sqrt18, frac1sqrt5-sqrt3, x^2, cosalpha, a_1
    - To'g'ri: $3\\\\sqrt{8}$, $\\\\sqrt{18}$, $\\\\frac{1}{\\\\sqrt{5}} - \\\\sqrt{3}$, $x^2$, $\\\\cos\\\\alpha$, $a_1$
-2. QO'SHALOQ BACKSLASH (ESCAPE): JSON formatiga tushishi uchun barcha LaTeX buyruqlarida IKKITA backslash ishlatishingiz SHART (masalan: \\\\frac, \\\\sqrt, \\\\alpha).
+2. JSON ESCAPE (LATEX): Matematik formulalarda standart bitta backslash (\\) ishlatiladi (masalan: \\frac, \\sqrt, \\alpha). Lekin siz JSON qaytarayotganingiz uchun, JSON sintaksisi buzilmasligi maqsadida ularni string ichida escape qiling (ya'ni qo'shaloq \\\\ qilib yozing). Natijada JSON parse qilingandan keyin kodda bitta backslash qolishi kerak.
 3. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing.
 4. NEVER put newlines (\\n) inside math mode. Inline and block math MUST be on a single line.
 
@@ -411,14 +411,14 @@ O'Z-O'ZINI TEKSHIRISH (Self-Review):
 1. Bu savolning faqat bitta to'g'ri javobi bormi?
 2. Savol matni ko'p ma'nolimi?
 3. Kalit javob 100% mosmi?
-4. Matematik ifodalar qat'iy $...$ va qo'shaloq \\\\ (masalan \\\\sqrt) bilan yozildimi? Xato (sqrt2 kabi) yozilmadimi?
+4. Matematik ifodalar qat'iy $...$ va to'g'ri LaTeX escape (masalan \\sqrt) bilan yozildimi? Xato (sqrt2 kabi) yozilmadimi?
 Agar kamchilik topsangiz, uni darhol to'g'rilab JSONga kiriting.
 
 TEXNIK VA FORMATLASH QOIDALARI:
 1. QAT'IY LATEX FORMATI (CRITICAL): Matematika, fizika va kimyo formulalari MUTLAQO to'g'ri LaTeX sintaksisi bilan yozilishi shart. Barcha matematik ifodalarni, sonlarni, ildizlarni $...$ ichiga oling!
    - Noto'g'ri: 3sqrt8, sqrt18, frac1sqrt5-sqrt3, x^2, cosalpha, a_1
    - To'g'ri: $3\\\\sqrt{8}$, $\\\\sqrt{18}$, $\\\\frac{1}{\\\\sqrt{5}} - \\\\sqrt{3}$, $x^2$, $\\\\cos\\\\alpha$, $a_1$
-2. QO'SHALOQ BACKSLASH (ESCAPE): JSON formatiga tushishi uchun barcha LaTeX buyruqlarida IKKITA backslash ishlatishingiz SHART (masalan: \\\\frac, \\\\sqrt, \\\\alpha).
+2. JSON ESCAPE (LATEX): Matematik formulalarda standart bitta backslash (\\) ishlatiladi (masalan: \\frac, \\sqrt, \\alpha). Lekin siz JSON qaytarayotganingiz uchun, JSON sintaksisi buzilmasligi maqsadida ularni string ichida escape qiling (ya'ni qo'shaloq \\\\ qilib yozing). Natijada JSON parse qilingandan keyin kodda bitta backslash qolishi kerak.
 3. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing.
 4. NEVER put newlines (\\n) inside math mode. Inline and block math MUST be on a single line.
 
