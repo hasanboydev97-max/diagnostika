@@ -680,11 +680,13 @@ LATEX FORMATTING (strict — remark-math compatible, zero tolerance)
    \sin \cos \tan, subscripts (_), superscripts (^). No custom macros, no
    \newcommand, no \text{} unless strictly necessary.
 
-7. Do not double-escape backslashes. Write \sqrt{50}, never \\\sqrt{50}.
+7. ALWAYS DOUBLE-ESCAPE BACKSLASHES in your JSON. Write \\\\sqrt{50}, \\\\frac{1}{2}, \\\\begin{cases}. This is STRICTLY REQUIRED because JSON parsers will treat single backslashes (like \\t or \\f or \\r) as control characters and destroy the LaTeX syntax.
 
 8. Systems of equations MUST use \begin{cases} ... \end{cases}.
    Correct: $\begin{cases} x+y=5 \\\\ x-y=1 \end{cases}$
    Incorrect: $x+y=5x-y=1$ or $x+y=5, x-y=1$
+
+9. NEVER put newlines (\\n) inside math mode. Inline and block math MUST be on a single line.
 
 FEW-SHOT REFERENCE (follow this exact pattern)
 GOOD:
@@ -692,16 +694,16 @@ GOOD:
   "questionText": "Tenglamani yeching: $2x + 3 = 11$"
 GOOD:
   "questionNumber": 2,
-  "questionText": "Integralni hisoblang: $\int_0^1 x^2\\,dx$"
+  "questionText": "Integralni hisoblang: $\\\\int_0^1 x^2\\\\,dx$"
 BAD — never produce this:
   "questionNumber": 3,
   "questionText": "Tenglamani yeching: $ 2x + 3 = 11 $"
 BAD — never produce this (unclosed brace):
   "questionNumber": 4,
-  "questionText": "Soddalashtiring: $\frac{1}{2"
+  "questionText": "Soddalashtiring: $\\\\frac{1}{2"
 GOOD:
   "questionNumber": 5,
-  "questionText": "Tenglamalar sistemasini yeching: $\begin{cases} x+y=5 \\\\ x-y=1 \end{cases}$"
+  "questionText": "Tenglamalar sistemasini yeching: $\\\\begin{cases} x+y=5 \\\\\\\\ x-y=1 \\\\end{cases}$"
 
 ANSWER QUALITY RULES
 - Exactly 4 options per question, only ONE mathematically and factually correct.
