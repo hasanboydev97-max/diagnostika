@@ -58,6 +58,10 @@ export default function TestResultView() {
   // ✅ 15. Xato holati — foydalanuvchiga ko'rsatish uchun
   const [fetchError, setFetchError] = useState<string | null>(null);
   const confettiFired = useRef(false);
+  
+  // ✅ AI Feedback Polling uchun
+  const DEFAULT_FEEDBACK = "Natijangiz saqlandi! AI batafsil tavsiyalarni tayyorlayapti, natijangizni yangilasangiz ko'rishingiz mumkin.";
+  const pollCountRef = useRef(0);
 
   useEffect(() => {
     // ✅ FIX: Agar result allaqachon mavjud bo'lsa (location.state yoki sessionStorage) —
@@ -114,6 +118,12 @@ export default function TestResultView() {
         if (data.questions && data.questions.length > 0) {
           setTest({ title: data.testTitle || 'Onlayn Test', questions: data.questions });
         }
+        
+        // ✅ POLLING LOGIC: Agar kutish matnida bo'lsa, fonda yana tekshiramiz
+        if ((!data.aiFeedback || data.aiFeedback === DEFAULT_FEEDBACK) && pollCountRef.current < 5) {
+          pollCountRef.current += 1;
+          setTimeout(fetchResultInBackground, 3000); // 3 soniyadan so'ng yana
+        }
       }
     } catch {
       // Background fetch xatosi — foydalanuvchiga ko'rsatilmaydi, mavjud ma'lumot qoladi
@@ -150,6 +160,12 @@ export default function TestResultView() {
           };
         }
         setTest(testData);
+
+        // ✅ POLLING LOGIC:
+        if ((!data.aiFeedback || data.aiFeedback === DEFAULT_FEEDBACK) && pollCountRef.current < 5) {
+          pollCountRef.current += 1;
+          setTimeout(fetchResultInBackground, 3000);
+        }
       } else if (retryCount < 2) {
         setTimeout(() => fetchResult(retryCount + 1), 800);
         return;
@@ -444,7 +460,7 @@ export default function TestResultView() {
                           return false;
                         })();
 
-                        let cls = "px-3 py-2 rounded-md border text-sm transition-colors ";
+                        let cls = "px-3 py-2 rounded-md border text-sm transition-colors overflow-hidden break-words ";
                         if (isActuallyCorrect) cls += "bg-green-50 border-green-200 text-green-800 font-medium";
                         else if (isStudentChoice && !isCorrect) cls += "bg-red-50 border-red-200 text-red-800 font-medium";
                         else cls += "bg-white border-gray-100 text-gray-500";

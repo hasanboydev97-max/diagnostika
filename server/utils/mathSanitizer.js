@@ -108,13 +108,25 @@ export function sanitizeQuestion(question) {
   const cleaned = { ...question };
   cleaned.questionText = sanitizeMathText(cleaned.questionText);
   if (Array.isArray(cleaned.options)) {
-    cleaned.options = cleaned.options.map(sanitizeMathText);
+    cleaned.options = cleaned.options.map(opt => {
+      let t = sanitizeMathText(opt);
+      // AI ba'zan variantlar boshida *, -, 🔘, ⚪, A), B) kabi belgilarni qo'shib yuboradi.
+      return t.replace(/^[-*•🔘⚪A-D][.)]?\s*/i, '').trim();
+    });
   }
   if (cleaned.correctOption) {
-    cleaned.correctOption = sanitizeMathText(cleaned.correctOption);
+    let t = sanitizeMathText(cleaned.correctOption);
+    cleaned.correctOption = t.replace(/^[-*•🔘⚪A-D][.)]?\s*/i, '').trim();
   }
   if (cleaned.subtopic) {
-    cleaned.subtopic = String(cleaned.subtopic).trim();
+    let st = String(cleaned.subtopic).trim();
+    // Prompt leakage or hallucination prevention
+    if (st.length > 40 || /YARAT|SAVOL|SELECT|QIL/i.test(st)) {
+      st = 'Umumiy';
+    }
+    cleaned.subtopic = st;
+  } else {
+    cleaned.subtopic = 'Umumiy';
   }
   return cleaned;
 }

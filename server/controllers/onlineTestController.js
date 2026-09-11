@@ -425,14 +425,21 @@ export const submitTestResult = async (req, res) => {
         const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
         const groqKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
 
-        if (!((anthropicKey || apiKey || groqKey) && test && data.questions)) return;
+        if (!((anthropicKey || apiKey || groqKey) && test && data.questions)) {
+          await OnlineTestResult.findOneAndUpdate({ id: data.id }, { $set: { aiFeedback: "AI xizmati vaqtincha o'chirilgan yoki API kalitlari ulanmagan." } });
+          return;
+        }
 
         const attempts = [];
         // [OPTIMIZATSIYA]: O'quvchilarga avtomat yoziladigan fikrlar (feedback) uchun qimmat Claude o'chirib qo'yildi.
         // O'rniga eng arzon/tekin Gemini Flash va Groq ishlatiladi. Bu xarajatni 90% ga tejaydi.
         if (apiKey) attempts.push({ provider: 'gemini', model: 'gemini-1.5-flash' });
         if (groqKey) attempts.push({ provider: 'groq', model: 'llama-3.3-70b-versatile' });
-        if (attempts.length === 0) return; // Agar Gemini/Groq bo'lmasa, pul ketkazmaslik uchun jim to'xtaydi.
+        
+        if (attempts.length === 0) {
+           await OnlineTestResult.findOneAndUpdate({ id: data.id }, { $set: { aiFeedback: "AI xizmati uchun aktiv provayder topilmadi." } });
+           return;
+        }
 
         const prompt = `O'quvchi test ishladi. 
 Test nomi: ${test.title}
@@ -489,9 +496,13 @@ Ushbu natijalarga asosan o'quvchiga o'zbek tilida qisqa (2-3 ta gap) dalda beruv
         if (aiFeedback) {
           await OnlineTestResult.findOneAndUpdate({ id: data.id }, { $set: { aiFeedback } });
           console.log(`[BG AI] aiFeedback DB ga yozildi. id=${data.id}`);
+        } else {
+          await OnlineTestResult.findOneAndUpdate({ id: data.id }, { $set: { aiFeedback: "AI xulosa shakllantirishda xatolik yuz berdi. Iltimos, keyinroq qayta tekshiring." } });
+          console.warn(`[BG AI] aiFeedback null bo'lib qoldi, default xato matni yozildi. id=${data.id}`);
         }
       } catch (bgErr) {
         console.error('[BG AI] Background AI xatosi:', bgErr.message);
+        await OnlineTestResult.findOneAndUpdate({ id: data.id }, { $set: { aiFeedback: "AI tizimida kutilmagan xatolik yuz berdi." } }).catch(() => {});
       }
 
       // API limitlarga tushmaslik uchun 4 soniya kutamiz (Gemini 15 RPM = ~4s)
@@ -668,10 +679,12 @@ CRITICAL PEDAGOGICAL INSTRUCTIONS (SENIOR Level):
 - DIFFICULTY ADAPTATION: If difficulty is "Oson", test basic facts/direct applications. If "O'rtacha", test multi-step understanding. If "Qiyin" or "Olimpiada", test complex synthesis, logic, and edge cases.
 1. ZERO DUPLICATION: You MUST NOT generate similar or duplicate questions. Every single question must test a completely unique concept, feature, or scenario within the topics. Do not repeat the same question phrasing, logic, or options.
 2. ZERO SYNTAX ERRORS: If generating questions about programming, HTML, CSS, Excel formulas, or technical tools, all code snippets MUST be 100% syntactically perfect. No missing brackets, no incorrect tags, no typos. Use standard conventions.
-3. EXACT COUNT: You MUST generate EXACTLY ${questionCount} questions. Use the "questionNumber" field to count from 1 to ${questionCount}. Do not stop until you reach ${questionCount}.
-4. EVEN DISTRIBUTION: If multiple topics are provided (separated by commas), distribute the questions evenly. Do not focus heavily on just one topic.
-5. PLAUSIBLE DISTRACTORS: Wrong options (distractors) must be realistic and challenging. Do not make them obvious jokes or entirely unrelated concepts.
-6. CLARITY: Questions must be formulated clearly and unambiguously in the Uzbek language.
+3. HTML/CODE ESCAPING (CRITICAL): If your question or options contain ANY HTML tags (like <video>, <dl>, <tr>, <h1>), CSS code, or programming snippets, you MUST wrap them in Markdown inline code backticks (e.g. \`<video src="...">\`). NEVER output raw HTML tags without backticks, because the frontend renderer will break or swallow them.
+4. NO BULLET POINTS IN OPTIONS: Do NOT include bullet points, emojis (like 🔘, ⚪, ◉), letters (A), B), C)), or numbers at the beginning of the text in the "options" array. The frontend automatically handles the layout and radio buttons. Just provide the raw text or raw code for the option.
+5. EXACT COUNT: You MUST generate EXACTLY ${questionCount} questions. Use the "questionNumber" field to count from 1 to ${questionCount}. Do not stop until you reach ${questionCount}.
+6. EVEN DISTRIBUTION: If multiple topics are provided (separated by commas), distribute the questions evenly. Do not focus heavily on just one topic.
+7. PLAUSIBLE DISTRACTORS: Wrong options (distractors) must be realistic and challenging. Do not make them obvious jokes or entirely unrelated concepts.
+8. CLARITY: Questions must be formulated clearly and unambiguously in the Uzbek language.
 7. PROGRESSIONS (PROGRESSIYA): If the topic is Arithmetic or Geometric Progressions, ALWAYS specify the type ("Arifmetik progressiya" or "Geometrik progressiya"). Wrap all sequence terms, parameters, and formulas in Math mode (e.g., $a_1$, $b_n$, $S_n$, $d$, $q$, $1, 3, 5, \dots$). Never write a1, bn, Sn as plain text. Ensure the problem has enough given values to be mathematically solvable.
 
 OUTPUT DISCIPLINE (for speed — follow strictly)
