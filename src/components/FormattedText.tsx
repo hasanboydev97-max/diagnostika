@@ -16,9 +16,14 @@ export default function FormattedText({ content, className = '' }: FormattedText
   // Shunchaki o'zbek alifbosidagi o' va g' uchun qo'shimcha xavfsizlik (ixtiyoriy).
   let safeContent = String(content);
 
-  // --- Senior Level Robust Frontend Sanitization (Fallback for old DB entries) ---
-  
-  // 1. Fix ,frac to \frac
+  // --- CRITICAL: Fix double-escaped LaTeX backslashes ---
+  // If AI stored "$\\\\sqrt{8}$" (which becomes "\\sqrt{8}" in memory after JSON.parse),
+  // KaTeX would receive "\\sqrt" (double backslash) and render it as literal text.
+  // We normalize: replace any \\command with \command so KaTeX gets proper \sqrt.
+  // This regex finds \\ followed by a LaTeX keyword and replaces with single \.
+  // Only do this when there are double backslashes before LaTeX commands.
+  safeContent = safeContent.replace(/\\\\(frac|sqrt|sin|cos|tan|cot|sec|csc|alpha|beta|gamma|delta|theta|phi|psi|omega|pi|sigma|mu|lambda|int|sum|prod|lim|log|ln|exp|left|right|begin|end|cdot|times|div|leq|geq|neq|infty|vec|hat|bar|tilde|pm|mp|to|rightarrow|leftarrow|Rightarrow|Leftarrow|forall|exists|in|notin|subset|supset|cup|cap|emptyset|infty|partial|nabla|text|mathrm|mathbf|mathbb|overline|underline)/g, '\\$1');
+
   safeContent = safeContent.replace(/,frac\{/g, '\\frac{');
 
   // 2. Fix $inner$$ -> $$inner$$

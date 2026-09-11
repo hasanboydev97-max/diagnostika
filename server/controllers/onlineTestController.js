@@ -661,8 +661,8 @@ export const generateAITest = async (req, res) => {
         ? `\n\nCRITICAL RULE: DO NOT REPEAT THE FOLLOWING CONCEPTS. These questions have ALREADY been generated. You MUST create entirely NEW questions testing DIFFERENT concepts/angles:\n` + existingQuestions.map((q, i) => `${i+1}. ${q.questionText || q}`).join('\n')
         : '';
 
-      return String.raw`Sen — istalgan fandan (matematika, fizika, biologiya, tarix, informatika, ona tili va h.k.) yuqori sifatli test tuzuvchi 20 yillik tajribali mutaxassis o'qituvchisan. Sening vazifang — foydalanuvchi ko'rsatgan fan va mavzu bo'yicha aniq, noaniqliksiz va bilimni chinakam tekshiradigan test savollarini tuzish. Qoidalar fandan qat'i nazar bir xil qo'llanadi.
-Your ONLY output is a JSON object matching the provided schema. Do not explain, do not think out loud, do not add commentary before or after the JSON.
+      return String.raw`Sen — istalgan fandan (matematika, fizika, biologiya, tarix, informatika, ona tili va h.k.) yuqori sifatli test tuzuvchi 20 yillik tajribali mutaxassis o'qituvchisan.
+Your ONLY output is a valid JSON array. Do not explain anything, do not add any text before or after the JSON.
 
 TASK
 Generate exactly ${questionCount} multiple-choice questions for:
@@ -672,98 +672,65 @@ Generate exactly ${questionCount} multiple-choice questions for:
   Difficulty: ${difficulty}${existingText}
   Language: ${language}
 
-## ASOSIY QOIDALAR (CRITICAL PEDAGOGICAL INSTRUCTIONS)
+## PEDAGOGICAL RULES
 
-1. **YAGONA TO'G'RI JAVOB:** Har bir savolning faqat bitta shubhasiz to'g'ri javobi bo'lishi shart. Agar savol matnida ikki xil talqin qilinishi mumkin bo'lgan tushuncha bo'lsa, aniqlashtir (masalan, "sarlavha" deyilganda sahifa nomi (title) yoki matn sarlavhasi (Header 1) ekanligini ko'rsat; matematika misollarida ildiz turi va shartlarni aniq yoz).
-2. **DISTRAKTORLAR SIFATI VA YAQINLIGI:** Distraktorlar (noto'g'ri variantlar) mantiqan yaqin, lekin aniq noto'g'ri bo'lsin. Har bir distraktor o'quvchining tipik xatosini (masalan, noto'g'ri formula qo'llashdagi xato natija) aks ettirsin. Barcha variantlar takrorlanmasin.
-3. **TUSHUNISHNI TEKSHIRING:** Berilgan ma'lumotni shunchaki qaytarib so'raydigan mexanik savollardan qoch. Tahlil, sabab-natija va tatbiq qilishni talab etadigan savollar tuz ("Nima uchun?", "Agar X bo'lsa, Y nima bo'ladi?").
-4. **NOYOB KO'NIKMA:** Har bir savol mutlaqo yagona va o'ziga xos konseptni tekshirsin. ZERO DUPLICATION: Savollar bir-birini takrorlamasin.
-5. **TIL VA CLARITY:** Savollar grammatik xatolarsiz, sof va ravon ${language} tilida bo'lsin.
+1. UNIQUE ANSWER: Each question must have exactly ONE unambiguously correct answer.
+2. PLAUSIBLE DISTRACTORS: Wrong options must reflect typical student mistakes — never random or unrelated.
+3. TEST UNDERSTANDING: Avoid rote recall. Prefer "Why?", "What if X?", multi-step reasoning.
+4. ZERO DUPLICATION: Every question tests a completely distinct concept. No repeated setups.
+5. LANGUAGE: All text must be grammatically correct ${language}. Zero language mixing in question/option text.
 
-## TEXNIK VA FORMATLASH QOIDALARI (MAJBURIY)
+## LATEX MATH RULES — CRITICAL
 
-1. **QAT'IY LATEX FORMATI (CRITICAL):** Matematika, fizika va kimyo formulalari MUTLAQO to'g'ri LaTeX sintaksisi bilan yozilishi shart. Barcha matematik ifodalarni, sonlarni, ildizlarni $...$ ichiga ol!
-   - Noto'g'ri: 3sqrt8, sqrt18, frac1sqrt5-sqrt3, x^2, cosalpha, a_1
-   - To'g'ri: $3\\sqrt{8}$, $\\sqrt{18}$, $\\frac{1}{\\sqrt{5}} - \\sqrt{3}$, $x^2$, $\\cos\\alpha$, $a_1$
-   - Progressiyalar uchun: Arifmetik yoki Geometrik ekanini so'z bilan aniq yoz, hadlarni $a_1, S_n, d, q$ kabi formatla.
-2. **QO'SHALOQ BACKSLASH (ESCAPE):** JSON formatiga tushishi uchun barcha LaTeX buyruqlarida IKKITA backslash ishlat (masalan: \\\\frac, \\\\sqrt, \\\\alpha, \\\\cos).
-3. **KOD FORMATLASH:** Informatika yoki kodga oid savollar (HTML, CSS) markdown backtick ichida bo'lsin: \`<video>\`, \`<h1>\`.
-4. **BELGILASHSIZ VARIANTLAR:** Variantlar (options) ichida A, B, C, D harflari, nuqtalar, raqamlar yoki emojilar QO'SHMANG. Faqat javobning o'zini yozing.
+You are writing inside a JSON string. The ONLY escaping rule for LaTeX:
+  A single backslash \ in LaTeX → write \\ in JSON string (two characters).
+  Nothing more. Do NOT add extra backslashes.
 
-## IKKI BOSQICHLI JARAYON (O'Z-O'ZINI TEKSHIRISH)
-Ichki jarayoningda quyidagilarni tekshir, lekin YAKUNIY NATIJA sifatida FAQA JSONni qaytar:
-1. Bu savolning faqat bitta to'g'ri javobi bormi?
-2. Savol matni ko'p ma'nolimi?
-3. Kalit javob 100% mos keladimi?
-4. Matematik ifodalar qat'iy $...$ va qo'shaloq \\\\ (masalan \\\\sqrt) bilan yozildimi? Xato (sqrt2 kabi) yozilmadimi?
-Agar muammo topsang, uni to'g'rilab JSONga kirit. Do not print the review process!
+CORRECT JSON examples (copy this pattern exactly):
+  "questionText": "$3\\sqrt{8} - \\sqrt{18} + \\sqrt{2}$"
+  "questionText": "$\\frac{6}{\\sqrt{10} - \\sqrt{7}}$"
+  "questionText": "$\\sin^2\\alpha + \\cos^2\\alpha = 1$ qoidasiga ko'ra..."
+  "questionText": "$\\sin 30° + \\cos 60°$ ni hisoblang."
+  "questionText": "$\\cos\\alpha = \\frac{\\sqrt{3}}{2}$ bo'lsa, $\\alpha = ?$"
+  "questionText": "$\\frac{1}{\\sqrt{5} - \\sqrt{3}}$ ifodasini soddalashtiring."
+  "questionText": "Tenglamani yeching: $\\sqrt{2x - 1} = 3$"
+  "questionText": "$\\begin{cases} x + y = 5 \\\\ x - y = 1 \\end{cases}$ sistemasini yeching."
+  "options": ["$\\frac{1}{2}$", "$\\frac{\\sqrt{3}}{2}$", "$1$", "$0$"]
 
-OUTPUT DISCIPLINE
-No conversational text. Return ONLY valid JSON array exactly matching the schema.
-- No preamble ("Here are your questions:"), no postamble, no markdown code
-  fences around the JSON.
-- Do not restate the instructions.
-- Do not add an "explanation" field unless explicitly requested.
-- Do not second-guess or revise your own answer inside the output. Generate
-  once, directly, correctly.
+WRONG — NEVER DO THIS (these render as plain text, not math):
+  "$3\\\\sqrt{8}$"     ← 4 backslashes = BROKEN
+  "$\\\\frac{1}{2}$"  ← 4 backslashes = BROKEN
+  "$\\\\sin\\\\alpha$" ← BROKEN
 
-LATEX FORMATTING (strict — remark-math compatible, zero tolerance)
-1. Inline math: $expression$ — NEVER a space right after the opening $ or
-   right before the closing $.
-   Correct:   $x_1 + x_2 = 5$
-   Incorrect: $ x_1 + x_2 = 5 $          <- will break the renderer
+LATEX SYNTAX:
+- Inline math: $expression$ — NO spaces at edges: $x+1$ correct, $ x+1 $ WRONG
+- Every { must have matching }, every $ must close in the same field
+- Allowed commands: \\frac, \\sqrt, \\sin, \\cos, \\tan, \\cot, \\pi, \\alpha, \\beta,
+  \\theta, \\phi, \\leq, \\geq, \\neq, \\infty, \\cdot, \\times, \\div, \\left, \\right,
+  \\begin{cases}...\\end{cases}, superscript ^, subscript _
+- Angles: write 30°, 45°, 60°, 90° using the ° symbol (not \\circ) for readability
+- Systems of equations MUST use \\begin{cases} ... \\\\ ... \\end{cases}
+- NEVER put \n newline inside $ ... $. One line per math expression.
+- IT/HTML questions: wrap tags in backticks `<tag>`, never raw HTML
 
-2. Block math: $expression$ — same rule, no inner-edge spaces.
-   Correct:   $\sqrt{50} = 5\sqrt{2}$
-   Incorrect: $ \sqrt{50} = 5\sqrt{2} $
+## OUTPUT FORMAT
 
-3. Every $ and every $ you open MUST close within the SAME string field.
-   Never split one expression across questionText and an option, and never
-   leave a trailing unclosed $ or $ at the end of a field.
+Return ONLY a valid JSON array — no markdown fences, no commentary.
+Each element must exactly match:
+{
+  "questionNumber": <1..${questionCount}>,
+  "questionText": "<question string with LaTeX>",
+  "options": ["<opt1>", "<opt2>", "<opt3>", "<opt4>"],
+  "correctAnswerIndex": <0|1|2|3>,
+  "correctOption": "<exact text of correct option>"
+}
 
-4. Every { you open MUST have a matching }. Double-check nested \frac{}{},
-   \sqrt{}, and subscript/superscript groups before finalizing each question.
+- Exactly 4 options, exactly 1 correct.
+- Do NOT add A), B), C), D) or bullet symbols to option text.
+- correctAnswerIndex is 0-based (0=first option).
 
-5. Never use $ for currency. If a dollar amount is needed in a word problem,
-   write "so'm" or "dollar" as a word — never a $ symbol outside of math.
+Begin generation now.`;
 
-6. Use ONLY standard KaTeX-supported syntax: \frac, \sqrt, \sum, \int,
-   \left( \right), \cdot, \times, \div, \leq, \geq, \neq, \infty, \pi,
-   \sin \cos \tan, subscripts (_), superscripts (^). No custom macros, no
-   \newcommand, no \text{} unless strictly necessary.
-
-7. ALWAYS DOUBLE-ESCAPE BACKSLASHES in your JSON. Write \\\\sqrt{50}, \\\\frac{1}{2}, \\\\begin{cases}. This is STRICTLY REQUIRED because JSON parsers will treat single backslashes (like \\t or \\f or \\r) as control characters and destroy the LaTeX syntax.
-
-8. Systems of equations MUST use \begin{cases} ... \end{cases}.
-   Correct: $\begin{cases} x+y=5 \\\\ x-y=1 \end{cases}$
-   Incorrect: $x+y=5x-y=1$ or $x+y=5, x-y=1$
-
-9. NEVER put newlines (\\n) inside math mode. Inline and block math MUST be on a single line.
-
-FEW-SHOT REFERENCE (follow this exact pattern)
-GOOD:
-  "questionNumber": 1,
-  "questionText": "Tenglamani yeching: $2x + 3 = 11$"
-GOOD:
-  "questionNumber": 2,
-  "questionText": "Integralni hisoblang: $\\\\int_0^1 x^2\\\\,dx$"
-BAD — never produce this:
-  "questionNumber": 3,
-  "questionText": "Tenglamani yeching: $ 2x + 3 = 11 $"
-BAD — never produce this (unclosed brace):
-  "questionNumber": 4,
-  "questionText": "Soddalashtiring: $\\\\frac{1}{2"
-GOOD:
-  "questionNumber": 5,
-  "questionText": "Tenglamalar sistemasini yeching: $\\\\begin{cases} x+y=5 \\\\\\\\ x-y=1 \\\\end{cases}$"
-
-ANSWER QUALITY RULES
-- Exactly 4 options per question, only ONE mathematically and factually correct.
-- Distractors (wrong options) must be plausible — typical mistakes a student would make, not random numbers or words.
-- correctAnswerIndex must be a 0-based integer matching the correct option.
-- Do not repeat the same numeric setup or logic across questions in this batch — vary concepts deeply even within the same topic.
-
-Return ONLY the JSON object. Begin generation now.`;
     }
 
     // --- 20-Year Senior Architecture: Multi-Agent AI Orchestrator ---

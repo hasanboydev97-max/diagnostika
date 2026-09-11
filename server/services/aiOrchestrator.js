@@ -158,7 +158,8 @@ export function sanitizeAndParseJSON(rawText) {
   }
 
   // 3. Fix unescaped LaTeX backslashes without corrupting valid escapes (\", \\, \n, etc.)
-  const safeJson = cleaned.replace(/(?<!\\)\\(?!["\\/bfnrtu]|u[0-9a-fA-F]{4})/g, '\\\\');
+  // Single backslash before a LaTeX keyword (not already escaped) → double it so JSON.parse keeps it
+  const safeJson = cleaned.replace(/(?<!\\)\\(?!["\\\/bfnrtu]|u[0-9a-fA-F]{4})/g, '\\\\');
 
   // 4. First parse attempt
   try {
