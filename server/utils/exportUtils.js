@@ -274,28 +274,37 @@ export async function buildDocxBuffer(title, subject, questions) {
   return await Packer.toBuffer(doc);
 }
 
+// ✅ FIX: DejaVu font mavjudligini server start'da bir marta tekshiramiz
+// Bu runtime'da har safar fs.existsSync chaqirmaslik uchun modul darajasida saqlanadi
+import { existsSync } from 'fs';
+const DEJAVUSANS_AVAILABLE = existsSync('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf');
+
 export function sanitizePdfText(text) {
   if (!text) return '';
   let str = String(text);
 
-  // Convert Cyrillic Uzbek/Russian characters to clean Latin equivalents if any exist in string
-  const cyrillicToLatinMap = {
-    'А':'A', 'а':'a', 'Б':'B', 'б':'b', 'В':'V', 'в':'v', 'Г':'G', 'г':'g', 'Д':'D', 'д':'d',
-    'Е':'E', 'е':'e', 'Ё':'Yo', 'ё':'yo', 'Ж':'Zh', 'ж':'zh', 'З':'Z', 'з':'z', 'И':'I', 'и':'i',
-    'Й':'Y', 'й':'y', 'К':'K', 'к':'k', 'Л':'L', 'л':'l', 'М':'M', 'м':'m', 'Н':'N', 'н':'n',
-    'О':'O', 'о':'o', 'П':'P', 'п':'p', 'Р':'R', 'р':'r', 'С':'S', 'с':'s', 'Т':'T', 'т':'t',
-    'У':'U', 'у':'u', 'Ф':'F', 'ф':'f', 'Х':'X', 'х':'x', 'Ц':'Ts', 'ц':'ts', 'Ч':'Ch', 'ч':'ch',
-    'Ш':'Sh', 'ш':'sh', 'Щ':'Shch', 'щ':'shch', 'Ъ':'', 'ъ':'', 'Ы':'Y', 'ы':'y', 'Ь':'', 'ь':'',
-    'Э':'E', 'э':'e', 'Ю':'Yu', 'ю':'yu', 'Я':'Ya', 'я':'ya', 'Ў':'O\'', 'ў':'o\'', 'Қ':'Q', 'қ':'q',
-    'Ғ':'G\'', 'ғ':'g\'', 'Ҳ':'H', 'ҳ':'h'
-  };
-
-  str = str.replace(/[А-яЁёЎўҚқҒғҲҳ]/g, m => cyrillicToLatinMap[m] || m);
+  // ✅ FIX: DejaVu Unicode font mavjud bo'lsa — Kirill→Latin konversiya qilinmaydi.
+  // DejaVu barcha Unicode belgilarni ko'rsata oladi, shuning uchun konversiya keraksiz va zararli.
+  // Faqat DejaVu yo'q (Helvetica fallback) holatda konversiya qilinadi.
+  if (!DEJAVUSANS_AVAILABLE) {
+    // Convert Cyrillic Uzbek/Russian characters to clean Latin equivalents if any exist in string
+    const cyrillicToLatinMap = {
+      'А':'A', 'а':'a', 'Б':'B', 'б':'b', 'В':'V', 'в':'v', 'Г':'G', 'г':'g', 'Д':'D', 'д':'d',
+      'Е':'E', 'е':'e', 'Ё':'Yo', 'ё':'yo', 'Ж':'Zh', 'ж':'zh', 'З':'Z', 'з':'z', 'И':'I', 'и':'i',
+      'Й':'Y', 'й':'y', 'К':'K', 'к':'k', 'Л':'L', 'л':'l', 'М':'M', 'м':'m', 'Н':'N', 'н':'n',
+      'О':'O', 'о':'o', 'П':'P', 'п':'p', 'Р':'R', 'р':'r', 'С':'S', 'с':'s', 'Т':'T', 'т':'t',
+      'У':'U', 'у':'u', 'Ф':'F', 'ф':'f', 'Х':'X', 'х':'x', 'Ц':'Ts', 'ц':'ts', 'Ч':'Ch', 'ч':'ch',
+      'Ш':'Sh', 'ш':'sh', 'Щ':'Shch', 'щ':'shch', 'Ъ':'', 'ъ':'', 'Ы':'Y', 'ы':'y', 'Ь':'', 'ь':'',
+      'Э':'E', 'э':'e', 'Ю':'Yu', 'ю':'yu', 'Я':'Ya', 'я':'ya', 'Ў':'O\'', 'ў':'o\'', 'Қ':'Q', 'қ':'q',
+      'Ғ':'G\'', 'ғ':'g\'', 'Ҳ':'H', 'ҳ':'h'
+    };
+    str = str.replace(/[А-яЁёЎўҚқҒғҲҳ]/g, m => cyrillicToLatinMap[m] || m);
+  }
 
   // Replace non-WinAnsi typographical quotes/dashes/accents with clean ASCII equivalents
   str = str
-    .replace(/[ʻ’'`ʼ]/g, "'")
-    .replace(/[“”"]/g, '"')
+    .replace(/[ʻ''`ʼ]/g, "'")
+    .replace(/[""\"]/g, '"')
     .replace(/[–—]/g, '-')
     .replace(/«/g, '"')
     .replace(/»/g, '"')

@@ -10,8 +10,19 @@ import pLimit from 'p-limit';
 import xlsx from 'xlsx';
 import { executeResilientQuestionGen, executeResilientVisionOCR, executeResilientTextGen } from '../services/aiOrchestrator.js';
 
+// ✅ DRY FIX: Modul darajasida bir marta ta'riflanib, barcha funksiyalarda qayta ishlatiladi
+const stripHtml = (text) => {
+  if (!text) return '';
+  return String(text)
+    .replace(/<[^>]*>/g, '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ')
+    .trim().toLowerCase();
+};
+
 const testGenerationQueue = pLimit(10); // 50-100 foydalanuvchi uchun test yaratish navbati
 const backgroundFeedbackQueue = pLimit(5); // O'quvchilar natijasi fonida AI tahlili uchun navbat
+
 
 export const getTests = async (req, res) => {
   try {
@@ -303,16 +314,7 @@ export const submitTestResult = async (req, res) => {
           // Agar mavjud bo'lsa — eng ishonchli yo'l (harf indeksiga bog'liq emas).
           const answeredIds = new Set();
 
-          // HTML teglarni tozalovchi yordamchi funksiya (server tomoni)
-          const stripHtml = (text) => {
-            if (!text) return '';
-            return String(text)
-              .replace(/<[^>]*>/g, '')
-              .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-              .replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ')
-              .trim().toLowerCase();
-          };
-
+          // ✅ DRY: modul darajasidagi stripHtml ishlatiladi (pastdagi takroriy ta'rif olib tashlandi)
           serverScore = data.questions.reduce((acc, q, i) => {
             const originalQ = test.questions.find(tq => {
               const matchesText = stripHtml(tq.questionText || '') === stripHtml(q.questionText || '');
@@ -353,14 +355,7 @@ export const submitTestResult = async (req, res) => {
           }, 0);
         } else {
           // Fallback: data.questions yo'q — faqat matn-matn taqqoslash
-          const stripHtml = (text) => {
-            if (!text) return '';
-            return String(text)
-              .replace(/<[^>]*>/g, '')
-              .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-              .replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ')
-              .trim().toLowerCase();
-          };
+          // ✅ DRY: modul darajasidagi stripHtml ishlatiladi
           serverScore = test.questions.reduce((acc, q, i) => {
             const userAns = data.answers[i];
             if (!userAns) return acc;
@@ -790,19 +785,21 @@ Return ONLY the JSON object. Begin generation now.`;
     // Trim to exactly targetTotal just in case of slight over-generation
     rawQuestions = rawQuestions.slice(0, targetTotal);
 
-    // Removed sanitizeQuestions. The robust generation handles quality now.
     // Shuffle options to ensure the correct answer is randomly distributed among options (A, B, C, D)
     const sanitizedQuestions = rawQuestions.map(q => {
       if (Array.isArray(q.options) && q.correctOption !== undefined) {
+        // ✅ FIX: Immutable shuffle — q ob'ektini mutatsiya qilmasdan yangi ob'ekt qaytaramiz
         const shuffled = [...q.options];
         for (let i = shuffled.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
-        q.options = shuffled;
-        // ✅ FIX: correctOption matn sifatida saqlanadi (to'g'ri),
-        // lekin correctAnswerIndex ham yangilanishi kerak — izchillik uchun
-        q.correctAnswerIndex = shuffled.findIndex(opt => opt === q.correctOption);
+        return {
+          ...q,
+          options: shuffled,
+          // correctOption o'zgarmaydi (matn), lekin correctAnswerIndex yangilanadi
+          correctAnswerIndex: shuffled.findIndex(opt => opt === q.correctOption)
+        };
       }
       return q;
     });
@@ -887,20 +884,47 @@ export const classAnalysis = async (req, res) => {
     }
 
     const testIds = [test.id, test._id?.toString(), id].filter(Boolean);
-    const results = await OnlineTestResult.find({ testId: { $in: testIds } });
+    const newResults = await OnlineTestResult.find({ testId: { $in: testIds } });
+    
+    // ✅ FIX: Eski Result modelidan ham natijalar olinadi (orqaga mosligi)
+    const { Result } = await import('../models/index.js');
+    const oldResults = await Result.find({ testId: { $in: testIds } }).lean();
+    
+    // Merge va dedup
+    const merged = [...newResults.map(r => r.toObject ? r.toObject() : r), ...oldResults];
+    const uniqueMap = new Map();
+    merged.forEach(r => uniqueMap.set(r.id || r._id?.toString(), r));
+    const results = Array.from(uniqueMap.values());
+    
     if (results.length === 0) {
       return res.status(400).json({ error: 'Tahlil qilish uchun yetarlicha natijalar yo\'q' });
     }
 
     const totalStudents = results.length;
-    const maxScore = results[0]?.totalScore || test.questions?.length || 0;
+    // ✅ FIX: maxScore — o'rtacha hisoblash uchun to'g'riroq
+    const maxScore = Math.max(...results.map(r => r.totalScore || 0), test.questions?.length || 0) || 0;
     const averageScore = results.reduce((acc, curr) => acc + (curr.score || 0), 0) / totalStudents;
-    const formattedResults = results.map(r => `${r.studentName}: ${r.score}/${r.totalScore || maxScore}`).join(', ');
+    
+    // ✅ FIX: 200+ o'quvchi bo'lsa prompt juda katta bo'lib AI limitga urishi mumkin.
+    // Shuning uchun maksimal 150 ta o'quvchi natijalari ko'rsatiladi, qolganlari stat sifatida.
+    const MAX_RESULTS_IN_PROMPT = 150;
+    const resultsForPrompt = results.slice(0, MAX_RESULTS_IN_PROMPT);
+    const formattedResults = resultsForPrompt.map(r => `${r.studentName}: ${r.score}/${r.totalScore || maxScore}`).join(', ');
+    const truncationNote = results.length > MAX_RESULTS_IN_PROMPT
+      ? `\n(Eslatma: jami ${totalStudents} ta o'quvchidan faqat birinchi ${MAX_RESULTS_IN_PROMPT} tasi ko'rsatildi)`
+      : '';
+
+    // Statistik taqsimot (past/o'rta/yuqori)
+    const passingThreshold = maxScore > 0 ? maxScore * 0.6 : 0;
+    const failing = results.filter(r => (r.score || 0) < passingThreshold).length;
+    const passing = totalStudents - failing;
+    const statsLine = `O'zlashtirish: ${passing} ta o'quvchi muvaffaqiyatli (≥60%), ${failing} ta past ko'rsatkich.`;
 
     const prompt = `Siz tajribali metodist-o'qituvchi va ta'lim ekspertisiz (Senior Level). "${test.title || 'Test'}" mavzusida o'quvchilar test ishlashdi.
 Testda jami ${totalStudents} ta o'quvchi qatnashdi.
 O'rtacha ball: ${averageScore.toFixed(1)} / ${maxScore}.
-O'quvchilarning natijalari: ${formattedResults}.
+${statsLine}
+O'quvchilarning natijalari: ${formattedResults}.${truncationNote}
 
 Vazifangiz: Sinfning umumiy o'zlashtirish darajasini chuqur kognitiv-pedagogik tahlil qilish.
 1. O'zlashtirishi past o'quvchilar va umumiy tendensiyalardagi kamchiliklarni ochib bering.
@@ -912,8 +936,6 @@ Javobni FAQAT quyidagi JSON formatida qaytaring (boshqa hech qanday so'z yoki ma
   "recommendation": "Sinfning mukammal pedagogik tahlili va yuqori darajadagi metodik tavsiyalar matni (kamida 3-4 ta xat boshidan iborat bo'lsin)..."
 }`;
 
-    const anthropicKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
-    const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
     const isPremium = teacher && teacher.plan === 'premium';
     const analysisResult = await executeResilientTextGen({
       prompt,
@@ -925,7 +947,15 @@ Javobni FAQAT quyidagi JSON formatida qaytaring (boshqa hech qanday so'z yoki ma
       return res.status(500).json({ error: 'Barcha AI agentlari band yoki javob bera olmadi. Iltimos qayta urinib ko\'ring.' });
     }
 
-    res.json(analysisResult.questions[0] || analysisResult);
+    // ✅ FIX: analysisResult.questions[0] — bu normalizeQuestions() dan kelgan ob'ekt.
+    // classAnalysis uchun recommendation maydoni to'g'ridan olinsin.
+    const analysisData = analysisResult.questions?.[0] || {};
+    const recommendation = analysisData.recommendation
+      || analysisData.text
+      || analysisData.content
+      || JSON.stringify(analysisData);
+
+    res.json({ recommendation });
   } catch (err) {
     console.error('AI Analysis Error:', err);
     res.status(500).json({ error: 'AI bilan bog\'lanishda xatolik: ' + err.message });

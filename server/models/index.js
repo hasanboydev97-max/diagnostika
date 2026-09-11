@@ -7,14 +7,15 @@ const ResultSchema = new mongoose.Schema({
   studentName: String,
   grade: String,
   blueprintSnapshot: Array,
-  scores: Object,
+  scores: mongoose.Schema.Types.Mixed,
   totalScore: Number,
-  questionResults: Object,
+  questionResults: mongoose.Schema.Types.Mixed,
   aiSummaryText: String,
   aiAdviceText: String,
+  aiRoadmap: mongoose.Schema.Types.Mixed,
   // ✅ 13. createdAt String emas Date — sort va date comparison to'g'ri ishlaydi
   createdAt: { type: Date, default: Date.now }
-}, { strict: false });
+}); // strict true bo'ldi (yaxshiroq xavfsizlik)
 
 
 export const Result = mongoose.model('Result', ResultSchema);
@@ -24,12 +25,15 @@ const OnlineTestSchema = new mongoose.Schema({
   teacherId: { type: String, required: true, index: true },
   title: String,
   subject: String,
-  questions: Array,
+  // ✅ FIX: questions strukturasi aniqlandi
+  questions: [mongoose.Schema.Types.Mixed],
   startTime: String,
   endTime: String,
   durationMinutes: Number,
+  isDiagnostic: Boolean,
+  grade: String,
   createdAt: { type: Date, default: Date.now }
-}, { strict: false });
+});
 
 
 OnlineTestSchema.index({ teacherId: 1, createdAt: -1 });
@@ -41,12 +45,14 @@ const OnlineTestResultSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true, index: true },
   testId: { type: String, required: true, index: true },
   studentName: { type: String, required: true, trim: true },
-  answers: Object,
+  testTitle: String,
+  answers: mongoose.Schema.Types.Mixed,
+  questions: [mongoose.Schema.Types.Mixed], // saqlangan snapshot
   score: { type: Number, default: 0 },
   totalScore: { type: Number, default: 0 },
   aiFeedback: String,
   createdAt: { type: Date, default: Date.now }
-}, { strict: false });
+});
 
 
 OnlineTestResultSchema.index({ testId: 1, createdAt: -1 });

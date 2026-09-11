@@ -234,7 +234,9 @@ export async function broadcastResultToTelegram(data) {
     // ✅ 3. ReDoS tuzatish — escapeRegex ishlatish
     const subs = await TelegramSubscription.find({ studentName: new RegExp('^' + escapeRegex(cleanName) + '$', 'i') });
     if (subs && subs.length > 0) {
-      const score = data.totalScore !== undefined ? data.totalScore : (data.score || 0);
+      const score = (data.totalScore && data.totalScore > 0)
+        ? Math.round((data.score / data.totalScore) * 100)
+        : (data.score || 0);
       const isPass = score >= 70;
       const statusEmoji = isPass ? '🟢' : '🔴';
       const resultLink = data.id?.startsWith('res_')
@@ -347,11 +349,46 @@ app.get('/api/student-results/:studentName', async (req, res) => {
   }
 });
 
+// ✅ FIX: Eski diagnostika natijalarini yozish uchun ichki secret tekshiruvi qo'shildi.
+// Bu endpoint eski frontend (Diagnostika testi) tomonidan ishlatiladi.
+// Secret kaliti bo'lmasa yoki noto'g'ri bo'lsa — 403 qaytariladi.
 app.post('/api/results', async (req, res) => {
   try {
     const data = req.body;
-    await Result.findOneAndUpdate({ id: data.id }, data, { upsert: true, new: true });
-    broadcastResultToTelegram(data).catch(() => {});
+    
+    // Ichki secret tekshiruvi — soxta yozishlarni oldini olish
+    const internalSecret = process.env.INTERNAL_API_SECRET;
+    const clientSecret = req.headers['x-internal-secret'] || req.body._secret;
+    
+    if (internalSecret && clientSecret !== internalSecret) {
+      // Eski frontend bilan mosligi: secret yo'q bo'lsa ham — faqat warn, block qilmaymiz
+      // Lekin INTERNAL_API_SECRET .env da sozlangan bo'lsa — qat'iy tekshiruv
+      console.warn(`[/api/results POST] Ruxsatsiz urinish. IP: ${req.ip}`);
+      return res.status(403).json({ error: 'Ruxsatsiz amal' });
+    }
+    
+    if (!data.id) {
+      return res.status(400).json({ error: 'id maydoni talab qilinadi' });
+    }
+    
+    // Xavfsiz: faqat ruxsat etilgan maydonlarni saqlaymiz
+    const safeData = {
+      id: data.id,
+      pin: data.pin,
+      studentName: data.studentName,
+      grade: data.grade,
+      blueprintSnapshot: data.blueprintSnapshot,
+      scores: data.scores,
+      totalScore: data.totalScore,
+      questionResults: data.questionResults,
+      aiSummaryText: data.aiSummaryText,
+      aiAdviceText: data.aiAdviceText,
+      aiRoadmap: data.aiRoadmap,
+      createdAt: data.createdAt || new Date()
+    };
+    
+    await Result.findOneAndUpdate({ id: safeData.id }, safeData, { upsert: true, new: true });
+    broadcastResultToTelegram(safeData).catch(() => {});
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -504,7 +541,11 @@ async function startTelegramBotPolling() {
                 const { OnlineTestResult } = await import('./models/index.js');
                 const found = await Result.findOne(searchQuery) || await OnlineTestResult.findOne(searchQuery);
                 if (found) {
-                  const summaryMsg = `🎓 <b>HB DIAGNOSTIKA NATIJASI</b> 🎓\n\n👤 <b>O'quvchi:</b> ${found.studentName}\n🏫 <b>Sinf:</b> ${found.grade || '5'}-sinf\n📊 <b>Natija:</b> ${found.totalScore}/100 ball\n\n🔗 <a href="https://bmdiagnostika.vercel.app/summary/${found.id || found._id}">Batafsil Hisobotni Ko'rish</a>`;
+                  // ✅ FIX: score to'g'ri foiz sifatida ko'rsatilsin
+                  const displayScore = (found.totalScore && found.totalScore > 0 && found.totalScore !== found.score)
+                    ? `${found.score}/${found.totalScore} (${Math.round((found.score / found.totalScore) * 100)}%)`
+                    : `${found.totalScore ?? found.score}/100`;
+                  const summaryMsg = `🎓 <b>HB DIAGNOSTIKA NATIJASI</b> 🎓\n\n👤 <b>O'quvchi:</b> ${found.studentName}\n🏫 <b>Sinf:</b> ${found.grade || '—'}\n📊 <b>Natija:</b> <b>${displayScore}</b>\n\n🔗 <a href="https://bmdiagnostika.vercel.app/summary/${found.id || found._id}">Batafsil Hisobotni Ko'rish</a>`;
                   await sendTelegramBotMessage(chatId, summaryMsg);
                 } else {
                   await sendTelegramBotMessage(chatId, `⚠️ <code>${text}</code> ID bo'yicha diagnostika natijasi topilmadi.`);
@@ -520,6 +561,9 @@ async function startTelegramBotPolling() {
           }
         }
       }
+      // ✅ FIX: Bo'sh update bo'lganda ham kichik delay — CPU ortiq yuklanmasin
+      // Long-polling timeout=25s server tomonda kutadi, lekin loop darhol qayta ketishini oldini olish uchun
+      await new Promise(r => setTimeout(r, 200));
     } catch (err) {
       console.error('Telegram bot polling error:', err);
       await new Promise(r => setTimeout(r, 5000));

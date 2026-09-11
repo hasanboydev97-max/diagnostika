@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, ArrowLeft, AlertTriangle, Swords } from 'lucide-react';
 import { toast } from 'sonner';
@@ -78,35 +78,45 @@ export default function TakeTest() {
   const [mousePosition, setMousePosition] = useState({ x: -100, y: -100 });
   const [isHovering, setIsHovering] = useState(false);
 
+  // ✅ savedProgress: localStorage dan o'qilgan — confirm kutayotgan holat
+  // Bu state started=true QILMAYDI — async state bug'idan xoli
+  const [savedProgress, setSavedProgress] = useState<{ studentName: string; answers: Record<number,string>; timeLeft: number|null; currentQIndex: number; shuffledQuestions: any[] } | null>(null);
+
+  const violations = useRef(0);
+  const submitRef = useRef(false);
+  const milestonesFired = useRef<Set<number>>(new Set());
+  const totalTimeRef = useRef<number>(0);
+  // ✅ Ref mirror — stale closure'lardan himoya
+  const answersRef = useRef(answers);
+  answersRef.current = answers;
+  const studentNameRef = useRef(studentName);
+  studentNameRef.current = studentName;
+
+  // ✅ FIX: useMemo — testId o'zgarmasa SAVE_KEY qayta hisoblanmaydi
+  const SAVE_KEY = useMemo(() => `test_progress_${testId}`, [testId]);
+
   useEffect(() => {
     const onMove = (e: MouseEvent) => setMousePosition({ x: e.clientX, y: e.clientY });
     window.addEventListener('mousemove', onMove);
     return () => window.removeEventListener('mousemove', onMove);
   }, []);
 
-  const violations = useRef(0);
-  const submitRef = useRef(false);
-  const milestonesFired = useRef<Set<number>>(new Set());
-  const totalTimeRef = useRef<number>(0);
-
-  const SAVE_KEY = `test_progress_${testId}`;
-
-  // Auto-restore from localStorage
+  // ✅ FIX 1: localStorage o'qish — started=true qilmaymiz, faqat prompt ko'rsatamiz
   useEffect(() => {
-    fetchTest();
-    const saved = localStorage.getItem(SAVE_KEY);
-    if (saved) {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) {
       try {
-        const p = JSON.parse(saved);
-        if (p.studentName) setStudentName(p.studentName);
-        if (p.answers) setAnswers(p.answers);
-        if (p.timeLeft) setTimeLeft(p.timeLeft);
-        if (p.started) setStarted(p.started);
-        if (p.currentQIndex) setCurrentQIndex(p.currentQIndex);
-      } catch (e) {
-        console.warn("Keshni o'qishda xatolik", e);
+        const p = JSON.parse(raw);
+        if (p.started && p.studentName && Object.keys(p.answers || {}).length > 0 && Array.isArray(p.shuffledQuestions)) {
+          setSavedProgress(p);
+        } else if (p.studentName) {
+          setStudentName(p.studentName);
+        }
+      } catch {
+        localStorage.removeItem(SAVE_KEY);
       }
     }
+    fetchTest();
   }, [testId]);
 
   // Auto-save to localStorage
@@ -205,11 +215,7 @@ export default function TakeTest() {
     else setTimeStatus('open');
   };
 
-  const handleStart = async () => {
-    if (!studentName.trim()) {
-      toast.error("Iltimos ismingizni kiriting.");
-      return;
-    }
+  const launchTest = useCallback(async () => {
     try {
       if (document.documentElement.requestFullscreen) {
         await document.documentElement.requestFullscreen();
@@ -217,14 +223,61 @@ export default function TakeTest() {
     } catch (err) {
       console.warn('Fullscreen failed', err);
     }
-    if (test.durationMinutes && timeLeft === null) {
+    setStarted(true);
+  }, []);
+
+  const handleStart = async () => {
+    if (!studentName.trim()) { toast.error("Iltimos ismingizni kiriting."); return; }
+    if (test?.durationMinutes) {
       const totalSecs = test.durationMinutes * 60;
       setTimeLeft(totalSecs);
       totalTimeRef.current = totalSecs;
-    } else if (timeLeft !== null && totalTimeRef.current === 0) {
-      totalTimeRef.current = timeLeft;
     }
-    setStarted(true);
+    await launchTest();
+  };
+
+  // ✅ FIX 2: handleResume — barcha setState SINXRON bajariladi, KEYIN launchTest
+  // React 18 automatic batching: barcha setState bir render cycle'da bajariladi
+  const handleResume = async () => {
+    if (!savedProgress) return;
+    setStudentName(savedProgress.studentName);
+    setAnswers(savedProgress.answers || {});
+    setCurrentQIndex(savedProgress.currentQIndex || 0);
+    if (savedProgress.timeLeft && savedProgress.timeLeft > 0) {
+      setTimeLeft(savedProgress.timeLeft);
+      totalTimeRef.current = savedProgress.timeLeft;
+    } else if (test?.durationMinutes) {
+      const totalSecs = test.durationMinutes * 60;
+      setTimeLeft(totalSecs);
+      totalTimeRef.current = totalSecs;
+    }
+    if (savedProgress.shuffledQuestions && test) {
+      setTest((prev: any) => ({ ...prev, questions: savedProgress.shuffledQuestions }));
+    }
+    const answeredCount = Object.keys(savedProgress.answers || {}).length;
+    const total = savedProgress.shuffledQuestions?.length || 1;
+    [25, 50, 75].forEach(ms => { if ((answeredCount / total) * 100 >= ms) milestonesFired.current.add(ms); });
+    setSavedProgress(null);
+    await launchTest();
+  };
+
+  // ✅ FIX 3: Tozalab yangidan boshlash — savollar qayta shufflelanadi
+  const handleClearAndRestart = () => {
+    localStorage.removeItem(SAVE_KEY);
+    setSavedProgress(null);
+    setStudentName('');
+    setAnswers({});
+    setCurrentQIndex(0);
+    setTimeLeft(null);
+    totalTimeRef.current = 0;
+    violations.current = 0;
+    submitRef.current = false;
+    milestonesFired.current = new Set();
+    setTest((prev: any) => {
+      if (!prev?.questions) return prev;
+      const shuffle = (arr: any[]) => { const a = [...arr]; for (let i = a.length-1; i>0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+      return { ...prev, questions: shuffle(prev.questions).map((q: any) => ({ ...q, options: Array.isArray(q.options) ? shuffle(q.options) : q.options })) };
+    });
   };
 
   // Countdown timer
@@ -312,10 +365,16 @@ export default function TakeTest() {
 
 
 
-  const handleSubmit = async (isForced = false) => {
+  // ✅ FIX: useCallback — handleSubmit har render'da qayta yaratilmaydi
+  // Bu useEffect dependency'larida infinite loop xavfini yo'q qiladi
+  const handleSubmit = useCallback(async (isForced = false) => {
     if (submitRef.current) return;
+    // ✅ FIX: Ref'dan o'qiymiz — stale closure yo'q (ayniqsa forced submit'da muhim)
+    const currentAnswers = answersRef.current;
+    const currentName = studentNameRef.current;
+
     if (!isForced) {
-      const answeredCount = Object.keys(answers).length;
+      const answeredCount = Object.keys(currentAnswers).length;
       if (answeredCount < test.questions.length) {
         const ok = window.confirm(`${test.questions.length} ta savoldan faqat ${answeredCount} tasiga javob berdingiz. Baribir yakunlaysizmi?`);
         if (!ok) return;
@@ -345,7 +404,7 @@ export default function TakeTest() {
           };
         });
         test.questions.forEach((q: any, i: number) => {
-          questionResults[blueprint[i].id] = isAnswerCorrect(answers[i], q.correctOption, q.options || []);
+          questionResults[blueprint[i].id] = isAnswerCorrect(currentAnswers[i], q.correctOption, q.options || []);
         });
         const categories = [...new Set(blueprint.map((q: any) => q.category))] as string[];
         const scores: Record<string, number> = {};
@@ -368,11 +427,11 @@ export default function TakeTest() {
 
         const totalScore = globalMax > 0 ? Math.round((globalEarned / globalMax) * 100) : 0;
         toast.loading('AI Diagnostik xulosa yaratilmoqda...', { id: toastId });
-        const summaryResponse = await generateDiagnosticSummary(studentName, test.grade || '5', scores, questionResults, blueprint);
+        const summaryResponse = await generateDiagnosticSummary(currentName, test.grade || '5', scores, questionResults, blueprint);
         const resultId = Math.floor(100000 + Math.random() * 900000).toString();
         const pin = Math.floor(1000 + Math.random() * 9000).toString();
         await db.saveResult({
-          id: resultId, pin, studentName, grade: test.grade || '5',
+          id: resultId, pin, studentName: currentName, grade: test.grade || '5',
           blueprintSnapshot: blueprint, scores, totalScore, questionResults,
           aiSummaryText: summaryResponse.summary, aiAdviceText: summaryResponse.advice,
           aiRoadmap: summaryResponse.roadmap || undefined,
@@ -408,7 +467,7 @@ export default function TakeTest() {
         // Eng xavfsiz: isAnswerCorrect ishlatamiz (u options dan qat'i nazar matnni taqqoslaydi)
         correctAnswerText = q.correctOption; // server asl options bilan solishtiradi
       }
-      const isCorrect = isAnswerCorrect(answers[i], q.correctOption, q.options || []);
+      const isCorrect = isAnswerCorrect(currentAnswers[i], q.correctOption, q.options || []);
       if (isCorrect) score++;
       return {
         ...q,
@@ -421,8 +480,8 @@ export default function TakeTest() {
     const resultId = 'res_' + Date.now().toString();
     const resultPayload = {
       id: resultId, testId,
-      studentName: studentName + (isForced ? ' (Qoidabuzarlik)' : ''),
-      answers, score, totalScore: test.questions.length,
+      studentName: currentName + (isForced ? ' (Qoidabuzarlik)' : ''),
+      answers: currentAnswers, score, totalScore: test.questions.length,
       questions: questionsWithMeta, testTitle: test.title,
       createdAt: new Date().toISOString()
     };
@@ -471,7 +530,8 @@ export default function TakeTest() {
       setSubmitting(false);
       submitRef.current = false;
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [test, studentName, answers, testId, navigate, SAVE_KEY]);
 
   // ─── Render States ────────────────────────────────────────────────────────
 
@@ -545,34 +605,62 @@ export default function TakeTest() {
             Testni boshlagach, boshqa oynaga o'tish qat'iyan man etiladi.
           </div>
           <div className="space-y-6">
-            <div>
-              <label className="block text-[10px] font-bold text-gray-600 uppercase tracking-[0.2em] mb-3">To'liq ismingizni kiriting</label>
-              <input type="text" value={studentName} onChange={e => setStudentName(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleStart()}
-                onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
-                className="w-full px-5 py-4 bg-white/50 border border-white/50 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:bg-white/80 focus:border-black/20 transition-colors shadow-sm"
-                placeholder="Masalan: Aliyev Vali" autoFocus />
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 items-center justify-center w-full">
-              <MagicButton
-                onClick={handleStart}
-                label="Yolg'iz Boshlash"
-                className="w-full sm:w-auto"
-              />
-              <MagicButton
-                onClick={() => {
-                  if (!studentName.trim()) {
-                    toast.error("Iltimos, avval ismingizni kiriting!");
-                    return;
-                  }
-                  navigate('/duel', { state: { testId, title: test.title, isCreator: true, studentName } });
-                }}
-                label="Duyel Yaratish (1v1)"
-                icon={<Swords />}
-                variant="danger"
-                className="w-full sm:w-auto"
-              />
-            </div>
+            {savedProgress ? (
+              <div className="p-5 bg-amber-50 border border-amber-200 rounded-xl mb-6 shadow-sm">
+                <div className="flex items-start gap-3 mb-4">
+                  <AlertTriangle className="text-amber-600 shrink-0 mt-0.5" size={18} />
+                  <div>
+                    <p className="text-sm font-semibold text-amber-900 mb-1">Chala qoldirilgan test topildi</p>
+                    <p className="text-xs text-amber-700 leading-relaxed">
+                      <strong>{savedProgress.studentName}</strong> ushbu testni{' '}
+                      <strong>{Object.keys(savedProgress.answers).length}/{savedProgress.shuffledQuestions.length}</strong> savolda to'xtatgan.
+                      {savedProgress.timeLeft && savedProgress.timeLeft > 0 ? ` Qolgan vaqt: ${Math.floor(savedProgress.timeLeft/60).toString().padStart(2,'0')}:${(savedProgress.timeLeft%60).toString().padStart(2,'0')}.` : ''}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                   <button onClick={handleResume} className="flex-1 bg-amber-600 text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-amber-700 active:scale-95 transition-all">
+                     Davom ettirish ({savedProgress.studentName})
+                   </button>
+                   <button onClick={handleClearAndRestart} className="flex-1 bg-white border border-amber-300 text-amber-800 py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-amber-50 active:scale-95 transition-all">
+                     Tozalash — Men boshlayman
+                   </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-600 uppercase tracking-[0.2em] mb-3">To'liq ismingizni kiriting</label>
+                  <input type="text" value={studentName} onChange={e => setStudentName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleStart()}
+                    onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}
+                    className="w-full px-5 py-4 bg-white/50 border border-white/50 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:bg-white/80 focus:border-black/20 transition-colors shadow-sm"
+                    placeholder="Masalan: Aliyev Vali" autoFocus />
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 items-center justify-center w-full">
+                  <MagicButton
+                    onClick={handleStart}
+                    label="Yolg'iz Boshlash"
+                    className="w-full sm:w-auto"
+                  />
+                  {!test.isDiagnostic && (
+                    <MagicButton
+                      onClick={() => {
+                        if (!studentName.trim()) {
+                          toast.error("Iltimos, avval ismingizni kiriting!");
+                          return;
+                        }
+                        navigate('/duel', { state: { testId, title: test.title, isCreator: true, studentName } });
+                      }}
+                      label="Duyel Yaratish (1v1)"
+                      icon={<Swords />}
+                      variant="danger"
+                      className="w-full sm:w-auto"
+                    />
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -300,8 +300,11 @@ async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22
 
     } else if (agent.provider === 'groq') {
       const supportsJsonMode = !agent.model.includes('qwen') && !agent.model.includes('compound');
-      // Groq on_demand tier has 1000 Output Tokens Per Minute (OTPM) limit
-      const maxTokens = 950;
+      // ✅ FIX: Dinamik maxTokens — so'ralgan savollar soniga qarab moslashuvchan.
+      // Groq on_demand tier da 1000 OTPM cheklov bor, lekin 950 20 ta savol uchun yetmaydi.
+      // Har savol taxminan 120-150 token, overhead 300 token = adaptiv formula.
+      const estimatedTokens = Math.min(Math.ceil((prompt.length / 4) * 0.6) + 400, 4096);
+      const maxTokens = Math.min(Math.max(estimatedTokens, 1200), 4096);
 
       const body = {
         model: agent.model,

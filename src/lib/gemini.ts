@@ -125,6 +125,9 @@ Qiyinchilik (difficulty): Oson, O'rta, Qiyin (aralash bo'lsin).
 Kognitiv ko'nikma (skill): Tushunish, Qo'llash, Tahlil, Baholash, Sintezlash.
 Fikrlash turi (thinkingType): Mantiqiy, Analitik, Ijodiy, Tanqidiy.
 
+QO'SHIMCHA QOIDALAR:
+1. Mavzular (topic) mutlaqo takrorlanmasin. Har bir savol uchun o'ziga xos noyob mavzu tanlansin.
+
 Javobni FAQAT VA FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang. Namuna formati:
 [
   { "id": 1, "topic": "Kichik matn yaratish", "category": "creativity", "difficulty": "O'rta", "skill": "Sintezlash", "thinkingType": "Ijodiy" }
@@ -176,8 +179,11 @@ MUHIM QOIDALAR:
 3. Variantlar ichida faqat BITTA to'g'ri javob bo'lsin
 4. Noto'g'ri variantlar ham mantiqan ishonchli bo'lsin (tasodifiy emas)
 5. "Oson" savollar oddiy, "O'rta" chuqurroq, "Qiyin" murakkab bo'lsin
-6. Matematik va informatikaga oid barcha formulalar (masalan Excel formulalari, kasrlar, ildizlar) toza LaTeX ko'rinishida yozilsin: inline formulalar uchun $...$ belgisidan foydalanilsin (masalan: $A1 = 10$, $\\frac{A1+B1+C1}{2}$). Formulalarni backtick \`...\` yoki $$...$$ ichiga olmang.
-7. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing. Barcha hadlar ($a_1, a_n, b_n, S_n, d, q, 1, 3, 5, \\dots$) mutlaqo Math rejimida ($...$) bo'lishi shart. Yetarlicha parametrlar bering.
+6. Matematik va informatikaga oid barcha formulalar (masalan Excel formulalari, kasrlar, ildizlar) toza LaTeX ko'rinishida yozilsin: inline formulalar uchun $...$ belgisidan foydalanilsin (masalan: $A1 = 10$, $\\\\frac{A1+B1+C1}{2}$). Formulalarni backtick \`...\` yoki $$...$$ ichiga olmang.
+7. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing. Barcha hadlar ($a_1, a_n, b_n, S_n, d, q, 1, 3, 5, \\\\dots$) mutlaqo Math rejimida ($...$) bo'lishi shart. Yetarlicha parametrlar bering.
+8. ALWAYS DOUBLE-ESCAPE BACKSLASHES in your JSON. Write \\\\sqrt{50}, \\\\frac{1}{2}, \\\\begin{cases}. This is STRICTLY REQUIRED.
+9. NEVER put newlines (\\n) inside math mode. Inline and block math MUST be on a single line.
+10. TAKRORIYLIKKA YO'L QO'YILMASIN: Savollar, ularning matni, ishlatilgan sonlar, ismlar va variantlar bir-birini umuman takrorlamasligi SHART. Har bir savol noyob bo'lsin!
 
 Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
 [
@@ -284,7 +290,10 @@ QAT'IY SIFAT MEZONLARI (100% AMAL QILING):
 2. QAT'IY SHART: Savollar yuzaki bo'lmasin. Noto'g'ri variantlar o'ta chalg'ituvchi va haqiqatga juda yaqin (mantiqiy) bo'lsin.
 3. Barcha faktlar, formulalar va ma'lumotlar 100% ilmiy to'g'ri va aniq bo'lishi KAFOLATLANSIN. Umuman xato qilmang!
 4. Matematik va informatikaga oid barcha formulalar toza LaTeX ko'rinishida yozilsin: inline formulalar uchun $...$ belgisidan foydalanilsin.
-5. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing. Barcha hadlar ($a_1, a_n, b_n, S_n, d, q, 1, 3, 5, \\dots$) mutlaqo Math rejimida ($...$) bo'lishi shart. Yetarlicha parametrlar bering.
+5. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing. Barcha hadlar ($a_1, a_n, b_n, S_n, d, q, 1, 3, 5, \\\\dots$) mutlaqo Math rejimida ($...$) bo'lishi shart. Yetarlicha parametrlar bering.
+6. ALWAYS DOUBLE-ESCAPE BACKSLASHES in your JSON. Write \\\\sqrt{50}, \\\\frac{1}{2}, \\\\begin{cases}. This is STRICTLY REQUIRED.
+7. NEVER put newlines (\\n) inside math mode. Inline and block math MUST be on a single line.
+8. MUTLAQO TAKRORLANMASIN: Barcha savollar matni, sonlar, muammolar va variantlar 100% noyob bo'lishi KAFOLATLANSIN. Hech bir savol boshqasini takrorlamasin!
 
 Har bir savolda quyidagilar bo'lishi shart:
 - Savol matni (aniq, tushunarli, chuqur ma'noli va mutlaqo xatosiz)
@@ -370,7 +379,10 @@ MUHIM SHARTLAR:
 2. Savollar O'zbek tilida bo'lsin.
 3. Har bir savolda 4 ta variant (A, B, C, D) va 1 ta to'g'ri javob ("correctOption") bo'lsin.
 4. Matematik va informatikaga oid barcha formulalar toza LaTeX ko'rinishida yozilsin: inline formulalar uchun $...$ belgisidan foydalanilsin.
-5. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing. Barcha hadlar ($a_1, a_n, b_n, S_n, d, q, 1, 3, 5, \\dots$) mutlaqo Math rejimida ($...$) bo'lishi shart. Yetarlicha parametrlar bering.
+5. PROGRESSIYA QOIDASI: Agar mavzu Arifmetik yoki Geometrik progressiya bo'lsa, qaysi turdaligini matnda aniq yozing. Barcha hadlar ($a_1, a_n, b_n, S_n, d, q, 1, 3, 5, \\\\dots$) mutlaqo Math rejimida ($...$) bo'lishi shart. Yetarlicha parametrlar bering.
+6. ALWAYS DOUBLE-ESCAPE BACKSLASHES in your JSON. Write \\\\sqrt{50}, \\\\frac{1}{2}, \\\\begin{cases}. This is STRICTLY REQUIRED.
+7. NEVER put newlines (\\n) inside math mode. Inline and block math MUST be on a single line.
+8. TAKRORLANMASLIK QOIDASI: Hech qaysi savol boshqa savolni takrorlamasin! Mavzular bir xil bo'lganda ham shartlar, sonlar va kontekst butunlay farq qilishi SHART.
 
 Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
 [
