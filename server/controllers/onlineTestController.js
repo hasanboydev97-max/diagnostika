@@ -661,6 +661,10 @@ export const generateAITest = async (req, res) => {
         ? `\n\nCRITICAL RULE: DO NOT REPEAT THE FOLLOWING CONCEPTS. These questions have ALREADY been generated. You MUST create entirely NEW questions testing DIFFERENT concepts/angles:\n` + existingQuestions.map((q, i) => `${i+1}. ${q.questionText || q}`).join('\n')
         : '';
 
+      // String.raw template ichida backtick yozib bo'lmaydi (templateni yopib qo'yadi).
+      // ${bt} orqali backtick belgilarini xavfsiz kiritamiz.
+      const bt = '\`';
+
       return String.raw`Sen — istalgan fandan (matematika, fizika, biologiya, tarix, informatika, ona tili va h.k.) yuqori sifatli test tuzuvchi 20 yillik tajribali mutaxassis o'qituvchisan.
 Your ONLY output is a valid JSON array. Do not explain anything, do not add any text before or after the JSON.
 
@@ -711,8 +715,12 @@ LATEX SYNTAX:
 - Angles: write 30°, 45°, 60°, 90° using the ° symbol (not \\circ) for readability
 - Systems of equations MUST use \\begin{cases} ... \\\\ ... \\end{cases}
 - NEVER put \n newline inside $ ... $. One line per math expression.
-- IT/HTML questions: wrap HTML tags in inline code format (use markdown code syntax), never raw HTML
-
+- IT/PROGRAMMING questions (Python, JavaScript, HTML, Excel etc.):
+  * Wrap ALL code expressions in inline code: ${bt}code here${bt}
+  * Python example options: ${bt}b**2 - 4*a*c${bt}, ${bt}math.sqrt(x)${bt}, ${bt}x**2 + 2*x + 1${bt}
+  * HTML example options: ${bt}<h1>Sarlavha</h1>${bt}, ${bt}<div class="box">${bt}
+  * NEVER write Python operators raw in options — ${bt}**${bt} without backticks renders as **bold** in Markdown!
+  * Formula code is NEVER in LaTeX — use backticks, not $...$
 
 ## OUTPUT FORMAT
 
