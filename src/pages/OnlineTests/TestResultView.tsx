@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import FormattedText from '../../components/FormattedText';
 import MeshGradient from '../../components/ui/MeshGradient';
 // ✅ 11. DRY: isAnswerCorrect umumiy moduldan import qilinadi — takrorlanmaydi
-import { isAnswerCorrect } from '../../utils/scoring';
+import { isAnswerCorrect, isEqual } from '../../utils/scoring';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -424,38 +424,42 @@ export default function TestResultView() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-auto pl-9">
                       {(q.options || []).map((opt: string, oIndex: number) => {
-                        // HTML teglarni tozalab taqqoslaymiz — FormattedText render farqini yo'qotadi
-                        const stripForCompare = (s: string) =>
-                          String(s || '').replace(/<[^>]*>/g, '').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim().toLowerCase();
+                        // 1. O'quvchi aynan shu variantni tanlaganmi?
+                        let isStudentChoice = false;
+                        if (studentAns !== undefined) {
+                          const sAns = String(studentAns).trim().toLowerCase();
+                          // Agar javob a, b, c, d shaklida saqlangan bo'lsa
+                          if (['a', 'b', 'c', 'd'].includes(sAns)) {
+                            const choiceIndex = ['a', 'b', 'c', 'd'].indexOf(sAns);
+                            if (choiceIndex === oIndex) isStudentChoice = true;
+                          }
+                          // To'liq matn sifatida saqlangan bo'lsa
+                          if (!isStudentChoice) {
+                            isStudentChoice = isEqual(String(studentAns), String(opt));
+                          }
+                        }
 
-                        const isStudentChoice = studentAns !== undefined &&
-                          stripForCompare(String(studentAns)) === stripForCompare(String(opt));
-
-                        // ✅ FIX: isAnswerCorrect(opt,...) o'rniga maxsus tekshiruv.
-                        // isAnswerCorrect "userAns vs correctOpt" uchun — u opt ni "o'quvchi javobi" deb ko'radi.
-                        // Harf-indeks lookup loop orqali noto'g'ri false-positive berishi mumkin edi.
-                        // Bu yerda faqat "bu opt to'g'ri javobmi?" ni aniq tekshiramiz:
+                        // 2. Bu variant rostdan ham to'g'ri javobmi?
                         const isActuallyCorrect = (() => {
-                          // Prioritet: correctAnswerText (shuffle-safe) > correctOption
                           const correctRef = q.correctAnswerText || q.correctOption;
                           if (!correctRef) return false;
-                          const sOpt = stripForCompare(String(opt));
-                          const sCorrect = stripForCompare(String(correctRef));
-                          if (!sOpt || !sCorrect) return false;
-                          // 1. To'g'ridan matn taqqoslash (eng ishonchli yo'l)
-                          if (sOpt === sCorrect) return true;
-                          // 2. correctRef harf (a/b/c/d) bo'lsa — to'g'ri variant matnini indeks orqali topamiz
+                          
+                          // To'g'ridan matn taqqoslash
+                          if (isEqual(String(opt), String(correctRef))) return true;
+                          
+                          // correctRef harf (a/b/c/d) bo'lsa
                           const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
-                          const correctIdx = letterMap[sCorrect];
+                          const correctIdx = letterMap[String(correctRef).toLowerCase().trim()];
                           if (correctIdx !== undefined) {
-                            const correctText = stripForCompare(String((q.options || [])[correctIdx] ?? ''));
-                            if (correctText && sOpt === correctText) return true;
+                            const correctText = String((q.options || [])[correctIdx] ?? '');
+                            if (correctText && isEqual(String(opt), correctText)) return true;
                           }
-                          // 3. opt o'zi harf bo'lsa — indeksidagi matnni correctRef bilan taqqoslaymiz
-                          const optIdx = letterMap[sOpt];
+                          
+                          // opt o'zi harf bo'lsa
+                          const optIdx = letterMap[String(opt).toLowerCase().trim()];
                           if (optIdx !== undefined) {
-                            const optText = stripForCompare(String((q.options || [])[optIdx] ?? ''));
-                            if (optText && optText === sCorrect) return true;
+                            const optText = String((q.options || [])[optIdx] ?? '');
+                            if (optText && isEqual(optText, String(correctRef))) return true;
                           }
                           return false;
                         })();

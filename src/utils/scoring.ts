@@ -4,7 +4,7 @@
  */
 
 // Matnni standartlashtirish (HTML belgilarni va ortiqcha bo'shliqlarni tozalash)
-function normalize(s: string): string {
+export function normalize(s: string): string {
   return String(s || '')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
@@ -16,12 +16,12 @@ function normalize(s: string): string {
 }
 
 // Sof HTML teglardan tozalash (rich-text formatdagi javoblar uchun)
-function stripHtmlTags(s: string): string {
+export function stripHtmlTags(s: string): string {
   return normalize(s).replace(/<[^>]*>/g, '').trim();
 }
 
 // Asosiy taqqoslash mantiqi (Senior Level)
-function isEqual(ans1: string, ans2: string): boolean {
+export function isEqual(ans1: string, ans2: string): boolean {
   const stripped1 = stripHtmlTags(ans1);
   const stripped2 = stripHtmlTags(ans2);
 
