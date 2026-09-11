@@ -711,7 +711,8 @@ LATEX SYNTAX:
 - Angles: write 30°, 45°, 60°, 90° using the ° symbol (not \\circ) for readability
 - Systems of equations MUST use \\begin{cases} ... \\\\ ... \\end{cases}
 - NEVER put \n newline inside $ ... $. One line per math expression.
-- IT/HTML questions: wrap tags in backticks `<tag>`, never raw HTML
+- IT/HTML questions: wrap HTML tags in inline code format (use markdown code syntax), never raw HTML
+
 
 ## OUTPUT FORMAT
 
