@@ -674,7 +674,7 @@ Generate exactly ${questionCount} multiple-choice questions for:
 
 ## ASOSIY QOIDALAR (CRITICAL PEDAGOGICAL INSTRUCTIONS)
 
-1. **YAGONA TO'G'RI JAVOB:** Har bir savolning faqat bitta shubhasiz to'g'ri javobi bo'lishi shart. Agar savol matnida ikki xil talqin qilinishi mumkin bo'lgan tushuncha bo'lsa, aniqlashtir (masalan, "sarlavha" deyilganda sahifa nomi `<title>` yoki matn sarlavhasi `<h1>` ekanligini ko'rsat; matematika misollarida ildiz turi va shartlarni aniq yoz).
+1. **YAGONA TO'G'RI JAVOB:** Har bir savolning faqat bitta shubhasiz to'g'ri javobi bo'lishi shart. Agar savol matnida ikki xil talqin qilinishi mumkin bo'lgan tushuncha bo'lsa, aniqlashtir (masalan, "sarlavha" deyilganda sahifa nomi (title) yoki matn sarlavhasi (Header 1) ekanligini ko'rsat; matematika misollarida ildiz turi va shartlarni aniq yoz).
 2. **DISTRAKTORLAR SIFATI VA YAQINLIGI:** Distraktorlar (noto'g'ri variantlar) mantiqan yaqin, lekin aniq noto'g'ri bo'lsin. Har bir distraktor o'quvchining tipik xatosini (masalan, noto'g'ri formula qo'llashdagi xato natija) aks ettirsin. Barcha variantlar takrorlanmasin.
 3. **TUSHUNISHNI TEKSHIRING:** Berilgan ma'lumotni shunchaki qaytarib so'raydigan mexanik savollardan qoch. Tahlil, sabab-natija va tatbiq qilishni talab etadigan savollar tuz ("Nima uchun?", "Agar X bo'lsa, Y nima bo'ladi?").
 4. **NOYOB KO'NIKMA:** Har bir savol mutlaqo yagona va o'ziga xos konseptni tekshirsin. ZERO DUPLICATION: Savollar bir-birini takrorlamasin.
