@@ -430,6 +430,46 @@ export default function TakeTest() {
         const summaryResponse = await generateDiagnosticSummary(currentName, test.grade || '5', scores, questionResults, blueprint);
         const resultId = Math.floor(100000 + Math.random() * 900000).toString();
         const pin = Math.floor(1000 + Math.random() * 9000).toString();
+        
+        // Prepare questions with meta and calculate correct count for the teacher view
+        let correctAnswersCount = 0;
+        const questionsWithMeta = test.questions.map((q: any, i: number) => {
+          const isCorrect = isAnswerCorrect(currentAnswers[i], q.correctOption, q.options || []);
+          if (isCorrect) correctAnswersCount++;
+          return q;
+        });
+
+        // 1. Send result to backend so teacher can see it in TestDetails
+        const backendPayload = {
+          id: resultId,
+          testId,
+          studentName: currentName + (isForced ? ' (Qoidabuzarlik)' : ''),
+          answers: currentAnswers,
+          score: correctAnswersCount,
+          totalScore: test.questions.length,
+          questions: questionsWithMeta,
+          testTitle: test.title,
+          summaryText: summaryResponse.summary, // backward compatibility
+          blueprintSnapshot: blueprint,
+          scores: scores,
+          questionResults: questionResults,
+          aiSummaryText: summaryResponse.summary,
+          aiAdviceText: summaryResponse.advice,
+          aiRoadmap: summaryResponse.roadmap || undefined,
+          createdAt: new Date().toISOString()
+        };
+
+        try {
+          await fetch(`${API_URL}/online-test-results`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(backendPayload)
+          });
+        } catch (e) {
+          console.error("Failed to sync diagnostic result to backend:", e);
+        }
+
+        // 2. Save locally for student's deep view
         await db.saveResult({
           id: resultId, pin, studentName: currentName, grade: test.grade || '5',
           blueprintSnapshot: blueprint, scores, totalScore, questionResults,

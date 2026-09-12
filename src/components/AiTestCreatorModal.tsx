@@ -28,7 +28,6 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
   const navigate = useNavigate();
   const [activeMode, setActiveMode] = useState<'simple' | 'matrix'>('matrix');
   
-  // General settings
   const [grade, setGrade] = useState(initialGrade);
   const [topic, setTopic] = useState('');
   const [language, setLanguage] = useState('o\'zbek');
@@ -123,7 +122,8 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
               explanation: q.explanation,
               category: q.category || actualSubject,
               difficulty: q.difficulty || (simpleDifficulty === 'Aralash' ? 'O\'rta' : simpleDifficulty),
-              skill: q.skill || 'Tushunish'
+              skill: q.skill || 'Tushunish',
+              thinkingType: 'Analitik'
             }));
           }
         }
@@ -151,7 +151,8 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
             explanation: q.explanation,
             category: q.category || selectedSubjects[0]?.subject || 'Matematika',
             difficulty: q.difficulty || 'O\'rta',
-            skill: q.skill || 'Tushunish'
+            skill: q.skill || 'Tushunish',
+            thinkingType: 'Mantiqiy'
           }));
         }
       }
@@ -190,15 +191,14 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
       // Save to server database if teacher token exists
       if (getToken()) {
         try {
-          const testTitle = topic.trim()
-            ? `${grade}-sinf: ${topic.trim()}`
-            : `${grade}-sinf AI Diagnostika Testi`;
+          const testTitle = topic.trim() ? `${grade}-sinf: ${topic.trim()}` : `${grade}-sinf AI Diagnostika Testi`;
           const testSubject = selectedSubjects.length > 0 ? selectedSubjects.map(s => s.subject).join(', ') : 'Diagnostika & Fanlar';
 
           const formattedQuestions = questions.map(q => ({
+            ...q,
             questionText: q.questionText || '',
             options: Array.isArray(q.options) ? q.options : [],
-            correctOption: typeof q.correctOption === 'number' ? q.correctOption : 0,
+            correctOption: typeof q.correctOption === 'number' ? q.correctOption : q.correctOption,
             explanation: q.explanation || ''
           }));
 
@@ -206,15 +206,18 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
             method: 'POST',
             headers: getAuthHeaders(),
             body: JSON.stringify({
+              id: testId,
               title: testTitle,
               subject: testSubject,
               grade,
               questions: formattedQuestions,
+              isDiagnostic: true,
+              durationMinutes: null,
               createdAt: new Date().toISOString()
             })
           });
         } catch (apiErr) {
-          console.warn('Serverga saqlashda tarmoq ogohlantirish (Mahalliy bazaga saqlandi):', apiErr);
+          console.warn('Serverga saqlashda tarmoq ogohlantirish:', apiErr);
         }
       }
 
@@ -238,54 +241,57 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
           transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
           className="bg-[#fdfdfd] border border-black/10 w-full max-w-6xl rounded-none md:rounded-2xl overflow-hidden flex flex-col max-h-[90vh] shadow-[0_20px_60px_rgba(0,0,0,0.1)] selection:bg-black selection:text-white"
         >
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 md:p-10 border-b border-black/10 bg-[#fdfdfd]">
-            <div className="flex items-center gap-4 md:gap-6">
-              <div className="w-10 h-10 md:w-12 md:h-12 border border-black/10 bg-[#111111] text-white flex items-center justify-center rounded-none">
-                <Sparkles className="w-5 h-5" />
+          {/* Header & Main Tabs */}
+          <div className={`flex flex-col bg-[#fdfdfd] ${createdTestId ? 'border-b border-black/10' : ''}`}>
+            <div className="flex items-center justify-between p-6 md:p-10 pb-4">
+              <div className="flex items-center gap-4 md:gap-6">
+                <div className="w-10 h-10 md:w-12 md:h-12 border border-black/10 bg-[#111111] text-white flex items-center justify-center rounded-none">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-gray-500 block mb-1">AI KONSTRUKTOR</span>
+                  <h2 className="text-xl md:text-3xl font-medium tracking-tight text-[#111111]">AI Test Yaratish</h2>
+                </div>
               </div>
-              <div>
-                <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-gray-500 block mb-1">AI KONSTRUKTOR</span>
-                <h2 className="text-xl md:text-3xl font-medium tracking-tight text-[#111111]">AI Test Yaratish</h2>
-              </div>
+              <button 
+                onClick={onClose} 
+                className="p-2 md:p-3 text-gray-400 hover:text-black transition-colors border border-transparent hover:border-black/10 rounded-none focus:outline-none"
+              >
+                <X className="w-6 h-6" strokeWidth={1.5} />
+              </button>
             </div>
-            <button 
-              onClick={onClose} 
-              className="p-2 md:p-3 text-gray-400 hover:text-black transition-colors border border-transparent hover:border-black/10 rounded-none"
-            >
-              <X className="w-6 h-6" strokeWidth={1.5} />
-            </button>
-          </div>
 
-          {/* Mode Tabs */}
-          {!createdTestId && (
-            <div className="px-[15px] sm:px-6 md:px-8 bg-white border-b border-black/10 flex gap-4 md:gap-6 overflow-x-auto whitespace-nowrap scrollbar-none">
-              <button
-                type="button"
-                onClick={() => setActiveMode('matrix')}
-                className={`py-3 md:py-4 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] transition-all border-b-2 flex items-center gap-2 ${
-                  activeMode === 'matrix'
-                    ? 'border-black text-[#111111]'
-                    : 'border-transparent text-gray-400 hover:text-black'
-                }`}
-              >
-                <SlidersHorizontal className="w-3.5 h-3.5 shrink-0" />
-                <span className="sm:hidden">Chuqur Sozlama</span>
-                <span className="hidden sm:inline">Chuqur Sozlama (Multi-Fan & Qiyinlik Matritsasi)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveMode('simple')}
-                className={`py-3 md:py-4 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] transition-all border-b-2 flex items-center gap-2 ${
-                  activeMode === 'simple'
-                    ? 'border-black text-[#111111]'
-                    : 'border-transparent text-gray-400 hover:text-black'
-                }`}
-              >
-                <Zap className="w-3.5 h-3.5 shrink-0" /> Tezkor Rejim
-              </button>
-            </div>
-          )}
+
+            {/* Mode Tabs (Integrated into header) */}
+            {!createdTestId && (
+              <div className="px-[15px] sm:px-6 md:px-10 bg-[#fdfdfd] border-b border-black/10 flex gap-6 md:gap-8 overflow-x-auto whitespace-nowrap scrollbar-none">
+                <button
+                  type="button"
+                  onClick={() => setActiveMode('matrix')}
+                  className={`pb-4 pt-2 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] transition-all border-b-2 flex items-center gap-2 focus:outline-none -mb-[1px] ${
+                    activeMode === 'matrix'
+                      ? 'border-black text-[#111111]'
+                      : 'border-transparent text-gray-400 hover:text-black'
+                  }`}
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5 shrink-0" />
+                  <span className="sm:hidden">Chuqur Sozlama</span>
+                  <span className="hidden sm:inline">Chuqur Sozlama (Multi-Fan & Qiyinlik Matritsasi)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveMode('simple')}
+                  className={`pb-4 pt-2 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] transition-all border-b-2 flex items-center gap-2 focus:outline-none -mb-[1px] ${
+                    activeMode === 'simple'
+                      ? 'border-black text-[#111111]'
+                      : 'border-transparent text-gray-400 hover:text-black'
+                  }`}
+                >
+                  <Zap className="w-3.5 h-3.5 shrink-0" /> Tezkor Rejim
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Content */}
           <div className="p-[15px] sm:p-6 md:p-8 overflow-y-auto space-y-6 md:space-y-8 flex-1">
@@ -340,12 +346,16 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
                   />
                 </div>
               </div>
-            ) : activeMode === 'matrix' ? (
-              /* Matrix Mode */
+            ) : (
               <div className="space-y-8">
-                {/* Sinf Selector */}
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-4">Sinf Tanlang</label>
+
+
+                {activeMode === 'matrix' ? (
+                  /* Matrix Mode */
+                  <div className="space-y-8">
+                    {/* Sinf Selector */}
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mb-4">Sinf Tanlang</label>
                   <div className="flex flex-wrap gap-2">
                     {['5', '6', '7', '8', '9', '10', '11'].map(g => (
                       <button
@@ -673,6 +683,8 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
                   />
                 </div>
               </div>
+            )}
+            </div>
             )}
           </div>
 

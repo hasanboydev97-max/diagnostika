@@ -107,3 +107,41 @@ export async function sendTelegramNotification(chatId: string, result: StudentRe
     return { success: false, message: "Tarmoq xatoligi: " + (error.message || error.toString()) };
   }
 }
+
+export async function sendTelegramMessage(chatId: string, text: string): Promise<{ success: boolean; message: string }> {
+  if (!chatId || !chatId.trim()) {
+    return { success: false, message: "Chat ID kiritilmadi." };
+  }
+  
+  const cleanChatId = chatId.trim();
+
+  try {
+    const response = await fetch(`${TELEGRAM_API_URL}/sendMessage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        chat_id: cleanChatId,
+        text: text,
+        parse_mode: 'HTML',
+        disable_web_page_preview: false
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.ok) {
+      return { success: true, message: "Xabar muvaffaqiyatli yuborildi!" };
+    } else {
+      console.error('Telegram API error:', data);
+      return { 
+        success: false, 
+        message: data.description || "Telegram ga yuborishda xatolik yuz berdi." 
+      };
+    }
+  } catch (error: any) {
+    console.error('Telegram network error:', error);
+    return { success: false, message: "Tarmoq xatoligi: " + (error.message || error.toString()) };
+  }
+}

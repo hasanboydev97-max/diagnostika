@@ -17,6 +17,8 @@ import { gradeOMRFromImage, gradeTestFromPhoto, type OMRResult, type PaperGradin
 import { parseZipGradeFile, type ZipGradeImportResult } from '../../lib/zipgradeParser';
 import { db, type StudentResult } from '../../lib/db';
 import { QUESTIONS_BLUEPRINT } from '../../lib/blueprint';
+import { generateClassAnalysis } from '../../lib/gemini';
+import { sendTelegramMessage, getSavedChatId } from '../../lib/telegram';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -446,7 +448,10 @@ export default function TestDetails() {
   };
 
   const handleClassAnalysis = async () => {
-    if (!test) return;
+    if (!test || !results || results.length === 0) {
+      toast.error("Tahlil uchun kamida 1 ta o'quvchi natijasi kerak!");
+      return;
+    }
     const teacher = getTeacher();
     if (teacher?.plan === 'free') {
       toast.error("AI Sinf Tahlili faqat 'Premium' yoki 'Standard' tarifda mavjud!");
@@ -456,15 +461,23 @@ export default function TestDetails() {
     setIsAnalyzing(true);
     setIsAnalysisModalOpen(true);
     try {
-      const res = await fetch(`${API_URL}/online-tests/${testId}/class-analysis`, {
-        method: 'POST',
-        headers: getAuthHeaders()
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Xatolik yuz berdi');
-      setAnalysisResult(data);
+      const classResult = await generateClassAnalysis(test.title, test.questions, results);
+      if (!classResult) throw new Error("AI tahlil yarata olmadi.");
+      setAnalysisResult(classResult);
+      
+      // Botga yuborish
+      const chatId = getSavedChatId();
+      if (chatId) {
+        let msg = `🎓 <b>AI Sinf Tahlili: ${test.title}</b> 🎓\n\n`;
+        msg += `💡 <b>Umumiy Xulosa:</b>\n${classResult.generalIssues}\n\n`;
+        msg += `👤 <b>O'quvchilar:</b>\n`;
+        classResult.studentBreakdowns.forEach(st => {
+          msg += `• <b>${st.name}</b> (${st.score} ball): ${st.feedback}\n`;
+        });
+        sendTelegramMessage(chatId, msg).catch(() => {});
+      }
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error.message || "Tahlilda xatolik");
       setIsAnalysisModalOpen(false);
     } finally {
       setIsAnalyzing(false);
@@ -1172,11 +1185,112 @@ export default function TestDetails() {
                     <p className="text-xs text-neutral-400 max-w-xs mt-1">Sun'iy intellekt zaif mavzularni va shaxsiy tavsiyalarni tuzmoqda</p>
                   </div>
                 ) : analysisResult ? (
-                  <div className="space-y-6">
-                    <div className="bg-neutral-50 border border-black/5 p-4 md:p-6 rounded-3xl">
-                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-2">Umumiy Sinf bo'yicha Xulosa:</h4>
-                      <p className="text-xs text-neutral-800 leading-relaxed">{analysisResult.recommendation}</p>
+                  <div className="space-y-8">
+                    {/* Umumiy Xulosa */}
+                    <div className="bg-neutral-50 border border-black/5 p-5 md:p-6 rounded-3xl">
+                      <div className="flex items-center gap-2 mb-3 text-neutral-800">
+                        <BrainCircuit size={18} />
+                        <h4 className="text-[11px] font-bold uppercase tracking-widest">Umumiy Sinf Bo'yicha Xulosa</h4>
+                      </div>
+                      <p className="text-sm text-neutral-700 leading-relaxed font-medium">{analysisResult.generalIssues}</p>
                     </div>
+
+                    {/* O'quvchilar tahlili */}
+                    <div>
+                      <h4 className="text-[11px] font-bold uppercase tracking-widest text-neutral-500 mb-4 px-2">Har bir o'quvchi uchun tavsiya</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {analysisResult.studentBreakdowns?.map((st: any, idx: number) => (
+                          <div key={idx} className="bg-white border border-black/5 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-bold text-neutral-900">{st.name}</span>
+                              <span className="text-[10px] font-bold bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full">{st.score} ball</span>
+                            </div>
+                            <p className="text-xs text-neutral-500 leading-relaxed">{st.feedback}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Handbook (Qo'llanma) */}
+                    <div>
+                      <h4 className="text-[11px] font-bold uppercase tracking-widest text-neutral-500 mb-4 px-2">Test Savollari va Metodik Qo'llanma</h4>
+                      <div className="space-y-4">
+                        {analysisResult.handbook?.map((hb: any, idx: number) => (
+                          <div key={idx} className="bg-white border border-black/10 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                            <div className="absolute top-0 left-0 bottom-0 w-1 bg-black"></div>
+                            <p className="text-sm font-semibold text-neutral-900 mb-3 pr-4 leading-relaxed">
+                              <span className="text-neutral-400 mr-2">{idx + 1}.</span> {hb.question}
+                            </p>
+                            <div className="bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-xl p-3 mb-3 text-xs font-bold flex items-center gap-2">
+                              <CheckCircle2 size={14} className="text-emerald-500" /> To'g'ri javob: {hb.correctAnswer}
+                            </div>
+                            <p className="text-xs text-neutral-600 leading-relaxed"><strong className="text-neutral-800">Izoh:</strong> {hb.explanation}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-4 flex justify-end">
+                      <button
+                        onClick={() => {
+                          const content = `
+                            <html>
+                              <head>
+                                <meta charset="utf-8" />
+                                <title>${test?.title} - Sinf Tahlili</title>
+                                <style>
+                                  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; padding: 40px; max-width: 800px; margin: 0 auto; color: #111; }
+                                  h1 { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 30px; font-size: 24px; }
+                                  h2 { color: #333; margin-top: 30px; font-size: 18px; text-transform: uppercase; letter-spacing: 1px; }
+                                  .box { background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e9ecef; }
+                                  .student { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ddd; }
+                                  .question { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #eee; border-left: 4px solid #000; }
+                                  .correct { background: #d1e7dd; color: #0f5132; padding: 8px 12px; border-radius: 6px; font-weight: bold; margin: 10px 0; font-size: 14px; }
+                                </style>
+                              </head>
+                              <body>
+                                <h1>${test?.title} - AI Sinf Tahlili va Metodik Qo'llanma</h1>
+                                
+                                <h2>Umumiy Xulosa</h2>
+                                <div class="box">
+                                  <p>${analysisResult.generalIssues}</p>
+                                </div>
+                                
+                                <h2>O'quvchilar Bo'yicha Tahlil</h2>
+                                ${analysisResult.studentBreakdowns?.map((st: any) => `
+                                  <div class="student">
+                                    <strong>${st.name}</strong> <span style="color:#666; font-size: 14px;">(Ball: ${st.score})</span><br/>
+                                    <p style="margin-top: 8px; color: #444;">${st.feedback}</p>
+                                  </div>
+                                `).join('')}
+                                
+                                <h2>Test Savollari va Qo'llanma (Handbook)</h2>
+                                ${analysisResult.handbook?.map((hb: any, i: number) => `
+                                  <div class="question">
+                                    <strong>${i + 1}-savol:</strong> ${hb.question}
+                                    <div class="correct">✅ To'g'ri javob: ${hb.correctAnswer}</div>
+                                    <p style="margin-top: 8px; color: #444;"><strong>Izoh:</strong> ${hb.explanation}</p>
+                                  </div>
+                                `).join('')}
+                              </body>
+                            </html>
+                          `;
+                          const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+                          const url = URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = `${test?.title}_Tahlil_Qollanma.html`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          URL.revokeObjectURL(url);
+                        }}
+                        className="flex items-center gap-2 px-6 py-3 bg-black text-white text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-neutral-800 transition-colors shadow-lg"
+                      >
+                        <Download size={16} /> Qo'llanmani Yuklash
+                      </button>
+                    </div>
+
                   </div>
                 ) : null}
               </div>
