@@ -1,9 +1,12 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import pLimit from 'p-limit';
 
-// Concurrency queue: prevents overwhelming AI APIs when 20+ teachers create tests simultaneously
-// 15 parallel — 50-100 foydalanuvchida navbat qotib qolmasligi uchun (Global Rate Limit himoyasi)
-const requestQueue = pLimit(15);
+// BUG #12 FIX: Alohida navbatlar — QuestionGen va TextGen bir-birini bloklmasin
+// QuestionGen (og'ir, uzoq): 10 parallel
+// TextGen (sinf tahlili, diagnostika xulosasi): 5 parallel
+const questionQueue = pLimit(10);
+const textQueue     = pLimit(5);
+
 
 // Circuit breaker / dynamic health tracking for agents
 const agentHealth = new Map();
@@ -166,32 +169,37 @@ export function buildAgentPipeline({ isPremium = false, isVision = false }) {
  */
 export function sanitizeAndParseJSON(rawText) {
   if (!rawText || typeof rawText !== 'string') {
-    throw new Error('AI bo\'sh javob qaytardi');
+    throw new Error("AI bo'sh javob qaytardi");
   }
 
-  // 1. Remove reasoning / thought tags
+  // 1. Reasoning/thought taglarini va markdown fences ni olib tashlash
   let cleaned = rawText
     .replace(/<think>[\s\S]*?<\/think>/gi, '')
-    .replace(/^```json\s*/i, '')
-    .replace(/^```\s*/i, '')
-    .replace(/```\s*$/i, '')
+    .replace(/^```json\s*/im, '')
+    .replace(/^```\s*/im, '')
+    .replace(/```\s*$/im, '')
     .trim();
 
-  // 2. Extract JSON substring if AI included introductory commentary
-  const jsonMatch = cleaned.match(/\[\s*\{[\s\S]*\}\s*\]|\{\s*"questions"[\s\S]*\}/);
-  if (jsonMatch) {
-    cleaned = jsonMatch[0];
+  // BUG #6 FIX: Eski regex faqat {"questions":...} ni topardi.
+  // Yangi: har qanday JSON array ([{...}]) yoki object ({...}) topadi.
+  // Bu TextGen javoblari (generalIssues, summary, roadmap) uchun ham ishlaydi.
+  const arrayMatch  = cleaned.match(/\[\s*\{[\s\S]*\}\s*\]/);
+  const objectMatch = cleaned.match(/\{[\s\S]*\}/);
+
+  if (arrayMatch) {
+    cleaned = arrayMatch[0];
+  } else if (objectMatch) {
+    cleaned = objectMatch[0];
   }
 
-  // 3. Fix unescaped LaTeX backslashes without corrupting valid escapes (\", \\, \n, etc.)
-  // Single backslash before a LaTeX keyword (not already escaped) → double it so JSON.parse keeps it
-  const safeJson = cleaned.replace(/(?<!\\)\\(?!["\\\/bfnrtu]|u[0-9a-fA-F]{4})/g, '\\\\');
+  // LaTeX backslash ni escape qilish (JSON sintaksisi buzilmasligi uchun)
+  const safeJson = cleaned.replace(/(?<!\\)\\(?!["\\/bfnrtu]|u[0-9a-fA-F]{4})/g, '\\\\');
 
-  // 4. First parse attempt
+  // Birinchi parse urinishi
   try {
     return JSON.parse(safeJson);
   } catch (initialErr) {
-    // 5. Truncated JSON Auto-Recovery: if output was cut off, close brackets
+    // Auto-repair: kesilgan JSON ni yopish
     let repaired = safeJson.trim();
     if (repaired.startsWith('{') && !repaired.endsWith('}')) {
       repaired += '"}';
@@ -278,28 +286,26 @@ function normalizeQuestions(parsed) {
 }
 
 /**
- * Executes an individual AI agent with a strict timeout (AbortSignal)
+ * Alohida agent chaqiruvi — strict timeout bilan
+ * BUG #9 FIX: timeoutMs dinamik — xabar ham mos bo'ladi
+ * BUG #11 FIX: isTextGen=true bo'lsa Groq da response_format ishlatilmaydi
  */
-async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22000, temperature = 0.7 }) {
-  // Agent o'zining apiKey ni olib yuradi (pullik/bepul farq qilish uchun)
+async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22000, temperature = 0.7, isTextGen = false }) {
+  // agent.apiKey — pullik/bepul farq qilish (BUG #1 fix saqlanadi)
   const geminiKey    = agent.apiKey || process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
   const anthropicKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
   const groqKey      = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutId  = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     if (agent.provider === 'gemini') {
       const genAI = new GoogleGenerativeAI(geminiKey);
       const model = genAI.getGenerativeModel({
         model: agent.model,
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: temperature
-        }
+        generationConfig: { responseMimeType: 'application/json', temperature }
       });
-
       const fullPrompt = `${systemPrompt ? systemPrompt + '\n\n' : ''}${prompt}`;
       const result = await model.generateContent(fullPrompt, { signal: controller.signal });
       return result.response.text();
@@ -316,35 +322,37 @@ async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22
         body: JSON.stringify({
           model: agent.model,
           max_tokens: 4096,
-          temperature: temperature,
-          system: `${systemPrompt || 'You are an elite educational assessment engineer.'}\nStrictly output valid JSON matching this schema: ${JSON.stringify(aiSchema)}. No markdown fences, no conversational prose.`,
+          temperature,
+          system: `${systemPrompt || 'You are an elite educational assessment engineer.'}\nStrictly output valid JSON. No markdown fences, no conversational prose.`,
           messages: [{ role: 'user', content: prompt }]
         })
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.error?.message || `Anthropic HTTP ${res.status}`);
       return data.content?.[0]?.text || '';
 
     } else if (agent.provider === 'groq') {
-      // compound-beta models don't reliably support json_object mode; llama models do
-      const supportsJsonMode = !agent.model.includes('compound');
-      // ✅ FIX: Dinamik maxTokens — so'ralgan savollar soniga qarab moslashuvchan.
-      // Groq on_demand tier da 1000 OTPM cheklov bor, lekin 950 20 ta savol uchun yetmaydi.
-      // Har savol taxminan 120-150 token, overhead 300 token = adaptiv formula.
-      const estimatedTokens = Math.min(Math.ceil((prompt.length / 4) * 0.6) + 400, 4096);
-      const maxTokens = Math.min(Math.max(estimatedTokens, 1200), 4096);
+      // BUG #11 FIX: TextGen uchun response_format ishlatma
+      // compound modellari json_object mode ni to'g'ri bajarmaydi
+      const supportsJsonMode = !isTextGen && !agent.model.includes('compound');
+
+      // BUG #5 FIX: Dinamik maxTokens — use-case ga qarab
+      // TextGen (sinf tahlili): 1500 token yetarli
+      // QuestionGen (20 ta savol): har savol ~150 token + overhead
+      const maxTokens = isTextGen
+        ? 1500
+        : Math.min(Math.max(Math.ceil((prompt.length / 4) * 0.8) + 500, 1500), 4096);
 
       const body = {
         model: agent.model,
         messages: [
           {
             role: 'system',
-            content: `${systemPrompt || 'You are an elite educational assessment engineer.'}\nReturn ONLY valid JSON matching: ${JSON.stringify(aiSchema)}. Do NOT include markdown code blocks or explanatory comments.`
+            content: `${systemPrompt || 'You are an elite educational assessment engineer.'}\nReturn ONLY valid JSON. Do NOT include markdown code blocks or explanatory comments.`
           },
           { role: 'user', content: prompt }
         ],
-        temperature: temperature,
+        temperature,
         max_tokens: maxTokens
       };
 
@@ -355,13 +363,9 @@ async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22
       const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         signal: controller.signal,
-        headers: {
-          'Authorization': `Bearer ${groqKey}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.error?.message || `Groq HTTP ${res.status}`);
       return data.choices?.[0]?.message?.content || '';
@@ -374,12 +378,14 @@ async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22
 }
 
 /**
- * Executes a question generation task with automatic cascading failover
- * through the agent matrix.
+ * Savol yaratish — kaskadli failover bilan
+ * BUG #12 FIX: questionQueue (textQueue bilan aralashmasin)
+ * BUG #9 FIX: dinamik timeout xabari
  */
 export async function executeResilientQuestionGen({ prompt, systemPrompt, aiSchema, isPremium = false }) {
-  return requestQueue(async () => {
+  return questionQueue(async () => {
     const pipeline = buildAgentPipeline({ isPremium });
+    const timeoutMs = 28000;
 
     if (pipeline.length === 0) {
       throw new Error("Hech qanday AI agenti sozlanmagan. Iltimos API kalitlarini tekshiring.");
@@ -391,11 +397,10 @@ export async function executeResilientQuestionGen({ prompt, systemPrompt, aiSche
     for (const agent of pipeline) {
       const startTime = Date.now();
       try {
-        console.log(`[AI Orchestrator] 🚀 Agent ishga tushirildi: ${agent.id} (${agent.provider}/${agent.model})`);
+        console.log(`[AI QuestionGen] 🚀 Agent: ${agent.id} (${agent.provider}/${agent.model})`);
 
-        const rawText = await callAgent(agent, { prompt, systemPrompt, aiSchema });
-        const parsed = sanitizeAndParseJSON(rawText);
-
+        const rawText = await callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs, isTextGen: false });
+        const parsed  = sanitizeAndParseJSON(rawText);
         const validQuestions = normalizeQuestions(parsed);
 
         if (validQuestions.length === 0) {
@@ -403,44 +408,52 @@ export async function executeResilientQuestionGen({ prompt, systemPrompt, aiSche
         }
 
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-        console.log(`[AI Orchestrator] ✅ MUVAFFAQIYAT: Agent ${agent.id} (${duration}s) orqali ${validQuestions.length} ta savol yaratildi`);
+        console.log(`[AI QuestionGen] ✅ ${agent.id} (${duration}s) — ${validQuestions.length} ta savol`);
 
         markAgentSuccess(agent.id);
         return { success: true, agentId: agent.id, questions: validQuestions };
 
       } catch (err) {
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-        const errMsg = err.name === 'AbortError' ? '18s Timeout oshib ketdi' : err.message;
-        console.warn(`[AI Orchestrator] ❌ Agent ${agent.id} muvaffaqiyatsiz (${duration}s): ${errMsg}`);
-        
+        // BUG #9 FIX: dinamik timeout xabari
+        const errMsg = err.name === 'AbortError'
+          ? `${Math.round(timeoutMs / 1000)}s Timeout oshib ketdi`
+          : err.message;
+        console.warn(`[AI QuestionGen] ❌ ${agent.id} (${duration}s): ${errMsg}`);
+
         markAgentFailure(agent.id, errMsg);
         lastError = `${agent.id}: ${errMsg}`;
         attemptLog.push(`${agent.id} (${errMsg})`);
       }
     }
 
-    console.error(`[AI Orchestrator] 💥 Barcha ${pipeline.length} ta agent sinab ko'rildi, lekin hech biri javob bermadi:\n  - ${attemptLog.join('\n  - ')}`);
+    console.error(`[AI QuestionGen] 💥 Barcha ${pipeline.length} ta agent xato:\n  - ${attemptLog.join('\n  - ')}`);
     return { success: false, error: lastError, attempts: attemptLog };
   });
 }
 
 /**
- * Multimodal / Vision OCR Execution with Multi-Agent Failover
+ * Vision OCR — Multi-Agent Failover
+ * BUG #1 FIX: agent.apiKey ishlatiladi (pullik Gemini OCR uchun)
+ * BUG #4 FIX: markAgentFailure har xatoda chaqiriladi (circuit breaker)
+ * BUG #12 FIX: questionQueue (og'ir operatsiya)
  */
 export async function executeResilientVisionOCR({ promptText, imageBase64, imageMimeType = 'image/jpeg' }) {
-  return requestQueue(async () => {
-    const pipeline = buildAgentPipeline({ isVision: true });
-    const geminiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  return questionQueue(async () => {
+    const pipeline     = buildAgentPipeline({ isVision: true });
     const anthropicKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
 
     let lastError = '';
+    const attemptLog  = [];
 
     for (const agent of pipeline) {
+      const startTime = Date.now();
       try {
-        console.log(`[AI Vision] 📷 OCR Agent ishga tushdi: ${agent.id}`);
+        console.log(`[AI Vision] 📷 OCR Agent: ${agent.id}`);
 
         if (agent.provider === 'gemini') {
-          const genAI = new GoogleGenerativeAI(geminiKey);
+          // BUG #1 FIX: agent.apiKey — pullik kalit avtomatik ishlatiladi
+          const genAI = new GoogleGenerativeAI(agent.apiKey);
           const model = genAI.getGenerativeModel({
             model: agent.model,
             generationConfig: { responseMimeType: 'application/json', temperature: 0.2 }
@@ -448,30 +461,25 @@ export async function executeResilientVisionOCR({ promptText, imageBase64, image
 
           const contentParts = [{ text: promptText }];
           if (imageBase64) {
-            contentParts.push({
-              inlineData: { data: imageBase64, mimeType: imageMimeType }
-            });
+            contentParts.push({ inlineData: { data: imageBase64, mimeType: imageMimeType } });
           }
 
-          const result = await model.generateContent(contentParts);
-          const parsed = sanitizeAndParseJSON(result.response.text());
+          const result    = await model.generateContent(contentParts);
+          const parsed    = sanitizeAndParseJSON(result.response.text());
           const questions = parsed.questions || (Array.isArray(parsed) ? parsed : []);
+
           if (questions.length > 0) {
-            console.log(`[AI Vision] ✅ OCR MUVAFFAQIYAT: ${agent.id} orqali ${questions.length} ta savol olindi`);
+            const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+            console.log(`[AI Vision] ✅ ${agent.id} (${duration}s) — ${questions.length} ta savol`);
+            markAgentSuccess(agent.id);
             return { success: true, questions };
           }
+          throw new Error("OCR natijasida savollar topilmadi");
 
         } else if (agent.provider === 'anthropic' && anthropicKey) {
           const content = [];
           if (imageBase64) {
-            content.push({
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: imageMimeType,
-                data: imageBase64
-              }
-            });
+            content.push({ type: 'image', source: { type: 'base64', media_type: imageMimeType, data: imageBase64 } });
           }
           content.push({ type: 'text', text: promptText });
 
@@ -482,40 +490,48 @@ export async function executeResilientVisionOCR({ promptText, imageBase64, image
               'anthropic-version': '2023-06-01',
               'content-type': 'application/json'
             },
-            body: JSON.stringify({
-              model: agent.model,
-              max_tokens: 4096,
-              temperature: 0.2,
-              messages: [{ role: 'user', content }]
-            })
+            body: JSON.stringify({ model: agent.model, max_tokens: 4096, temperature: 0.2, messages: [{ role: 'user', content }] })
           });
 
           const data = await res.json();
           if (!res.ok) throw new Error(data.error?.message || 'Anthropic Vision xatosi');
-          const parsed = sanitizeAndParseJSON(data.content?.[0]?.text || '');
+          const parsed    = sanitizeAndParseJSON(data.content?.[0]?.text || '');
           const questions = parsed.questions || (Array.isArray(parsed) ? parsed : []);
+
           if (questions.length > 0) {
+            markAgentSuccess(agent.id);
             return { success: true, questions };
           }
+          throw new Error("OCR natijasida savollar topilmadi");
         }
+
       } catch (err) {
-        console.warn(`[AI Vision] ❌ OCR Agent ${agent.id} xatosi: ${err.message}`);
-        lastError = err.message;
+        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+        const errMsg = err.name === 'AbortError' ? '30s OCR Timeout' : err.message;
+        console.warn(`[AI Vision] ❌ ${agent.id} (${duration}s): ${errMsg}`);
+
+        // BUG #4 FIX: circuit breaker OCR da ham ishlaydi
+        markAgentFailure(agent.id, errMsg);
+        lastError = errMsg;
+        attemptLog.push(`${agent.id} (${errMsg})`);
       }
     }
 
-    return { success: false, error: lastError || 'Rasmdan savollarni ajratib bo\'lmadi' };
+    console.error(`[AI Vision] 💥 Barcha OCR agentlari xato:\n  - ${attemptLog.join('\n  - ')}`);
+    return { success: false, error: lastError || "Rasmdan savollarni ajratib bo'lmadi" };
   });
 }
 
 /**
- * Text Generation (e.g. Class Analysis, Feedback) with Multi-Agent Failover.
- * Unlike executeResilientQuestionGen, this does NOT validate question structure —
- * it simply returns the raw AI text so the caller can parse it as needed.
+ * Text Generation (sinf tahlili, diagnostika xulosasi, feedback)
+ * BUG #11 FIX: isTextGen=true → Groq da response_format o'chiriladi
+ * BUG #12 FIX: textQueue (questionQueue bilan aralashmasin)
+ * BUG #9 FIX: dinamik timeout xabari
  */
 export async function executeResilientTextGen({ prompt, systemPrompt, isPremium = false }) {
-  return requestQueue(async () => {
-    const pipeline = buildAgentPipeline({ isPremium });
+  return textQueue(async () => {
+    const pipeline  = buildAgentPipeline({ isPremium });
+    const timeoutMs = 30000;
 
     if (pipeline.length === 0) {
       throw new Error("Hech qanday AI agenti sozlanmagan. Iltimos API kalitlarini tekshiring.");
@@ -527,14 +543,15 @@ export async function executeResilientTextGen({ prompt, systemPrompt, isPremium 
     for (const agent of pipeline) {
       const startTime = Date.now();
       try {
-        console.log(`[AI TextGen] 🚀 Agent ishga tushirildi: ${agent.id} (${agent.provider}/${agent.model})`);
+        console.log(`[AI TextGen] 🚀 Agent: ${agent.id} (${agent.provider}/${agent.model})`);
 
         const rawText = await callAgent(agent, {
           prompt,
           systemPrompt,
           aiSchema: { type: 'object' },
-          timeoutMs: 25000,
-          temperature: 0.5
+          timeoutMs,
+          temperature: 0.5,
+          isTextGen: true  // BUG #11 FIX
         });
 
         if (!rawText || typeof rawText !== 'string' || rawText.trim().length < 5) {
@@ -542,15 +559,18 @@ export async function executeResilientTextGen({ prompt, systemPrompt, isPremium 
         }
 
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-        console.log(`[AI TextGen] ✅ MUVAFFAQIYAT: Agent ${agent.id} (${duration}s) javob qaytardi`);
+        console.log(`[AI TextGen] ✅ ${agent.id} (${duration}s)`);
 
         markAgentSuccess(agent.id);
         return { success: true, agentId: agent.id, text: rawText };
 
       } catch (err) {
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-        const errMsg = err.name === 'AbortError' ? '25s Timeout oshib ketdi' : err.message;
-        console.warn(`[AI TextGen] ❌ Agent ${agent.id} muvaffaqiyatsiz (${duration}s): ${errMsg}`);
+        // BUG #9 FIX: dinamik timeout xabari
+        const errMsg = err.name === 'AbortError'
+          ? `${Math.round(timeoutMs / 1000)}s Timeout oshib ketdi`
+          : err.message;
+        console.warn(`[AI TextGen] ❌ ${agent.id} (${duration}s): ${errMsg}`);
 
         markAgentFailure(agent.id, errMsg);
         lastError = `${agent.id}: ${errMsg}`;
@@ -558,7 +578,8 @@ export async function executeResilientTextGen({ prompt, systemPrompt, isPremium 
       }
     }
 
-    console.error(`[AI TextGen] 💥 Barcha ${pipeline.length} ta agent sinab ko'rildi, hech biri javob bermadi:\n  - ${attemptLog.join('\n  - ')}`);
+    console.error(`[AI TextGen] 💥 Barcha agentlar xato:\n  - ${attemptLog.join('\n  - ')}`);
     return { success: false, error: lastError, attempts: attemptLog };
   });
 }
+

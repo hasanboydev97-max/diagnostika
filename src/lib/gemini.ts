@@ -157,17 +157,26 @@ Javobni FAQAT VA FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh y
   try {
     const rawText = await executeResilientAiPrompt(prompt);
     const cleanText = cleanJsonText(rawText);
-    const parsed = JSON.parse(cleanText) as QuestionBlueprint[];
+    // BUG #3 FIX: JSON.parse try/catch ichida
+    let parsed: QuestionBlueprint[];
+    try {
+      parsed = JSON.parse(cleanText) as QuestionBlueprint[];
+    } catch (parseErr) {
+      console.error('Blueprint JSON parse xatosi:', parseErr);
+      // BUG #7 FIX: null qaytarish o'rniga error throw — frontend toast ko'rsata oladi
+      throw new Error("AI javobi noto'g'ri formatda. Iltimos qayta urinib ko'ring.");
+    }
     if (Array.isArray(parsed) && parsed.length > 0) {
       return parsed.map((item, index) => ({
         ...item,
         id: index + 1
       })).slice(0, 30);
     }
+    throw new Error("AI bo'sh savol shabloni qaytardi. Qayta urinib ko'ring.");
   } catch (error) {
     console.error("Blueprint AI generation error:", error);
+    throw error; // BUG #7 FIX: caller ga error yetkaziladi
   }
-  return null;
 };
 
 export interface GeneratedQuestion {
@@ -229,17 +238,25 @@ Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
   try {
     const rawText = await executeResilientAiPrompt(prompt);
     const cleanText = cleanJsonText(rawText);
-    const parsed = JSON.parse(cleanText) as GeneratedQuestion[];
+    // BUG #3 FIX: JSON.parse try/catch ichida
+    let parsed: GeneratedQuestion[];
+    try {
+      parsed = JSON.parse(cleanText) as GeneratedQuestion[];
+    } catch (parseErr) {
+      console.error('DiagnosticTest JSON parse xatosi:', parseErr);
+      throw new Error("AI javobi noto'g'ri formatda. Iltimos qayta urinib ko'ring.");
+    }
     if (Array.isArray(parsed) && parsed.length > 0) {
       return parsed.map((item, index) => ({
         ...item,
         blueprintId: blueprint[index]?.id || index + 1
       }));
     }
+    throw new Error("AI bo'sh test qaytardi. Qayta urinib ko'ring.");
   } catch (error) {
     console.error("Diagnostic test AI generation error:", error);
+    throw error; // BUG #7 FIX
   }
-  return null;
 };
 
 export interface GenerateCustomTestParams {
@@ -365,17 +382,25 @@ Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh qo'shmang:
   try {
     const rawText = await executeResilientAiPrompt(prompt);
     const cleanText = cleanJsonText(rawText);
-    const parsed = JSON.parse(cleanText) as CustomGeneratedQuestion[];
+    // BUG #3 FIX: JSON.parse try/catch ichida
+    let parsed: CustomGeneratedQuestion[];
+    try {
+      parsed = JSON.parse(cleanText) as CustomGeneratedQuestion[];
+    } catch (parseErr) {
+      console.error('CustomTest JSON parse xatosi:', parseErr);
+      throw new Error("AI javobi noto'g'ri formatda. Iltimos qayta urinib ko'ring.");
+    }
     if (Array.isArray(parsed) && parsed.length > 0) {
       return parsed.map((item, index) => ({
         ...item,
         id: index + 1
       })).slice(0, questionCount);
     }
+    throw new Error("AI bo'sh test qaytardi. Qayta urinib ko'ring.");
   } catch (error) {
     console.error("Custom test AI generation error:", error);
+    throw error; // BUG #7 FIX
   }
-  return null;
 };
 
 export interface MatrixSubjectItem {
@@ -460,17 +485,25 @@ Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
   try {
     const rawText = await executeResilientAiPrompt(prompt);
     const cleanText = cleanJsonText(rawText);
-    const parsed = JSON.parse(cleanText) as CustomGeneratedQuestion[];
+    // BUG #3 FIX: JSON.parse try/catch ichida
+    let parsed: CustomGeneratedQuestion[];
+    try {
+      parsed = JSON.parse(cleanText) as CustomGeneratedQuestion[];
+    } catch (parseErr) {
+      console.error('MatrixTest JSON parse xatosi:', parseErr);
+      throw new Error("AI javobi noto'g'ri formatda. Iltimos qayta urinib ko'ring.");
+    }
     if (Array.isArray(parsed) && parsed.length > 0) {
       return parsed.map((item, index) => ({
         ...item,
         id: index + 1
       })).slice(0, totalQuestions);
     }
+    throw new Error("AI bo'sh test qaytardi. Qayta urinib ko'ring.");
   } catch (error) {
     console.error("Matrix test AI generation error:", error);
+    throw error; // BUG #7 FIX
   }
-  return null;
 };
 
 export interface ClassAnalysisResult {
@@ -503,9 +536,7 @@ ${JSON.stringify((questions || []).map((q: any) => {
 O'quvchilar:
 ${JSON.stringify((results || []).map(r => ({
   name: r.studentName,
-  score: r.score,
-  totalScore: r.totalScore,
-  pct: Math.round((r.score / (r.totalScore || 1)) * 100)
+  score: Math.round(((r.score || 0) / (r.totalScore || Math.max(r.score || 1, 1))) * 100) // BUG #10 FIX: doim 100% lik shkalada beramiz
 })).slice(0, 15), null, 2)}
 
 QAT'IY JSON obyekti qaytar (faqat JSON, hech qanday qo'shimcha matnsiz):
@@ -514,7 +545,7 @@ QAT'IY JSON obyekti qaytar (faqat JSON, hech qanday qo'shimcha matnsiz):
   "studentBreakdowns": [
     {
       "name": "O'quvchi ismi",
-      "score": 80,
+      "score": 80, // Foizdagi natija (100 dan)
       "feedback": "Qisqa individual tavsiya (1 gap)"
     }
   ],
