@@ -27,19 +27,20 @@ export const generateText = async (req, res) => {
 
     const result = await executeResilientTextGen({
       prompt,
-      systemPrompt: 'You are an educational assistant for teachers. Always provide clear, accurate responses.'
+      systemPrompt: 'You are an educational assistant for teachers. Always respond with valid JSON only, no markdown, no extra text.'
     });
 
-    if (result.success && result.questions && result.questions.length > 0) {
-      return res.json({ text: JSON.stringify(result.questions) });
+    if (!result.success) {
+      return res.status(503).json({ error: result.error || 'AI xizmati vaqtincha mavjud emas.' });
     }
 
-    res.json({ text: result.rawText || "Muvaffaqiyatli bajarildi" });
+    return res.json({ text: result.text });
   } catch (error) {
     console.error('[generateText] Xato:', error.message);
     res.status(500).json({ error: error.message });
   }
 };
+
 
 export const generateVision = async (req, res) => {
   try {

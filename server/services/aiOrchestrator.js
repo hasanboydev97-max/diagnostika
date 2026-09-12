@@ -42,39 +42,53 @@ function markAgentSuccess(agentId) {
  * 3. Groq LPUs (5 models)
  */
 function getAgentCatalog(keys) {
-  const { geminiKey, anthropicKey, groqKey } = keys;
+  const { geminiPaidKey, geminiKey, anthropicKey, groqKey } = keys;
   const agents = [];
 
-  // --- 1. Anthropic Claude Agents ---
-  if (anthropicKey) {
+  // --- 1. Gemini PAID Agents (2000 RPM, billing enabled) — PRIMARY ---
+  // Verified working models: gemini-3.7-flash ✅ gemini-3.5-flash ✅ gemini-3.5-flash-lite ✅
+  if (geminiPaidKey) {
     agents.push(
-      { id: 'anthropic-haiku-4-5', provider: 'anthropic', model: 'claude-haiku-4-5', tier: 'elite-speed', priority: 1 },
-      { id: 'anthropic-sonnet-4-5', provider: 'anthropic', model: 'claude-sonnet-4-5', tier: 'elite-intelligence', priority: 2 },
-      { id: 'anthropic-opus-4-5', provider: 'anthropic', model: 'claude-opus-4-5', tier: 'elite-deep', priority: 3 }
+      { id: 'gemini-paid-3-7-flash',      provider: 'gemini', model: 'gemini-3.7-flash',      apiKey: geminiPaidKey, tier: 'paid-flagship', priority: 1 },
+      { id: 'gemini-paid-3-5-flash',      provider: 'gemini', model: 'gemini-3.5-flash',      apiKey: geminiPaidKey, tier: 'paid-fast',     priority: 2 },
+      { id: 'gemini-paid-3-5-flash-lite', provider: 'gemini', model: 'gemini-3.5-flash-lite', apiKey: geminiPaidKey, tier: 'paid-lite',     priority: 3 }
     );
   }
 
-  // --- 2. Google Gemini Agents ---
+  // --- 2. Gemini FREE Agents (15 RPM) — FALLBACK ---
+  // Verified: gemini-2.5-flash ✅ gemini-flash-lite-latest ✅
   if (geminiKey) {
     agents.push(
-      { id: 'gemini-2-5-flash', provider: 'gemini', model: 'gemini-2.5-flash', tier: 'standard-fast', priority: 1 },
-      { id: 'gemini-3-5-flash-lite', provider: 'gemini', model: 'gemini-3.5-flash-lite', tier: 'standard-lite', priority: 2 }
+      { id: 'gemini-free-2-5-flash',   provider: 'gemini', model: 'gemini-2.5-flash',       apiKey: geminiKey, tier: 'free-standard', priority: 4 },
+      { id: 'gemini-free-flash-lite',  provider: 'gemini', model: 'gemini-flash-lite-latest', apiKey: geminiKey, tier: 'free-lite',    priority: 5 }
     );
   }
 
-  // --- 3. Groq Accelerated Open-Weights Agents ---
+  // --- 3. Anthropic Claude Agents ---
+  if (anthropicKey) {
+    agents.push(
+      { id: 'anthropic-haiku-4-5',  provider: 'anthropic', model: 'claude-haiku-4-5',  tier: 'elite-speed',        priority: 6 },
+      { id: 'anthropic-sonnet-4-5', provider: 'anthropic', model: 'claude-sonnet-4-5', tier: 'elite-intelligence', priority: 7 },
+      { id: 'anthropic-opus-4-5',   provider: 'anthropic', model: 'claude-opus-4-5',   tier: 'elite-deep',         priority: 8 }
+    );
+  }
+
+  // --- 4. Groq Accelerated Open-Weights Agents ---
   if (groqKey) {
     agents.push(
-      { id: 'groq-qwen-3-6', provider: 'groq', model: 'qwen/qwen3.6-27b', tier: 'groq-speed', priority: 1 },
-      { id: 'groq-compound-mini', provider: 'groq', model: 'groq/compound-mini', tier: 'groq-lite', priority: 2 },
-      { id: 'groq-gpt-oss-20b', provider: 'groq', model: 'openai/gpt-oss-20b', tier: 'groq-standard', priority: 3 },
-      { id: 'groq-qwen-3-8', provider: 'groq', model: 'qwen/qwen3.8-27b', tier: 'groq-deep', priority: 4 },
-      { id: 'groq-compound', provider: 'groq', model: 'groq/compound', tier: 'groq-ensemble', priority: 5 }
+      { id: 'groq-llama-4-scout',      provider: 'groq', model: 'meta-llama/llama-4-scout-17b-16e-instruct', tier: 'groq-speed',    priority: 9  },
+      { id: 'groq-llama-3-3-70b',      provider: 'groq', model: 'llama-3.3-70b-versatile',                   tier: 'groq-standard', priority: 10 },
+      { id: 'groq-llama-3-1-8b',       provider: 'groq', model: 'llama-3.1-8b-instant',                      tier: 'groq-lite',     priority: 11 },
+      { id: 'groq-compound-beta',      provider: 'groq', model: 'compound-beta',                              tier: 'groq-deep',     priority: 12 },
+      { id: 'groq-compound-beta-mini', provider: 'groq', model: 'compound-beta-mini',                        tier: 'groq-ensemble', priority: 13 }
     );
   }
 
   return agents;
 }
+
+
+
 
 /**
  * Builds a dynamic, ordered execution pipeline of AI agents based on:
@@ -83,48 +97,60 @@ function getAgentCatalog(keys) {
  * - Guaranteed Fallback (Free users cascade to Groq, and as last-resort to Claude so it NEVER fails)
  */
 export function buildAgentPipeline({ isPremium = false, isVision = false }) {
-  const geminiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-  const anthropicKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
-  const groqKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
+  const geminiPaidKey = process.env.GEMINI_PAID_API_KEY || process.env.VITE_GEMINI_PAID_API_KEY;
+  const geminiKey     = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  const anthropicKey  = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
+  const groqKey       = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
 
-  const allAgents = getAgentCatalog({ geminiKey, anthropicKey, groqKey });
+  const allAgents = getAgentCatalog({ geminiPaidKey, geminiKey, anthropicKey, groqKey });
 
   let pipeline = [];
 
   if (isVision) {
-    // Vision / OCR pipeline: Gemini Flash 2.5 -> Gemini Flash-Lite 3.5 -> Claude Haiku
-    const visionOrder = ['gemini-2-5-flash', 'gemini-3-5-flash-lite', 'anthropic-haiku-4-5'];
+    // Vision: Pullik Gemini 3.7 → 3.5 → Bepul 2.5 Flash → Claude Haiku
+    const visionOrder = [
+      'gemini-paid-3-7-flash',
+      'gemini-paid-3-5-flash',
+      'gemini-free-2-5-flash',
+      'anthropic-haiku-4-5'
+    ];
     pipeline = visionOrder.map(id => allAgents.find(a => a.id === id)).filter(Boolean);
+
   } else if (isPremium) {
-    // Premium Tier: Claude Sonnet -> Claude Haiku -> Gemini 2.5 Flash -> Groq Agents
+    // Premium: Pullik Gemini → Claude Sonnet → Groq → Claude Haiku (emergency)
     const premiumOrder = [
+      'gemini-paid-3-7-flash',
+      'gemini-paid-3-5-flash',
       'anthropic-sonnet-4-5',
       'anthropic-haiku-4-5',
-      'gemini-2-5-flash',
-      'gemini-3-5-flash-lite',
-      'groq-qwen-3-6',
-      'groq-compound-mini',
-      'groq-gpt-oss-20b',
+      'gemini-paid-3-5-flash-lite',
+      'gemini-free-2-5-flash',
+      'groq-llama-4-scout',
+      'groq-llama-3-3-70b',
       'anthropic-opus-4-5'
     ];
     pipeline = premiumOrder.map(id => allAgents.find(a => a.id === id)).filter(Boolean);
+
   } else {
-    // Standard / Free Tier: Gemini 2.5 Flash -> Gemini 3.5 Lite -> Groq Qwen 3.6 -> Groq Compound -> Groq GPT-OSS -> Claude Haiku (Safety net)
+    // Standard/Free: Pullik Gemini → Bepul Gemini → Groq → Claude Haiku (safety net)
     const standardOrder = [
-      'gemini-2-5-flash',
-      'gemini-3-5-flash-lite',
-      'groq-qwen-3-6',
-      'groq-compound-mini',
-      'groq-gpt-oss-20b',
-      'groq-qwen-3-8',
-      'groq-compound',
-      'anthropic-haiku-4-5' // Fail-safe safety net: customer NEVER sees a blank error
+      'gemini-paid-3-7-flash',      // 🥇 pullik flagship
+      'gemini-paid-3-5-flash',      // 🥈 pullik fast
+      'gemini-paid-3-5-flash-lite', // 🥉 pullik lite
+      'gemini-free-2-5-flash',      // bepul fallback
+      'gemini-free-flash-lite',     // bepul lite fallback
+      'groq-llama-4-scout',         // Groq
+      'groq-llama-3-3-70b',
+      'groq-llama-3-1-8b',
+      'groq-compound-beta',
+      'groq-compound-beta-mini',
+      'anthropic-haiku-4-5'         // 🛡️ oxirgi qo'riqchi
     ];
     pipeline = standardOrder.map(id => allAgents.find(a => a.id === id)).filter(Boolean);
   }
 
-  // Sort healthy agents first, cooled-down agents last
-  const healthy = pipeline.filter(a => isAgentHealthy(a.id));
+  // Sog'lom agentlar birinchi, sovutishdagilar oxirgi
+  const healthy    = pipeline.filter(a => isAgentHealthy(a.id));
   const cooledDown = pipeline.filter(a => !isAgentHealthy(a.id));
 
   return [...healthy, ...cooledDown];
@@ -255,9 +281,10 @@ function normalizeQuestions(parsed) {
  * Executes an individual AI agent with a strict timeout (AbortSignal)
  */
 async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22000, temperature = 0.7 }) {
-  const geminiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  // Agent o'zining apiKey ni olib yuradi (pullik/bepul farq qilish uchun)
+  const geminiKey    = agent.apiKey || process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
   const anthropicKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
-  const groqKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
+  const groqKey      = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -300,7 +327,8 @@ async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22
       return data.content?.[0]?.text || '';
 
     } else if (agent.provider === 'groq') {
-      const supportsJsonMode = !agent.model.includes('qwen') && !agent.model.includes('compound');
+      // compound-beta models don't reliably support json_object mode; llama models do
+      const supportsJsonMode = !agent.model.includes('compound');
       // ✅ FIX: Dinamik maxTokens — so'ralgan savollar soniga qarab moslashuvchan.
       // Groq on_demand tier da 1000 OTPM cheklov bor, lekin 950 20 ta savol uchun yetmaydi.
       // Har savol taxminan 120-150 token, overhead 300 token = adaptiv formula.
@@ -481,15 +509,56 @@ export async function executeResilientVisionOCR({ promptText, imageBase64, image
 }
 
 /**
- * Text Generation (e.g. Class Analysis, Feedback) with Multi-Agent Failover
+ * Text Generation (e.g. Class Analysis, Feedback) with Multi-Agent Failover.
+ * Unlike executeResilientQuestionGen, this does NOT validate question structure —
+ * it simply returns the raw AI text so the caller can parse it as needed.
  */
 export async function executeResilientTextGen({ prompt, systemPrompt, isPremium = false }) {
-  const result = await executeResilientQuestionGen({
-    prompt,
-    systemPrompt,
-    aiSchema: { type: 'object', properties: { recommendation: { type: 'string' } } },
-    isPremium
-  });
+  return requestQueue(async () => {
+    const pipeline = buildAgentPipeline({ isPremium });
 
-  return result;
+    if (pipeline.length === 0) {
+      throw new Error("Hech qanday AI agenti sozlanmagan. Iltimos API kalitlarini tekshiring.");
+    }
+
+    let lastError = '';
+    const attemptLog = [];
+
+    for (const agent of pipeline) {
+      const startTime = Date.now();
+      try {
+        console.log(`[AI TextGen] 🚀 Agent ishga tushirildi: ${agent.id} (${agent.provider}/${agent.model})`);
+
+        const rawText = await callAgent(agent, {
+          prompt,
+          systemPrompt,
+          aiSchema: { type: 'object' },
+          timeoutMs: 25000,
+          temperature: 0.5
+        });
+
+        if (!rawText || typeof rawText !== 'string' || rawText.trim().length < 5) {
+          throw new Error("Agent bo'sh javob qaytardi");
+        }
+
+        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+        console.log(`[AI TextGen] ✅ MUVAFFAQIYAT: Agent ${agent.id} (${duration}s) javob qaytardi`);
+
+        markAgentSuccess(agent.id);
+        return { success: true, agentId: agent.id, text: rawText };
+
+      } catch (err) {
+        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+        const errMsg = err.name === 'AbortError' ? '25s Timeout oshib ketdi' : err.message;
+        console.warn(`[AI TextGen] ❌ Agent ${agent.id} muvaffaqiyatsiz (${duration}s): ${errMsg}`);
+
+        markAgentFailure(agent.id, errMsg);
+        lastError = `${agent.id}: ${errMsg}`;
+        attemptLog.push(`${agent.id} (${errMsg})`);
+      }
+    }
+
+    console.error(`[AI TextGen] 💥 Barcha ${pipeline.length} ta agent sinab ko'rildi, hech biri javob bermadi:\n  - ${attemptLog.join('\n  - ')}`);
+    return { success: false, error: lastError, attempts: attemptLog };
+  });
 }

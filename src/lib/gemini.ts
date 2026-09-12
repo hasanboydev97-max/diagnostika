@@ -30,6 +30,27 @@ async function executeResilientAiPrompt(prompt: string): Promise<string> {
 
 function cleanJsonText(rawText: string): string {
   let cleanText = rawText.replace(/```json\n?/gi, '').replace(/```\n?/gi, '').trim();
+  
+  // Find the first { or [ and the last } or ] to extract only the JSON part
+  const firstBrace = cleanText.indexOf('{');
+  const firstBracket = cleanText.indexOf('[');
+  let startIndex = -1;
+  if (firstBrace !== -1 && firstBracket !== -1) {
+    startIndex = Math.min(firstBrace, firstBracket);
+  } else if (firstBrace !== -1) {
+    startIndex = firstBrace;
+  } else if (firstBracket !== -1) {
+    startIndex = firstBracket;
+  }
+  
+  if (startIndex !== -1) {
+    const isObject = cleanText[startIndex] === '{';
+    const lastIndex = cleanText.lastIndexOf(isObject ? '}' : ']');
+    if (lastIndex !== -1 && lastIndex >= startIndex) {
+      cleanText = cleanText.substring(startIndex, lastIndex + 1);
+    }
+  }
+
   cleanText = cleanText.replace(/(?<!\\)\\([^"\\/bfnrt])/g, "\\\\$1");
   cleanText = cleanText.replace(/(?<!\\)\\b(egin|eta|ullet|ar|mod|oldsymbol|f)/g, "\\\\b$1");
   cleanText = cleanText.replace(/(?<!\\)\\f(rac|orall)/g, "\\\\f$1");
@@ -450,4 +471,74 @@ Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
     console.error("Matrix test AI generation error:", error);
   }
   return null;
+};
+
+export interface ClassAnalysisResult {
+  generalIssues: string;
+  studentBreakdowns: { name: string; score: number; feedback: string }[];
+  handbook: { question: string; correctAnswer: string; explanation: string }[];
+}
+
+export const generateClassAnalysis = async (
+  testTitle: string,
+  questions: any[] = [],
+  results: any[] = []
+): Promise<ClassAnalysisResult> => {
+  const prompt = `Sen tajribali metotistsan.
+"${testTitle}" testi bo'yicha sinf natijalari va savollar berilgan. QAT'IY JSON formatda qisqa xulosa ber.
+
+Savollar:
+${JSON.stringify((questions || []).map((q: any) => {
+  let correctText = q.correctOption;
+  if (q.options && q.correctOption) {
+    const idx = q.correctOption.charCodeAt(0) - 65;
+    if (idx >= 0 && idx < q.options.length) correctText = q.options[idx];
+  }
+  return {
+    question: q.questionText || q.topic || 'Nomalum savol',
+    correctAnswer: correctText
+  };
+}).slice(0, 10), null, 2)}
+
+O'quvchilar:
+${JSON.stringify((results || []).map(r => ({
+  name: r.studentName,
+  score: r.score,
+  totalScore: r.totalScore,
+  pct: Math.round((r.score / (r.totalScore || 1)) * 100)
+})).slice(0, 15), null, 2)}
+
+QAT'IY JSON obyekti qaytar (faqat JSON, hech qanday qo'shimcha matnsiz):
+{
+  "generalIssues": "Umumiy muammolar haqida qisqacha 2 gaplik xulosa.",
+  "studentBreakdowns": [
+    {
+      "name": "O'quvchi ismi",
+      "score": 80,
+      "feedback": "Qisqa individual tavsiya (1 gap)"
+    }
+  ],
+  "handbook": [
+    {
+      "question": "Savol",
+      "correctAnswer": "Javob",
+      "explanation": "Nega shu javob to'g'riligi (1 gapda)"
+    }
+  ]
+}
+`;
+
+  const responseText = await executeResilientAiPrompt(prompt);
+  if (!responseText || responseText.trim().length === 0) {
+    throw new Error("AI bo'sh javob qaytardi. Iltimos qayta urinib ko'ring.");
+  }
+
+  const cleaned = cleanJsonText(responseText);
+
+  try {
+    return JSON.parse(cleaned) as ClassAnalysisResult;
+  } catch (parseErr) {
+    console.error('[generateClassAnalysis] JSON parse xatosi. Raw text:', responseText.slice(0, 300));
+    throw new Error("AI javobi noto'g'ri formatda. Iltimos qayta urinib ko'ring.");
+  }
 };
