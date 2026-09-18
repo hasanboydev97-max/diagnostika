@@ -111,12 +111,13 @@ export function sanitizeQuestion(question) {
     cleaned.options = cleaned.options.map(opt => {
       let t = sanitizeMathText(opt);
       // AI ba'zan variantlar boshida *, -, 🔘, ⚪, A), B) kabi belgilarni qo'shib yuboradi.
-      return t.replace(/^[-*•🔘⚪A-D][.)]?\s*/i, '').trim();
+      // Fix: Only strip A-D if followed by . or ) to prevent stripping valid words like "animatsiya"
+      return t.replace(/^([A-D][.)]\s*|[-*•🔘⚪]\s*)/i, '').trim();
     });
   }
   if (cleaned.correctOption) {
     let t = sanitizeMathText(cleaned.correctOption);
-    cleaned.correctOption = t.replace(/^[-*•🔘⚪A-D][.)]?\s*/i, '').trim();
+    cleaned.correctOption = t.replace(/^([A-D][.)]\s*|[-*•🔘⚪]\s*)/i, '').trim();
   }
   if (cleaned.subtopic) {
     let st = String(cleaned.subtopic).trim();
