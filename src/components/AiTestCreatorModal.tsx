@@ -118,7 +118,7 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
               let resolvedCorrect = q.correctOption;
               if (typeof q.correctOption === 'string' && q.options && q.options.length > 0) {
                 const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
-                const cNorm = q.correctOption.toLowerCase().trim();
+                const cNorm = String(q.correctOption).toLowerCase().replace(/[^a-z]/g, '');
                 if (letterMap[cNorm] !== undefined && q.options[letterMap[cNorm]]) {
                   resolvedCorrect = q.options[letterMap[cNorm]];
                 }
@@ -157,7 +157,7 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
             let resolvedCorrect = q.correctOption;
             if (typeof q.correctOption === 'string' && q.options && q.options.length > 0) {
               const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
-              const cNorm = q.correctOption.toLowerCase().trim();
+              const cNorm = String(q.correctOption).toLowerCase().replace(/[^a-z]/g, '');
               if (letterMap[cNorm] !== undefined && q.options[letterMap[cNorm]]) {
                 resolvedCorrect = q.options[letterMap[cNorm]];
               }

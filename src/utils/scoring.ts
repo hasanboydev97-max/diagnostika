@@ -67,7 +67,7 @@ export function isAnswerCorrect(
   // 3. Agar eski bazada correctOpt faqat harf (a, b, c, d) bo'lib saqlangan bo'lsa
   // u holda options massividan mos indeksdagi matn bilan tekshiramiz.
   // Eslatma: userAns hech qachon harf indeksi bo'lmaydi, u har doim to'liq matn.
-  const cNorm = normalize(correctOpt);
+  const cNorm = normalize(correctOpt).replace(/[^a-z]/g, '');
   const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3, e: 4 };
 
   if (letterMap[cNorm] !== undefined && options[letterMap[cNorm]] !== undefined) {

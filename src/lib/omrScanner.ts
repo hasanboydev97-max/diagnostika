@@ -129,10 +129,15 @@ export async function gradeOMRFromImage(
   );
 
   let cleanJson = text.trim();
-  if (cleanJson.startsWith('```json')) {
-    cleanJson = cleanJson.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-  } else if (cleanJson.startsWith('```')) {
-    cleanJson = cleanJson.replace(/^```\s*/, '').replace(/\s*```$/, '');
+  const jsonMatch = cleanJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (jsonMatch) {
+    cleanJson = jsonMatch[1];
+  } else {
+    const firstBrace = cleanJson.indexOf('{');
+    const lastBrace = cleanJson.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
+    }
   }
 
   const parsed = JSON.parse(cleanJson);
@@ -308,7 +313,18 @@ export async function gradeTestFromPhoto(
       imageParts,
       true // requireJson = true
     );
-    const parsed = JSON.parse(responseText);
+    let cleanJson = responseText.trim();
+    const jsonMatch = cleanJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      cleanJson = jsonMatch[1];
+    } else {
+      const firstBracket = cleanJson.indexOf('[');
+      const lastBracket = cleanJson.lastIndexOf(']');
+      if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+        cleanJson = cleanJson.substring(firstBracket, lastBracket + 1);
+      }
+    }
+    const parsed = JSON.parse(cleanJson);
 
     const gradedAnswers: PaperGradingResult['answers'] = questions.map((q, idx) => {
       const found = Array.isArray(parsed) ? parsed.find((item: any) => item.q === idx + 1) : null;

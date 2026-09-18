@@ -93,7 +93,7 @@ O'quvchi xato qilgan spesifik joylar:
 - Qaysi qiyinlikdagi savollarda ko'p xato qildi: ${failedDifficulties || 'Hech qaysi'}
 
 Vazifa:
-Iltimos, javobni faqat va faqat quyidagi JSON formatida qaytaring, boshqa hech qanday izoh qo'shmang. Tahlilda o'quvchining KOGNITIV KO'NIKMALARIGA (masalan, "Yodlash zo'r, lekin tahlil qilish yo'q" yoki "Sintezlash ko'nikmasi ustida ishlash kerak") alohida chuqur urg'u bering:
+Iltimos, javobni faqat va faqat quyidagi JSON formatida qaytaring, boshqa hech qanday izoh qo'shmang. Tahlilda o'quvchining KOGNITIV KO'NIKMALARIGA (masalan, "Yodlash zo'r, lekin tahlil qilish yo'q") alohida chuqur urg'u bering. Matn ichida hech qachon qochirilmagan qo'shtirnoq (") ishlatmang, uning o'rniga yakkalik qo'shtirnoq (') ishlating:
 {
   "summary": "O'quvchining kuchli va zaif tomonlari (qaysi mavzular va ko'nikmalarda oqsagani), umumiy intellektual profili haqida 3-4 gapdan iborat chuqur tahlil (o'zbek tilida).",
   "advice": "O'quvchi o'zini qanday rivojlantirishi kerakligi, xato qilgan mavzularini qanday to'g'rilashi haqida amaliy, motivatsion 3-4 gapdan iborat maslahat (o'zbek tilida).",
@@ -543,7 +543,7 @@ ${JSON.stringify((results || []).map(r => ({
   score: Math.round(((r.score || 0) / (r.totalScore || Math.max(r.score || 1, 1))) * 100) // BUG #10 FIX: doim 100% lik shkalada beramiz
 })).slice(0, 15), null, 2)}
 
-QAT'IY JSON obyekti qaytar (faqat JSON, hech qanday qo'shimcha matnsiz):
+QAT'IY JSON obyekti qaytar (faqat JSON, hech qanday matn qo'shmang). Matn ichida hech qachon qochirilmagan qo'shtirnoq (") ishlatmang, faqat yakkalik (') ishlating:
 {
   "generalIssues": "Umumiy muammolar haqida qisqacha 2 gaplik xulosa.",
   "studentBreakdowns": [

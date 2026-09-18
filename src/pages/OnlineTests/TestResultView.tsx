@@ -455,14 +455,14 @@ export default function TestResultView() {
                           
                           // correctRef harf (a/b/c/d) bo'lsa
                           const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3, e: 4 };
-                          const correctIdx = letterMap[String(correctRef).toLowerCase().trim()];
+                          const correctIdx = letterMap[String(correctRef).toLowerCase().replace(/[^a-z]/g, '')];
                           if (correctIdx !== undefined) {
                             const correctText = String((q.options || [])[correctIdx] ?? '');
                             if (correctText && isEqual(String(opt), correctText)) return true;
                           }
                           
                           // opt o'zi harf bo'lsa
-                          const optIdx = letterMap[String(opt).toLowerCase().trim()];
+                          const optIdx = letterMap[String(opt).toLowerCase().replace(/[^a-z]/g, '')];
                           if (optIdx !== undefined) {
                             const optText = String((q.options || [])[optIdx] ?? '');
                             if (optText && isEqual(optText, String(correctRef))) return true;
