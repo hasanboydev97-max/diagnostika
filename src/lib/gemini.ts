@@ -196,7 +196,7 @@ export const generateDiagnosticTest = async (blueprint: QuestionBlueprint[], gra
 
 Har bir savolda:
 - Savol matni (aniq, tushunarli, ${grade}-sinf darajasida)
-- 4 ta javob varianti (A, B, C, D)
+- 4 ta javob varianti (ularning boshiga A, B, C, D deb yozmang, faqat javob matnini o'zini yozing)
 - To'g'ri javob belgisi (faqat "A", "B", "C" yoki "D")
 - Qisqa tushuntirish
 
@@ -230,7 +230,7 @@ Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
   {
     "blueprintId": 1,
     "questionText": "Savol matni...",
-    "options": ["A variant", "B variant", "C variant", "D variant"],
+    "options": ["1-variant matni", "2-variant matni", "3-variant matni", "4-variant matni"],
     "correctOption": "A",
     "explanation": "Tushuntirish..."
   }
@@ -361,7 +361,7 @@ TEXNIK VA FORMATLASH QOIDALARI:
 
 Har bir savolda quyidagilar bo'lishi shart:
 - Savol matni (aniq, tushunarli, chuqur ma'noli va mutlaqo xatosiz)
-- 4 ta javob varianti (A, B, C, D)
+- 4 ta javob varianti (ularning boshiga A, B, C, D deb yozmang, faqat javob matnini o'zini yozing)
 - To'g'ri javob ko'rsatkichi (faqat "A", "B", "C" yoki "D")
 - Kategoriya (fan nomi)
 - Qiyinchilik: "Oson", "O'rta" yoki "Qiyin"
@@ -373,7 +373,7 @@ Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh qo'shmang:
   {
     "id": 1,
     "questionText": "Savol matni...",
-    "options": ["A variant", "B variant", "C variant", "D variant"],
+    "options": ["1-variant matni", "2-variant matni", "3-variant matni", "4-variant matni"],
     "correctOption": "A",
     "category": "${subject}",
     "difficulty": "${difficulty === 'Aralash' ? 'O\'rta' : difficulty}",
@@ -477,7 +477,7 @@ Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
   {
     "id": 1,
     "questionText": "Savol matni...",
-    "options": ["A variant", "B variant", "C variant", "D variant"],
+    "options": ["1-variant matni", "2-variant matni", "3-variant matni", "4-variant matni"],
     "correctOption": "A",
     "category": "Matematika",
     "difficulty": "Oson",
