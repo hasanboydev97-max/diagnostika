@@ -66,6 +66,12 @@ export default function FormattedText({ content, className = '' }: FormattedText
         components={{
           // Matn savol/variant ichida bitta qatorda (yoki mos paragraphda) qolishi uchun
           p: ({ children }) => <span className="inline-block">{children}</span>,
+          h1: ({ children }) => <span className="inline-block font-bold text-lg">{children || '#'}</span>,
+          h2: ({ children }) => <span className="inline-block font-bold text-md">{children || '##'}</span>,
+          h3: ({ children }) => <span className="inline-block font-bold">{children || '###'}</span>,
+          h4: ({ children }) => <span className="inline-block font-semibold">{children || '####'}</span>,
+          h5: ({ children }) => <span className="inline-block font-semibold">{children || '#####'}</span>,
+          h6: ({ children }) => <span className="inline-block font-semibold">{children || '######'}</span>,
           // Informatika uchun inline kod bloki
           code: ({ children, ...props }) => (
             <code className="bg-zinc-100 text-pink-600 px-1.5 py-0.5 rounded text-[0.9em] font-mono border border-zinc-200" {...props}>

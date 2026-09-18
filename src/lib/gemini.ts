@@ -209,6 +209,7 @@ ASOSIY QOIDALAR (Majburiy):
 3. DISTRAKTORLAR SIFATI: Noto'g'ri variantlar (distraktorlar) mantiqan yaqin, lekin aniq noto'g'ri bo'lsin. Tasodifiy emas, balki tipik xatoni aks ettirsin. Barcha variantlar bir-biridan farq qilsin.
 4. TUSHUNISHNI TEKSHIRING: Berilgan ma'lumotni shunchaki qaytarib so'raydigan yuzaki savollardan qoching.
 5. NOYOB KO'NIKMA: Savollar matni, sonlar, muammolar va variantlar 100% noyob bo'lishi KAFOLATLANSIN. Hech bir savol boshqasini takrorlamasin!
+6. KOD VA TEGLAR FORMATI: Har qanday dasturlash kodi, HTML teglar (masalan <h1>, <p>), CSS selektorlar (#, .) va maxsus simvollar mutlaqo backtick (\`) ichiga olinishi shart (masalan: \`<h1>\`, \`#menu\`). Yalang'och HTML teglar yozish qat'iyan man etiladi. Barcha kodlar sintaktik jihatdan 100% xatosiz bo'lsin.
 
 O'Z-O'ZINI TEKSHIRISH (Self-Review):
 1. Bu savolning faqat bitta to'g'ri javobi bormi?
@@ -313,11 +314,12 @@ FAN BO'YICHA MAXSUS KO'RSATMA (INGLIZ TILI):
 FAN BO'YICHA MAXSUS KO'RSATMA (RUS TILI):
 - Savollar va javob variantlari toza Rus tilida (Кириллица) yozilsin.
 - Грамматика (Падежи, Склонения, Спряжения глаголов, Орфография) va Лексика bo'yicha aniq savollar tuzilsin.`;
-  } else if (subLower.includes('informatika') || subLower.includes('it')) {
+  } else if (subLower.includes('informatika') || subLower.includes('it') || subLower.includes('web') || subLower.includes('dasturlash')) {
     subjectSpecificRules = `
-FAN BO'YICHA MAXSUS KO'RSATMA (INFORMATIKA):
-- MS Excel formulalari (=SUM(), =AVERAGE()), Mantiqiy amallar (AND, OR, NOT), Algoritmlar, Dasturlash (Python/Pascal) va Ma'lumot hajmlari (Bayt, KB, MB) bo'yicha savollar tuzilsin.
-- Formulalar yoki koddagi matematik amallarni backtick yoki \`$$\` ichida emas, toza text yoki $...$ formatida yozing.`;
+FAN BO'YICHA MAXSUS KO'RSATMA (INFORMATIKA VA DASTURLASH):
+- Tarmoqlar, Dasturlash (Python/C++/JS), Web texnologiyalar (HTML/CSS) va Algoritmlar bo'yicha yuqori sifatli savollar tuzilsin.
+- Dasturlash kodlari, HTML teglar, CSS selektorlar va maxsus simvollar (masalan <p>, <h1>, #, ., &, body) MUTLAQO kod formati uchun backtick (\`) ichida yozilishi shart (masalan \`<h1>\`, \`#menu\`, \`&\`).
+- HTML/CSS yoki kodlarda hech qanday sintaksis xatosi bo'lmasin, barcha kodlar ideal va real dasturlash standartlariga javob bersin.`;
   } else if (subLower.includes('matematika') || subLower.includes('math')) {
     subjectSpecificRules = `
 FAN BO'YICHA MAXSUS KO'RSATMA (MATEMATIKA):
@@ -340,6 +342,7 @@ ASOSIY QOIDALAR (Majburiy):
 3. TUSHUNISHNI TEKSHIRING: O'quvchini tahlil qilishga majbur qiling, yuzaki va yodlangan faktlarni quruq so'rashdan qoching.
 4. XATOSIZLIK VA ANIKLIK: Barcha faktlar, formulalar va ma'lumotlar 100% ilmiy to'g'ri va aniq bo'lishi KAFOLATLANSIN.
 5. NOYOB KO'NIKMA: Savollar matni, sonlar, muammolar va variantlar 100% noyob bo'lishi KAFOLATLANSIN. Hech bir savol boshqasini takrorlamasin!
+6. KOD VA TEGLAR FORMATI: Har qanday dasturlash kodi, HTML teglar (masalan <h1>, <p>), CSS selektorlar (#, .) va maxsus simvollar mutlaqo backtick (\`) ichiga olinishi shart (masalan: \`<h1>\`, \`#menu\`). Yalang'och HTML teglar yozish qat'iyan man etiladi. Barcha kodlar sintaktik jihatdan 100% xatosiz bo'lsin.
 
 O'Z-O'ZINI TEKSHIRISH (Self-Review):
 1. Bu savolning faqat bitta to'g'ri javobi bormi?
@@ -452,6 +455,7 @@ ASOSIY QOIDALAR (Majburiy):
 3. TUSHUNISHNI TEKSHIRING: O'quvchini tahlil qilishga majbur qiling, yuzaki va yodlangan faktlarni quruq so'rashdan qoching.
 4. MOSLIK: Har bir savol tegishli faniga ("category") va ko'rsatilgan qiyinlik darajasiga ("difficulty") aniq mos kelsin. Savollar ${language} tilida bo'lsin.
 5. NOYOB KO'NIKMA: Savollar matni, sonlar, muammolar va variantlar 100% noyob bo'lishi KAFOLATLANSIN. Hech bir savol boshqasini takrorlamasin!
+6. KOD VA TEGLAR FORMATI: Har qanday dasturlash kodi, HTML teglar (masalan <h1>, <p>), CSS selektorlar (#, .) va maxsus simvollar mutlaqo backtick (\`) ichiga olinishi shart (masalan: \`<h1>\`, \`#menu\`). Yalang'och HTML teglar yozish qat'iyan man etiladi. Barcha kodlar sintaktik jihatdan 100% xatosiz bo'lsin.
 
 O'Z-O'ZINI TEKSHIRISH (Self-Review):
 1. Bu savolning faqat bitta to'g'ri javobi bormi?

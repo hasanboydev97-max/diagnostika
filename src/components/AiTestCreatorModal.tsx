@@ -114,17 +114,27 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
             language
           });
           if (res) {
-            questions = res.map((q, idx) => ({
-              blueprintId: q.id || idx + 1,
-              questionText: q.questionText,
-              options: q.options,
-              correctOption: q.correctOption,
-              explanation: q.explanation,
-              category: q.category || actualSubject,
-              difficulty: q.difficulty || (simpleDifficulty === 'Aralash' ? 'O\'rta' : simpleDifficulty),
-              skill: q.skill || 'Tushunish',
-              thinkingType: 'Analitik'
-            }));
+            questions = res.map((q, idx) => {
+              let resolvedCorrect = q.correctOption;
+              if (typeof q.correctOption === 'string' && q.options && q.options.length > 0) {
+                const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
+                const cNorm = q.correctOption.toLowerCase().trim();
+                if (letterMap[cNorm] !== undefined && q.options[letterMap[cNorm]]) {
+                  resolvedCorrect = q.options[letterMap[cNorm]];
+                }
+              }
+              return {
+                blueprintId: q.id || idx + 1,
+                questionText: q.questionText,
+                options: q.options,
+                correctOption: resolvedCorrect,
+                explanation: q.explanation,
+                category: q.category || actualSubject,
+                difficulty: q.difficulty || (simpleDifficulty === 'Aralash' ? 'O\'rta' : simpleDifficulty),
+                skill: q.skill || 'Tushunish',
+                thinkingType: 'Analitik'
+              };
+            });
           }
         }
       } else {
@@ -143,17 +153,27 @@ export default function AiTestCreatorModal({ initialGrade, blueprint, onClose, t
         });
 
         if (res) {
-          questions = res.map((q, idx) => ({
-            blueprintId: q.id || idx + 1,
-            questionText: q.questionText,
-            options: q.options,
-            correctOption: q.correctOption,
-            explanation: q.explanation,
-            category: q.category || selectedSubjects[0]?.subject || 'Matematika',
-            difficulty: q.difficulty || 'O\'rta',
-            skill: q.skill || 'Tushunish',
-            thinkingType: 'Mantiqiy'
-          }));
+          questions = res.map((q, idx) => {
+            let resolvedCorrect = q.correctOption;
+            if (typeof q.correctOption === 'string' && q.options && q.options.length > 0) {
+              const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
+              const cNorm = q.correctOption.toLowerCase().trim();
+              if (letterMap[cNorm] !== undefined && q.options[letterMap[cNorm]]) {
+                resolvedCorrect = q.options[letterMap[cNorm]];
+              }
+            }
+            return {
+              blueprintId: q.id || idx + 1,
+              questionText: q.questionText,
+              options: q.options,
+              correctOption: resolvedCorrect,
+              explanation: q.explanation,
+              category: q.category || selectedSubjects[0]?.subject || 'Matematika',
+              difficulty: q.difficulty || 'O\'rta',
+              skill: q.skill || 'Tushunish',
+              thinkingType: 'Mantiqiy'
+            };
+          });
         }
       }
 

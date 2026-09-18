@@ -427,15 +427,21 @@ export default function TestResultView() {
                         // 1. O'quvchi aynan shu variantni tanlaganmi?
                         let isStudentChoice = false;
                         if (studentAns !== undefined) {
-                          const sAns = String(studentAns).trim().toLowerCase();
+                          // Handle OMR object case: { q: 1, ans: 'A' }
+                          let extractedAns = studentAns;
+                          if (typeof studentAns === 'object' && studentAns !== null) {
+                            extractedAns = studentAns.ans || '';
+                          }
+                          const sAns = String(extractedAns).trim().toLowerCase();
+                          
                           // Agar javob a, b, c, d shaklida saqlangan bo'lsa
-                          if (['a', 'b', 'c', 'd'].includes(sAns)) {
-                            const choiceIndex = ['a', 'b', 'c', 'd'].indexOf(sAns);
+                          if (['a', 'b', 'c', 'd', 'e'].includes(sAns)) {
+                            const choiceIndex = ['a', 'b', 'c', 'd', 'e'].indexOf(sAns);
                             if (choiceIndex === oIndex) isStudentChoice = true;
                           }
                           // To'liq matn sifatida saqlangan bo'lsa
                           if (!isStudentChoice) {
-                            isStudentChoice = isEqual(String(studentAns), String(opt));
+                            isStudentChoice = isEqual(String(extractedAns), String(opt));
                           }
                         }
 
@@ -448,7 +454,7 @@ export default function TestResultView() {
                           if (isEqual(String(opt), String(correctRef))) return true;
                           
                           // correctRef harf (a/b/c/d) bo'lsa
-                          const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
+                          const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3, e: 4 };
                           const correctIdx = letterMap[String(correctRef).toLowerCase().trim()];
                           if (correctIdx !== undefined) {
                             const correctText = String((q.options || [])[correctIdx] ?? '');

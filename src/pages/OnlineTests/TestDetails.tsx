@@ -130,7 +130,18 @@ export default function TestDetails() {
     const keyMap: Record<number, string> = {};
     const optionLetters = ['A', 'B', 'C', 'D', 'E'];
     test.questions.forEach((q: any, idx: number) => {
-      const optIdx = typeof q.correctOption === 'number' ? q.correctOption : 0;
+      let optIdx = 0;
+      if (typeof q.correctOption === 'number') {
+        optIdx = q.correctOption;
+      } else if (typeof q.correctOption === 'string') {
+        if (['a', 'b', 'c', 'd', 'e'].includes(q.correctOption.toLowerCase().trim())) {
+          const map: Record<string, number> = { a: 0, b: 1, c: 2, d: 3, e: 4 };
+          optIdx = map[q.correctOption.toLowerCase().trim()];
+        } else if (Array.isArray(q.options)) {
+          const foundIdx = q.options.findIndex((opt: string) => opt.trim() === q.correctOption.trim());
+          if (foundIdx !== -1) optIdx = foundIdx;
+        }
+      }
       keyMap[idx + 1] = optionLetters[optIdx] || 'A';
     });
     return keyMap;

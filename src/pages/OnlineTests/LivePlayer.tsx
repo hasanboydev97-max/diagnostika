@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -139,7 +139,7 @@ export default function LivePlayer() {
     setHasAnswered(true);
     const question = test.questions[currentQuestionIndex];
     const selectedOption = question.options[optionIndex];
-    const isCorrect = isAnswerCorrect(selectedOption, question.correctOption, question.options || []);
+    const isCorrect = isAnswerCorrect(selectedOption, question.correctOption, question.options || [], question.correctAnswerText);
     setIsCorrectLast(isCorrect);
     socketRef.current?.emit('submit_answer', {
       pin: joinDataRef.current?.pin || pin,

@@ -234,7 +234,7 @@ export default function DuelPlayer() {
     const question = test.questions[currentQIndex];
     const selectedOption = question.options[optionIndex];
     // ✅ DRY: umumiy scoring utility ishlatiladi — harf (a/b/c/d) ham, matn ham to'g'ri aniqlaydi
-    const isCorrect = isAnswerCorrect(selectedOption, question.correctOption, question.options || []);
+    const isCorrect = isAnswerCorrect(selectedOption, question.correctOption, question.options || [], question.correctAnswerText);
     
     const newScore = isCorrect ? myScore + 1 : myScore;
     if (isCorrect) setMyScore(newScore);

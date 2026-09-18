@@ -190,10 +190,21 @@ export default function TakeTest() {
           return shuffled;
         };
         
-        fetchedTest.questions = shuffleArray(fetchedTest.questions).map((q: any) => ({
-          ...q,
-          options: Array.isArray(q.options) ? shuffleArray(q.options) : q.options
-        }));
+        fetchedTest.questions = shuffleArray(fetchedTest.questions).map((q: any) => {
+          let correctAnswerText = q.correctOption;
+          if (typeof q.correctOption === 'string' && q.options && q.options.length > 0) {
+            const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
+            const cNorm = q.correctOption.toLowerCase().trim();
+            if (letterMap[cNorm] !== undefined && q.options[letterMap[cNorm]] !== undefined) {
+              correctAnswerText = q.options[letterMap[cNorm]];
+            }
+          }
+          return {
+            ...q,
+            correctAnswerText,
+            options: Array.isArray(q.options) ? shuffleArray(q.options) : q.options
+          };
+        });
       }
 
       setTest(fetchedTest);
@@ -404,7 +415,7 @@ export default function TakeTest() {
           };
         });
         test.questions.forEach((q: any, i: number) => {
-          questionResults[blueprint[i].id] = isAnswerCorrect(currentAnswers[i], q.correctOption, q.options || []);
+          questionResults[blueprint[i].id] = isAnswerCorrect(currentAnswers[i], q.correctOption, q.options || [], q.correctAnswerText);
         });
         const categories = [...new Set(blueprint.map((q: any) => q.category))] as string[];
         const scores: Record<string, number> = {};
@@ -434,7 +445,7 @@ export default function TakeTest() {
         // Prepare questions with meta and calculate correct count for the teacher view
         let correctAnswersCount = 0;
         const questionsWithMeta = test.questions.map((q: any, i: number) => {
-          const isCorrect = isAnswerCorrect(currentAnswers[i], q.correctOption, q.options || []);
+          const isCorrect = isAnswerCorrect(currentAnswers[i], q.correctOption, q.options || [], q.correctAnswerText);
           if (isCorrect) correctAnswersCount++;
           return q;
         });
@@ -494,7 +505,7 @@ export default function TakeTest() {
     // Regular test path
     let score = 0;
     const questionsWithMeta = test.questions.map((q: any, i: number) => {
-      const isCorrect = isAnswerCorrect(currentAnswers[i], q.correctOption, q.options || []);
+      const isCorrect = isAnswerCorrect(currentAnswers[i], q.correctOption, q.options || [], q.correctAnswerText);
       if (isCorrect) score++;
       return q;
     });

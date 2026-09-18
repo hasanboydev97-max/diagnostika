@@ -20,19 +20,30 @@ export function stripHtmlTags(s: string): string {
   return normalize(s).replace(/<[^>]*>/g, '').trim();
 }
 
-// Asosiy taqqoslash mantiqi (Senior Level)
 export function isEqual(ans1: string, ans2: string): boolean {
-  const stripped1 = stripHtmlTags(ans1);
-  const stripped2 = stripHtmlTags(ans2);
+  const n1 = normalize(ans1);
+  const n2 = normalize(ans2);
 
-  // Agar ikkala javob ham sof HTML teglardan iborat bo'lsa (masalan <link href="...">)
-  // stripHtmlTags ularni bo'sh string ("") qilib qo'yadi.
-  // Bu holatda ularning asl (tozalanmagan) qiymatlarini normalizatsiya qilib taqqoslaymiz.
-  if (stripped1 === '' && stripped2 === '') {
-    return normalize(ans1) === normalize(ans2);
+  if (n1 === n2) return true;
+
+  const s1 = stripHtmlTags(ans1);
+  const s2 = stripHtmlTags(ans2);
+
+  // Agar ikkala matnda ham HTML teglar (yoki unga o'xshash qavslar) qatnashgan bo'lsa
+  // va ularning toza matni har xil bo'lsa (n1 !== n2), ular turlicha javob variantlaridir (masalan <h1> va <h2>)
+  const hasTag1 = /<[^>]+>/.test(ans1);
+  const hasTag2 = /<[^>]+>/.test(ans2);
+  
+  if (hasTag1 && hasTag2) {
+    return false;
   }
 
-  return stripped1 === stripped2;
+  // Agar s1 va s2 teng bo'lsa va tozalangan matn bo'sh/faqat tinish belgisi bo'lmasa:
+  if (s1 === s2 && s1.replace(/[^a-z0-9]/gi, '').length > 0) {
+    return true;
+  }
+
+  return false;
 }
 
 /**
@@ -53,19 +64,14 @@ export function isAnswerCorrect(
   // 2. To'g'ridan-to'g'ri matn taqqoslash
   if (isEqual(userAns, correctOpt)) return true;
 
-  // 3. Harf indeksi orqali options dan matn olib taqqoslash
-  const uNorm = normalize(userAns);
+  // 3. Agar eski bazada correctOpt faqat harf (a, b, c, d) bo'lib saqlangan bo'lsa
+  // u holda options massividan mos indeksdagi matn bilan tekshiramiz.
+  // Eslatma: userAns hech qachon harf indeksi bo'lmaydi, u har doim to'liq matn.
   const cNorm = normalize(correctOpt);
-  const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
+  const letterMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3, e: 4 };
 
-  // correctOpt harf bo'lsa → options dan to'g'ri matnni topib taqqosla
   if (letterMap[cNorm] !== undefined && options[letterMap[cNorm]] !== undefined) {
     if (isEqual(userAns, options[letterMap[cNorm]])) return true;
-  }
-
-  // userAns harf bo'lsa → options dan o'quvchi matni topib to'g'ri bilan taqqosla
-  if (letterMap[uNorm] !== undefined && options[letterMap[uNorm]] !== undefined) {
-    if (isEqual(options[letterMap[uNorm]], correctOpt)) return true;
   }
 
   return false;
