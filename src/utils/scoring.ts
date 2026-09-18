@@ -39,7 +39,7 @@ export function isEqual(ans1: string, ans2: string): boolean {
   }
 
   // Agar s1 va s2 teng bo'lsa va tozalangan matn bo'sh/faqat tinish belgisi bo'lmasa:
-  if (s1 === s2 && s1.replace(/[^a-z0-9]/gi, '').length > 0) {
+  if (s1 === s2 && s1.replace(/[^\p{L}\p{N}]/gu, '').length > 0) {
     return true;
   }
 

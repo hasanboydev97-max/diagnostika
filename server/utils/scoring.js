@@ -23,12 +23,26 @@ function stripHtmlTags(s) {
 
 // Asosiy taqqoslash mantiqi
 function isEqual(ans1, ans2) {
-  const stripped1 = stripHtmlTags(ans1);
-  const stripped2 = stripHtmlTags(ans2);
-  if (stripped1 === '' && stripped2 === '') {
-    return normalize(ans1) === normalize(ans2);
+  const n1 = normalize(ans1);
+  const n2 = normalize(ans2);
+
+  if (n1 === n2) return true;
+
+  const s1 = stripHtmlTags(ans1);
+  const s2 = stripHtmlTags(ans2);
+
+  const hasTag1 = /<[^>]+>/.test(ans1 || '');
+  const hasTag2 = /<[^>]+>/.test(ans2 || '');
+  
+  if (hasTag1 && hasTag2) {
+    return false;
   }
-  return stripped1 === stripped2;
+
+  if (s1 === s2 && s1.replace(/[^\p{L}\p{N}]/gu, '').length > 0) {
+    return true;
+  }
+
+  return false;
 }
 
 /**
@@ -39,9 +53,9 @@ export function isAnswerCorrect(userAns, correctOpt, options = []) {
 
   if (isEqual(userAns, correctOpt)) return true;
 
-  const uNorm = normalize(userAns);
-  const cNorm = normalize(correctOpt);
-  const letterMap = { a: 0, b: 1, c: 2, d: 3 };
+  const uNorm = normalize(userAns).replace(/[^a-z]/g, '');
+  const cNorm = normalize(correctOpt).replace(/[^a-z]/g, '');
+  const letterMap = { a: 0, b: 1, c: 2, d: 3, e: 4 };
 
   if (letterMap[cNorm] !== undefined && options[letterMap[cNorm]] !== undefined) {
     if (isEqual(userAns, options[letterMap[cNorm]])) return true;
