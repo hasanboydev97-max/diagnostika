@@ -193,7 +193,12 @@ export function sanitizeAndParseJSON(rawText) {
   }
 
   // LaTeX backslash ni escape qilish (JSON sintaksisi buzilmasligi uchun)
-  const safeJson = cleaned.replace(/(?<!\\)\\(?!["\\/bfnrtu]|u[0-9a-fA-F]{4})/g, '\\\\');
+  let safeJson = cleaned.replace(/(?<!\\)\\(?!["\\/bfnrtu]|u[0-9a-fA-F]{4})/g, '\\\\');
+  safeJson = safeJson.replace(/(?<!\\)\\b(egin|eta|ullet|ar|mod|oldsymbol|f)/g, "\\\\b$1");
+  safeJson = safeJson.replace(/(?<!\\)\\f(rac|orall)/g, "\\\\f$1");
+  safeJson = safeJson.replace(/(?<!\\)\\r(ight|ho|angle|m)/g, "\\\\r$1");
+  safeJson = safeJson.replace(/(?<!\\)\\t(an|ext|imes|o|riangle|heta|ilde)/g, "\\\\t$1");
+  safeJson = safeJson.replace(/(?<!\\)\\n(u|abla|eq|eg|exists)/g, "\\\\n$1");
 
   // Birinchi parse urinishi
   try {
