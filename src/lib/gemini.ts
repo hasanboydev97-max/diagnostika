@@ -214,7 +214,7 @@ ASOSIY QOIDALAR (Majburiy):
 O'Z-O'ZINI TEKSHIRISH (Self-Review):
 1. Bu savolning faqat bitta to'g'ri javobi bormi?
 2. Savol matni ko'p ma'nolimi?
-3. Kalit javob 100% mosmi?
+3. Kalit javob 100% mosmi? (Agar Excel, MS Word yoki Matematik/Mantiqiy savol bo'lsa, qator/ustun/harf/raqamlarni adashtirmasdan 100% ishonch hosil qiling).
 4. Matematik ifodalar qat'iy $...$ va to'g'ri LaTeX escape (masalan \\sqrt) bilan yozildimi? Xato (sqrt2 kabi) yozilmadimi?
 Agar kamchilik topsangiz, uni darhol to'g'rilab JSONga kiriting.
 
@@ -317,9 +317,9 @@ FAN BO'YICHA MAXSUS KO'RSATMA (RUS TILI):
   } else if (subLower.includes('informatika') || subLower.includes('it') || subLower.includes('web') || subLower.includes('dasturlash')) {
     subjectSpecificRules = `
 FAN BO'YICHA MAXSUS KO'RSATMA (INFORMATIKA VA DASTURLASH):
-- Tarmoqlar, Dasturlash (Python/C++/JS), Web texnologiyalar (HTML/CSS) va Algoritmlar bo'yicha yuqori sifatli savollar tuzilsin.
-- Dasturlash kodlari, HTML teglar, CSS selektorlar va maxsus simvollar (masalan <p>, <h1>, #, ., &, body) MUTLAQO kod formati uchun backtick (\`) ichida yozilishi shart (masalan \`<h1>\`, \`#menu\`, \`&\`).
-- HTML/CSS yoki kodlarda hech qanday sintaksis xatosi bo'lmasin, barcha kodlar ideal va real dasturlash standartlariga javob bersin.`;
+- Tarmoqlar, Dasturlash (Python/C++/JS), Web texnologiyalar (HTML/CSS) va MS Office (Excel, Word) bo'yicha yuqori sifatli savollar tuzilsin.
+- Dasturlash kodlari, HTML teglar, CSS selektorlar va maxsus simvollar mutlaqo backtick (\`) ichida yozilishi shart.
+- Diqqat! MS Excel savollarida ustunlar harflar (A=1, B=2, C=3, D=4, E=5, F=6, G=7) va satrlar raqamlar (1, 2, 3) bilan belgilanishini adashtirmang (Masalan, 4-ustun va 7-satr bu G4 emas, balki D7). Barcha faktlarni 100% to'g'riligini tasdiqlang.`;
   } else if (subLower.includes('matematika') || subLower.includes('math')) {
     subjectSpecificRules = `
 FAN BO'YICHA MAXSUS KO'RSATMA (MATEMATIKA):
@@ -347,7 +347,7 @@ ASOSIY QOIDALAR (Majburiy):
 O'Z-O'ZINI TEKSHIRISH (Self-Review):
 1. Bu savolning faqat bitta to'g'ri javobi bormi?
 2. Savol matni ko'p ma'nolimi?
-3. Kalit javob 100% mosmi?
+3. Kalit javob 100% mosmi? (Agar Excel, MS Word yoki Matematik/Mantiqiy savol bo'lsa, qator/ustun/harf/raqamlarni adashtirmasdan 100% ishonch hosil qiling).
 4. Matematik ifodalar qat'iy $...$ va to'g'ri LaTeX escape (masalan \\sqrt) bilan yozildimi? Xato (sqrt2 kabi) yozilmadimi?
 Agar kamchilik topsangiz, uni darhol to'g'rilab JSONga kiriting.
 
@@ -460,7 +460,7 @@ ASOSIY QOIDALAR (Majburiy):
 O'Z-O'ZINI TEKSHIRISH (Self-Review):
 1. Bu savolning faqat bitta to'g'ri javobi bormi?
 2. Savol matni ko'p ma'nolimi?
-3. Kalit javob 100% mosmi?
+3. Kalit javob 100% mosmi? (Agar Excel, MS Word yoki Matematik/Mantiqiy savol bo'lsa, qator/ustun/harf/raqamlarni adashtirmasdan 100% ishonch hosil qiling).
 4. Matematik ifodalar qat'iy $...$ va to'g'ri LaTeX escape (masalan \\sqrt) bilan yozildimi? Xato (sqrt2 kabi) yozilmadimi?
 Agar kamchilik topsangiz, uni darhol to'g'rilab JSONga kiriting.
 
