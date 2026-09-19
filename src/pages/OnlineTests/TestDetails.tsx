@@ -792,7 +792,9 @@ export default function TestDetails() {
                     <Scan size={20} className="text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="text-sm sm:text-base font-semibold tracking-tight text-neutral-900 leading-tight line-clamp-1">Qog'ozdagi Testlarni Tekshirish</h3>
+                    <h3 className="text-sm sm:text-base font-semibold tracking-tight text-neutral-900 leading-tight line-clamp-1">
+                      Qog'ozdagi Testlarni Tekshirish <span className="text-emerald-600 text-[10px] ml-1 bg-emerald-100 px-2 py-0.5 rounded-full relative -top-0.5">v2.1</span>
+                    </h3>
                     <p className="text-[10px] sm:text-xs text-neutral-500 font-medium mt-0.5 line-clamp-1">
                       Test: <span className="font-bold text-neutral-800">"{test.title}"</span> ({test.questions?.length} ta savol kaliti)
                     </p>
