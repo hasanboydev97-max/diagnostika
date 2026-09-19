@@ -756,31 +756,31 @@ export default function TestDetails() {
               className="bg-white border border-black/10 rounded-3xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl relative z-10"
             >
               {/* Modal Top Bar */}
-              <div className="px-8 py-5 border-b border-black/10 flex items-center justify-between bg-neutral-50/70">
-                <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-2xl bg-neutral-900 text-white flex items-center justify-center shadow-sm">
+              <div className="px-4 sm:px-8 py-4 sm:py-5 border-b border-black/10 flex items-start sm:items-center justify-between bg-neutral-50/70 gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-neutral-900 text-white flex items-center justify-center shadow-sm shrink-0">
                     <Scan size={20} className="text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold tracking-tight text-neutral-900 leading-tight">Qog'ozdagi Testlarni Tekshirish</h3>
-                    <p className="text-xs text-neutral-500 font-medium mt-0.5">
-                      Test: <span className="font-bold text-neutral-800">"{test.title}"</span> ({test.questions?.length} ta savol kaliti ulangan)
+                    <h3 className="text-sm sm:text-base font-semibold tracking-tight text-neutral-900 leading-tight line-clamp-1">Qog'ozdagi Testlarni Tekshirish</h3>
+                    <p className="text-[10px] sm:text-xs text-neutral-500 font-medium mt-0.5 line-clamp-1">
+                      Test: <span className="font-bold text-neutral-800">"{test.title}"</span> ({test.questions?.length} ta savol kaliti)
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsCameraModalOpen(false)}
-                  className="w-9 h-9 rounded-xl bg-white hover:bg-neutral-100 border border-black/10 text-neutral-500 hover:text-black flex items-center justify-center transition-colors cursor-pointer"
+                  className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl bg-white hover:bg-neutral-100 border border-black/10 text-neutral-500 hover:text-black flex items-center justify-center transition-colors cursor-pointer"
                 >
                   <X size={18} />
                 </button>
               </div>
 
               {/* Minimalist Segmented Tab Switcher */}
-              <div className="px-8 pt-4 pb-2 border-b border-black/5 bg-white flex gap-2 overflow-x-auto">
+              <div className="px-4 sm:px-8 pt-4 pb-2 border-b border-black/5 bg-white flex gap-2 overflow-x-auto scrollbar-hide">
                 <button
                   onClick={() => setOmrTab('bubble-omr')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                  className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap shrink-0 ${
                     omrTab === 'bubble-omr' 
                       ? 'bg-black text-white shadow-sm' 
                       : 'text-neutral-500 hover:text-black hover:bg-neutral-100'
@@ -790,7 +790,7 @@ export default function TestDetails() {
                 </button>
                 <button
                   onClick={() => setOmrTab('zipgrade')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                  className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap shrink-0 ${
                     omrTab === 'zipgrade' 
                       ? 'bg-black text-white shadow-sm' 
                       : 'text-neutral-500 hover:text-black hover:bg-neutral-100'
@@ -800,7 +800,7 @@ export default function TestDetails() {
                 </button>
                 <button
                   onClick={() => setOmrTab('multi-page')}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                  className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap shrink-0 ${
                     omrTab === 'multi-page' 
                       ? 'bg-black text-white shadow-sm' 
                       : 'text-neutral-500 hover:text-black hover:bg-neutral-100'
@@ -811,27 +811,27 @@ export default function TestDetails() {
               </div>
 
               {/* Modal Content */}
-              <div className="p-8 overflow-y-auto flex-1 space-y-6">
+              <div className="p-4 sm:p-8 overflow-y-auto flex-1 space-y-4 sm:space-y-6">
 
                 {/* TAB 1: BUBBLE OMR CAMERA SCANNER */}
                 {omrTab === 'bubble-omr' && (
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
                     
                     {/* Viewfinder Area */}
                     <div className="lg:col-span-7 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold uppercase tracking-widest text-neutral-500">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-neutral-500 line-clamp-1">
                           Javoblar varaqasini ramkaga to'g'rilang:
                         </span>
                         <button
                           onClick={handleDownloadOMRSheet}
-                          className="text-xs font-bold text-neutral-800 hover:text-black bg-white hover:bg-neutral-50 px-3 py-1.5 rounded-xl border border-black/10 flex items-center gap-1.5 shadow-xs transition-all"
+                          className="text-xs font-bold text-neutral-800 hover:text-black bg-white hover:bg-neutral-50 px-3 py-1.5 rounded-xl border border-black/10 flex items-center gap-1.5 shadow-xs transition-all w-full sm:w-auto justify-center"
                         >
                           <Printer size={13} /> Blankani yuklash (PDF)
                         </button>
                       </div>
 
-                      <div className="bg-neutral-950 rounded-3xl overflow-hidden shadow-2xl relative aspect-[4/3] border-4 border-neutral-100 flex items-center justify-center">
+                      <div className="bg-neutral-950 rounded-3xl overflow-hidden shadow-xl relative aspect-[3/4] sm:aspect-[4/3] border-4 border-neutral-100 flex items-center justify-center">
                         {!omrImageSrc ? (
                           <>
                             <Webcam
