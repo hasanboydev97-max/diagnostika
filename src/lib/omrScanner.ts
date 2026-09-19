@@ -132,15 +132,21 @@ export async function gradeOMRFromImage(
   const jsonMatch = cleanJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
   if (jsonMatch) {
     cleanJson = jsonMatch[1];
-  } else {
-    const firstBrace = cleanJson.indexOf('{');
-    const lastBrace = cleanJson.lastIndexOf('}');
-    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-      cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
-    }
+  }
+  
+  const firstBrace = cleanJson.indexOf('{');
+  const lastBrace = cleanJson.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
   }
 
-  const parsed = JSON.parse(cleanJson);
+  let parsed;
+  try {
+    parsed = JSON.parse(cleanJson);
+  } catch (error: any) {
+    console.error("AI JSON Parse error. Raw text:", text);
+    throw new Error("Tahlil xatosi (AI noto'g'ri format qaytardi). Iltimos, qaytadan rasmga oling.");
+  }
   const detectedAnswers: { q: number; ans: string | null }[] = parsed.answers || [];
 
   let correctCount = 0;
@@ -317,14 +323,19 @@ export async function gradeTestFromPhoto(
     const jsonMatch = cleanJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
     if (jsonMatch) {
       cleanJson = jsonMatch[1];
-    } else {
-      const firstBracket = cleanJson.indexOf('[');
-      const lastBracket = cleanJson.lastIndexOf(']');
-      if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
-        cleanJson = cleanJson.substring(firstBracket, lastBracket + 1);
-      }
     }
-    const parsed = JSON.parse(cleanJson);
+    const firstBracket = cleanJson.indexOf('[');
+    const lastBracket = cleanJson.lastIndexOf(']');
+    if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+      cleanJson = cleanJson.substring(firstBracket, lastBracket + 1);
+    }
+    let parsed;
+    try {
+      parsed = JSON.parse(cleanJson);
+    } catch (error: any) {
+      console.error("AI JSON Parse error. Raw text:", responseText);
+      throw new Error("Tahlil xatosi (AI noto'g'ri format qaytardi). Iltimos, qaytadan rasmga oling.");
+    }
 
     const gradedAnswers: PaperGradingResult['answers'] = questions.map((q, idx) => {
       const found = Array.isArray(parsed) ? parsed.find((item: any) => item.q === idx + 1) : null;
