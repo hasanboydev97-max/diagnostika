@@ -244,7 +244,7 @@ export function convertZipGradeRowToStudentResult(
     scores[cat] = total > 0 ? Math.round((correct / total) * 100) : 0;
   });
 
-  const totalScore = row.percent || Math.round((row.earnedPts / row.possiblePts) * 100);
+  const totalScore = row.percent || (row.possiblePts > 0 ? Math.round((row.earnedPts / row.possiblePts) * 100) : 0);
 
   return {
     id: row.studentId,

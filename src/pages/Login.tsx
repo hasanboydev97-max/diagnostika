@@ -27,15 +27,7 @@ export default function Login() {
     e.preventDefault();
     setError('');
     
-    if (id === 'admin') {
-      if (pin === '7777') {
-        navigate('/admin');
-      } else {
-        setError(t('login.err_admin_pass'));
-      }
-      return;
-    }
-    
+    // Hardcoded admin login block removed for security.
     if (!pin) {
       setError(t('login.err_no_pin'));
       return;

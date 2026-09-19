@@ -240,40 +240,7 @@ export async function processWithGemini(
   return gradeOMRFromImage(base64Image, dummyKey, { totalQuestions });
 }
 
-export async function processWithOpenCV(
-  _base64Image: string,
-  totalQuestions: number,
-  answerKey?: Record<number, string>
-): Promise<OMRResult> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const correctCount = Math.round(totalQuestions * 0.75);
-      const answers = Array.from({ length: totalQuestions }, (_, i) => {
-        const qNum = i + 1;
-        const options = ['A', 'B', 'C', 'D'];
-        const chosen = options[Math.floor(Math.random() * options.length)];
-        const correct = answerKey ? answerKey[qNum] === chosen : Math.random() > 0.3;
-        return {
-          q: qNum,
-          ans: chosen,
-          correctAns: answerKey ? answerKey[qNum] : undefined,
-          isCorrect: correct
-        };
-      });
-
-      resolve({
-        studentName: "O'quvchi (Lokal)",
-        score: Math.round((correctCount / totalQuestions) * 100),
-        total: totalQuestions,
-        correctCount,
-        wrongCount: totalQuestions - correctCount,
-        unansweredCount: 0,
-        method: 'OpenCV.js (Lokal Algoritm)',
-        answers
-      });
-    }, 1200);
-  });
-}
+// processWithOpenCV was removed due to fake random logic.
 
 export interface PaperGradingResult {
   studentName: string;

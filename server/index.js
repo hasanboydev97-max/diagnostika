@@ -89,10 +89,12 @@ app.use((req, _res, next) => {
   next();
 });
 
+app.use(express.json({ limit: '10mb' })); // Limit from 50mb down to 10mb for safety
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
 // ✅ 2. CORS — Faqat ruxsat etilgan domenlar
 const allowedOrigins = [
   'https://bmdiagnostika.vercel.app',
-  'https://hbdiagnostika.vercel.app',
   'https://diagnostika-3jdz.onrender.com',
   'http://localhost:5173',
   'http://localhost:3000'
@@ -100,12 +102,12 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // origin yo'q bo'lsa — server-to-server so'rov (Postman, curl) — ruxsat
+    // origin yo'q bo'lsa -> server-to-server so'rov (Postman, curl) -> ruxsat
     if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    // Vercel preview URL lari uchun (har deploy da yangi URL bo'lishi mumkin)
-    if (origin && origin.endsWith('.vercel.app')) {
+    // Vercel preview URL lari uchun
+    if (origin === 'https://bmdiagnostika.vercel.app') {
       return callback(null, true);
     }
     console.warn(`[CORS BLOCKED] Origin: ${origin}`);
@@ -395,7 +397,7 @@ app.post('/api/results', async (req, res) => {
   }
 });
 
-app.post('/api/upload', upload.single('file'), async (req, res) => {
+app.post('/api/upload', authMiddleware, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Fayl yuklanmadi' });
 
@@ -457,7 +459,17 @@ app.use('/api/ai', aiRoutes);
 
 // --- Telegram Bot Logic ---
 // Backend API endpoint for sending Telegram notifications from Vercel web app
-app.post('/api/telegram/send', async (req, res) => {
+app.post('/api/telegram/send-message', authMiddleware, async (req, res) => {
+  try {
+    const { chatId, message } = req.body;
+    if (!chatId || !message) return res.status(400).json({ error: 'Chat ID va xabar talab qilinadi.' });
+    const botRes = await sendTelegramBotMessage(chatId, message);
+    if (botRes.ok) res.json({ success: true, message: 'Xabar yuborildi!' });
+    else res.status(500).json({ error: botRes.description || 'Telegram xatosi' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/telegram/send', authMiddleware, async (req, res) => {
   try {
     const { chatId, result } = req.body;
     if (!chatId || !result) {

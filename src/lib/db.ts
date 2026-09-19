@@ -83,25 +83,35 @@ export const db = {
 
   // Results
   async saveResult(result: StudentResult): Promise<void> {
+    let backendSuccess = false;
     try {
-      await fetch(`${API_URL}/results`, {
+      const res = await fetch(`${API_URL}/results`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(result)
       });
+      if (res.ok) backendSuccess = true;
+      else console.error("Backend returned error:", await res.text());
     } catch (e) {
-      console.error("Backend Error, saving to local backup:", e);
+      console.error("Backend network error:", e);
     }
     
     // Always save locally as a reliable fallback
-    const current: StudentResult[] = await localforage.getItem<StudentResult[]>(LOCAL_DB_KEY) || [];
-    const existingIndex = current.findIndex(r => r.id === result.id);
-    if (existingIndex >= 0) {
-      current[existingIndex] = result;
-    } else {
-      current.unshift(result);
+    try {
+      const current: StudentResult[] = await localforage.getItem<StudentResult[]>(LOCAL_DB_KEY) || [];
+      const existingIndex = current.findIndex(r => r.id === result.id);
+      if (existingIndex >= 0) {
+        current[existingIndex] = result;
+      } else {
+        current.unshift(result);
+      }
+      await localforage.setItem(LOCAL_DB_KEY, current);
+    } catch (localErr) {
+      console.error("Local backup failed:", localErr);
+      if (!backendSuccess) {
+         throw new Error("Saqlashda xatolik yuz berdi (Server ham, lokal baza ham ishlamayapti).");
+      }
     }
-    await localforage.setItem(LOCAL_DB_KEY, current);
   },
 
   async getResult(id: string): Promise<StudentResult | undefined> {

@@ -3,7 +3,14 @@ export const setToken = (token: string) => localStorage.setItem('teacher_token',
 export const removeToken = () => localStorage.removeItem('teacher_token');
 export const getTeacher = () => {
   const t = localStorage.getItem('teacher_data');
-  return t ? JSON.parse(t) : null;
+  if (!t) return null;
+  try {
+    return JSON.parse(t);
+  } catch (err) {
+    console.error('Failed to parse teacher data:', err);
+    localStorage.removeItem('teacher_data');
+    return null;
+  }
 };
 export const setTeacher = (teacher: any) => localStorage.setItem('teacher_data', JSON.stringify(teacher));
 export const removeTeacher = () => localStorage.removeItem('teacher_data');

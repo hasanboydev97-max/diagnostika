@@ -26,7 +26,21 @@ export default function StudentDashboard() {
         const data = await response.json();
         setResults(data);
       } catch (err: any) {
-        setError(err.message);
+        console.warn("Backend failed, attempting local fallback", err);
+        try {
+          const { db } = await import('../lib/db');
+          const allLocal = await db.getAllResults();
+          const studentLocal = allLocal.filter((r: any) => 
+             r.studentName?.toLowerCase() === studentName.toLowerCase()
+          );
+          if (studentLocal.length > 0) {
+            setResults(studentLocal);
+          } else {
+            setError(err.message || "Tarmoq xatosi va lokal ma'lumot topilmadi");
+          }
+        } catch (localErr) {
+          setError(err.message);
+        }
       } finally {
         setLoading(false);
       }

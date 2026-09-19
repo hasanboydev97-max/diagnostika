@@ -78,8 +78,8 @@ export default function OnlineTestsDashboard() {
   };
 
   const filteredTests = tests.filter(test => 
-    test.title.toLowerCase().includes(search.toLowerCase()) ||
-    test.subject.toLowerCase().includes(search.toLowerCase())
+    test.title?.toLowerCase().includes(search.toLowerCase()) ||
+    test.subject?.toLowerCase().includes(search.toLowerCase())
   );
   return (
     <div className="min-h-screen relative font-sans text-[#111111] overflow-x-hidden bg-[#fdfdfd]">
@@ -99,7 +99,7 @@ export default function OnlineTestsDashboard() {
                     Premium
                   </span>
                 ) : teacher?.plan === 'standard' ? (
-                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-zinc-955 text-white uppercase tracking-wider">
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-zinc-950 text-white uppercase tracking-wider">
                     Standard
                   </span>
                 ) : (

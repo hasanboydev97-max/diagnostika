@@ -694,11 +694,11 @@ export default function Landing() {
                   </span>
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-mono text-lg md:text-xl font-bold tracking-wider">
-                      8600 0000 0000 0000
+                      {import.meta.env.VITE_PAYMENT_CARD || "KARTA_RAQAMINI_KIRITING"}
                     </span>
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText("8600000000000000");
+                        navigator.clipboard.writeText((import.meta.env.VITE_PAYMENT_CARD || "KARTA_RAQAMINI_KIRITING").replace(/\s/g, ""));
                         setCopiedCard(true);
                         toast.success("Karta raqami nusxalandi!");
                         setTimeout(() => setCopiedCard(false), 2000);

@@ -9,7 +9,17 @@ import { Check, Settings2, Users, PlusCircle, ChevronDown, Scan, Printer } from 
 import BlueprintEditorModal from '../components/BlueprintEditorModal';
 import MeshGradient from '../components/ui/MeshGradient';
 
+import { getToken } from '../lib/auth';
+
 export default function Admin() {
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    if (!getToken()) {
+      navigate('/teacher/login');
+    }
+  }, [navigate]);
+
   const [activeTab, setActiveTab] = useState<'new' | 'dashboard'>('new');
   const [allResults, setAllResults] = useState<StudentResult[]>([]);
   
@@ -139,31 +149,37 @@ export default function Admin() {
     const totalScoreSum = Object.values(calculatedScores).reduce((a, b) => a + b, 0);
     const totalScore = Math.round(totalScoreSum / categoriesCount);
     
-    // Call Gemini API
-    const aiResponse = await generateDiagnosticSummary(studentName, grade, calculatedScores, questionResults, currentBlueprint);
-    
-    // Generate secure 6-digit ID and 4-digit PIN
-    const uniqueId = Math.floor(100000 + Math.random() * 900000).toString();
-    const pin = Math.floor(1000 + Math.random() * 9000).toString();
-    
-    // Save to DB (Hybrid Cloud/Local)
-    await db.saveResult({
-      id: uniqueId,
-      pin,
-      studentName,
-      grade,
-      scores: calculatedScores,
-      questionResults,
-      blueprintSnapshot: currentBlueprint,
-      totalScore,
-      aiSummaryText: aiResponse.summary,
-      aiAdviceText: aiResponse.advice,
-      aiRoadmap: aiResponse.roadmap,
-      createdAt: new Date().toISOString(),
-    });
+    try {
+      // Call Gemini API
+      const aiResponse = await generateDiagnosticSummary(studentName, grade, calculatedScores, questionResults, currentBlueprint);
+      
+      // Generate secure 6-digit ID and 4-digit PIN
+      const uniqueId = Math.floor(100000 + Math.random() * 900000).toString();
+      const pin = Math.floor(1000 + Math.random() * 9000).toString();
+      
+      // Save to DB (Hybrid Cloud/Local)
+      await db.saveResult({
+        id: uniqueId,
+        pin,
+        studentName,
+        grade,
+        scores: calculatedScores,
+        questionResults,
+        blueprintSnapshot: currentBlueprint,
+        totalScore,
+        aiSummaryText: aiResponse.summary,
+        aiAdviceText: aiResponse.advice,
+        aiRoadmap: aiResponse.roadmap,
+        createdAt: new Date().toISOString(),
+      });
 
-    setGeneratedCredentials({ id: uniqueId, pin });
-    setIsLoading(false);
+      setGeneratedCredentials({ id: uniqueId, pin });
+    } catch (err: any) {
+      console.error(err);
+      alert("Xatolik yuz berdi: " + (err.message || 'Iltimos qaytadan urinib ko\'ring'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

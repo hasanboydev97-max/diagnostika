@@ -2,7 +2,7 @@
  * Cloudinary API integration using our Backend Express server
  */
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const uploadToCloudinary = async (file: File | Blob, filename: string): Promise<string | null> => {
   try {
