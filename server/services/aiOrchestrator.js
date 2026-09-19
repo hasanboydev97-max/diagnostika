@@ -48,42 +48,36 @@ function getAgentCatalog(keys) {
   const { geminiPaidKey, geminiKey, anthropicKey, groqKey } = keys;
   const agents = [];
 
-  // --- 1. Gemini PAID Agents (2000 RPM, billing enabled) — PRIMARY ---
-  // Verified working models: gemini-3.7-flash ✅ gemini-3.5-flash ✅ gemini-3.5-flash-lite ✅
+  // --- 1. Gemini PAID Agents ---
+  // ✅ VERIFIED WORKING (test o'tkazildi 2026-09-19): faqat gemini-2.5-flash ishlaydi
+  // ❌ gemini-3.7-flash, gemini-3.5-flash, gemini-2.0-flash, gemini-1.5-flash — BARCHASI 404!
   if (geminiPaidKey) {
     agents.push(
-      { id: 'gemini-paid-3-7-flash',      provider: 'gemini', model: 'gemini-3.7-flash',      apiKey: geminiPaidKey, tier: 'paid-flagship', priority: 1 },
-      { id: 'gemini-paid-3-5-flash',      provider: 'gemini', model: 'gemini-3.5-flash',      apiKey: geminiPaidKey, tier: 'paid-fast',     priority: 2 },
-      { id: 'gemini-paid-3-5-flash-lite', provider: 'gemini', model: 'gemini-3.5-flash-lite', apiKey: geminiPaidKey, tier: 'paid-lite',     priority: 3 }
+      { id: 'gemini-paid-2-5-flash', provider: 'gemini', model: 'gemini-2.5-flash', apiKey: geminiPaidKey, tier: 'paid-flagship', priority: 1 }
     );
   }
 
   // --- 2. Gemini FREE Agents (15 RPM) — FALLBACK ---
-  // Verified: gemini-2.5-flash ✅ gemini-flash-lite-latest ✅
+  // ✅ VERIFIED WORKING: gemini-2.5-flash
   if (geminiKey) {
     agents.push(
-      { id: 'gemini-free-2-5-flash',   provider: 'gemini', model: 'gemini-2.5-flash',       apiKey: geminiKey, tier: 'free-standard', priority: 4 },
-      { id: 'gemini-free-flash-lite',  provider: 'gemini', model: 'gemini-flash-lite-latest', apiKey: geminiKey, tier: 'free-lite',    priority: 5 }
+      { id: 'gemini-free-2-5-flash', provider: 'gemini', model: 'gemini-2.5-flash', apiKey: geminiKey, tier: 'free-standard', priority: 2 }
     );
   }
 
   // --- 3. Anthropic Claude Agents ---
   if (anthropicKey) {
     agents.push(
-      { id: 'anthropic-haiku-4-5',  provider: 'anthropic', model: 'claude-haiku-4-5',  tier: 'elite-speed',        priority: 6 },
-      { id: 'anthropic-sonnet-4-5', provider: 'anthropic', model: 'claude-sonnet-4-5', tier: 'elite-intelligence', priority: 7 },
-      { id: 'anthropic-opus-4-5',   provider: 'anthropic', model: 'claude-opus-4-5',   tier: 'elite-deep',         priority: 8 }
+      { id: 'anthropic-haiku-4-5',  provider: 'anthropic', model: 'claude-haiku-4-5',  tier: 'elite-speed',        priority: 3 },
+      { id: 'anthropic-sonnet-4-5', provider: 'anthropic', model: 'claude-sonnet-4-5', tier: 'elite-intelligence', priority: 4 }
     );
   }
 
   // --- 4. Groq Accelerated Open-Weights Agents ---
   if (groqKey) {
     agents.push(
-      { id: 'groq-llama-4-scout',      provider: 'groq', model: 'meta-llama/llama-4-scout-17b-16e-instruct', tier: 'groq-speed',    priority: 9  },
-      { id: 'groq-llama-3-3-70b',      provider: 'groq', model: 'llama-3.3-70b-versatile',                   tier: 'groq-standard', priority: 10 },
-      { id: 'groq-llama-3-1-8b',       provider: 'groq', model: 'llama-3.1-8b-instant',                      tier: 'groq-lite',     priority: 11 },
-      { id: 'groq-compound-beta',      provider: 'groq', model: 'compound-beta',                              tier: 'groq-deep',     priority: 12 },
-      { id: 'groq-compound-beta-mini', provider: 'groq', model: 'compound-beta-mini',                        tier: 'groq-ensemble', priority: 13 }
+      { id: 'groq-llama-4-scout', provider: 'groq', model: 'meta-llama/llama-4-scout-17b-16e-instruct', tier: 'groq-speed',    priority: 5 },
+      { id: 'groq-llama-3-3-70b', provider: 'groq', model: 'llama-3.3-70b-versatile',                   tier: 'groq-standard', priority: 6 }
     );
   }
 
