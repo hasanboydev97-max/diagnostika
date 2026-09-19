@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Search, Lock, ArrowRight, Activity, ArrowLeft, Eye, EyeOff } from 'lucide-react';
@@ -8,6 +8,11 @@ import MeshGradient from '../components/ui/MeshGradient';
 import MagicButton from '../components/MagicButton';
 
 export default function Login() {
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    return () => { mountedRef.current = false; };
+  }, []);
+
   const { t } = useTranslation();
   const [id, setId] = useState('');
   const [pin, setPin] = useState('');
@@ -39,16 +44,17 @@ export default function Login() {
       const result = await db.getResult(id);
       
       if (result) {
-        if (result.pin && result.pin !== pin) {
+        const expectedPin = result.pin || '0000';
+        if (expectedPin !== pin) {
           setError(t('login.err_wrong_pin'));
           setIsLoading(false);
         } else {
           // Intrigue Loading Sequence
           setLoadingStep(0);
-          setTimeout(() => setLoadingStep(1), 1800);
-          setTimeout(() => setLoadingStep(2), 3600);
+          setTimeout(() => mountedRef.current && setLoadingStep(1), 1800);
+          setTimeout(() => mountedRef.current && setLoadingStep(2), 3600);
           setTimeout(() => {
-            navigate('/summary/' + id);
+            if (mountedRef.current) navigate('/summary/' + id);
           }, 4500);
         }
       } else {

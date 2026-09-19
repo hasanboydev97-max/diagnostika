@@ -163,7 +163,7 @@ export const db = {
              method: 'POST',
              headers: { 'Content-Type': 'application/json' },
              body: JSON.stringify(local)
-           }).catch(() => {});
+           }).catch((e) => { console.error("Background sync failed:", e); });
         }
       }
     } else {

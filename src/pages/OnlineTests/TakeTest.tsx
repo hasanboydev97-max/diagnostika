@@ -299,10 +299,6 @@ export default function TakeTest() {
         if (prev === null) return null;
         if (prev <= 1) {
           clearInterval(timer);
-          if (!submitRef.current) {
-            handleSubmit(true);
-            toast.error("Vaqt tugadi! Test avtomatik yakunlandi.", { duration: 5000 });
-          }
           return 0;
         }
         return prev - 1;
@@ -310,6 +306,14 @@ export default function TakeTest() {
     }, 1000);
     return () => clearInterval(timer);
   }, [started, timeLeft, submitting]);
+
+  // Handle auto-submit on time up safely outside of state updater
+  useEffect(() => {
+    if (started && timeLeft === 0 && !submitting && !submitRef.current) {
+      toast.error("Vaqt tugadi! Test avtomatik yakunlandi.", { duration: 5000 });
+      handleSubmit(true);
+    }
+  }, [timeLeft, started, submitting]);
 
   // Anti-cheat: tab/window switch detection
   useEffect(() => {
@@ -336,10 +340,8 @@ export default function TakeTest() {
 
     const onVisibility = () => { if (document.hidden) handleViolation(); };
     document.addEventListener('visibilitychange', onVisibility);
-    window.addEventListener('blur', handleViolation);
     return () => {
       document.removeEventListener('visibilitychange', onVisibility);
-      window.removeEventListener('blur', handleViolation);
     };
   }, [started, answers]);
 

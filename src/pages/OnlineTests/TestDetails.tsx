@@ -269,7 +269,7 @@ export default function TestDetails() {
     const toastId = toast.loading(`${studentName} natijasi saqlanmoqda...`);
 
     try {
-      await fetch(`${API_URL}/online-test-results`, {
+      const res = await fetch(`${API_URL}/online-test-results`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -282,6 +282,11 @@ export default function TestDetails() {
           createdAt: new Date().toISOString()
         })
       });
+
+      if (!res.ok) {
+         const errData = await res.json().catch(() => ({}));
+         throw new Error(errData.error || "Natijani saqlashda xatolik yuz berdi");
+      }
 
       const questionResults: Record<number, boolean> = {};
       omrResult.answers.forEach(a => {
@@ -356,27 +361,42 @@ export default function TestDetails() {
     setIsImportingZipGrade(true);
     const toastId = toast.loading(`0/${zipGradeData.students.length} o'quvchi saqlanmoqda...`);
 
+    let successCount = 0;
+    let failCount = 0;
+
     try {
       for (let i = 0; i < zipGradeData.students.length; i++) {
         const s = zipGradeData.students[i];
         const earned = typeof s.earnedPts === 'number' ? s.earnedPts : Math.round((s.percent / 100) * test.questions.length);
 
-        await fetch(`${API_URL}/online-test-results`, {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({
-            testId,
-            studentName: s.studentName,
-            score: earned,
-            totalScore: test.questions.length,
-            createdAt: new Date().toISOString()
-          })
-        });
+        try {
+          const res = await fetch(`${API_URL}/online-test-results`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              testId,
+              studentName: s.studentName,
+              score: earned,
+              totalScore: test.questions.length,
+              createdAt: new Date().toISOString()
+            })
+          });
+          
+          if (!res.ok) throw new Error("Backend failed");
+          successCount++;
+        } catch (innerErr) {
+          console.error(`Failed to save student ${s.studentName}`, innerErr);
+          failCount++;
+        }
 
-        toast.loading(`${i + 1}/${zipGradeData.students.length} o'quvchi saqlandi...`, { id: toastId });
+        toast.loading(`${i + 1}/${zipGradeData.students.length} o'quvchi saqlanmoqda...`, { id: toastId });
       }
 
-      toast.success(`Barcha ${zipGradeData.students.length} nafar o'quvchi ushbu testga saqlandi!`, { id: toastId });
+      if (failCount === 0) {
+        toast.success(`Barcha ${successCount} nafar o'quvchi ushbu testga saqlandi!`, { id: toastId });
+      } else {
+        toast.error(`${successCount} tasi saqlandi, ${failCount} tasi saqlanmadi (Tarmoq xatosi).`, { id: toastId, duration: 6000 });
+      }
       setZipGradeData(null);
       fetchData();
       setIsCameraModalOpen(false);
@@ -409,7 +429,7 @@ export default function TestDetails() {
       const result = await gradeTestFromPhoto(paperImageSrcs, test.questions, paperStudentName.trim());
       setPaperGradingResult(result);
 
-      await fetch(`${API_URL}/online-test-results`, {
+      const res = await fetch(`${API_URL}/online-test-results`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -420,6 +440,11 @@ export default function TestDetails() {
           createdAt: new Date().toISOString()
         })
       });
+
+      if (!res.ok) {
+         const errData = await res.json().catch(() => ({}));
+         throw new Error(errData.error || "Natijani saqlashda xatolik yuz berdi");
+      }
 
       toast.success(`${paperStudentName.trim()} natijasi (${result.score}/${result.totalScore}) saqlandi!`, { id: toastId });
       fetchData();

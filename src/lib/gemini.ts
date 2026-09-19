@@ -540,7 +540,7 @@ ${JSON.stringify((questions || []).map((q: any) => {
 O'quvchilar:
 ${JSON.stringify((results || []).map(r => ({
   name: r.studentName,
-  score: Math.round(((r.score || 0) / (r.totalScore || Math.max(r.score || 1, 1))) * 100) // BUG #10 FIX: doim 100% lik shkalada beramiz
+  score: Math.round(((r.score || 0) / (r.totalScore || 1)) * 100)
 })).slice(0, 15), null, 2)}
 
 QAT'IY JSON obyekti qaytar (faqat JSON, hech qanday matn qo'shmang). Matn ichida hech qachon qochirilmagan qo'shtirnoq (") ishlatmang, faqat yakkalik (') ishlating:

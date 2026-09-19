@@ -136,8 +136,8 @@ export default function Summary() {
 
           // Calculate cohort average
           db.getAllResults().then(all => {
-             const sameGrade = all.filter(r => r.grade === data.grade);
-             if (sameGrade.length > 1) { // we need at least 1 other to compare
+             const sameGrade = all.filter(r => r.grade === data.grade && r.id !== data.id);
+             if (sameGrade.length > 0) {
                 const total = sameGrade.reduce((acc, curr) => acc + curr.totalScore, 0);
                 setCohortAverage(Math.round(total / sameGrade.length));
              } else {
