@@ -136,15 +136,23 @@ export async function gradeOMRFromImage(
     cleanJson = jsonMatch[1];
   }
   
+  const firstBracket = cleanJson.indexOf('[');
+  const lastBracket = cleanJson.lastIndexOf(']');
   const firstBrace = cleanJson.indexOf('{');
   const lastBrace = cleanJson.lastIndexOf('}');
-  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+  
+  if (firstBracket !== -1 && lastBracket > firstBracket && (firstBrace === -1 || firstBracket < firstBrace)) {
+    cleanJson = cleanJson.substring(firstBracket, lastBracket + 1);
+  } else if (firstBrace !== -1 && lastBrace > firstBrace) {
     cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
   }
 
   let parsed;
   try {
     parsed = JSON.parse(cleanJson);
+    if (Array.isArray(parsed)) {
+      parsed = { answers: parsed };
+    }
   } catch (error: any) {
     console.error("AI JSON Parse error. Raw text:", text);
     // Debug uchun to'g'ridan-to'g'ri AI ning javobini ekranga chiqaramiz

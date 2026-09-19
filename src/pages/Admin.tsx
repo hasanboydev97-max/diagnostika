@@ -75,7 +75,6 @@ export default function Admin() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [generatedCredentials, setGeneratedCredentials] = useState<{id: string, pin: string} | null>(null);
-  const navigate = useNavigate();
 
   // Load blueprint when grade changes
   useEffect(() => {
