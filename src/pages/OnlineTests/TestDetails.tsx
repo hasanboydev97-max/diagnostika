@@ -226,6 +226,11 @@ export default function TestDetails() {
             // Oq fon qo'yish (shaffof PNG lar uchun)
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, width, height);
+            
+            // SENIOR DARAJASIDAGI YECHIM: Rasmni AI ko'rishi uchun qulaylashtirish
+            // Qorong'i va xira rasmlarni avtomatik oqartirish va kontrastini oshirish
+            ctx.filter = 'contrast(1.4) brightness(1.2) grayscale(0.2)';
+            
             ctx.drawImage(img, 0, 0, width, height);
           }
           resolve(canvas.toDataURL('image/jpeg', 0.85)); // 85% sifatli JPEG (hajm va sifat balansi)
