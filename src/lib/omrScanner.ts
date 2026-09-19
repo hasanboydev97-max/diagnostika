@@ -107,17 +107,20 @@ export async function gradeOMRFromImage(
        - Agar savolga umuman javob belgilanmagan bo'lsa, 'ans': null deb ber.
        - Agar bir nechta variant bo'yalgan bo'lsa (ikki marta belgilangan), 'ans': null deb ber.
 
-    Qat'iy ravishda quyidagi JSON strukturada qaytar:
+    Qat'iy ravishda faqat quyidagi JSON strukturada qaytar (boshqa hech qanday izohsiz):
     {
       "studentName": "Ism Familiya yoki null",
       "studentClass": "Sinf yoki null",
       "studentId": "ID yoki null",
       "answers": [
         { "q": 1, "ans": "A" },
-        { "q": 2, "ans": "C" },
-        ...
-      ]
+        { "q": 2, "ans": "C" }
+      ],
+      "error": null
     }
+
+    Agar rasm umuman o'qib bo'lmaydigan, o'ta xira bo'lsa yoki OMR javoblar varaqasi qat'iyan topilmasa, faqat ushbu JSONni qaytar:
+    { "error": "Rasmda OMR varaqasi topilmadi yoki o'qish uchun juda xira. Iltimos, yorug'roq joyda tekis rasmga oling." }
   `;
 
   const imagePart = base64ToGenerativePart(base64Image, 'image/jpeg');
@@ -145,7 +148,11 @@ export async function gradeOMRFromImage(
     parsed = JSON.parse(cleanJson);
   } catch (error: any) {
     console.error("AI JSON Parse error. Raw text:", text);
-    throw new Error("Tahlil xatosi (AI noto'g'ri format qaytardi). Iltimos, qaytadan rasmga oling.");
+    throw new Error("Kechirasiz, rasm noaniq bo'lgani uchun AI uni tahlil qila olmadi. Iltimos, tekis va yorug'roq joyda qaytadan rasmga oling.");
+  }
+
+  if (parsed.error) {
+    throw new Error(parsed.error);
   }
   const detectedAnswers: { q: number; ans: string | null }[] = parsed.answers || [];
 
@@ -310,6 +317,15 @@ export async function gradeTestFromPhoto(
     Keltirilgan ${imagesArray.length} ta sahifadagi rasmlarning barchasini ko'rib chiq.
     Har bir savol uchun o'quvchi belgilagan javob variantini top (A -> 0, B -> 1, C -> 2, D -> 3).
     Agar belgilanmagan bo'lsa ansIndex = null qilib ber.
+
+    Qat'iy ravishda faqat quyidagi JSON massivni qaytar (boshqa izohlarsiz):
+    [
+      { "q": 1, "ansIndex": 0 },
+      { "q": 2, "ansIndex": null }
+    ]
+
+    Agar rasmda test savollari umuman ko'rinmasa yoki o'ta xira bo'lsa, xatolikni bildiruvchi quyidagi JSONni qaytar:
+    { "error": "Rasmda test savollari topilmadi. Iltimos, qaytadan yorug'roq joyda rasmga oling." }
   `;
 
   try {
@@ -324,17 +340,30 @@ export async function gradeTestFromPhoto(
     if (jsonMatch) {
       cleanJson = jsonMatch[1];
     }
+    
+    // Yoki massiv [...] yoki obyekt {...} qaytishi mumkin.
     const firstBracket = cleanJson.indexOf('[');
     const lastBracket = cleanJson.lastIndexOf(']');
-    if (firstBracket !== -1 && lastBracket !== -1 && lastBracket > firstBracket) {
+    const firstBrace = cleanJson.indexOf('{');
+    const lastBrace = cleanJson.lastIndexOf('}');
+    
+    // Qaysi biri tashqarida ekanini aniqlab olish
+    if (firstBracket !== -1 && lastBracket > firstBracket && (firstBrace === -1 || firstBracket < firstBrace)) {
       cleanJson = cleanJson.substring(firstBracket, lastBracket + 1);
+    } else if (firstBrace !== -1 && lastBrace > firstBrace) {
+      cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
     }
+
     let parsed;
     try {
       parsed = JSON.parse(cleanJson);
     } catch (error: any) {
       console.error("AI JSON Parse error. Raw text:", responseText);
-      throw new Error("Tahlil xatosi (AI noto'g'ri format qaytardi). Iltimos, qaytadan rasmga oling.");
+      throw new Error("Kechirasiz, rasm noaniq bo'lgani uchun AI uni tahlil qila olmadi. Iltimos, qaytadan rasmga oling.");
+    }
+    
+    if (parsed && !Array.isArray(parsed) && parsed.error) {
+      throw new Error(parsed.error);
     }
 
     const gradedAnswers: PaperGradingResult['answers'] = questions.map((q, idx) => {
