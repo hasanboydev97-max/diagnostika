@@ -203,8 +203,38 @@ export default function TestDetails() {
 
     const toastId = toast.loading("AI OMR varaqani tahlil qilmoqda...");
     try {
+      // Senior optimization: Rasm hajmini va formatini client-side optimallashtirish (Network va AI limitlarini oldini olish uchun)
+      const compressedImg = await new Promise<string>((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let { width, height } = img;
+          const MAX_SIZE = 1600; // Optimal o'lcham
+          if (width > MAX_SIZE || height > MAX_SIZE) {
+            if (width > height) {
+              height = Math.round((height * MAX_SIZE) / width);
+              width = MAX_SIZE;
+            } else {
+              width = Math.round((width * MAX_SIZE) / height);
+              height = MAX_SIZE;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            // Oq fon qo'yish (shaffof PNG lar uchun)
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+          }
+          resolve(canvas.toDataURL('image/jpeg', 0.85)); // 85% sifatli JPEG (hajm va sifat balansi)
+        };
+        img.src = base64Img;
+      });
+
       const answerKey = getTestAnswerKey();
-      const omrRes = await gradeOMRFromImage(base64Img, answerKey, {
+      const omrRes = await gradeOMRFromImage(compressedImg, answerKey, {
         totalQuestions: test.questions.length,
         optionsCount: 4,
         testTitle: test.title
