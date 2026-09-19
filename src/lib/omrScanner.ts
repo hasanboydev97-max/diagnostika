@@ -147,7 +147,9 @@ export async function gradeOMRFromImage(
     parsed = JSON.parse(cleanJson);
   } catch (error: any) {
     console.error("AI JSON Parse error. Raw text:", text);
-    throw new Error("Kechirasiz, rasm noaniq bo'lgani uchun AI uni tahlil qila olmadi. Iltimos, tekis va yorug'roq joyda qaytadan rasmga oling.");
+    // Debug uchun to'g'ridan-to'g'ri AI ning javobini ekranga chiqaramiz
+    const preview = text.substring(0, 100).replace(/\n/g, ' ');
+    throw new Error(`AI matn qaytardi (JSON emas): "${preview}..." Iltimos tekisroq rasmga oling.`);
   }
 
   if (parsed.error) {
