@@ -95,6 +95,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // ✅ 2. CORS — Faqat ruxsat etilgan domenlar
 const allowedOrigins = [
   'https://bmdiagnostika.vercel.app',
+  'https://hbdiagnostika.vercel.app',
   'https://diagnostika-3jdz.onrender.com',
   'http://localhost:5173',
   'http://localhost:3000'
@@ -107,7 +108,7 @@ app.use(cors({
       return callback(null, true);
     }
     // Vercel preview URL lari uchun
-    if (origin === 'https://bmdiagnostika.vercel.app') {
+    if (origin && origin.endsWith('.vercel.app')) {
       return callback(null, true);
     }
     console.warn(`[CORS BLOCKED] Origin: ${origin}`);
