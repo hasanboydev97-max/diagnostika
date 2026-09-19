@@ -67,10 +67,9 @@ export const generateVision = async (req, res) => {
       imageMimeType: images[0].mimeType || 'image/jpeg'
     });
 
-    if (result.success && result.questions && result.questions.length > 0) {
-      // requireJson logic is handled inside orchestrator (it always attempts JSON if schema allows)
-      // Actually executeResilientVisionOCR returns { success: true, questions }
-      return res.json({ text: JSON.stringify(result.questions) });
+    if (result.success && result.rawData) {
+      // requireJson logic is handled inside orchestrator
+      return res.json({ text: JSON.stringify(result.rawData) });
     }
 
     res.status(503).json({ error: result.error || "Rasm formatini tahlil qilib bo'lmadi." });

@@ -471,15 +471,19 @@ export async function executeResilientVisionOCR({ promptText, imageBase64, image
 
           const result    = await model.generateContent(contentParts);
           const parsed    = sanitizeAndParseJSON(result.response.text());
-          const questions = parsed.questions || (Array.isArray(parsed) ? parsed : []);
-
-          if (questions.length > 0) {
+          
+          if (parsed) {
             const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-            console.log(`[AI Vision] ✅ ${agent.id} (${duration}s) — ${questions.length} ta savol`);
+            console.log(`[AI Vision] ✅ ${agent.id} (${duration}s)`);
             markAgentSuccess(agent.id);
-            return { success: true, questions };
+            // Agar massiv bo'lsa (savollar) uni questions ga o'raymiz, yo'qsa to'g'ridan to'g'ri qaytaramiz
+            return { 
+              success: true, 
+              questions: Array.isArray(parsed) ? parsed : (parsed.questions || []),
+              rawData: parsed
+            };
           }
-          throw new Error("OCR natijasida savollar topilmadi");
+          throw new Error("OCR natijasi noto'g'ri (bo'sh)");
 
         } else if (agent.provider === 'anthropic' && anthropicKey) {
           const content = [];
@@ -501,13 +505,16 @@ export async function executeResilientVisionOCR({ promptText, imageBase64, image
           const data = await res.json();
           if (!res.ok) throw new Error(data.error?.message || 'Anthropic Vision xatosi');
           const parsed    = sanitizeAndParseJSON(data.content?.[0]?.text || '');
-          const questions = parsed.questions || (Array.isArray(parsed) ? parsed : []);
-
-          if (questions.length > 0) {
+          
+          if (parsed) {
             markAgentSuccess(agent.id);
-            return { success: true, questions };
+            return { 
+              success: true, 
+              questions: Array.isArray(parsed) ? parsed : (parsed.questions || []),
+              rawData: parsed
+            };
           }
-          throw new Error("OCR natijasida savollar topilmadi");
+          throw new Error("OCR natijasi noto'g'ri (bo'sh)");
         }
 
       } catch (err) {
