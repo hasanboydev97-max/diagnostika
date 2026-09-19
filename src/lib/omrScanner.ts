@@ -119,8 +119,7 @@ export async function gradeOMRFromImage(
       "error": null
     }
 
-    Agar rasm umuman o'qib bo'lmaydigan, o'ta xira bo'lsa yoki OMR javoblar varaqasi qat'iyan topilmasa, faqat ushbu JSONni qaytar:
-    { "error": "Rasmda OMR varaqasi topilmadi yoki o'qish uchun juda xira. Iltimos, yorug'roq joyda tekis rasmga oling." }
+    MUHIM OGOHLANTIRISH: Rasm biroz xira yoki yorug'lik past bo'lsa ham, ASLO taslim bo'lma! Har bir savol uchun eng ehtimoliy javobni topishga maksimal harakat qil. Faqatgina rasmda varaq umuman bo'lmasagina "error" xabarini qaytarishing mumkin. Aks holda JSON qaytar!
   `;
 
   const imagePart = base64ToGenerativePart(base64Image, 'image/jpeg');
