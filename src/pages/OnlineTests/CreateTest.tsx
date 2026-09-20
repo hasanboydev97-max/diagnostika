@@ -269,13 +269,23 @@ export default function CreateTest() {
           const errData = await res.json();
           errMsg = errData.error || errMsg;
         } catch {
-          // JSON parse xatosi — default xabar qoladi
+          // JSON parse xatosi - default xabar qoladi
         }
         throw new Error(errMsg);
       }
       
-      toast.success('Test muvaffaqiyatli saqlandi!');
-      navigate('/online-tests');
+      const resData = await res.json();
+      
+      try {
+        const { downloadDesktopShortcut } = await import('../../lib/shortcut');
+        downloadDesktopShortcut(resData.id, title);
+        toast.success('Test yaratildi! Ish stolingizga yorliq (shortcut) yuklab olindi.', { duration: 5000 });
+      } catch (err) {
+        console.error("Shortcut yuklashda xatolik:", err);
+        toast.success('Test muvaffaqiyatli saqlandi!');
+      }
+
+      navigate(`/online-tests/details/${resData.id}`);
     } catch (error: any) {
       console.error('Save error:', error);
       toast.error(error.message || 'Testni saqlashda xatolik yuz berdi.');

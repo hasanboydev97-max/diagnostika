@@ -632,6 +632,17 @@ export default function TestDetails() {
                   variant="indigo"
                   fullWidth
                 />
+
+                <button
+                  onClick={async () => {
+                    const { downloadDesktopShortcut } = await import('../../lib/shortcut');
+                    downloadDesktopShortcut(testId as string, test?.title || 'Test');
+                    toast.success("Ish stoliga yorliq yuklandi!");
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white hover:bg-neutral-50 text-neutral-900 border border-black/10 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs group cursor-pointer"
+                >
+                  <Download size={15} className="group-hover:scale-110 transition-transform" /> Ish stoliga yorliq yuklash
+                </button>
                 
                 <button
                   onClick={() => navigate(`/online-tests/take/${testId}`)}
