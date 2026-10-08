@@ -384,7 +384,7 @@ async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22
 export async function executeResilientQuestionGen({ prompt, systemPrompt, aiSchema, isPremium = false }) {
   return questionQueue(async () => {
     const pipeline = buildAgentPipeline({ isPremium });
-    const timeoutMs = 28000;
+    const timeoutMs = 85000;
 
     if (pipeline.length === 0) {
       throw new Error("Hech qanday AI agenti sozlanmagan. Iltimos API kalitlarini tekshiring.");
@@ -537,7 +537,7 @@ export async function executeResilientVisionOCR({ promptText, imageBase64, image
 export async function executeResilientTextGen({ prompt, systemPrompt, isPremium = false }) {
   return textQueue(async () => {
     const pipeline  = buildAgentPipeline({ isPremium });
-    const timeoutMs = 30000;
+    const timeoutMs = 85000;
 
     if (pipeline.length === 0) {
       throw new Error("Hech qanday AI agenti sozlanmagan. Iltimos API kalitlarini tekshiring.");
