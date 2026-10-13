@@ -613,17 +613,17 @@ export function sanitizeAndDeduplicateStudents(results: any[]): {
     }
 
     // Har bir so'zni Title Case ga keltirish
-    const words = cleaned
+    const words: string[] = cleaned
       .split(' ')
-      .filter(w => w.length > 1)
-      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+      .filter((w: string) => w.length > 1)
+      .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 
     if (words.length === 0) continue;
     const formattedName = words.join(' ');
 
     // 2. Token-set normalization: "Abbasova Fotima" va "Fotima Abbasova" bitta key beradi
     const normalizedKey = [...words]
-      .map(w => w.toLowerCase())
+      .map((w: string) => w.toLowerCase())
       .sort()
       .join('_');
 

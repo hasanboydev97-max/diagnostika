@@ -16,6 +16,7 @@ import { generateOMRPdf } from '../../lib/omrPdfGenerator';
 import { gradeOMRFromImage, gradeTestFromPhoto, type OMRResult, type PaperGradingResult } from '../../lib/omrScanner';
 import { parseZipGradeFile, type ZipGradeImportResult } from '../../lib/zipgradeParser';
 import { db, type StudentResult } from '../../lib/db';
+import { QUESTIONS_BLUEPRINT } from '../../lib/blueprint';
 import { generateClassAnalysis, type StudentAnalysis, type CurriculumTopicInsight } from '../../lib/gemini';
 import { openClassReportPrintWindow } from '../../lib/classReportPdfGenerator';
 import { sendTelegramMessage, getSavedChatId } from '../../lib/telegram';
@@ -291,7 +292,7 @@ export default function TestDetails() {
       }
 
       const questionResults: Record<number, boolean> = {};
-      omrResult.answers.forEach(a => {
+      omrResult.answers.forEach((a: any) => {
         questionResults[a.q] = !!a.isCorrect;
       });
 
@@ -299,7 +300,7 @@ export default function TestDetails() {
       const catTotals: Record<string, number> = {};
       const catCorrects: Record<string, number> = {};
 
-      blueprint.forEach(bp => {
+      blueprint.forEach((bp: any) => {
         const isCorrect = questionResults[bp.id] || false;
         catTotals[bp.category] = (catTotals[bp.category] || 0) + 1;
         if (isCorrect) catCorrects[bp.category] = (catCorrects[bp.category] || 0) + 1;
@@ -1735,206 +1736,6 @@ export default function TestDetails() {
                     <p className="text-[10px] text-neutral-500">
                       {new Date(analysisResult.analyzedAt || Date.now()).toLocaleDateString('uz-UZ', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} da tahlil qilindi
                     </p>
-                    <button
-                      onClick={() => {
-                        const studentSections = (analysisResult.studentAnalyses || []).map((st: StudentAnalysis) => `
-                          <div class="student-card">
-                            <div class="student-header">
-                              <div class="student-avatar">${st.name.charAt(0).toUpperCase()}</div>
-                              <div class="student-info">
-                                <h3>${st.name}</h3>
-                                <div class="badges">
-                                  <span class="badge score">${st.scorePercent}% — ${st.scoreRaw}</span>
-                                  <span class="badge level level-${st.level.replace("'", '')}">${st.level.toUpperCase()}</span>
-                                </div>
-                              </div>
-                            </div>
-                            <p class="insight">${st.personalityInsight || ''}</p>
-                            <div class="sw-grid">
-                              <div class="strengths">
-                                <h4>✅ Kuchli Tomonlari</h4>
-                                <ul>${(st.strengths || []).map(s => `<li>${s}</li>`).join('')}</ul>
-                              </div>
-                              <div class="weaknesses">
-                                <h4>⚡ Zaif Tomonlari</h4>
-                                <ul>${(st.weaknesses || []).map(w => `<li>${w}</li>`).join('')}</ul>
-                              </div>
-                            </div>
-                            <div class="parent-report">
-                              <h4>✉️ Ota-Onalarga Hisobot</h4>
-                              <p>${st.parentReport || ''}</p>
-                            </div>
-                            <div class="roadmap">
-                              <h4>🗺️ Rivojlanish Yo'l Xaritasi</h4>
-                              ${(st.roadmap || []).map((step, i) => `
-                                <div class="roadmap-step step-${i}">
-                                  <div class="step-header"><span class="step-badge">${step.phase}</span> <span class="step-duration">${step.duration}</span></div>
-                                  <strong>${step.focus}</strong>
-                                  <ul>${(step.actions || []).map(a => `<li>${a}</li>`).join('')}</ul>
-                                  <div class="tips">
-                                    <div class="parent-tip">👨‍👩‍👧 <strong>Ota-onaga:</strong> ${step.parentTip}</div>
-                                    <div class="outcome">🎯 <strong>Kutilayotgan natija:</strong> ${step.expectedOutcome}</div>
-                                  </div>
-                                </div>
-                              `).join('')}
-                            </div>
-                          </div>
-                        `).join('');
-
-                        const content = `
-<!DOCTYPE html>
-<html lang="uz">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${test?.title} — AI Sinf Tahlili</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; color: #111; line-height: 1.6; }
-    .container { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
-    .report-header { background: linear-gradient(135deg, #111 0%, #333 100%); color: white; padding: 32px; border-radius: 20px; margin-bottom: 32px; }
-    .report-header h1 { font-size: 26px; margin-bottom: 8px; }
-    .report-header p { opacity: 0.7; font-size: 14px; }
-    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
-    .stat-card { background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px; text-align: center; }
-    .stat-card .value { font-size: 28px; font-weight: 900; margin-bottom: 4px; }
-    .stat-card .label { font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-    .section-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #6b7280; margin: 28px 0 16px; }
-    .class-analysis { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-    .strengths-box, .weaknesses-box { background: white; border-radius: 16px; padding: 20px; }
-    .strengths-box { border: 1px solid #d1fae5; }
-    .weaknesses-box { border: 1px solid #fee2e2; }
-    .strengths-box h4 { color: #065f46; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-    .weaknesses-box h4 { color: #991b1b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-    .strengths-box ul, .weaknesses-box ul { list-style: none; }
-    .strengths-box li { font-size: 13px; color: #064e3b; padding: 5px 0; border-bottom: 1px solid #d1fae5; }
-    .weaknesses-box li { font-size: 13px; color: #7f1d1d; padding: 5px 0; border-bottom: 1px solid #fee2e2; }
-    .recommendations { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 16px; padding: 20px; margin-bottom: 32px; }
-    .recommendations h4 { color: #1e40af; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-    .recommendations ol { padding-left: 0; list-style: none; }
-    .recommendations li { font-size: 13px; color: #1e3a8a; padding: 8px 0; border-bottom: 1px solid #bfdbfe; display: flex; gap: 10px; align-items: flex-start; }
-    .rec-num { width: 24px; height: 24px; background: #1d4ed8; color: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; flex-shrink: 0; margin-top: 2px; }
-    .student-card { background: white; border: 1px solid #e5e7eb; border-radius: 20px; padding: 24px; margin-bottom: 24px; page-break-inside: avoid; }
-    .student-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
-    .student-avatar { width: 56px; height: 56px; border-radius: 16px; background: #111; color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; flex-shrink: 0; }
-    .student-info h3 { font-size: 20px; font-weight: 800; }
-    .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
-    .badge { padding: 4px 12px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-    .badge.score { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
-    .level-yuqori { background: #d1fae5; color: #065f46; }
-    .level-yaxshi { background: #dbeafe; color: #1e40af; }
-    .level-orta { background: #fef3c7; color: #92400e; }
-    .level-zaif { background: #ffedd5; color: #9a3412; }
-    .level-judazaif { background: #fee2e2; color: #991b1b; }
-    .insight { font-size: 13px; color: #6b7280; font-style: italic; margin-bottom: 16px; padding: 12px; background: #f9fafb; border-radius: 10px; }
-    .sw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-    .strengths { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 14px; }
-    .weaknesses { background: #fff1f2; border: 1px solid #fecdd3; border-radius: 12px; padding: 14px; }
-    .strengths h4, .weaknesses h4 { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-    .strengths h4 { color: #047857; }
-    .weaknesses h4 { color: #be123c; }
-    .strengths ul, .weaknesses ul { list-style: none; font-size: 12px; }
-    .strengths li { color: #064e3b; padding: 4px 0; }
-    .weaknesses li { color: #881337; padding: 4px 0; }
-    .parent-report { background: #111; color: white; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
-    .parent-report h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #f59e0b; margin-bottom: 10px; }
-    .parent-report p { font-size: 13px; color: #f3f4f6; line-height: 1.7; }
-    .roadmap h4 { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; margin-bottom: 12px; }
-    .roadmap-step { border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px; margin-bottom: 10px; border-left: 4px solid #111; }
-    .step-0 { border-left-color: #3b82f6; }
-    .step-1 { border-left-color: #f59e0b; }
-    .step-2 { border-left-color: #10b981; }
-    .step-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-    .step-badge { padding: 3px 10px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; background: #f3f4f6; color: #374151; }
-    .step-duration { font-size: 11px; color: #9ca3af; font-weight: 600; }
-    .roadmap-step strong { font-size: 14px; color: #111; display: block; margin-bottom: 8px; }
-    .roadmap-step ul { list-style: disc; padding-left: 18px; font-size: 12px; color: #374151; margin-bottom: 10px; }
-    .tips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .parent-tip { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 10px; font-size: 11px; color: #78350f; }
-    .outcome { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 10px; font-size: 11px; color: #064e3b; }
-    .handbook-section { margin-top: 40px; }
-    .handbook-item { background: white; border: 1px solid #e5e7eb; border-left: 4px solid #111; border-radius: 14px; padding: 18px; margin-bottom: 14px; }
-    .handbook-item .question { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 10px; }
-    .correct-answer { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 10px; font-size: 12px; font-weight: 700; color: #065f46; margin-bottom: 8px; }
-    .common-mistake { background: #fff1f2; border: 1px solid #fecdd3; border-radius: 10px; padding: 10px; font-size: 12px; color: #881337; margin-bottom: 8px; }
-    .explanation { font-size: 12px; color: #6b7280; }
-    @media print { body { background: white; } .container { padding: 20px; } }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="report-header">
-      <h1>📊 ${test?.title}</h1>
-      <p>AI Sinf Tahlili va Ota-Onalarga Hisobot • ${new Date().toLocaleDateString('uz-UZ', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-    </div>
-
-    <div class="stats-grid">
-      <div class="stat-card"><div class="value">${analysisResult.classOverview.totalStudents}</div><div class="label">Jami o'quvchi</div></div>
-      <div class="stat-card"><div class="value" style="color:#d97706">${analysisResult.classOverview.averageScore}%</div><div class="label">O'rtacha natija</div></div>
-      <div class="stat-card"><div class="value" style="color:#059669">${analysisResult.classOverview.passCount}</div><div class="label">O'tganlar</div></div>
-      <div class="stat-card"><div class="value" style="color:#dc2626">${analysisResult.classOverview.failCount}</div><div class="label">Muammoli</div></div>
-    </div>
-
-    <div class="section-title">Sinf Bo'yicha Tahlil</div>
-    <div class="class-analysis">
-      <div class="strengths-box"><h4>✅ Sinf Kuchli Tomonlari</h4><ul>${(analysisResult.classOverview.classStrengths || []).map((s: string) => `<li>• ${s}</li>`).join('')}</ul></div>
-      <div class="weaknesses-box"><h4>⚡ Sinf Zaif Tomonlari</h4><ul>${(analysisResult.classOverview.classWeaknesses || []).map((w: string) => `<li>• ${w}</li>`).join('')}</ul></div>
-    </div>
-
-    <div class="recommendations">
-      <h4>🎓 O'qituvchiga Metodik Tavsiyalar</h4>
-      <ol>${(analysisResult.classOverview.teacherRecommendations || []).map((r: string, i: number) => `<li><span class="rec-num">${i + 1}</span><span>${r}</span></li>`).join('')}</ol>
-    </div>
-
-    ${analysisResult.curriculumTopics?.length > 0 ? `
-      <div class="section-title">📚 O'tilgan Mavzular va Ularning Hayotiy Zarurati (Faktlar bilan)</div>
-      <div class="topics-grid" style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px;">
-        ${analysisResult.curriculumTopics.map((t: CurriculumTopicInsight, i: number) => `
-          <div style="background: white; border: 1px solid #e5e7eb; border-left: 5px solid #f59e0b; border-radius: 14px; padding: 18px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <strong style="font-size: 15px; color: #111;">${i + 1}. ${t.topic}</strong>
-              ${t.category ? `<span style="font-size: 10px; padding: 3px 10px; background: #f3f4f6; border-radius: 999px; font-weight: 700; text-transform: uppercase;">${t.category}</span>` : ''}
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px;">
-              <div style="background: #f9fafb; padding: 10px; border-radius: 8px;">
-                <span style="font-weight: 800; color: #4b5563; text-transform: uppercase; font-size: 10px;">🧠 Nega bolaga kerak:</span>
-                <p style="margin-top: 4px; color: #1f2937;">${t.whyItMattersForChild}</p>
-              </div>
-              <div style="background: #eff6ff; padding: 10px; border-radius: 8px;">
-                <span style="font-weight: 800; color: #1d4ed8; text-transform: uppercase; font-size: 10px;">💼 Real hayot va kasblarda:</span>
-                <p style="margin-top: 4px; color: #1e3a8a;">${t.realWorldApplication}</p>
-              </div>
-              <div style="background: #faf5ff; padding: 10px; border-radius: 8px;">
-                <span style="font-weight: 800; color: #7e22ce; text-transform: uppercase; font-size: 10px;">⚡ Kognitiv foydasi:</span>
-                <p style="margin-top: 4px; color: #581c87;">${t.cognitiveBenefits}</p>
-              </div>
-              <div style="background: #ecfdf5; padding: 10px; border-radius: 8px;">
-                <span style="font-weight: 800; color: #047857; text-transform: uppercase; font-size: 10px;">🎯 O'zlashtirish mezoni:</span>
-                <p style="margin-top: 4px; color: #064e3b;">${t.successMetric}</p>
-              </div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    ` : ''}
-
-    <div class="section-title">O'quvchilar Bo'yicha Individual Tahlil</div>
-    ${studentSections}
-
-    <div class="handbook-section">
-      <div class="section-title">📖 Test Savollari Qo'llanma</div>
-      ${(analysisResult.handbook || []).map((hb: any, i: number) => `
-        <div class="handbook-item">
-          <div class="question">${i + 1}. ${hb.question}</div>
-          <div class="correct-answer">✅ To'g'ri javob: ${hb.correctAnswer}</div>
-          ${hb.commonMistake ? `<div class="common-mistake">⚠️ Tipik xato: ${hb.commonMistake}</div>` : ''}
-          <div class="explanation">📝 ${hb.explanation}</div>
-        </div>
-      `).join('')}
-    </div>
-  </div>
-</body>
-</html>`;
                     <div className="flex flex-wrap items-center gap-2.5">
                       <button
                         onClick={() => openClassReportPrintWindow(analysisResult, test)}
@@ -1942,24 +1743,6 @@ export default function TestDetails() {
                         title="Ota-onalarga berish uchun har bir bolaga alohida rasmiy A4 varaq chiqarish (Print/PDF)"
                       >
                         <Printer size={15} className="text-emerald-400" /> Rasmiy PDF Chop Etish / Yuklash (A4)
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
-                          const url = URL.createObjectURL(blob);
-                          const link = document.createElement('a');
-                          link.href = url;
-                          link.download = `${test?.title}_AI_Sinf_Tahlili.html`;
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                          URL.revokeObjectURL(url);
-                        }}
-                        className="flex items-center gap-1.5 px-3.5 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
-                        title="HTML fayl sifatida saqlash"
-                      >
-                        <Download size={14} /> HTML
                       </button>
                     </div>
                   </div>
