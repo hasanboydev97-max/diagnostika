@@ -22,8 +22,8 @@ export const generateText = async (req, res) => {
     const { prompt } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
 
-    if (prompt.length > 10000) {
-      return res.status(400).json({ error: 'Prompt juda uzun (max 10000 belgi).' });
+    if (prompt.length > 50000) {
+      return res.status(400).json({ error: 'Prompt juda uzun (max 50000 belgi).' });
     }
 
     const result = await executeResilientTextGen({
@@ -52,8 +52,8 @@ export const generateVision = async (req, res) => {
       return res.status(503).json({ error: 'Gemini API kaliti sozlanmagan. Admin bilan bog\'laning.' });
     }
 
-    if (prompt.length > 10000) {
-      return res.status(400).json({ error: 'Prompt juda uzun (max 10000 belgi).' });
+    if (prompt.length > 50000) {
+      return res.status(400).json({ error: 'Prompt juda uzun (max 50000 belgi).' });
     }
 
     if (!Array.isArray(images) || images.length === 0) {

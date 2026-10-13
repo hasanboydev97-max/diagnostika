@@ -682,110 +682,90 @@ export const generateClassAnalysis = async (
 
   const avgScore = Math.round(studentData.reduce((a, b) => a + b.percent, 0) / studentData.length);
 
-  // 2. Savollar ro'yxatini tahlil qilish uchun qisqartirilgan model
-  const questionsSample = (questions || []).slice(0, 15).map((q: any) => {
-    let correctText = q.correctOption;
-    if (q.options && q.correctOption) {
-      const idx = typeof q.correctOption === 'string' ? q.correctOption.charCodeAt(0) - 65 : q.correctOption;
-      if (idx >= 0 && Array.isArray(q.options) && idx < q.options.length) correctText = q.options[idx];
+  // 2. Savollar va mavzularni ixcham formatda shakllantirish (Prompt hajmini tejash uchun)
+  const uniqueTopics = Array.from(new Set((questions || []).map((q: any) => q.topic || q.category).filter(Boolean))).slice(0, 8);
+  const topicsSummary = uniqueTopics.length > 0 ? uniqueTopics.join(', ') : 'Umumiy fan mavzulari';
+  
+  const sampleQuestions = (questions || []).slice(0, 6).map((q: any, i: number) => {
+    let ans = q.correctOption;
+    if (q.options && typeof q.correctOption === 'string') {
+      const idx = q.correctOption.charCodeAt(0) - 65;
+      if (idx >= 0 && q.options[idx]) ans = q.options[idx];
     }
-    return {
-      topic: q.topic || q.category || 'Mavzu',
-      category: q.category || 'Fan',
-      difficulty: q.difficulty || 'O\'rta',
-      skill: q.skill || 'Tushunish',
-      question: q.questionText || q.topic || 'Savol',
-      correctAnswer: correctText
-    };
-  });
+    return `${i + 1}. [${q.topic || 'Mavzu'}] ${(q.questionText || '').slice(0, 70)} (Javob: ${ans || 'A'})`;
+  }).join('\n');
 
-  const prompt = `Sen 20 yillik tajribaga ega yetakchi pedagog-metodist, bolalar neyropsixologi va ta'lim tizimi tahlilchisisan.
-Sening maqsading: Ushbu test orqali o'tilgan mavzularning tub mohiyatini, nima uchun bu bilimlar bolaning real hayotida va kelajagida o'ta zarurligini FAKTLAR va ilmiy dalillar bilan isbotlab berish, hamda HAR BIR O'QUVCHIGA ALOHIDA individual yo'l xaritasi va ota-onalarga chuqur, samimiy hisobot yaratishdir.
+  // O'quvchilar ro'yxatini ixcham qatorlar ko'rinishida berish
+  const studentsSummary = studentData.map((s, i) => `${i + 1}. ${s.name}: ${s.percent}%`).join('\n');
 
-TEST NOMI: "${testTitle}"
-O'QUVCHILAR SONI (Tozalangan, yagona ismlar): ${studentData.length} nafar
-O'RTACHA FOIZ: ${avgScore}%
+  const prompt = `Sen 20 yillik tajribali pedagog-metodist va bolalar psixologisan.
+Test: "${testTitle}", O'rtacha natija: ${avgScore}%.
+Asosiy mavzular: ${topicsSummary}
 
-O'QUVCHILAR RO'YXATI (Dublikatlar tozalangan):
-${JSON.stringify(studentData, null, 2)}
+O'QUVCHILAR (Jami ${studentData.length} nafar):
+${studentsSummary}
 
-TEST SAVOLLARI VA MAVZULARI:
-${JSON.stringify(questionsSample, null, 2)}
+SAVOLLAR NAMUNASI:
+${sampleQuestions}
 
-QAT'IY TALABLAR (PROFESSIONAL DARAJA):
-1. O'TILGAN MAVZULAR VA ULARNING ZARURATI (curriculumTopics):
-   - Testdagi asosiy mavzularni ajratib ol (kamida 3-5 ta).
-   - Har bir mavzu uchun "whyItMattersForChild": Bu mavzu bolaning intellekti uchun nima beradi?
-   - "realWorldApplication": FAKTLAR BILAN! Hayotda qayerda kerak bo'ladi? (Masalan: mantiqiy algoritmlar dasturlash va muhandislikda, foizlar va proporsiyalar moliyaviy qarorlarda va biznesda, matnli tahlil murakkab vaziyatlarda to'g'ri xulosa chiqarishda).
-   - "cognitiveBenefits": Neyropsixologik foydasi (kognitiv moslashuvchanlik, operativ xotira, tanqidiy fikrlash).
-   - "successMetric": Bola bu mavzuni to'liq egallaganini qanday bilish mumkin.
+VAZIFA:
+1. "curriculumTopics": Testdagi asosiy mavzular nega bolaga kerakligi, IT/moliya/muhandislikda real foydasi, kognitiv rivoji va muvaffaqiyat mezoni (faktlar bilan).
+2. "studentAnalyses": Har bir ${studentData.length} nafar o'quvchiga ALOHIDA: kuchli/zaif tomonlari, ota-onaga samimiy xat, 3 bosqichli rivojlanish yo'l xaritasi (1-4 hafta, 1-2 oy, 2-3 oy).
+3. "classOverview": Sinf kuchli/zaif tomonlari va o'qituvchiga 3 ta tavsiya.
 
-2. HAR BIR O'QUVCHIGA ALOHIDA YONDASHUV (studentAnalyses):
-   - Yuqoridagi har bir ${studentData.length} nafar o'quvchi uchun ALOHIDA, takrorlanmas, shaxsiy tahlil.
-   - Hech bir o'quvchida shabloniy "yaxshi natija, davom eting" degan yuzaki gaplar bo'lmasin! Aniq uning foiziga mos tahlil bo'lsin.
-   - "parentReport": Ota-ona o'qiganda ko'z oldiga farzandining aniq holati keladigan, iliq, chuqur va amaliy 4-5 jumlalik maktub.
-   - "roadmap": 3 ta aniq bosqichli yo'l xaritasi (1-bosqich: 1-4 hafta, 2-bosqich: 1-2 oy, 3-bosqich: 2-3 oy). Har bosqichda aniq kundalik mashqlar va ota-onaga tavsiyalar.
-
-3. SINFNING UMUMIY HOLATI (classOverview):
-   - Sinfning eng zaif mavzulari va o'qituvchiga dars jarayonini o'zgartirish uchun amaliy 3 ta maslahat.
-
-4. MATN STANDARTI:
-   - O'zbek adabiy tilida, professional pedagogik terminlar bilan yozilsin.
-   - Matn ichida hech qachon qochirilmagan qo'shtirnoq (") ishlatmang, faqat yakkalik (') ishlating.
-
-FAQAT VA FAQAT quyidagi JSON formatda javob bering, boshqa hech qanday so'z qo'shmang:
+QAT'IY QOIDA: Faqat toza JSON qaytaring. Matn ichida hech qachon qochirilmagan qo'shtirnoq (") ishlatmang, faqat yakkalik (') ishlating.
 {
   "classOverview": {
-    "classStrengths": ["Sinf kuchli bo'lgan aniq 1-jihat", "2-jihat"],
-    "classWeaknesses": ["Sinf zaif bo'lgan aniq 1-mavzu", "2-mavzu", "3-mavzu"],
-    "teacherRecommendations": ["O'qituvchiga 1-metodik ko'rsatma (faktlar bilan)", "2-ko'rsatma", "3-ko'rsatma"],
-    "generalSummary": "Sinfning intellektual salohiyati va umumiy kamchiliklari bo'yicha to'liq 3-4 gaplik xulosa."
+    "classStrengths": ["Kuchli jihat 1", "2"],
+    "classWeaknesses": ["Zaif mavzu 1", "2", "3"],
+    "teacherRecommendations": ["O'qituvchiga tavsiya 1", "2", "3"],
+    "generalSummary": "Sinf bo'yicha to'liq umumiy xulosa."
   },
   "curriculumTopics": [
     {
-      "topic": "Mavzu nomi (masalan: Mantiqiy munosabatlar va tenglamalar)",
-      "category": "Fan yo'nalishi",
-      "whyItMattersForChild": "Nima uchun bu mavzu bolaning aqliy rivojlanishi uchun muhim (faktlar bilan)",
-      "realWorldApplication": "Real hayotda va zamonaviy kasblarda (IT, moliya, muhandislik) qanday qo'llaniladi",
-      "cognitiveBenefits": "Rivojlanadigan kognitiv ko'nikmalar (tanqidiy tahlil, deduktiv fikrlash)",
-      "successMetric": "O'zlashtirish mezoni (masalan: 10 ta masaladan 8 tasini mustaqil yecha olish)"
+      "topic": "Mavzu nomi",
+      "category": "Fan",
+      "whyItMattersForChild": "Bolaga nega kerakligi (pedagogik asos)",
+      "realWorldApplication": "Real hayot va kasblarda qo'llanilishi (IT, moliya, faktlar)",
+      "cognitiveBenefits": "Rivojlanadigan kognitiv ko'nikma",
+      "successMetric": "O'zlashtirish mezoni"
     }
   ],
   "studentAnalyses": [
     {
-      "name": "O'quvchining to'liq ismi",
+      "name": "O'quvchi ismi",
       "scorePercent": 75,
       "scoreRaw": "15/20",
       "level": "yaxshi",
-      "strengths": ["Kuchli tomoni 1", "Kuchli tomoni 2"],
-      "weaknesses": ["Zaif tomoni 1 (aniq mavzu)", "Zaif tomoni 2"],
-      "personalityInsight": "O'quvchining fikrlash tezligi va yondashuvi haqida 2 jumlalik xarakteristika.",
-      "parentReport": "Hurmatli ota-ona! Farzandingiz [Ism] ushbu sinovda [X]% natijaga erishdi. [Uning intellektual ustunligi haqida fakt]. Biroq [zaif tomoni] bo'yicha bo'shliq sezildi. Uy sharoitida unga [aniq, qulay metodika]. Farzandingiz juda katta salohiyatga ega, unga [rag'batlantirish so'zlari].",
-      "immediateActions": ["Ushbu haftada bajarishi kerak bo'lgan 1-aniq vazifa", "2-vazifa"],
+      "strengths": ["Kuchli tomoni 1", "2"],
+      "weaknesses": ["Zaif mavzu 1", "2"],
+      "personalityInsight": "O'quvchi haqida xarakteristika.",
+      "parentReport": "Hurmatli ota-ona! Farzandingiz ushbu testda [X]% natijaga erishdi. [Yutuqlari va zaif tomonlari, uyda qilinadigan amaliy ishlar].",
+      "immediateActions": ["Bu haftadagi 1-vazifa", "2-vazifa"],
       "roadmap": [
         {
-          "phase": "1-bosqich: Bo'shliqlarni to'ldirish",
+          "phase": "1-bosqich: Bo'shliqlar",
           "duration": "1-4 hafta",
-          "focus": "Bazaviy tushunchalarni mustahkamlash",
-          "actions": ["Kunlik 15 daqiqa aniq mashg'ulot", "Xatolar ustida ishlash daftarini tutish"],
-          "parentTip": "Ota-onaga: har kuni kechqurun uning bajargan ishini tekshirib, rag'batlantirish",
-          "expectedOutcome": "Natijani 10-15% ga oshirish"
+          "focus": "Baza mustahkamlash",
+          "actions": ["Kunlik 15 daqiqa mashq", "Xatolar daftari"],
+          "parentTip": "Ota-onaga maslahat",
+          "expectedOutcome": "Natijani 15% oshirish"
         },
         {
-          "phase": "2-bosqich: Tahlil va amaliyot",
+          "phase": "2-bosqich: Tahlil",
           "duration": "1-2 oy",
-          "focus": "Mantiqiy tahlil va tezlikni oshirish",
-          "actions": ["Murakkabroq testlar yechish", "Mustaqil tushuntirib bera olish"],
-          "parentTip": "Ota-onaga: qiyin vaziyatda to'g'ri javobni aytmasdan, yo'naltiruvchi savol berish",
-          "expectedOutcome": "Barqaror 80%+ ko'rsatkich"
+          "focus": "Tezlik va mustaqil yechish",
+          "actions": ["Murakkab masalalar"],
+          "parentTip": "Ota-onaga maslahat",
+          "expectedOutcome": "80%+ natija"
         },
         {
-          "phase": "3-bosqich: Yetakchilik va erkin fikrlash",
+          "phase": "3-bosqich: Yetakchilik",
           "duration": "2-3 oy",
-          "focus": "Olimpiada va chuqurlashtirilgan daraja",
-          "actions": ["Nostandart muammolarni yechish", "O'z tengdoshlariga tushuntirish"],
-          "parentTip": "Ota-onaga: o'ziga bo'lgan ishonchini yuksaltirish",
-          "expectedOutcome": "Mavzuni 95%+ darajada erkin egallash"
+          "focus": "Olimpiada darajasi",
+          "actions": ["Chuqur vazifalar"],
+          "parentTip": "Ota-onaga maslahat",
+          "expectedOutcome": "95%+ daraja"
         }
       ]
     }
@@ -794,8 +774,8 @@ FAQAT VA FAQAT quyidagi JSON formatda javob bering, boshqa hech qanday so'z qo's
     {
       "question": "Savol matni",
       "correctAnswer": "To'g'ri javob",
-      "explanation": "Nega bu javob to'g'riligi haqida metodik izoh",
-      "commonMistake": "O'quvchilar yo'l qo'yadigan odatiy xato sababi"
+      "explanation": "Metodik izoh",
+      "commonMistake": "Tipik xato"
     }
   ]
 }`;
