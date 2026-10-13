@@ -16,8 +16,8 @@ import { generateOMRPdf } from '../../lib/omrPdfGenerator';
 import { gradeOMRFromImage, gradeTestFromPhoto, type OMRResult, type PaperGradingResult } from '../../lib/omrScanner';
 import { parseZipGradeFile, type ZipGradeImportResult } from '../../lib/zipgradeParser';
 import { db, type StudentResult } from '../../lib/db';
-import { QUESTIONS_BLUEPRINT } from '../../lib/blueprint';
-import { generateClassAnalysis } from '../../lib/gemini';
+import { generateClassAnalysis, type StudentAnalysis, type CurriculumTopicInsight } from '../../lib/gemini';
+import { openClassReportPrintWindow } from '../../lib/classReportPdfGenerator';
 import { sendTelegramMessage, getSavedChatId } from '../../lib/telegram';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -42,6 +42,8 @@ export default function TestDetails() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<StudentAnalysis | null>(null);
+  const [activeAnalysisTab, setActiveAnalysisTab] = useState<'class' | 'topics' | 'students' | 'handbook'>('class');
 
   // OMR & ZipGrade Modal State
   const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
@@ -1233,151 +1235,736 @@ export default function TestDetails() {
         )}
       </AnimatePresence>
 
-      {/* AI CLASS ANALYSIS MODAL */}
+      {/* AI CLASS ANALYSIS MODAL — PROFESSIONAL VERSION */}
       <AnimatePresence>
         {isAnalysisModalOpen && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
             <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 10 }}
+              initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 10 }}
-              className="bg-white border border-black/10 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ duration: 0.25 }}
+              className="bg-white border border-black/10 rounded-3xl w-full max-w-5xl max-h-[95vh] overflow-hidden flex flex-col shadow-2xl"
             >
-              <div className="px-8 py-5 border-b border-black/10 flex items-center justify-between bg-neutral-50/70">
+              {/* Modal Header */}
+              <div className="px-5 sm:px-8 py-4 sm:py-5 border-b border-black/10 flex items-center justify-between bg-gradient-to-r from-neutral-50 to-white shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-2xl bg-amber-500/10 text-amber-700 border border-amber-500/20 flex items-center justify-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20 shrink-0">
                     <Sparkles size={20} />
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold text-neutral-900 tracking-tight leading-tight">AI Sinf Tahlili va Xulosa</h3>
-                    <p className="text-xs text-neutral-500 font-medium mt-0.5">Barcha o'quvchilar natijalari bo'yicha kognitiv pedagogik tahlil</p>
+                    <h3 className="text-sm sm:text-base font-bold text-neutral-900 tracking-tight leading-tight">AI Sinf Tahlili va Xulosa</h3>
+                    <p className="text-[10px] sm:text-xs text-neutral-500 font-medium mt-0.5">{test?.title} • {results.length} nafar o'quvchi</p>
                   </div>
                 </div>
                 <button
-                  onClick={() => setIsAnalysisModalOpen(false)}
-                  className="w-9 h-9 rounded-xl bg-white hover:bg-neutral-100 border border-black/10 text-neutral-500 hover:text-black flex items-center justify-center transition-colors"
+                  onClick={() => { setIsAnalysisModalOpen(false); setSelectedStudent(null); setActiveAnalysisTab('class'); }}
+                  className="w-9 h-9 rounded-xl bg-white hover:bg-neutral-100 border border-black/10 text-neutral-500 hover:text-black flex items-center justify-center transition-colors shrink-0"
                 >
                   <X size={18} />
                 </button>
               </div>
 
-              <div className="p-8 overflow-y-auto space-y-6 flex-1">
-                {isAnalyzing ? (
-                  <div className="py-20 flex flex-col items-center justify-center text-center">
-                    <Loader2 size={36} className="animate-spin text-neutral-900 mb-4" />
-                    <h4 className="text-base font-bold text-neutral-900">Sinf natijalari tahlil qilinmoqda...</h4>
-                    <p className="text-xs text-neutral-400 max-w-xs mt-1">Sun'iy intellekt zaif mavzularni va shaxsiy tavsiyalarni tuzmoqda</p>
+              {/* Loading State */}
+              {isAnalyzing && (
+                <div className="flex-1 flex flex-col items-center justify-center py-20 px-8 text-center space-y-5">
+                  <div className="relative">
+                    <div className="w-16 h-16 rounded-full border-4 border-amber-100 border-t-amber-500 animate-spin" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Sparkles size={20} className="text-amber-500" />
+                    </div>
                   </div>
-                ) : analysisResult ? (
-                  <div className="space-y-8">
-                    {/* Umumiy Xulosa */}
-                    <div className="bg-neutral-50 border border-black/5 p-5 md:p-6 rounded-3xl">
-                      <div className="flex items-center gap-2 mb-3 text-neutral-800">
-                        <BrainCircuit size={18} />
-                        <h4 className="text-[11px] font-bold uppercase tracking-widest">Umumiy Sinf Bo'yicha Xulosa</h4>
+                  <div>
+                    <h4 className="text-lg font-bold text-neutral-900 mb-1">Sinf tahlil qilinmoqda...</h4>
+                    <p className="text-sm text-neutral-500 max-w-xs leading-relaxed">Sun'iy intellekt har bir o'quvchi uchun individual yo'l xarita va ota-onalarga hisobot tuzmoqda</p>
+                  </div>
+                  <div className="flex flex-col gap-2 w-full max-w-xs">
+                    {['Sinf statistikasi hisoblanmoqda', 'Individual tahlil amalga oshirilmoqda', 'Ota-onalarga hisobotlar yozilmoqda', 'Yo\'l xaritalari tuzilmoqda'].map((step, i) => (
+                      <div key={i} className="flex items-center gap-2.5 text-xs text-neutral-500">
+                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" style={{ animationDelay: `${i * 0.3}s` }} />
+                        {step}
                       </div>
-                      <p className="text-sm text-neutral-700 leading-relaxed font-medium">{analysisResult.generalIssues}</p>
-                    </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-                    {/* O'quvchilar tahlili */}
-                    <div>
-                      <h4 className="text-[11px] font-bold uppercase tracking-widest text-neutral-500 mb-4 px-2">Har bir o'quvchi uchun tavsiya</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {analysisResult.studentBreakdowns?.map((st: any, idx: number) => (
-                          <div key={idx} className="bg-white border border-black/5 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="font-bold text-neutral-900">{st.name}</span>
-                              <span className="text-[10px] font-bold bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full">{st.score} ball</span>
+              {/* Results */}
+              {!isAnalyzing && analysisResult && (
+                <>
+                  {/* Tabs */}
+                  <div className="px-5 sm:px-8 pt-4 pb-0 border-b border-black/5 flex gap-1 overflow-x-auto scrollbar-hide shrink-0 bg-white">
+                    {[
+                      { key: 'class', label: 'Sinf Bo\'yicha', icon: '🏫' },
+                      { key: 'topics', label: `O'tilgan Mavzular & Zarurati (${analysisResult.curriculumTopics?.length || 0})`, icon: '📚' },
+                      { key: 'students', label: `O'quvchilar (${analysisResult.studentAnalyses?.length || 0})`, icon: '👥' },
+                      { key: 'handbook', label: 'Savollar Qo\'llanma', icon: '📖' },
+                    ].map(tab => (
+                      <button
+                        key={tab.key}
+                        onClick={() => { setActiveAnalysisTab(tab.key as any); setSelectedStudent(null); }}
+                        className={`flex items-center gap-1.5 px-4 py-2.5 rounded-t-xl text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap shrink-0 border-b-2 ${
+                          activeAnalysisTab === tab.key
+                            ? 'border-b-black text-neutral-900 bg-neutral-50 shadow-xs'
+                            : 'border-b-transparent text-neutral-400 hover:text-neutral-700 hover:bg-neutral-50/50'
+                        }`}
+                      >
+                        <span>{tab.icon}</span> {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="overflow-y-auto flex-1">
+
+                    {/* ===== TAB 1: CLASS OVERVIEW ===== */}
+                    {activeAnalysisTab === 'class' && (
+                      <div className="p-5 sm:p-8 space-y-6">
+                        {/* Deduplication notice if any were cleaned */}
+                        {analysisResult.classOverview.duplicatesRemovedCount > 0 && (
+                          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 rounded-2xl p-4 flex items-center justify-between gap-3 text-xs text-blue-900 shadow-xs">
+                            <div className="flex items-center gap-2.5">
+                              <span className="text-base">🛡️</span>
+                              <div>
+                                <span className="font-bold">Aqlli Tozalash Muvaffaqiyatli:</span> {analysisResult.classOverview.rawSubmissionsCount} ta topshiriqdan <strong>{analysisResult.classOverview.duplicatesRemovedCount} ta</strong> takrorlangan urinish va soxta test ismlari tozalandi.
+                                <div className="text-[11px] text-blue-700/80 mt-0.5">Har bir o'quvchining faqat eng yaxshi (maksimal) balli qoldirildi.</div>
+                              </div>
                             </div>
-                            <p className="text-xs text-neutral-500 leading-relaxed">{st.feedback}</p>
+                            <span className="px-2.5 py-1 rounded-full bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wider shrink-0">
+                              {analysisResult.classOverview.totalStudents} yagona o'quvchi
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Stats Row */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {[
+                            { label: 'Jami yagona o\'quvchi', value: analysisResult.classOverview.totalStudents, color: 'bg-blue-50 text-blue-700 border-blue-100' },
+                            { label: 'O\'rtacha ball', value: `${analysisResult.classOverview.averageScore}%`, color: 'bg-amber-50 text-amber-700 border-amber-100' },
+                            { label: 'O\'tganlar (≥60%)', value: analysisResult.classOverview.passCount, color: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
+                            { label: 'Muammoli (<60%)', value: analysisResult.classOverview.failCount, color: 'bg-rose-50 text-rose-700 border-rose-100' },
+                          ].map((stat, i) => (
+                            <div key={i} className={`border rounded-2xl p-4 text-center ${stat.color}`}>
+                              <div className="text-2xl sm:text-3xl font-black mb-1">{stat.value}</div>
+                              <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider opacity-80">{stat.label}</div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Top performer + Needs attention */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {analysisResult.classOverview.topPerformer && (
+                            <div className="bg-gradient-to-br from-emerald-50 to-white border border-emerald-100 rounded-2xl p-4 flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-lg font-black shadow-md shadow-emerald-500/20 shrink-0">🏆</div>
+                              <div>
+                                <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-0.5">Eng yuqori natija</div>
+                                <div className="font-bold text-neutral-900 text-sm">{analysisResult.classOverview.topPerformer}</div>
+                              </div>
+                            </div>
+                          )}
+                          {analysisResult.classOverview.needsAttention?.length > 0 && (
+                            <div className="bg-gradient-to-br from-rose-50 to-white border border-rose-100 rounded-2xl p-4">
+                              <div className="text-[10px] font-bold text-rose-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">⚠️ Alohida e'tibor talab qiluvchilar</div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {analysisResult.classOverview.needsAttention.map((name: string, i: number) => (
+                                  <span key={i} className="px-2.5 py-1 bg-white border border-rose-200 text-rose-700 text-[10px] font-bold rounded-lg">{name}</span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Strengths & Weaknesses */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-5">
+                            <h4 className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-3 flex items-center gap-1.5">✅ Sinf Kuchli Tomonlari</h4>
+                            <ul className="space-y-2">
+                              {(analysisResult.classOverview.classStrengths || []).map((s: string, i: number) => (
+                                <li key={i} className="flex items-start gap-2 text-xs text-emerald-800 font-medium leading-relaxed">
+                                  <span className="mt-0.5 w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-black shrink-0">{i + 1}</span>
+                                  {s}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div className="bg-rose-50 border border-rose-100 rounded-2xl p-5">
+                            <h4 className="text-[10px] font-bold text-rose-700 uppercase tracking-widest mb-3 flex items-center gap-1.5">⚡ Sinf Zaif Tomonlari</h4>
+                            <ul className="space-y-2">
+                              {(analysisResult.classOverview.classWeaknesses || []).map((w: string, i: number) => (
+                                <li key={i} className="flex items-start gap-2 text-xs text-rose-800 font-medium leading-relaxed">
+                                  <span className="mt-0.5 w-4 h-4 rounded-full bg-rose-500 text-white flex items-center justify-center text-[9px] font-black shrink-0">{i + 1}</span>
+                                  {w}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* Teacher Recommendations */}
+                        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-5">
+                          <h4 className="text-[10px] font-bold text-indigo-700 uppercase tracking-widest mb-3 flex items-center gap-2">🎓 O'qituvchiga Metodik Tavsiyalar</h4>
+                          <ol className="space-y-3">
+                            {(analysisResult.classOverview.teacherRecommendations || []).map((rec: string, i: number) => (
+                              <li key={i} className="flex items-start gap-3">
+                                <span className="w-6 h-6 rounded-lg bg-indigo-600 text-white text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                                <p className="text-xs sm:text-sm text-indigo-900 leading-relaxed font-medium">{rec}</p>
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+
+                        {/* General Summary */}
+                        <div className="bg-neutral-900 text-white rounded-2xl p-6">
+                          <div className="flex items-center gap-2 mb-3">
+                            <BrainCircuit size={18} className="text-amber-400" />
+                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-neutral-300">Umumiy Sinf Xulosasi</h4>
+                          </div>
+                          <p className="text-sm leading-relaxed font-medium text-neutral-100">{analysisResult.generalIssues}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ===== TAB 2: CURRICULUM TOPICS & REAL WORLD RELEVANCE ===== */}
+                    {activeAnalysisTab === 'topics' && (
+                      <div className="p-5 sm:p-8 space-y-6">
+                        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 rounded-2xl p-5">
+                          <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-2 mb-1.5">
+                            <span>🎯</span> O'tilgan Mavzularning Real Hayotdagi Ahamiyati
+                          </h4>
+                          <p className="text-xs text-amber-800 leading-relaxed font-medium">
+                            Ushbu testdagi har bir mavzu shunchaki nazariya emas, balki bolaning zamonaviy dunyoda muvaffaqiyatga erishishi, IT, moliya, muhandislik va mantiqiy qaror qabul qilishida o'ta muhim ahamiyat kasb etadi.
+                          </p>
+                        </div>
+
+                        <div className="space-y-4">
+                          {(analysisResult.curriculumTopics || []).map((t: CurriculumTopicInsight, idx: number) => (
+                            <div key={idx} className="bg-white border border-black/10 rounded-2xl p-6 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+                              <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-gradient-to-b from-amber-500 via-orange-500 to-indigo-600" />
+                              <div className="pl-3 space-y-4">
+                                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-black/5 pb-3">
+                                  <div className="flex items-center gap-2.5">
+                                    <span className="w-7 h-7 rounded-lg bg-black text-white text-xs font-bold flex items-center justify-center">
+                                      {idx + 1}
+                                    </span>
+                                    <h5 className="font-bold text-base text-neutral-900">{t.topic}</h5>
+                                  </div>
+                                  {t.category && (
+                                    <span className="px-3 py-1 rounded-full bg-neutral-100 text-neutral-700 text-[10px] font-bold uppercase tracking-wider border border-black/5">
+                                      {t.category}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {/* Why it matters */}
+                                  <div className="bg-neutral-50 rounded-xl p-4 border border-black/5 space-y-1.5">
+                                    <div className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider flex items-center gap-1.5">
+                                      <span>🧠</span> Nima uchun bolaga kerak?
+                                    </div>
+                                    <p className="text-xs text-neutral-800 leading-relaxed font-medium">
+                                      {t.whyItMattersForChild}
+                                    </p>
+                                  </div>
+
+                                  {/* Real world & careers */}
+                                  <div className="bg-blue-50/70 rounded-xl p-4 border border-blue-100 space-y-1.5">
+                                    <div className="text-[10px] font-bold text-blue-700 uppercase tracking-wider flex items-center gap-1.5">
+                                      <span>💼</span> Real hayot va zamonaviy kasblarda (Faktlar)
+                                    </div>
+                                    <p className="text-xs text-blue-950 leading-relaxed font-medium">
+                                      {t.realWorldApplication}
+                                    </p>
+                                  </div>
+
+                                  {/* Cognitive benefits */}
+                                  <div className="bg-purple-50/70 rounded-xl p-4 border border-purple-100 space-y-1.5">
+                                    <div className="text-[10px] font-bold text-purple-700 uppercase tracking-wider flex items-center gap-1.5">
+                                      <span>⚡</span> Kognitiv & Neyropsixologik Foydasi
+                                    </div>
+                                    <p className="text-xs text-purple-950 leading-relaxed font-medium">
+                                      {t.cognitiveBenefits}
+                                    </p>
+                                  </div>
+
+                                  {/* Success metric */}
+                                  <div className="bg-emerald-50/70 rounded-xl p-4 border border-emerald-100 space-y-1.5">
+                                    <div className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1.5">
+                                      <span>🎯</span> O'zlashtirish Mezoni
+                                    </div>
+                                    <p className="text-xs text-emerald-950 leading-relaxed font-medium">
+                                      {t.successMetric}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ===== TAB 3: INDIVIDUAL STUDENTS ===== */}
+                    {activeAnalysisTab === 'students' && !selectedStudent && (
+                      <div className="p-5 sm:p-8">
+                        <p className="text-xs text-neutral-500 mb-4">O'quvchini bosing — to'liq individual tahlil va yo'l xaritasini ko'ring.</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {(analysisResult.studentAnalyses || []).map((st: StudentAnalysis, idx: number) => {
+                            const levelConfig: Record<string, { bg: string; text: string; border: string; dot: string }> = {
+                              'yuqori':    { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', dot: 'bg-emerald-500' },
+                              'yaxshi':    { bg: 'bg-blue-50',    text: 'text-blue-700',    border: 'border-blue-200',    dot: 'bg-blue-500' },
+                              "o'rta":     { bg: 'bg-amber-50',   text: 'text-amber-700',   border: 'border-amber-200',   dot: 'bg-amber-500' },
+                              'zaif':      { bg: 'bg-orange-50',  text: 'text-orange-700',  border: 'border-orange-200',  dot: 'bg-orange-500' },
+                              'juda zaif': { bg: 'bg-rose-50',    text: 'text-rose-700',    border: 'border-rose-200',    dot: 'bg-rose-500' },
+                            };
+                            const lc = levelConfig[st.level] || levelConfig["o'rta"];
+                            return (
+                              <button
+                                key={idx}
+                                onClick={() => setSelectedStudent(st)}
+                                className="text-left bg-white border border-black/10 rounded-2xl p-4 hover:shadow-md hover:border-black/20 transition-all group"
+                              >
+                                <div className="flex items-start justify-between mb-3">
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-8 h-8 rounded-xl ${lc.bg} ${lc.text} font-black text-sm flex items-center justify-center shrink-0`}>
+                                      {st.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                      <div className="font-bold text-neutral-900 text-sm leading-tight">{st.name}</div>
+                                      <div className="text-[10px] text-neutral-400 font-medium">{st.scoreRaw}</div>
+                                    </div>
+                                  </div>
+                                  <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${lc.bg} ${lc.text} ${lc.border} whitespace-nowrap`}>
+                                    {st.scorePercent}%
+                                  </div>
+                                </div>
+                                <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg ${lc.bg} ${lc.border} border`}>
+                                  <div className={`w-1.5 h-1.5 rounded-full ${lc.dot}`} />
+                                  <span className={`text-[10px] font-bold uppercase tracking-wider ${lc.text}`}>{st.level}</span>
+                                </div>
+                                {st.weaknesses?.[0] && (
+                                  <p className="text-[10px] text-neutral-500 mt-2 leading-relaxed line-clamp-2">⚡ {st.weaknesses[0]}</p>
+                                )}
+                                <div className="mt-3 text-[10px] font-bold text-neutral-400 group-hover:text-neutral-600 flex items-center gap-1 transition-colors">
+                                  To'liq tahlilni ko'rish →
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Individual Student Detail Panel */}
+                    {activeAnalysisTab === 'students' && selectedStudent && (() => {
+                      const st = selectedStudent;
+                      const levelConfig: Record<string, { bg: string; text: string; border: string; gradient: string }> = {
+                        'yuqori':    { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', gradient: 'from-emerald-500 to-teal-600' },
+                        'yaxshi':    { bg: 'bg-blue-50',    text: 'text-blue-700',    border: 'border-blue-200',    gradient: 'from-blue-500 to-indigo-600' },
+                        "o'rta":     { bg: 'bg-amber-50',   text: 'text-amber-700',   border: 'border-amber-200',   gradient: 'from-amber-500 to-orange-600' },
+                        'zaif':      { bg: 'bg-orange-50',  text: 'text-orange-700',  border: 'border-orange-200',  gradient: 'from-orange-500 to-red-600' },
+                        'juda zaif': { bg: 'bg-rose-50',    text: 'text-rose-700',    border: 'border-rose-200',    gradient: 'from-rose-500 to-pink-700' },
+                      };
+                      const lc = levelConfig[st.level] || levelConfig["o'rta"];
+                      return (
+                        <div className="p-5 sm:p-8 space-y-5">
+                          {/* Back button */}
+                          <button
+                            onClick={() => setSelectedStudent(null)}
+                            className="flex items-center gap-2 text-xs font-bold text-neutral-500 hover:text-neutral-900 transition-colors"
+                          >
+                            <ArrowLeft size={14} /> O'quvchilar ro'yxatiga qaytish
+                          </button>
+
+                          {/* Student Header Card */}
+                          <div className={`bg-gradient-to-br ${lc.gradient} text-white rounded-3xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4`}>
+                            <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-3xl font-black shrink-0">
+                              {st.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-xl sm:text-2xl font-bold leading-tight">{st.name}</h3>
+                              <p className="text-white/80 text-sm mt-0.5">{st.scoreRaw} ball • Daraja: <strong className="text-white uppercase">{st.level}</strong></p>
+                              <p className="text-white/70 text-xs mt-1 leading-relaxed">{st.personalityInsight}</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-4xl font-black">{st.scorePercent}%</div>
+                              <div className="text-white/70 text-xs">Umumiy natija</div>
+                            </div>
+                          </div>
+
+                          {/* Strengths & Weaknesses */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4">
+                              <h5 className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-3">✅ Kuchli Tomonlari</h5>
+                              <ul className="space-y-2">
+                                {(st.strengths || []).map((s, i) => (
+                                  <li key={i} className="flex items-start gap-2 text-xs text-emerald-900 font-medium leading-relaxed">
+                                    <span className="mt-0.5 text-emerald-500 shrink-0">●</span> {s}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div className="bg-rose-50 border border-rose-100 rounded-2xl p-4">
+                              <h5 className="text-[10px] font-bold text-rose-700 uppercase tracking-wider mb-3">⚡ Zaif Tomonlari</h5>
+                              <ul className="space-y-2">
+                                {(st.weaknesses || []).map((w, i) => (
+                                  <li key={i} className="flex items-start gap-2 text-xs text-rose-900 font-medium leading-relaxed">
+                                    <span className="mt-0.5 text-rose-500 shrink-0">●</span> {w}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+
+                          {/* Immediate Actions */}
+                          {st.immediateActions?.length > 0 && (
+                            <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4">
+                              <h5 className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider mb-3">⚡ Darhol Bajarilishi Kerak</h5>
+                              <ul className="space-y-2">
+                                {st.immediateActions.map((a, i) => (
+                                  <li key={i} className="flex items-start gap-2 text-xs text-indigo-900 font-medium leading-relaxed">
+                                    <span className="mt-0.5 w-5 h-5 rounded-lg bg-indigo-600 text-white text-[9px] font-black flex items-center justify-center shrink-0">{i + 1}</span> {a}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Parent Report */}
+                          <div className="bg-neutral-900 text-white rounded-2xl p-5">
+                            <h5 className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                              <span>✉️</span> Ota-Onalarga Hisobot
+                            </h5>
+                            <p className="text-sm text-neutral-100 leading-relaxed font-medium">{st.parentReport}</p>
+                          </div>
+
+                          {/* 3-Phase Roadmap */}
+                          {st.roadmap?.length > 0 && (
+                            <div>
+                              <h5 className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-4 flex items-center gap-2">🗺️ Rivojlanish Yo'l Xaritasi (3 Bosqich)</h5>
+                              <div className="space-y-4">
+                                {st.roadmap.map((step, i) => (
+                                  <div key={i} className="relative bg-white border border-black/10 rounded-2xl p-5 overflow-hidden">
+                                    <div className={`absolute top-0 left-0 bottom-0 w-1 bg-gradient-to-b ${
+                                      i === 0 ? 'from-blue-400 to-blue-600' :
+                                      i === 1 ? 'from-amber-400 to-amber-600' :
+                                      'from-emerald-400 to-emerald-600'
+                                    }`} />
+                                    <div className="pl-3">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <span className={`text-[10px] font-black px-2.5 py-1 rounded-full ${
+                                          i === 0 ? 'bg-blue-100 text-blue-700' :
+                                          i === 1 ? 'bg-amber-100 text-amber-700' :
+                                          'bg-emerald-100 text-emerald-700'
+                                        }`}>{step.phase}</span>
+                                        <span className="text-[10px] text-neutral-500 font-semibold">{step.duration}</span>
+                                      </div>
+                                      <h6 className="font-bold text-neutral-900 text-sm mb-3">{step.focus}</h6>
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                          <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5">Amaliyotlar:</p>
+                                          <ul className="space-y-1.5">
+                                            {step.actions.map((a, j) => (
+                                              <li key={j} className="text-xs text-neutral-700 font-medium flex items-start gap-1.5">
+                                                <span className="text-neutral-400 mt-0.5">›</span> {a}
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                        <div className="space-y-2.5">
+                                          <div className="bg-amber-50 border border-amber-100 rounded-xl p-2.5">
+                                            <p className="text-[9px] font-bold text-amber-600 uppercase tracking-wider mb-1">👨‍👩‍👧 Ota-onaga:</p>
+                                            <p className="text-[10px] text-amber-900 font-medium leading-relaxed">{step.parentTip}</p>
+                                          </div>
+                                          <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-2.5">
+                                            <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-wider mb-1">🎯 Kutilayotgan natija:</p>
+                                            <p className="text-[10px] text-emerald-900 font-medium leading-relaxed">{step.expectedOutcome}</p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* ===== TAB 3: HANDBOOK ===== */}
+                    {activeAnalysisTab === 'handbook' && (
+                      <div className="p-5 sm:p-8 space-y-4">
+                        <p className="text-xs text-neutral-500">Test savollari bo'yicha to'g'ri javoblar, pedagogik izohlar va tipik xatolar.</p>
+                        {(analysisResult.handbook || []).map((hb: any, idx: number) => (
+                          <div key={idx} className="bg-white border border-black/10 rounded-2xl p-5 relative overflow-hidden shadow-sm">
+                            <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-gradient-to-b from-neutral-800 to-neutral-600" />
+                            <div className="pl-3">
+                              <p className="text-sm font-semibold text-neutral-900 leading-relaxed mb-3">
+                                <span className="text-neutral-400 mr-2 text-xs">{idx + 1}.</span>{hb.question}
+                              </p>
+                              <div className="flex flex-col sm:flex-row gap-2.5">
+                                <div className="flex-1 bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-xl p-3 text-xs font-bold flex items-start gap-2">
+                                  <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+                                  <div>
+                                    <div className="text-[9px] text-emerald-600 uppercase tracking-wider mb-0.5">To'g'ri javob</div>
+                                    {hb.correctAnswer}
+                                  </div>
+                                </div>
+                                {hb.commonMistake && (
+                                  <div className="flex-1 bg-rose-50 text-rose-800 border border-rose-100 rounded-xl p-3 text-xs font-medium flex items-start gap-2">
+                                    <span className="text-rose-500 shrink-0 mt-0.5">⚠️</span>
+                                    <div>
+                                      <div className="text-[9px] text-rose-600 uppercase tracking-wider mb-0.5 font-bold">Tipik xato</div>
+                                      {hb.commonMistake}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                              <p className="text-xs text-neutral-600 leading-relaxed mt-2.5">
+                                <strong className="text-neutral-800">📝 Izoh:</strong> {hb.explanation}
+                              </p>
+                            </div>
                           </div>
                         ))}
                       </div>
-                    </div>
+                    )}
 
-                    {/* Handbook (Qo'llanma) */}
-                    <div>
-                      <h4 className="text-[11px] font-bold uppercase tracking-widest text-neutral-500 mb-4 px-2">Test Savollari va Metodik Qo'llanma</h4>
-                      <div className="space-y-4">
-                        {analysisResult.handbook?.map((hb: any, idx: number) => (
-                          <div key={idx} className="bg-white border border-black/10 rounded-2xl p-5 shadow-sm relative overflow-hidden">
-                            <div className="absolute top-0 left-0 bottom-0 w-1 bg-black"></div>
-                            <p className="text-sm font-semibold text-neutral-900 mb-3 pr-4 leading-relaxed">
-                              <span className="text-neutral-400 mr-2">{idx + 1}.</span> {hb.question}
-                            </p>
-                            <div className="bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-xl p-3 mb-3 text-xs font-bold flex items-center gap-2">
-                              <CheckCircle2 size={14} className="text-emerald-500" /> To'g'ri javob: {hb.correctAnswer}
+                  </div>
+
+                  {/* Footer with download button */}
+                  <div className="px-5 sm:px-8 py-4 border-t border-black/10 flex flex-col sm:flex-row items-center justify-between gap-3 bg-neutral-50/70 shrink-0">
+                    <p className="text-[10px] text-neutral-500">
+                      {new Date(analysisResult.analyzedAt || Date.now()).toLocaleDateString('uz-UZ', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })} da tahlil qilindi
+                    </p>
+                    <button
+                      onClick={() => {
+                        const studentSections = (analysisResult.studentAnalyses || []).map((st: StudentAnalysis) => `
+                          <div class="student-card">
+                            <div class="student-header">
+                              <div class="student-avatar">${st.name.charAt(0).toUpperCase()}</div>
+                              <div class="student-info">
+                                <h3>${st.name}</h3>
+                                <div class="badges">
+                                  <span class="badge score">${st.scorePercent}% — ${st.scoreRaw}</span>
+                                  <span class="badge level level-${st.level.replace("'", '')}">${st.level.toUpperCase()}</span>
+                                </div>
+                              </div>
                             </div>
-                            <p className="text-xs text-neutral-600 leading-relaxed"><strong className="text-neutral-800">Izoh:</strong> {hb.explanation}</p>
+                            <p class="insight">${st.personalityInsight || ''}</p>
+                            <div class="sw-grid">
+                              <div class="strengths">
+                                <h4>✅ Kuchli Tomonlari</h4>
+                                <ul>${(st.strengths || []).map(s => `<li>${s}</li>`).join('')}</ul>
+                              </div>
+                              <div class="weaknesses">
+                                <h4>⚡ Zaif Tomonlari</h4>
+                                <ul>${(st.weaknesses || []).map(w => `<li>${w}</li>`).join('')}</ul>
+                              </div>
+                            </div>
+                            <div class="parent-report">
+                              <h4>✉️ Ota-Onalarga Hisobot</h4>
+                              <p>${st.parentReport || ''}</p>
+                            </div>
+                            <div class="roadmap">
+                              <h4>🗺️ Rivojlanish Yo'l Xaritasi</h4>
+                              ${(st.roadmap || []).map((step, i) => `
+                                <div class="roadmap-step step-${i}">
+                                  <div class="step-header"><span class="step-badge">${step.phase}</span> <span class="step-duration">${step.duration}</span></div>
+                                  <strong>${step.focus}</strong>
+                                  <ul>${(step.actions || []).map(a => `<li>${a}</li>`).join('')}</ul>
+                                  <div class="tips">
+                                    <div class="parent-tip">👨‍👩‍👧 <strong>Ota-onaga:</strong> ${step.parentTip}</div>
+                                    <div class="outcome">🎯 <strong>Kutilayotgan natija:</strong> ${step.expectedOutcome}</div>
+                                  </div>
+                                </div>
+                              `).join('')}
+                            </div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
+                        `).join('');
 
-                    <div className="pt-4 flex justify-end">
+                        const content = `
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${test?.title} — AI Sinf Tahlili</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; color: #111; line-height: 1.6; }
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
+    .report-header { background: linear-gradient(135deg, #111 0%, #333 100%); color: white; padding: 32px; border-radius: 20px; margin-bottom: 32px; }
+    .report-header h1 { font-size: 26px; margin-bottom: 8px; }
+    .report-header p { opacity: 0.7; font-size: 14px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px; text-align: center; }
+    .stat-card .value { font-size: 28px; font-weight: 900; margin-bottom: 4px; }
+    .stat-card .label { font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+    .section-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #6b7280; margin: 28px 0 16px; }
+    .class-analysis { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .strengths-box, .weaknesses-box { background: white; border-radius: 16px; padding: 20px; }
+    .strengths-box { border: 1px solid #d1fae5; }
+    .weaknesses-box { border: 1px solid #fee2e2; }
+    .strengths-box h4 { color: #065f46; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .weaknesses-box h4 { color: #991b1b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .strengths-box ul, .weaknesses-box ul { list-style: none; }
+    .strengths-box li { font-size: 13px; color: #064e3b; padding: 5px 0; border-bottom: 1px solid #d1fae5; }
+    .weaknesses-box li { font-size: 13px; color: #7f1d1d; padding: 5px 0; border-bottom: 1px solid #fee2e2; }
+    .recommendations { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 16px; padding: 20px; margin-bottom: 32px; }
+    .recommendations h4 { color: #1e40af; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .recommendations ol { padding-left: 0; list-style: none; }
+    .recommendations li { font-size: 13px; color: #1e3a8a; padding: 8px 0; border-bottom: 1px solid #bfdbfe; display: flex; gap: 10px; align-items: flex-start; }
+    .rec-num { width: 24px; height: 24px; background: #1d4ed8; color: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; flex-shrink: 0; margin-top: 2px; }
+    .student-card { background: white; border: 1px solid #e5e7eb; border-radius: 20px; padding: 24px; margin-bottom: 24px; page-break-inside: avoid; }
+    .student-header { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .student-avatar { width: 56px; height: 56px; border-radius: 16px; background: #111; color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; flex-shrink: 0; }
+    .student-info h3 { font-size: 20px; font-weight: 800; }
+    .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+    .badge { padding: 4px 12px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .badge.score { background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+    .level-yuqori { background: #d1fae5; color: #065f46; }
+    .level-yaxshi { background: #dbeafe; color: #1e40af; }
+    .level-orta { background: #fef3c7; color: #92400e; }
+    .level-zaif { background: #ffedd5; color: #9a3412; }
+    .level-judazaif { background: #fee2e2; color: #991b1b; }
+    .insight { font-size: 13px; color: #6b7280; font-style: italic; margin-bottom: 16px; padding: 12px; background: #f9fafb; border-radius: 10px; }
+    .sw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .strengths { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 14px; }
+    .weaknesses { background: #fff1f2; border: 1px solid #fecdd3; border-radius: 12px; padding: 14px; }
+    .strengths h4, .weaknesses h4 { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .strengths h4 { color: #047857; }
+    .weaknesses h4 { color: #be123c; }
+    .strengths ul, .weaknesses ul { list-style: none; font-size: 12px; }
+    .strengths li { color: #064e3b; padding: 4px 0; }
+    .weaknesses li { color: #881337; padding: 4px 0; }
+    .parent-report { background: #111; color: white; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+    .parent-report h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #f59e0b; margin-bottom: 10px; }
+    .parent-report p { font-size: 13px; color: #f3f4f6; line-height: 1.7; }
+    .roadmap h4 { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; margin-bottom: 12px; }
+    .roadmap-step { border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px; margin-bottom: 10px; border-left: 4px solid #111; }
+    .step-0 { border-left-color: #3b82f6; }
+    .step-1 { border-left-color: #f59e0b; }
+    .step-2 { border-left-color: #10b981; }
+    .step-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .step-badge { padding: 3px 10px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; background: #f3f4f6; color: #374151; }
+    .step-duration { font-size: 11px; color: #9ca3af; font-weight: 600; }
+    .roadmap-step strong { font-size: 14px; color: #111; display: block; margin-bottom: 8px; }
+    .roadmap-step ul { list-style: disc; padding-left: 18px; font-size: 12px; color: #374151; margin-bottom: 10px; }
+    .tips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .parent-tip { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 10px; font-size: 11px; color: #78350f; }
+    .outcome { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 10px; font-size: 11px; color: #064e3b; }
+    .handbook-section { margin-top: 40px; }
+    .handbook-item { background: white; border: 1px solid #e5e7eb; border-left: 4px solid #111; border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+    .handbook-item .question { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 10px; }
+    .correct-answer { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 10px; font-size: 12px; font-weight: 700; color: #065f46; margin-bottom: 8px; }
+    .common-mistake { background: #fff1f2; border: 1px solid #fecdd3; border-radius: 10px; padding: 10px; font-size: 12px; color: #881337; margin-bottom: 8px; }
+    .explanation { font-size: 12px; color: #6b7280; }
+    @media print { body { background: white; } .container { padding: 20px; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="report-header">
+      <h1>📊 ${test?.title}</h1>
+      <p>AI Sinf Tahlili va Ota-Onalarga Hisobot • ${new Date().toLocaleDateString('uz-UZ', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="value">${analysisResult.classOverview.totalStudents}</div><div class="label">Jami o'quvchi</div></div>
+      <div class="stat-card"><div class="value" style="color:#d97706">${analysisResult.classOverview.averageScore}%</div><div class="label">O'rtacha natija</div></div>
+      <div class="stat-card"><div class="value" style="color:#059669">${analysisResult.classOverview.passCount}</div><div class="label">O'tganlar</div></div>
+      <div class="stat-card"><div class="value" style="color:#dc2626">${analysisResult.classOverview.failCount}</div><div class="label">Muammoli</div></div>
+    </div>
+
+    <div class="section-title">Sinf Bo'yicha Tahlil</div>
+    <div class="class-analysis">
+      <div class="strengths-box"><h4>✅ Sinf Kuchli Tomonlari</h4><ul>${(analysisResult.classOverview.classStrengths || []).map((s: string) => `<li>• ${s}</li>`).join('')}</ul></div>
+      <div class="weaknesses-box"><h4>⚡ Sinf Zaif Tomonlari</h4><ul>${(analysisResult.classOverview.classWeaknesses || []).map((w: string) => `<li>• ${w}</li>`).join('')}</ul></div>
+    </div>
+
+    <div class="recommendations">
+      <h4>🎓 O'qituvchiga Metodik Tavsiyalar</h4>
+      <ol>${(analysisResult.classOverview.teacherRecommendations || []).map((r: string, i: number) => `<li><span class="rec-num">${i + 1}</span><span>${r}</span></li>`).join('')}</ol>
+    </div>
+
+    ${analysisResult.curriculumTopics?.length > 0 ? `
+      <div class="section-title">📚 O'tilgan Mavzular va Ularning Hayotiy Zarurati (Faktlar bilan)</div>
+      <div class="topics-grid" style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px;">
+        ${analysisResult.curriculumTopics.map((t: CurriculumTopicInsight, i: number) => `
+          <div style="background: white; border: 1px solid #e5e7eb; border-left: 5px solid #f59e0b; border-radius: 14px; padding: 18px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <strong style="font-size: 15px; color: #111;">${i + 1}. ${t.topic}</strong>
+              ${t.category ? `<span style="font-size: 10px; padding: 3px 10px; background: #f3f4f6; border-radius: 999px; font-weight: 700; text-transform: uppercase;">${t.category}</span>` : ''}
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px;">
+              <div style="background: #f9fafb; padding: 10px; border-radius: 8px;">
+                <span style="font-weight: 800; color: #4b5563; text-transform: uppercase; font-size: 10px;">🧠 Nega bolaga kerak:</span>
+                <p style="margin-top: 4px; color: #1f2937;">${t.whyItMattersForChild}</p>
+              </div>
+              <div style="background: #eff6ff; padding: 10px; border-radius: 8px;">
+                <span style="font-weight: 800; color: #1d4ed8; text-transform: uppercase; font-size: 10px;">💼 Real hayot va kasblarda:</span>
+                <p style="margin-top: 4px; color: #1e3a8a;">${t.realWorldApplication}</p>
+              </div>
+              <div style="background: #faf5ff; padding: 10px; border-radius: 8px;">
+                <span style="font-weight: 800; color: #7e22ce; text-transform: uppercase; font-size: 10px;">⚡ Kognitiv foydasi:</span>
+                <p style="margin-top: 4px; color: #581c87;">${t.cognitiveBenefits}</p>
+              </div>
+              <div style="background: #ecfdf5; padding: 10px; border-radius: 8px;">
+                <span style="font-weight: 800; color: #047857; text-transform: uppercase; font-size: 10px;">🎯 O'zlashtirish mezoni:</span>
+                <p style="margin-top: 4px; color: #064e3b;">${t.successMetric}</p>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    ` : ''}
+
+    <div class="section-title">O'quvchilar Bo'yicha Individual Tahlil</div>
+    ${studentSections}
+
+    <div class="handbook-section">
+      <div class="section-title">📖 Test Savollari Qo'llanma</div>
+      ${(analysisResult.handbook || []).map((hb: any, i: number) => `
+        <div class="handbook-item">
+          <div class="question">${i + 1}. ${hb.question}</div>
+          <div class="correct-answer">✅ To'g'ri javob: ${hb.correctAnswer}</div>
+          ${hb.commonMistake ? `<div class="common-mistake">⚠️ Tipik xato: ${hb.commonMistake}</div>` : ''}
+          <div class="explanation">📝 ${hb.explanation}</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+</body>
+</html>`;
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <button
+                        onClick={() => openClassReportPrintWindow(analysisResult, test)}
+                        className="flex items-center gap-2 px-6 py-2.5 bg-neutral-900 hover:bg-black text-white text-xs font-bold uppercase tracking-wider rounded-xl hover:scale-[1.01] active:scale-[0.99] transition-all shadow-md cursor-pointer border border-white/10"
+                        title="Ota-onalarga berish uchun har bir bolaga alohida rasmiy A4 varaq chiqarish (Print/PDF)"
+                      >
+                        <Printer size={15} className="text-emerald-400" /> Rasmiy PDF Chop Etish / Yuklash (A4)
+                      </button>
+
                       <button
                         onClick={() => {
-                          const content = `
-                            <html>
-                              <head>
-                                <meta charset="utf-8" />
-                                <title>${test?.title} - Sinf Tahlili</title>
-                                <style>
-                                  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; padding: 40px; max-width: 800px; margin: 0 auto; color: #111; }
-                                  h1 { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 30px; font-size: 24px; }
-                                  h2 { color: #333; margin-top: 30px; font-size: 18px; text-transform: uppercase; letter-spacing: 1px; }
-                                  .box { background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e9ecef; }
-                                  .student { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ddd; }
-                                  .question { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #eee; border-left: 4px solid #000; }
-                                  .correct { background: #d1e7dd; color: #0f5132; padding: 8px 12px; border-radius: 6px; font-weight: bold; margin: 10px 0; font-size: 14px; }
-                                </style>
-                              </head>
-                              <body>
-                                <h1>${test?.title} - AI Sinf Tahlili va Metodik Qo'llanma</h1>
-                                
-                                <h2>Umumiy Xulosa</h2>
-                                <div class="box">
-                                  <p>${analysisResult.generalIssues}</p>
-                                </div>
-                                
-                                <h2>O'quvchilar Bo'yicha Tahlil</h2>
-                                ${analysisResult.studentBreakdowns?.map((st: any) => `
-                                  <div class="student">
-                                    <strong>${st.name}</strong> <span style="color:#666; font-size: 14px;">(Ball: ${st.score})</span><br/>
-                                    <p style="margin-top: 8px; color: #444;">${st.feedback}</p>
-                                  </div>
-                                `).join('')}
-                                
-                                <h2>Test Savollari va Qo'llanma (Handbook)</h2>
-                                ${analysisResult.handbook?.map((hb: any, i: number) => `
-                                  <div class="question">
-                                    <strong>${i + 1}-savol:</strong> ${hb.question}
-                                    <div class="correct">✅ To'g'ri javob: ${hb.correctAnswer}</div>
-                                    <p style="margin-top: 8px; color: #444;"><strong>Izoh:</strong> ${hb.explanation}</p>
-                                  </div>
-                                `).join('')}
-                              </body>
-                            </html>
-                          `;
                           const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
                           const url = URL.createObjectURL(blob);
                           const link = document.createElement('a');
                           link.href = url;
-                          link.download = `${test?.title}_Tahlil_Qollanma.html`;
+                          link.download = `${test?.title}_AI_Sinf_Tahlili.html`;
                           document.body.appendChild(link);
                           link.click();
                           document.body.removeChild(link);
                           URL.revokeObjectURL(url);
                         }}
-                        className="flex items-center gap-2 px-6 py-3 bg-black text-white text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-neutral-800 transition-colors shadow-lg"
+                        className="flex items-center gap-1.5 px-3.5 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                        title="HTML fayl sifatida saqlash"
                       >
-                        <Download size={16} /> Qo'llanmani Yuklash
+                        <Download size={14} /> HTML
                       </button>
                     </div>
-
                   </div>
-                ) : null}
-              </div>
+                </>
+              )}
             </motion.div>
           </div>
         )}

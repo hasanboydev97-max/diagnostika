@@ -510,10 +510,162 @@ Javobni FAQAT JSON Array formatida qaytaring, boshqa hech qanday izoh yozmang:
   }
 };
 
+export interface CurriculumTopicInsight {
+  topic: string;
+  category?: string;
+  whyItMattersForChild: string;
+  realWorldApplication: string;
+  cognitiveBenefits: string;
+  successMetric: string;
+}
+
+export interface StudentRoadmapStep {
+  phase: string;
+  duration: string;
+  focus: string;
+  actions: string[];
+  parentTip: string;
+  expectedOutcome: string;
+}
+
+export interface StudentAnalysis {
+  name: string;
+  scorePercent: number;
+  scoreRaw: string;
+  level: 'yuqori' | 'yaxshi' | 'o\'rta' | 'zaif' | 'juda zaif';
+  strengths: string[];
+  weaknesses: string[];
+  personalityInsight: string;
+  parentReport: string;
+  immediateActions: string[];
+  roadmap: StudentRoadmapStep[];
+}
+
 export interface ClassAnalysisResult {
+  testTitle: string;
+  analyzedAt: string;
+  classOverview: {
+    totalStudents: number;
+    rawSubmissionsCount: number;
+    duplicatesRemovedCount: number;
+    averageScore: number;
+    passCount: number;
+    failCount: number;
+    topPerformer: string;
+    needsAttention: string[];
+    classStrengths: string[];
+    classWeaknesses: string[];
+    teacherRecommendations: string[];
+  };
+  curriculumTopics: CurriculumTopicInsight[];
+  studentAnalyses: StudentAnalysis[];
+  handbook: { question: string; correctAnswer: string; explanation: string; commonMistake: string }[];
   generalIssues: string;
   studentBreakdowns: { name: string; score: number; feedback: string }[];
-  handbook: { question: string; correctAnswer: string; explanation: string }[];
+}
+
+/**
+ * 20 yillik tajribali arxitektor darajasidagi ma'lumotlarni tozalash va dublikatlarni birlashtirish funksiyasi.
+ * - Test/dummy/soxta ismlarni chiqarib tashlaydi ('massalan', 'test', 'demo', 'admin', 'sinov' va h.k.)
+ * - Sinf, imtihon va boshqa qo'shimchalarni tozalaydi ('7-blue', '6haftali imtihon' ...)
+ * - Ism-familiya teskari yozilgan dublikatlarni aniqlaydi ('Fotima Abbasova' == 'Abbasova Fotima')
+ * - Bir o'quvchi bir necha marta topshirgan bo'lsa, eng yuqori (eng yaxshi) ballini saqlab qoladi!
+ */
+export function sanitizeAndDeduplicateStudents(results: any[]): {
+  cleanedList: { name: string; score: number; totalScore: number; percent: number }[];
+  rawCount: number;
+  dedupedCount: number;
+} {
+  const rawList = results || [];
+  const rawCount = rawList.length;
+
+  const JUNK_NAME_REGEX = /^(massalan|test|demo|sinov|admin|namuna|example|proverka|temp|check|asdf|qwerty|tekshiruv|o['`]?quvchi|\d+|sample)$/i;
+
+  interface CleanedCandidate {
+    normalizedKey: string;
+    displayName: string;
+    score: number;
+    totalScore: number;
+    percent: number;
+  }
+
+  const mapByNormalizedKey = new Map<string, CleanedCandidate>();
+
+  for (const item of rawList) {
+    let rawName = (item.studentName || item.name || '').trim();
+    if (!rawName) continue;
+
+    // 1. Matnni keraksiz metadata va qo'shimchalardan tozalash
+    let cleaned = rawName
+      .replace(/\s*\(\s*ball:?\s*\d+\s*\)/gi, '') // "(Ball: 60)"
+      .replace(/\b\d+[-_]?[a-zA-Z]+\b/gi, '') // "7-blue", "6a"
+      .replace(/\b\d+[-_]?haftali\b/gi, '') // "6haftali"
+      .replace(/\b(sinf|guruhi?|imtihon|test|nazorat|yakuniy|maktab|hafta)\b/gi, '')
+      .replace(/[^\p{L}\s'-]/gu, '') // Raqam va maxsus belgilarni tozalash
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!cleaned || cleaned.length < 3) continue;
+
+    // Soxta/test ismlarni inkor qilish
+    if (JUNK_NAME_REGEX.test(cleaned.toLowerCase())) {
+      continue;
+    }
+
+    // Har bir so'zni Title Case ga keltirish
+    const words = cleaned
+      .split(' ')
+      .filter(w => w.length > 1)
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+
+    if (words.length === 0) continue;
+    const formattedName = words.join(' ');
+
+    // 2. Token-set normalization: "Abbasova Fotima" va "Fotima Abbasova" bitta key beradi
+    const normalizedKey = [...words]
+      .map(w => w.toLowerCase())
+      .sort()
+      .join('_');
+
+    const score = Number(item.score) || 0;
+    const totalScore = Number(item.totalScore) || 100;
+    const percent = Math.round((score / Math.max(totalScore, 1)) * 100);
+
+    const existing = mapByNormalizedKey.get(normalizedKey);
+    if (!existing) {
+      mapByNormalizedKey.set(normalizedKey, {
+        normalizedKey,
+        displayName: formattedName,
+        score,
+        totalScore,
+        percent
+      });
+    } else {
+      // Bir necha marta topshirgan bo'lsa, eng yuqori (maksimal) ballni saqlaymiz
+      if (percent > existing.percent) {
+        existing.displayName = formattedName.length > existing.displayName.length ? formattedName : existing.displayName;
+        existing.score = score;
+        existing.totalScore = totalScore;
+        existing.percent = percent;
+      }
+    }
+  }
+
+  const cleanedList = Array.from(mapByNormalizedKey.values()).map(c => ({
+    name: c.displayName,
+    score: c.score,
+    totalScore: c.totalScore,
+    percent: c.percent
+  }));
+
+  // Ball bo'yicha kamayish tartibida tartiblaymiz
+  cleanedList.sort((a, b) => b.percent - a.percent);
+
+  return {
+    cleanedList,
+    rawCount,
+    dedupedCount: Math.max(0, rawCount - cleanedList.length)
+  };
 }
 
 export const generateClassAnalysis = async (
@@ -521,47 +673,132 @@ export const generateClassAnalysis = async (
   questions: any[] = [],
   results: any[] = []
 ): Promise<ClassAnalysisResult> => {
-  const prompt = `Sen tajribali metotistsan.
-"${testTitle}" testi bo'yicha sinf natijalari va savollar berilgan. QAT'IY JSON formatda qisqa xulosa ber.
+  // 1. Ma'lumotlarni chuqur tozalash va dublikatlarni 100% yo'q qilish
+  const { cleanedList: studentData, rawCount, dedupedCount } = sanitizeAndDeduplicateStudents(results);
 
-Savollar:
-${JSON.stringify((questions || []).map((q: any) => {
-  let correctText = q.correctOption;
-  if (q.options && q.correctOption) {
-    const idx = q.correctOption.charCodeAt(0) - 65;
-    if (idx >= 0 && idx < q.options.length) correctText = q.options[idx];
+  if (studentData.length === 0) {
+    throw new Error("Yaroqli o'quvchilar ro'yxati topilmadi (barcha yozuvlar test yoki bo'sh bo'lgan).");
   }
-  return {
-    question: q.questionText || q.topic || 'Nomalum savol',
-    correctAnswer: correctText
-  };
-}).slice(0, 10), null, 2)}
 
-O'quvchilar:
-${JSON.stringify((results || []).map(r => ({
-  name: r.studentName,
-  score: Math.round(((r.score || 0) / (r.totalScore || 1)) * 100)
-})).slice(0, 15), null, 2)}
+  const avgScore = Math.round(studentData.reduce((a, b) => a + b.percent, 0) / studentData.length);
 
-QAT'IY JSON obyekti qaytar (faqat JSON, hech qanday matn qo'shmang). Matn ichida hech qachon qochirilmagan qo'shtirnoq (") ishlatmang, faqat yakkalik (') ishlating:
+  // 2. Savollar ro'yxatini tahlil qilish uchun qisqartirilgan model
+  const questionsSample = (questions || []).slice(0, 15).map((q: any) => {
+    let correctText = q.correctOption;
+    if (q.options && q.correctOption) {
+      const idx = typeof q.correctOption === 'string' ? q.correctOption.charCodeAt(0) - 65 : q.correctOption;
+      if (idx >= 0 && Array.isArray(q.options) && idx < q.options.length) correctText = q.options[idx];
+    }
+    return {
+      topic: q.topic || q.category || 'Mavzu',
+      category: q.category || 'Fan',
+      difficulty: q.difficulty || 'O\'rta',
+      skill: q.skill || 'Tushunish',
+      question: q.questionText || q.topic || 'Savol',
+      correctAnswer: correctText
+    };
+  });
+
+  const prompt = `Sen 20 yillik tajribaga ega yetakchi pedagog-metodist, bolalar neyropsixologi va ta'lim tizimi tahlilchisisan.
+Sening maqsading: Ushbu test orqali o'tilgan mavzularning tub mohiyatini, nima uchun bu bilimlar bolaning real hayotida va kelajagida o'ta zarurligini FAKTLAR va ilmiy dalillar bilan isbotlab berish, hamda HAR BIR O'QUVCHIGA ALOHIDA individual yo'l xaritasi va ota-onalarga chuqur, samimiy hisobot yaratishdir.
+
+TEST NOMI: "${testTitle}"
+O'QUVCHILAR SONI (Tozalangan, yagona ismlar): ${studentData.length} nafar
+O'RTACHA FOIZ: ${avgScore}%
+
+O'QUVCHILAR RO'YXATI (Dublikatlar tozalangan):
+${JSON.stringify(studentData, null, 2)}
+
+TEST SAVOLLARI VA MAVZULARI:
+${JSON.stringify(questionsSample, null, 2)}
+
+QAT'IY TALABLAR (PROFESSIONAL DARAJA):
+1. O'TILGAN MAVZULAR VA ULARNING ZARURATI (curriculumTopics):
+   - Testdagi asosiy mavzularni ajratib ol (kamida 3-5 ta).
+   - Har bir mavzu uchun "whyItMattersForChild": Bu mavzu bolaning intellekti uchun nima beradi?
+   - "realWorldApplication": FAKTLAR BILAN! Hayotda qayerda kerak bo'ladi? (Masalan: mantiqiy algoritmlar dasturlash va muhandislikda, foizlar va proporsiyalar moliyaviy qarorlarda va biznesda, matnli tahlil murakkab vaziyatlarda to'g'ri xulosa chiqarishda).
+   - "cognitiveBenefits": Neyropsixologik foydasi (kognitiv moslashuvchanlik, operativ xotira, tanqidiy fikrlash).
+   - "successMetric": Bola bu mavzuni to'liq egallaganini qanday bilish mumkin.
+
+2. HAR BIR O'QUVCHIGA ALOHIDA YONDASHUV (studentAnalyses):
+   - Yuqoridagi har bir ${studentData.length} nafar o'quvchi uchun ALOHIDA, takrorlanmas, shaxsiy tahlil.
+   - Hech bir o'quvchida shabloniy "yaxshi natija, davom eting" degan yuzaki gaplar bo'lmasin! Aniq uning foiziga mos tahlil bo'lsin.
+   - "parentReport": Ota-ona o'qiganda ko'z oldiga farzandining aniq holati keladigan, iliq, chuqur va amaliy 4-5 jumlalik maktub.
+   - "roadmap": 3 ta aniq bosqichli yo'l xaritasi (1-bosqich: 1-4 hafta, 2-bosqich: 1-2 oy, 3-bosqich: 2-3 oy). Har bosqichda aniq kundalik mashqlar va ota-onaga tavsiyalar.
+
+3. SINFNING UMUMIY HOLATI (classOverview):
+   - Sinfning eng zaif mavzulari va o'qituvchiga dars jarayonini o'zgartirish uchun amaliy 3 ta maslahat.
+
+4. MATN STANDARTI:
+   - O'zbek adabiy tilida, professional pedagogik terminlar bilan yozilsin.
+   - Matn ichida hech qachon qochirilmagan qo'shtirnoq (") ishlatmang, faqat yakkalik (') ishlating.
+
+FAQAT VA FAQAT quyidagi JSON formatda javob bering, boshqa hech qanday so'z qo'shmang:
 {
-  "generalIssues": "Umumiy muammolar haqida qisqacha 2 gaplik xulosa.",
-  "studentBreakdowns": [
+  "classOverview": {
+    "classStrengths": ["Sinf kuchli bo'lgan aniq 1-jihat", "2-jihat"],
+    "classWeaknesses": ["Sinf zaif bo'lgan aniq 1-mavzu", "2-mavzu", "3-mavzu"],
+    "teacherRecommendations": ["O'qituvchiga 1-metodik ko'rsatma (faktlar bilan)", "2-ko'rsatma", "3-ko'rsatma"],
+    "generalSummary": "Sinfning intellektual salohiyati va umumiy kamchiliklari bo'yicha to'liq 3-4 gaplik xulosa."
+  },
+  "curriculumTopics": [
     {
-      "name": "O'quvchi ismi",
-      "score": 80, // Foizdagi natija (100 dan)
-      "feedback": "Qisqa individual tavsiya (1 gap)"
+      "topic": "Mavzu nomi (masalan: Mantiqiy munosabatlar va tenglamalar)",
+      "category": "Fan yo'nalishi",
+      "whyItMattersForChild": "Nima uchun bu mavzu bolaning aqliy rivojlanishi uchun muhim (faktlar bilan)",
+      "realWorldApplication": "Real hayotda va zamonaviy kasblarda (IT, moliya, muhandislik) qanday qo'llaniladi",
+      "cognitiveBenefits": "Rivojlanadigan kognitiv ko'nikmalar (tanqidiy tahlil, deduktiv fikrlash)",
+      "successMetric": "O'zlashtirish mezoni (masalan: 10 ta masaladan 8 tasini mustaqil yecha olish)"
+    }
+  ],
+  "studentAnalyses": [
+    {
+      "name": "O'quvchining to'liq ismi",
+      "scorePercent": 75,
+      "scoreRaw": "15/20",
+      "level": "yaxshi",
+      "strengths": ["Kuchli tomoni 1", "Kuchli tomoni 2"],
+      "weaknesses": ["Zaif tomoni 1 (aniq mavzu)", "Zaif tomoni 2"],
+      "personalityInsight": "O'quvchining fikrlash tezligi va yondashuvi haqida 2 jumlalik xarakteristika.",
+      "parentReport": "Hurmatli ota-ona! Farzandingiz [Ism] ushbu sinovda [X]% natijaga erishdi. [Uning intellektual ustunligi haqida fakt]. Biroq [zaif tomoni] bo'yicha bo'shliq sezildi. Uy sharoitida unga [aniq, qulay metodika]. Farzandingiz juda katta salohiyatga ega, unga [rag'batlantirish so'zlari].",
+      "immediateActions": ["Ushbu haftada bajarishi kerak bo'lgan 1-aniq vazifa", "2-vazifa"],
+      "roadmap": [
+        {
+          "phase": "1-bosqich: Bo'shliqlarni to'ldirish",
+          "duration": "1-4 hafta",
+          "focus": "Bazaviy tushunchalarni mustahkamlash",
+          "actions": ["Kunlik 15 daqiqa aniq mashg'ulot", "Xatolar ustida ishlash daftarini tutish"],
+          "parentTip": "Ota-onaga: har kuni kechqurun uning bajargan ishini tekshirib, rag'batlantirish",
+          "expectedOutcome": "Natijani 10-15% ga oshirish"
+        },
+        {
+          "phase": "2-bosqich: Tahlil va amaliyot",
+          "duration": "1-2 oy",
+          "focus": "Mantiqiy tahlil va tezlikni oshirish",
+          "actions": ["Murakkabroq testlar yechish", "Mustaqil tushuntirib bera olish"],
+          "parentTip": "Ota-onaga: qiyin vaziyatda to'g'ri javobni aytmasdan, yo'naltiruvchi savol berish",
+          "expectedOutcome": "Barqaror 80%+ ko'rsatkich"
+        },
+        {
+          "phase": "3-bosqich: Yetakchilik va erkin fikrlash",
+          "duration": "2-3 oy",
+          "focus": "Olimpiada va chuqurlashtirilgan daraja",
+          "actions": ["Nostandart muammolarni yechish", "O'z tengdoshlariga tushuntirish"],
+          "parentTip": "Ota-onaga: o'ziga bo'lgan ishonchini yuksaltirish",
+          "expectedOutcome": "Mavzuni 95%+ darajada erkin egallash"
+        }
+      ]
     }
   ],
   "handbook": [
     {
-      "question": "Savol",
-      "correctAnswer": "Javob",
-      "explanation": "Nega shu javob to'g'riligi (1 gapda)"
+      "question": "Savol matni",
+      "correctAnswer": "To'g'ri javob",
+      "explanation": "Nega bu javob to'g'riligi haqida metodik izoh",
+      "commonMistake": "O'quvchilar yo'l qo'yadigan odatiy xato sababi"
     }
   ]
-}
-`;
+}`;
 
   const responseText = await executeResilientAiPrompt(prompt);
   if (!responseText || responseText.trim().length === 0) {
@@ -571,9 +808,44 @@ QAT'IY JSON obyekti qaytar (faqat JSON, hech qanday matn qo'shmang). Matn ichida
   const cleaned = cleanJsonText(responseText);
 
   try {
-    return JSON.parse(cleaned) as ClassAnalysisResult;
+    const parsed = JSON.parse(cleaned);
+
+    const generalIssues = parsed.classOverview?.generalSummary || 'Sinf tahlili muvaffaqiyatli yakunlandi.';
+    const studentBreakdowns = (parsed.studentAnalyses || []).map((s: any) => ({
+      name: s.name,
+      score: s.scorePercent,
+      feedback: s.immediateActions?.[0] || s.weaknesses?.[0] || ''
+    }));
+
+    return {
+      testTitle,
+      analyzedAt: new Date().toISOString(),
+      classOverview: {
+        totalStudents: studentData.length,
+        rawSubmissionsCount: rawCount,
+        duplicatesRemovedCount: dedupedCount,
+        averageScore: avgScore,
+        passCount: studentData.filter(s => s.percent >= 60).length,
+        failCount: studentData.filter(s => s.percent < 60).length,
+        topPerformer: studentData[0]?.name || '',
+        needsAttention: studentData.filter(s => s.percent < 50).map(s => s.name),
+        classStrengths: parsed.classOverview?.classStrengths || [],
+        classWeaknesses: parsed.classOverview?.classWeaknesses || [],
+        teacherRecommendations: parsed.classOverview?.teacherRecommendations || [],
+      },
+      curriculumTopics: parsed.curriculumTopics || [],
+      studentAnalyses: parsed.studentAnalyses || [],
+      handbook: (parsed.handbook || []).map((h: any) => ({
+        ...h,
+        commonMistake: h.commonMistake || ''
+      })),
+      generalIssues,
+      studentBreakdowns,
+    } as ClassAnalysisResult;
   } catch (parseErr) {
     console.error('[generateClassAnalysis] JSON parse xatosi. Raw text:', responseText.slice(0, 300));
     throw new Error("AI javobi noto'g'ri formatda. Iltimos qayta urinib ko'ring.");
   }
 };
+
+
