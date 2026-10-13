@@ -303,7 +303,7 @@ async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22
       const genAI = new GoogleGenerativeAI(geminiKey);
       const model = genAI.getGenerativeModel({
         model: agent.model,
-        generationConfig: { responseMimeType: 'application/json', temperature }
+        generationConfig: { responseMimeType: 'application/json', temperature, maxOutputTokens: 8192 }
       });
       const fullPrompt = `${systemPrompt ? systemPrompt + '\n\n' : ''}${prompt}`;
       const result = await model.generateContent(fullPrompt, { signal: controller.signal });
@@ -335,11 +335,10 @@ async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22
       // compound modellari json_object mode ni to'g'ri bajarmaydi
       const supportsJsonMode = !isTextGen && !agent.model.includes('compound');
 
-      // BUG #5 FIX: Dinamik maxTokens — use-case ga qarab
-      // TextGen (sinf tahlili): 1500 token yetarli
+      // TextGen (sinf tahlili va batafsil xulosalar): 8000 token
       // QuestionGen (20 ta savol): har savol ~150 token + overhead
       const maxTokens = isTextGen
-        ? 1500
+        ? 8000
         : Math.min(Math.max(Math.ceil((prompt.length / 4) * 0.8) + 500, 1500), 4096);
 
       const body = {
