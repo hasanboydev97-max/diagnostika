@@ -1,20 +1,13 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { executeResilientTextGen, executeResilientVisionOCR } from '../services/aiOrchestrator.js';
 
-// BUG #2 & #8 FIX: paid key ham tekshiriladi, GEMINI_VISION_MODELS dead code olib tashlandi
-const GEMINI_API_KEY      = process.env.GEMINI_API_KEY      || process.env.VITE_GEMINI_API_KEY;
-const GEMINI_PAID_API_KEY = process.env.GEMINI_PAID_API_KEY || process.env.VITE_GEMINI_PAID_API_KEY;
-const GROQ_API_KEY        = process.env.GROQ_API_KEY        || process.env.VITE_GROQ_API_KEY;
-
-// Vision uchun: pullik yoki bepul Gemini kaliti yetarli
-const hasGeminiKey = !!(GEMINI_PAID_API_KEY || GEMINI_API_KEY);
-
-if (!GEMINI_API_KEY && !GEMINI_PAID_API_KEY && !GROQ_API_KEY) {
-  console.warn(
-    '⚠️ [aiController] Hech qanday AI API kaliti topilmadi.\n' +
-    '   /api/ai/* endpointlari ishlamaydi. Render/hosting Environment Variables bo\'limini tekshiring.'
-  );
-}
+// Vision uchun: pullik yoki bepul Gemini kaliti yetarli (dinamik tekshiruv)
+const checkHasGeminiKey = () => !!(
+  process.env.GEMINI_PAID_API_KEY ||
+  process.env.VITE_GEMINI_PAID_API_KEY ||
+  process.env.GEMINI_API_KEY ||
+  process.env.VITE_GEMINI_API_KEY
+);
 
 
 export const generateText = async (req, res) => {
@@ -47,8 +40,8 @@ export const generateVision = async (req, res) => {
   try {
     const { prompt, images, requireJson } = req.body;
     if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
-    // BUG #2 FIX: pullik yoki bepul kalit bormi tekshir (avval faqat bepul tekshirilardi)
-    if (!hasGeminiKey) {
+    // BUG #2 FIX: pullik yoki bepul kalit bormi tekshir (dinamik)
+    if (!checkHasGeminiKey()) {
       return res.status(503).json({ error: 'Gemini API kaliti sozlanmagan. Admin bilan bog\'laning.' });
     }
 
