@@ -422,8 +422,8 @@ export const submitTestResult = async (req, res) => {
     backgroundFeedbackQueue(async () => {
       try {
         const anthropicKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
-        const apiKey = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-        const groqKey = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
+        const apiKey = process.env.GEMINI_PAID_API_KEY || process.env.VITE_GEMINI_PAID_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+        const groqKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
 
         if (!((anthropicKey || apiKey || groqKey) && test && data.questions)) {
           await OnlineTestResult.findOneAndUpdate({ id: data.id }, { $set: { aiFeedback: "AI xizmati vaqtincha o'chirilgan yoki API kalitlari ulanmagan." } });
@@ -431,10 +431,9 @@ export const submitTestResult = async (req, res) => {
         }
 
         const attempts = [];
-        // [OPTIMIZATSIYA]: O'quvchilarga avtomat yoziladigan fikrlar (feedback) uchun qimmat Claude o'chirib qo'yildi.
-        // O'rniga eng arzon/tekin Gemini Flash va Groq ishlatiladi. Bu xarajatni 90% ga tejaydi.
+        // [OPTIMIZATSIYA]: O'quvchilarga avtomat yoziladigan fikrlar (feedback) uchun eng arzon/pullik 2000 RPM Gemini va Groq ishlatiladi
         if (apiKey) attempts.push({ provider: 'gemini', model: 'gemini-2.5-flash' });
-        if (groqKey) attempts.push({ provider: 'groq', model: 'qwen/qwen3.6-27b' });
+        if (groqKey) attempts.push({ provider: 'groq', model: 'qwen/qwen3.8-27b' });
         
         if (attempts.length === 0) {
            await OnlineTestResult.findOneAndUpdate({ id: data.id }, { $set: { aiFeedback: "AI xizmati uchun aktiv provayder topilmadi." } });
@@ -474,7 +473,7 @@ Ushbu natijalarga asosan o'quvchiga o'zbek tilida qisqa (2-3 ta gap) dalda beruv
               const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${groqKey}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ model: task.model, temperature: 0.7,
+                body: JSON.stringify({ model: task.model, temperature: 0.7, max_tokens: 500,
                   messages: [{ role: 'system', content: "Sen tajribali ustozsan. Faqat matnli maslahat yoz." }, { role: 'user', content: prompt }] })
               });
               const rd = await r.json();

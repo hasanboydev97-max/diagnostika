@@ -39,45 +39,43 @@ function markAgentSuccess(agentId) {
 
 /**
  * 20-Year Senior Architecture: Multi-Agent Fallback Registry
- * 10 verified production-ready AI agents across 3 major AI platforms:
- * 1. Google Gemini (2 models)
- * 2. Anthropic Claude (3 models)
- * 3. Groq LPUs (5 models)
+ * Cost-Optimized Cascading Fallback:
+ * 1. Google Gemini Paid (gemini-2.5-flash) — Primary Flagship (~$0.075 / 1M tokens, 2000 RPM)
+ * 2. Google Gemini Free (gemini-2.5-flash) — Standard Fallback (15 RPM)
+ * 3. Groq Accelerated LPUs (qwen/qwen3.8-27b, openai/gpt-oss-20b) — Fast & Free LPU Fallback
+ * 4. Anthropic Claude (claude-haiku-4-5-20251001, claude-sonnet-4-5-20250929) — Emergency Safety Net Only
  */
 function getAgentCatalog(keys) {
   const { geminiPaidKey, geminiKey, anthropicKey, groqKey } = keys;
   const agents = [];
 
-  // --- 1. Gemini PAID Agents ---
-  // ✅ VERIFIED WORKING (test o'tkazildi 2026-09-19): faqat gemini-2.5-flash ishlaydi
-  // ❌ gemini-3.7-flash, gemini-3.5-flash, gemini-2.0-flash, gemini-1.5-flash — BARCHASI 404!
+  // --- 1. Gemini PAID Agents (PRIMARY FLAGSHIP - 2000 RPM, $0.075 / 1M tokens) ---
   if (geminiPaidKey) {
     agents.push(
       { id: 'gemini-paid-2-5-flash', provider: 'gemini', model: 'gemini-2.5-flash', apiKey: geminiPaidKey, tier: 'paid-flagship', priority: 1 }
     );
   }
 
-  // --- 2. Gemini FREE Agents (15 RPM) — FALLBACK ---
-  // ✅ VERIFIED WORKING: gemini-2.5-flash
+  // --- 2. Gemini FREE Agents (15 RPM FALLBACK) ---
   if (geminiKey) {
     agents.push(
       { id: 'gemini-free-2-5-flash', provider: 'gemini', model: 'gemini-2.5-flash', apiKey: geminiKey, tier: 'free-standard', priority: 2 }
     );
   }
 
-  // --- 3. Anthropic Claude Agents ---
-  if (anthropicKey) {
+  // --- 3. Groq Accelerated Open-Weights Agents (FREE LPU) ---
+  if (groqKey) {
     agents.push(
-      { id: 'anthropic-haiku-4-5',  provider: 'anthropic', model: 'claude-haiku-4-5',  tier: 'elite-speed',        priority: 3 },
-      { id: 'anthropic-sonnet-4-5', provider: 'anthropic', model: 'claude-sonnet-4-5', tier: 'elite-intelligence', priority: 4 }
+      { id: 'groq-qwen-27b',    provider: 'groq', model: 'qwen/qwen3.8-27b',   tier: 'groq-speed',    priority: 3 },
+      { id: 'groq-gpt-oss-20b', provider: 'groq', model: 'openai/gpt-oss-20b', tier: 'groq-standard', priority: 4 }
     );
   }
 
-  // --- 4. Groq Accelerated Open-Weights Agents ---
-  if (groqKey) {
+  // --- 4. Anthropic Claude Agents (EMERGENCY SAFETY NET - High precision, preserves user budget) ---
+  if (anthropicKey) {
     agents.push(
-      { id: 'groq-llama-4-scout', provider: 'groq', model: 'meta-llama/llama-4-scout-17b-16e-instruct', tier: 'groq-speed',    priority: 5 },
-      { id: 'groq-llama-3-3-70b', provider: 'groq', model: 'llama-3.3-70b-versatile',                   tier: 'groq-standard', priority: 6 }
+      { id: 'anthropic-haiku-4-5',  provider: 'anthropic', model: 'claude-haiku-4-5-20251001', tier: 'elite-speed',        priority: 5 },
+      { id: 'anthropic-sonnet-4-5', provider: 'anthropic', model: 'claude-sonnet-4-5-20250929', tier: 'elite-intelligence', priority: 6 }
     );
   }
 
@@ -88,60 +86,50 @@ function getAgentCatalog(keys) {
 
 
 /**
- * Builds a dynamic, ordered execution pipeline of AI agents based on:
- * - User Plan (Premium prioritizes Claude & Gemini 2.5 Flash)
- * - Health Status (Temporarily skips agents with 429 or temporary 503)
- * - Guaranteed Fallback (Free users cascade to Groq, and as last-resort to Claude so it NEVER fails)
+ * Dynamic Cost-Optimized Pipeline:
+ * - Paid Gemini 2.5 Flash is ALWAYS priority #1 (fastest, cheapest, 2000 RPM)
+ * - Groq LPU & Free Gemini serve as secondary free fallbacks
+ * - Anthropic Claude is the last-resort emergency shield so requests NEVER fail
  */
 export function buildAgentPipeline({ isPremium = false, isVision = false }) {
   const geminiPaidKey = process.env.GEMINI_PAID_API_KEY || process.env.VITE_GEMINI_PAID_API_KEY;
   const geminiKey     = process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
   const anthropicKey  = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
-  const groqKey       = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
+  const groqKey       = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
 
   const allAgents = getAgentCatalog({ geminiPaidKey, geminiKey, anthropicKey, groqKey });
 
   let pipeline = [];
 
   if (isVision) {
-    // Vision: Pullik Gemini 3.7 → 3.5 → Bepul 2.5 Flash → Claude Haiku
+    // Vision & OMR: 1. Pullik Gemini 2.5 Flash -> 2. Bepul Gemini 2.5 Flash -> 3. Claude Haiku (Safety net)
     const visionOrder = [
-      'gemini-paid-3-7-flash',
-      'gemini-paid-3-5-flash',
+      'gemini-paid-2-5-flash',
       'gemini-free-2-5-flash',
       'anthropic-haiku-4-5'
     ];
     pipeline = visionOrder.map(id => allAgents.find(a => a.id === id)).filter(Boolean);
 
   } else if (isPremium) {
-    // Premium: Pullik Gemini → Claude Sonnet → Groq → Claude Haiku (emergency)
+    // Premium: 1. Pullik Gemini 2.5 Flash -> 2. Bepul Gemini -> 3. Groq -> 4. Claude Haiku -> 5. Claude Sonnet
     const premiumOrder = [
-      'gemini-paid-3-7-flash',
-      'gemini-paid-3-5-flash',
-      'anthropic-sonnet-4-5',
-      'anthropic-haiku-4-5',
-      'gemini-paid-3-5-flash-lite',
+      'gemini-paid-2-5-flash',
       'gemini-free-2-5-flash',
-      'groq-llama-4-scout',
-      'groq-llama-3-3-70b',
-      'anthropic-opus-4-5'
+      'groq-qwen-27b',
+      'groq-gpt-oss-20b',
+      'anthropic-haiku-4-5',
+      'anthropic-sonnet-4-5'
     ];
     pipeline = premiumOrder.map(id => allAgents.find(a => a.id === id)).filter(Boolean);
 
   } else {
-    // Standard/Free: Pullik Gemini → Bepul Gemini → Groq → Claude Haiku (safety net)
+    // Standard/Free: 1. Pullik Gemini 2.5 Flash -> 2. Bepul Gemini -> 3. Groq -> 4. Claude Haiku
     const standardOrder = [
-      'gemini-paid-3-7-flash',      // 🥇 pullik flagship
-      'gemini-paid-3-5-flash',      // 🥈 pullik fast
-      'gemini-paid-3-5-flash-lite', // 🥉 pullik lite
-      'gemini-free-2-5-flash',      // bepul fallback
-      'gemini-free-flash-lite',     // bepul lite fallback
-      'groq-llama-4-scout',         // Groq
-      'groq-llama-3-3-70b',
-      'groq-llama-3-1-8b',
-      'groq-compound-beta',
-      'groq-compound-beta-mini',
-      'anthropic-haiku-4-5'         // 🛡️ oxirgi qo'riqchi
+      'gemini-paid-2-5-flash',
+      'gemini-free-2-5-flash',
+      'groq-qwen-27b',
+      'groq-gpt-oss-20b',
+      'anthropic-haiku-4-5'
     ];
     pipeline = standardOrder.map(id => allAgents.find(a => a.id === id)).filter(Boolean);
   }
@@ -335,11 +323,11 @@ async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22
       // compound modellari json_object mode ni to'g'ri bajarmaydi
       const supportsJsonMode = !isTextGen && !agent.model.includes('compound');
 
-      // TextGen (sinf tahlili va batafsil xulosalar): 8000 token
-      // QuestionGen (20 ta savol): har savol ~150 token + overhead
-      const maxTokens = isTextGen
-        ? 8000
-        : Math.min(Math.max(Math.ceil((prompt.length / 4) * 0.8) + 500, 1500), 4096);
+      // Groq on-demand OTPM limit is 1000 tokens for free tier
+      const maxTokens = Math.min(
+        isTextGen ? 1000 : Math.max(Math.ceil((prompt.length / 4) * 0.8) + 300, 500),
+        1000
+      );
 
       const body = {
         model: agent.model,
