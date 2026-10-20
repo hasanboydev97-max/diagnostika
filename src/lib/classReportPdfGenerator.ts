@@ -2,667 +2,746 @@ import type { ClassAnalysisResult, StudentAnalysis, CurriculumTopicInsight } fro
 
 /**
  * ====================================================================
- *  SENIOR-LEVEL A4 DIAGNOSTIC REPORT GENERATOR
- *  ─────────────────────────────────────────────────────────────────
- *  Architecture:
- *   - Page 1   : Professional class overview (teacher / admin report)
- *   - Page 2…N : Individual student A4 sheets (for parents)
- *
- *  Print Pipeline:
- *   window.open → document.write → Ctrl+P / "Save as PDF" (browser)
- *   • @page rule locks to A4 Portrait
- *   • -webkit-print-color-adjust: exact preserves all colours
- *   • No canvas / jsPDF — pure vector HTML, pixel-perfect on paper
+ *  SENIOR-LEVEL A4 DIAGNOSTIC REPORT GENERATOR  v3.0
  * ====================================================================
  */
 export function openClassReportPrintWindow(
   analysisResult: ClassAnalysisResult,
   test: any
 ): void {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
+  const win = window.open('', '_blank');
+  if (!win) {
     alert('Iltimos, brauzeringizda qalqib chiquvchi oynalarga (pop-up) ruxsat bering.');
     return;
   }
 
-  /* ── helpers ── */
-  const today = new Date().toLocaleDateString('uz-UZ', {
-    year: 'numeric', month: 'long', day: 'numeric',
-  });
-  const shortDate = new Date().toLocaleDateString('uz-UZ');
+  /* ─────────────── helpers ─────────────── */
+  const todayFull  = new Date().toLocaleDateString('uz-UZ', { year:'numeric', month:'long', day:'numeric' });
+  const todayShort = new Date().toLocaleDateString('uz-UZ');
 
-  const levelMeta = (level: string): { cls: string; label: string } => {
-    const map: Record<string, { cls: string; label: string }> = {
-      yuqori:   { cls: 'badge-high',    label: 'A\'LO'       },
-      yaxshi:   { cls: 'badge-good',    label: 'YAXSHI'      },
-      "o'rta":  { cls: 'badge-mid',     label: 'O\'RTA'      },
-      past:     { cls: 'badge-low',     label: 'PAST'        },
-    };
-    return map[level] ?? { cls: 'badge-low', label: level.toUpperCase() };
+  const LEVELS: Record<string, { bg:string; border:string; text:string; badge:string; label:string }> = {
+    yuqori:  { bg:'#f0fdf4', border:'#4ade80', text:'#166534', badge:'#dcfce7', label:"A'LO"   },
+    yaxshi:  { bg:'#eff6ff', border:'#60a5fa', text:'#1d4ed8', badge:'#dbeafe', label:'YAXSHI' },
+    "o'rta": { bg:'#fffbeb', border:'#fbbf24', text:'#92400e', badge:'#fef3c7', label:"O'RTA"  },
+    past:    { bg:'#fff1f2', border:'#fb7185', text:'#9f1239', badge:'#fee2e2', label:'PAST'   },
+  };
+  const getLevel = (l: string) => LEVELS[l] ?? LEVELS['past'];
+
+  const scoreGradient = (pct: number) =>
+    pct >= 80 ? 'linear-gradient(135deg,#22c55e,#16a34a)' :
+    pct >= 60 ? 'linear-gradient(135deg,#f59e0b,#d97706)' :
+                'linear-gradient(135deg,#f87171,#dc2626)';
+
+  const rankIcon = (i: number) =>
+    i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+
+  /* mini SVG gauge (decorative arc) */
+  const gauge = (pct: number, color: string) => {
+    const r = 36; const cx = 44; const cy = 44;
+    const circ = 2 * Math.PI * r;
+    const dash  = (pct / 100) * circ * 0.75;
+    const gap   = circ - dash;
+    const rot   = -225;
+    return `<svg width="88" height="88" viewBox="0 0 88 88">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#e2e8f0" stroke-width="7"
+        stroke-dasharray="${circ * 0.75} ${circ * 0.25}" stroke-dashoffset="0"
+        stroke-linecap="round" transform="rotate(${rot} ${cx} ${cy})"/>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="7"
+        stroke-dasharray="${dash} ${gap + circ * 0.25}" stroke-dashoffset="0"
+        stroke-linecap="round" transform="rotate(${rot} ${cx} ${cy})"/>
+      <text x="${cx}" y="${cy - 2}" text-anchor="middle"
+        font-family="Inter,sans-serif" font-size="15" font-weight="800" fill="#0f172a">${pct}%</text>
+      <text x="${cx}" y="${cy + 12}" text-anchor="middle"
+        font-family="Inter,sans-serif" font-size="7" font-weight="600" fill="#94a3b8">BALL</text>
+    </svg>`;
   };
 
-  const scoreColor = (pct: number) =>
-    pct >= 80 ? '#15803d' : pct >= 60 ? '#d97706' : '#dc2626';
-
-  const progressBar = (pct: number) => {
-    const color = pct >= 80 ? '#22c55e' : pct >= 60 ? '#f59e0b' : '#ef4444';
-    const bg    = pct >= 80 ? '#dcfce7' : pct >= 60 ? '#fef3c7' : '#fee2e2';
+  /* topic mastery bar row */
+  const topicBar = (label: string, pct: number) => {
+    const c = pct >= 80 ? '#22c55e' : pct >= 60 ? '#f59e0b' : '#ef4444';
+    const bg = pct >= 80 ? '#f0fdf4' : pct >= 60 ? '#fffbeb' : '#fff1f2';
     return `
-      <div class="pb-wrapper">
-        <div class="pb-track" style="background:${bg};">
-          <div class="pb-fill" style="width:${Math.min(100, pct)}%;background:${color};"></div>
-        </div>
-        <span class="pb-label" style="color:${color};">${pct}%</span>
-      </div>`;
+    <div class="tm-row">
+      <span class="tm-label">${label}</span>
+      <div class="tm-bar-bg" style="background:${bg};">
+        <div class="tm-bar-fill" style="width:${pct}%;background:${c};"></div>
+      </div>
+      <span class="tm-pct" style="color:${c};">${pct}%</span>
+    </div>`;
   };
 
-  /* ── per-student A4 pages ── */
+  /* roadmap step card */
+  const roadmapStepColors = ['#6366f1','#f59e0b','#10b981'];
+  const stepCard = (step: any, si: number) => {
+    const col = roadmapStepColors[si] ?? '#94a3b8';
+    return `
+    <div class="rm-card" style="border-top:3px solid ${col};">
+      <div class="rm-head">
+        <span class="rm-num" style="color:${col};">${step.phase}</span>
+        <span class="rm-dur">${step.duration}</span>
+      </div>
+      <div class="rm-focus">${step.focus}</div>
+      <div class="rm-label">Vazifalar:</div>
+      <ul class="rm-list">
+        ${(step.actions || []).map((a: string) => `<li>${a}</li>`).join('')}
+      </ul>
+      <div class="rm-chip rm-parent">
+        <span>👨‍👩‍👧</span><span>${step.parentTip}</span>
+      </div>
+      <div class="rm-chip rm-outcome">
+        <span>🎯</span><span>${step.expectedOutcome}</span>
+      </div>
+    </div>`;
+  };
+
+  /* sorted students for leaderboard */
+  const sorted = [...(analysisResult.studentAnalyses || [])]
+    .sort((a, b) => b.scorePercent - a.scorePercent);
+
+  /* ─────────────── CLASS OVERVIEW PAGE ─────────────── */
+  const ov = analysisResult.classOverview;
+
+  const classPage = `
+  <div class="a4-sheet">
+
+    <!-- HEADER -->
+    <header class="doc-hdr">
+      <div class="hdr-brand">
+        <div class="hdr-logo">HB</div>
+        <div>
+          <div class="hdr-title">MAKTAB TA'LIM VA DIAGNOSTIKA TIZIMI</div>
+          <div class="hdr-sub">Umumiy Sinf Ko'rsatkichlari va Metodik Tahlil Hisoboti</div>
+        </div>
+      </div>
+      <div class="hdr-right">
+        <div class="hdr-code">SINF HISOBOTI</div>
+        <div class="hdr-date">${todayFull}</div>
+      </div>
+    </header>
+
+    <!-- HERO -->
+    <div class="class-hero">
+      <div class="hero-left">
+        <div class="hero-eyebrow">📊 AI Sinf Tahlili</div>
+        <h1 class="hero-h1">${test?.title ?? 'Sinf Diagnostikasi'}</h1>
+        <div class="hero-meta">
+          <span>${todayFull}</span>
+          <span class="hero-dot">·</span>
+          <span>${test?.subject ?? 'Umumiy Fan'}</span>
+          <span class="hero-dot">·</span>
+          <span>Jami ${ov.totalStudents} o'quvchi</span>
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat-item">
+          <div class="hero-stat-val">${ov.averageScore}<span class="hero-stat-unit">%</span></div>
+          <div class="hero-stat-lbl">O'rtacha ball</div>
+        </div>
+        <div class="hero-sep"></div>
+        <div class="hero-stat-item">
+          <div class="hero-stat-val green">${ov.passCount}</div>
+          <div class="hero-stat-lbl">O'tdi (≥60%)</div>
+        </div>
+        <div class="hero-sep"></div>
+        <div class="hero-stat-item">
+          <div class="hero-stat-val red">${ov.failCount}</div>
+          <div class="hero-stat-lbl">Diqqat kerak</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD TABLE -->
+    <div class="section">
+      <div class="section-hdr">
+        <div class="section-title">🏆 O'quvchilar Natijalari Reytingi</div>
+        <div class="section-badge">${(analysisResult.studentAnalyses || []).length} nafar</div>
+      </div>
+      <table class="lb-table">
+        <thead>
+          <tr>
+            <th style="width:5%;">#</th>
+            <th style="width:32%;">O'quvchi ismi</th>
+            <th style="width:13%;text-align:center;">Ball</th>
+            <th style="width:11%;text-align:center;">Daraja</th>
+            <th style="width:39%;">Ko'rsatkich</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sorted.map((st, i) => {
+            const lv = getLevel(st.level);
+            const pct = st.scorePercent;
+            const barColor = pct >= 80 ? '#22c55e' : pct >= 60 ? '#f59e0b' : '#ef4444';
+            const barBg    = pct >= 80 ? '#dcfce7' : pct >= 60 ? '#fef3c7' : '#fee2e2';
+            return `<tr class="${i % 2 === 0 ? 'tr-even' : ''}">
+              <td class="rank-cell">${rankIcon(i)}</td>
+              <td class="name-cell">
+                <div class="name-avatar" style="background:${lv.text};">${st.name.charAt(0)}</div>
+                <span>${st.name}</span>
+              </td>
+              <td style="text-align:center;">
+                <strong style="color:${lv.text};font-size:12px;">${pct}%</strong>
+                <div style="color:#94a3b8;font-size:8px;">${st.scoreRaw} ball</div>
+              </td>
+              <td style="text-align:center;">
+                <span class="lb-badge" style="background:${lv.badge};color:${lv.text};border:1px solid ${lv.border};">
+                  ${lv.label}
+                </span>
+              </td>
+              <td>
+                <div class="lb-bar-wrap">
+                  <div class="lb-bar-bg" style="background:${barBg};">
+                    <div class="lb-bar-fill" style="width:${pct}%;background:${barColor};"></div>
+                  </div>
+                  <span class="lb-pct" style="color:${barColor};">${pct}%</span>
+                </div>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- STRENGTHS / WEAKNESSES -->
+    <div class="two-col">
+      <div class="sw-card green-card">
+        <div class="sw-title">✅ Sinf Kuchli Tomonlari</div>
+        <ul class="sw-list">
+          ${(ov.classStrengths || []).map((s: string) => `<li>${s}</li>`).join('')}
+        </ul>
+      </div>
+      <div class="sw-card red-card">
+        <div class="sw-title">⚡ Sinf Zaif Tomonlari</div>
+        <ul class="sw-list">
+          ${(ov.classWeaknesses || []).map((w: string) => `<li>${w}</li>`).join('')}
+        </ul>
+      </div>
+    </div>
+
+    <!-- RECOMMENDATIONS -->
+    <div class="rec-card">
+      <div class="rec-title">🎓 O'qituvchiga Metodik Tavsiyalar</div>
+      <ol class="rec-list">
+        ${(ov.teacherRecommendations || []).map((r: string) => `<li>${r}</li>`).join('')}
+      </ol>
+    </div>
+
+    <!-- TOPICS TABLE -->
+    ${(analysisResult.curriculumTopics?.length ?? 0) > 0 ? `
+    <div class="section">
+      <div class="section-hdr">
+        <div class="section-title">📚 O'tilgan Mavzular va Ularning Hayotiy Zarurati</div>
+      </div>
+      <table class="topics-tbl">
+        <thead>
+          <tr>
+            <th style="width:24%;">Mavzu</th>
+            <th style="width:36%;">Nima uchun bolaga kerak?</th>
+            <th style="width:40%;">Real hayot va kasblarda</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${(analysisResult.curriculumTopics || []).slice(0, 5).map((t: CurriculumTopicInsight) => `
+          <tr>
+            <td><strong>${t.topic}</strong><br/><span class="tbl-sub">${t.category ?? ''}</span></td>
+            <td>${t.whyItMattersForChild}</td>
+            <td>${t.realWorldApplication}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>` : ''}
+
+    <footer class="sig-footer">
+      <div class="sig-block"><div class="sig-line"></div><div class="sig-lbl">Fan o'qituvchisi</div></div>
+      <div class="sig-block"><div class="sig-line"></div><div class="sig-lbl">Metodist / Ilmiy mudir</div></div>
+      <div class="sig-block"><div class="sig-line"></div><div class="sig-lbl">Maktab direktori</div></div>
+    </footer>
+  </div>`;
+
+  /* ─────────────── PER-STUDENT PAGES ─────────────── */
   const studentPages = (analysisResult.studentAnalyses || [])
     .map((st: StudentAnalysis, idx: number) => {
-      const { cls: badgeCls, label: badgeLabel } = levelMeta(st.level);
-      const pct = st.scorePercent;
-      const bgAccent = pct >= 80 ? '#f0fdf4' : pct >= 60 ? '#fffbeb' : '#fef2f2';
-      const borderAccent = pct >= 80 ? '#86efac' : pct >= 60 ? '#fde68a' : '#fca5a5';
-      const accentColor  = pct >= 80 ? '#15803d' : pct >= 60 ? '#b45309' : '#b91c1c';
+      const pct   = st.scorePercent;
+      const lv    = getLevel(st.level);
+      const gColor = pct >= 80 ? '#22c55e' : pct >= 60 ? '#f59e0b' : '#ef4444';
+      const rank  = sorted.findIndex(s => s.name === st.name) + 1;
 
-      const roadmapStepColors = ['#3b82f6', '#f59e0b', '#10b981'];
+      /* subject mastery bars — approximate from scoreRaw vs total */
+      const hasMastery = (st as any).subjectMastery && Object.keys((st as any).subjectMastery).length > 0;
+      const masteryHtml = hasMastery
+        ? Object.entries((st as any).subjectMastery as Record<string, number>)
+            .map(([k, v]) => topicBar(k, v))
+            .join('')
+        : '';
 
       return `
-      <div class="a4-sheet student-sheet">
+  <div class="a4-sheet student-sheet">
 
-        <!-- ▌ Header ▐ -->
-        <header class="doc-header">
-          <div class="brand-row">
-            <div class="brand-logo">HB</div>
-            <div>
-              <div class="brand-name">MAKTAB TA'LIM VA DIAGNOSTIKA TIZIMI</div>
-              <div class="brand-sub">O'quvchining Shaxsiy Diagnostika va Rivojlanish Varaqasi · Ota-onalar uchun</div>
-            </div>
-          </div>
-          <div class="doc-meta">
-            <div class="doc-code">BLANKA №&nbsp;${String(idx + 1).padStart(2, '0')}&nbsp;/&nbsp;${st.name.substring(0, 3).toUpperCase()}</div>
-            <div class="doc-date">${shortDate}</div>
-          </div>
-        </header>
+    <!-- HEADER -->
+    <header class="doc-hdr">
+      <div class="hdr-brand">
+        <div class="hdr-logo">HB</div>
+        <div>
+          <div class="hdr-title">MAKTAB TA'LIM VA DIAGNOSTIKA TIZIMI</div>
+          <div class="hdr-sub">O'quvchining Shaxsiy Diagnostika va Rivojlanish Varaqasi · Ota-onalar uchun</div>
+        </div>
+      </div>
+      <div class="hdr-right">
+        <div class="hdr-code">BLANKA №&nbsp;${String(idx + 1).padStart(2, '0')}&nbsp;/&nbsp;${st.name.substring(0, 3).toUpperCase()}</div>
+        <div class="hdr-date">${todayShort}</div>
+      </div>
+    </header>
 
-        <!-- ▌ Student hero bar ▐ -->
-        <div class="student-hero" style="background:${bgAccent};border:1.5px solid ${borderAccent};">
-          <div class="student-hero-left">
-            <div class="avatar" style="background:${accentColor};">${st.name.charAt(0).toUpperCase()}</div>
-            <div>
-              <div class="student-name">${st.name}</div>
-              <div class="student-sub">Imtihon: <strong>${test?.title || 'Diagnostika'}</strong> &nbsp;·&nbsp; Fan: ${test?.subject || 'Umumiy'}</div>
-            </div>
+    <!-- STUDENT HERO -->
+    <div class="st-hero" style="background:${lv.bg};border:1.5px solid ${lv.border};">
+      <div class="st-hero-left">
+        <div class="st-avatar" style="background:${gColor};">
+          ${st.name.charAt(0).toUpperCase()}
+        </div>
+        <div class="st-info">
+          <div class="st-name">${st.name}</div>
+          <div class="st-meta">
+            <span>📖 ${test?.title ?? 'Diagnostika'}</span>
+            <span>·</span>
+            <span>📚 ${test?.subject ?? 'Umumiy Fan'}</span>
+            <span>·</span>
+            <span>📅 ${todayShort}</span>
           </div>
-          <div class="score-cluster">
-            <div class="score-big" style="color:${accentColor};">${pct}<span class="score-pct-sign">%</span></div>
-            <div class="badge ${badgeCls}">${badgeLabel}</div>
-            <div class="score-raw-label">${st.scoreRaw}&nbsp;ball</div>
+          <div class="st-rank-row">
+            <span class="rank-pill" style="background:${lv.badge};color:${lv.text};border:1px solid ${lv.border};">
+              ${rankIcon(rank - 1)}&nbsp; Sinfda ${rank}-o'rin
+            </span>
+            <span class="level-pill" style="background:${lv.text};color:#fff;">
+              ${lv.label}
+            </span>
           </div>
         </div>
+      </div>
+      <div class="st-gauge">
+        ${gauge(pct, gColor)}
+        <div class="gauge-raw">${st.scoreRaw} ball</div>
+      </div>
+    </div>
 
-        ${st.personalityInsight ? `
-        <div class="insight-strip">
-          <span class="insight-icon">👤</span>
-          <span><strong>Psixologik-Pedagogik Profil:</strong>&nbsp;${st.personalityInsight}</span>
-        </div>` : ''}
+    <!-- PERSONALITY INSIGHT -->
+    ${st.personalityInsight ? `
+    <div class="insight-bar">
+      <span class="insight-icon">🧠</span>
+      <div>
+        <div class="insight-title">Psixologik-Pedagogik Profil</div>
+        <div class="insight-text">${st.personalityInsight}</div>
+      </div>
+    </div>` : ''}
 
-        <!-- ▌ Strengths / Weaknesses ▐ -->
-        <div class="two-col">
-          <div class="card card-green">
-            <div class="card-heading" style="color:#166534;">✅ Kuchli Tomonlar</div>
-            <ul class="card-list">
-              ${(st.strengths || []).map(s => `<li style="color:#14532d;">${s}</li>`).join('')}
-            </ul>
-          </div>
-          <div class="card card-red">
-            <div class="card-heading" style="color:#991b1b;">⚡ Mustahkamlash Kerak</div>
-            <ul class="card-list">
-              ${(st.weaknesses || []).map(w => `<li style="color:#7f1d1d;">${w}</li>`).join('')}
-            </ul>
-          </div>
-        </div>
+    <!-- STRENGTHS & WEAKNESSES -->
+    <div class="two-col">
+      <div class="sw-card green-card">
+        <div class="sw-title">✅ Kuchli Tomonlar</div>
+        <ul class="sw-list">
+          ${(st.strengths || []).map(s => `<li>${s}</li>`).join('')}
+        </ul>
+      </div>
+      <div class="sw-card red-card">
+        <div class="sw-title">⚡ Mustahkamlash Kerak</div>
+        <ul class="sw-list">
+          ${(st.weaknesses || []).map(w => `<li>${w}</li>`).join('')}
+        </ul>
+      </div>
+    </div>
 
-        <!-- ▌ Parent letter ▐ -->
-        <div class="parent-letter">
-          <div class="parent-letter-badge">✉️&nbsp; Hurmatli Ota-Onaga Maxsus Murojaat</div>
-          <p class="parent-letter-body">${st.parentReport || ''}</p>
-        </div>
+    <!-- MASTERY BARS (if available) -->
+    ${masteryHtml ? `
+    <div class="mastery-wrap">
+      <div class="mastery-title">📊 Fan bo'yicha o'zlashtirish darajasi</div>
+      ${masteryHtml}
+    </div>` : ''}
 
-        <!-- ▌ 3-Step Roadmap ▐ -->
-        <div class="roadmap-wrap">
-          <div class="roadmap-title">🗺️&nbsp; 3 Bosqichli Shaxsiy Rivojlanish Yo'l Xaritasi</div>
-          <div class="roadmap-grid">
-            ${(st.roadmap || []).map((step, si) => `
-            <div class="roadmap-card" style="border-top:3px solid ${roadmapStepColors[si] ?? '#94a3b8'};">
-              <div class="rc-head">
-                <span class="rc-phase">${step.phase}</span>
-                <span class="rc-dur">${step.duration}</span>
-              </div>
-              <div class="rc-focus">${step.focus}</div>
-              <div class="rc-section-label">Vazifalar:</div>
-              <ul class="rc-actions">
-                ${(step.actions || []).map(a => `<li>${a}</li>`).join('')}
-              </ul>
-              <div class="rc-tip">
-                <span class="rc-tip-icon">👨‍👩‍👧</span>
-                <span>${step.parentTip}</span>
-              </div>
-              <div class="rc-outcome">
-                <span class="rc-tip-icon">🎯</span>
-                <span>${step.expectedOutcome}</span>
-              </div>
-            </div>`).join('')}
-          </div>
-        </div>
+    <!-- PARENT LETTER -->
+    <div class="parent-card">
+      <div class="parent-badge">✉️ &nbsp;Hurmatli Ota-Onaga Maxsus Murojaat</div>
+      <p class="parent-body">${st.parentReport ?? ''}</p>
+    </div>
 
-        <!-- ▌ Signature footer ▐ -->
-        <footer class="sig-footer">
-          <div class="sig-block">
-            <div class="sig-line"></div>
-            <div class="sig-label">Fan o'qituvchisi (F.I.Sh va imzo)</div>
-          </div>
-          <div class="sig-block">
-            <div class="sig-line"></div>
-            <div class="sig-label">Maktab ma'muriyati / Metodist</div>
-          </div>
-          <div class="sig-block">
-            <div class="sig-line"></div>
-            <div class="sig-label">Ota-ona tanishdim (Imzo)</div>
-          </div>
-        </footer>
-      </div>`;
+    <!-- ROADMAP -->
+    <div class="roadmap-wrap">
+      <div class="roadmap-hdr">
+        <div class="roadmap-title">🗺️ &nbsp;3 Bosqichli Shaxsiy Rivojlanish Yo'l Xaritasi</div>
+        <div class="roadmap-sub">Maqsadli o'quv rejasi · Har bosqich 2–4 hafta</div>
+      </div>
+      <div class="rm-grid">
+        ${(st.roadmap || []).map((step, si) => stepCard(step, si)).join('')}
+      </div>
+    </div>
+
+    <!-- PROGRESS SCALE -->
+    <div class="scale-wrap">
+      <div class="scale-labels">
+        <span>0</span><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span>
+      </div>
+      <div class="scale-bar">
+        <div class="scale-marker" style="left:${Math.min(97, Math.max(2, pct))}%;"></div>
+      </div>
+      <div class="scale-zones">
+        <span style="color:#ef4444;">Sayoz (0–35)</span>
+        <span style="color:#f59e0b;">Zaif (35–60)</span>
+        <span style="color:#84cc16;">O'rta (60–75)</span>
+        <span style="color:#22c55e;">Yaxshi (75–90)</span>
+        <span style="color:#15803d;">A'lo (90–100)</span>
+      </div>
+    </div>
+
+    <!-- SIGNATURE FOOTER -->
+    <footer class="sig-footer">
+      <div class="sig-block">
+        <div class="sig-line"></div>
+        <div class="sig-lbl">Fan o'qituvchisi (F.I.Sh va imzo)</div>
+      </div>
+      <div class="sig-block">
+        <div class="sig-line"></div>
+        <div class="sig-lbl">Maktab ma'muriyati / Metodist</div>
+      </div>
+      <div class="sig-block">
+        <div class="sig-line"></div>
+        <div class="sig-lbl">Ota-ona tanishdim (Imzo)</div>
+      </div>
+    </footer>
+
+    <!-- PAGE NUMBER WATERMARK -->
+    <div class="page-num">${idx + 2}</div>
+  </div>`;
     })
     .join('');
 
-  /* ── class overview — page 1 ── */
-  const ov = analysisResult.classOverview;
-  const topicsHtml = (analysisResult.curriculumTopics || []).slice(0, 5).map(
-    (t: CurriculumTopicInsight) => `
-    <tr>
-      <td><strong>${t.topic}</strong><br/><span class="tbl-sub">${t.category || ''}</span></td>
-      <td>${t.whyItMattersForChild}</td>
-      <td>${t.realWorldApplication}</td>
-    </tr>`
-  ).join('');
-
-  /* ── full HTML document ── */
-  const html = `<!DOCTYPE html>
-<html lang="uz">
-<head>
-<meta charset="utf-8"/>
-<title>${test?.title ?? 'Diagnostika'} — AI Sinf Xulosasi</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet"/>
-
-<style>
-/* ============================================================
-   BASE RESET
-   ============================================================ */
+  /* ─────────────── CSS ─────────────── */
+  const css = `
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300..900;1,14..32,300..900&family=Playfair+Display:wght@700;800;900&display=swap');
+@page{size:A4 portrait;margin:10mm 12mm;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{
-  font-family:'Inter',system-ui,-apple-system,sans-serif;
-  font-size:10.5px;
-  line-height:1.5;
-  color:#111;
-  background:#f0f2f5;
-  -webkit-print-color-adjust:exact;
-  print-color-adjust:exact;
+  font-family:'Inter',system-ui,sans-serif;
+  font-size:10.5px;line-height:1.5;color:#111;
+  background:#e8eaed;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;
 }
 
-/* ============================================================
-   TOP ACTION BAR (hidden on print)
-   ============================================================ */
+/* ── TOP ACTION BAR ── */
 .topbar{
-  position:sticky;top:0;z-index:999;
-  background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
-  padding:12px 28px;
+  position:sticky;top:0;z-index:1000;
+  background:linear-gradient(90deg,#0f172a 0%,#1e3a5f 50%,#0f172a 100%);
+  padding:11px 28px;
   display:flex;justify-content:space-between;align-items:center;
-  box-shadow:0 4px 24px rgba(0,0,0,.28);
+  box-shadow:0 2px 20px rgba(0,0,0,.35);
 }
-.topbar-left{display:flex;align-items:center;gap:14px;}
-.topbar-logo{
-  width:38px;height:38px;border-radius:10px;
+.tb-left{display:flex;align-items:center;gap:12px;}
+.tb-logo{
+  width:36px;height:36px;border-radius:9px;
   background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
   display:flex;align-items:center;justify-content:center;
-  font-size:14px;font-weight:900;color:#fff;letter-spacing:.5px;
+  font-size:13px;font-weight:900;color:#fff;letter-spacing:.5px;flex-shrink:0;
 }
-.topbar-info{color:#fff;}
-.topbar-title{font-size:13px;font-weight:700;letter-spacing:.2px;}
-.topbar-sub{font-size:10px;opacity:.55;margin-top:1px;}
-.topbar-actions{display:flex;gap:10px;align-items:center;}
-.btn-print{
-  background:linear-gradient(135deg,#10b981,#059669);
-  color:#fff;border:none;
-  padding:9px 20px;border-radius:10px;
-  font-weight:800;font-size:11.5px;
-  cursor:pointer;letter-spacing:.4px;
-  display:flex;align-items:center;gap:7px;
-  transition:transform .15s,box-shadow .15s;
-  box-shadow:0 4px 14px rgba(16,185,129,.35);
+.tb-info{color:#fff;}
+.tb-title{font-size:12.5px;font-weight:700;}
+.tb-sub{font-size:9.5px;opacity:.5;margin-top:1px;}
+.tb-actions{display:flex;gap:8px;}
+.btn-pdf{
+  background:linear-gradient(135deg,#10b981,#059669);color:#fff;
+  border:none;padding:9px 20px;border-radius:9px;
+  font-family:'Inter',sans-serif;font-size:11.5px;font-weight:800;
+  cursor:pointer;display:flex;align-items:center;gap:7px;
+  box-shadow:0 4px 14px rgba(16,185,129,.4);transition:transform .15s;
 }
-.btn-print:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(16,185,129,.45);}
+.btn-pdf:hover{transform:translateY(-1px);}
 .btn-close{
-  background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.15);
-  padding:8px 16px;border-radius:9px;font-size:11px;cursor:pointer;
-  font-weight:600;transition:background .15s;
+  background:rgba(255,255,255,.08);color:#fff;
+  border:1px solid rgba(255,255,255,.15);
+  padding:8px 15px;border-radius:8px;
+  font-family:'Inter',sans-serif;font-size:11px;font-weight:600;
+  cursor:pointer;transition:background .15s;
 }
-.btn-close:hover{background:rgba(255,255,255,.18);}
+.btn-close:hover{background:rgba(255,255,255,.15);}
+kbd{
+  background:rgba(255,255,255,.15);border-radius:5px;
+  padding:1px 7px;font-size:10px;font-family:monospace;
+}
 
-/* ============================================================
-   A4 CONTAINER
-   ============================================================ */
-.a4-wrap{max-width:210mm;margin:28px auto 40px;}
-
-@page{size:A4 portrait;margin:11mm 13mm;}
-
+/* ── A4 WRAPPER ── */
+.a4-wrap{max-width:210mm;margin:24px auto 40px;}
 .a4-sheet{
-  background:#fff;
-  width:210mm;
-  min-height:297mm;
-  padding:12mm 14mm 12mm 14mm;
-  margin-bottom:20px;
-  box-shadow:0 6px 32px rgba(0,0,0,.09);
-  border-radius:3px;
-  position:relative;
-  display:flex;flex-direction:column;gap:9px;
+  background:#fff;width:210mm;min-height:297mm;
+  padding:11mm 13mm 10mm;margin-bottom:18px;
+  box-shadow:0 4px 28px rgba(0,0,0,.1);border-radius:3px;
+  position:relative;display:flex;flex-direction:column;gap:8px;
 }
-.student-sheet{
-  page-break-before:always;
-  break-before:page;
-  page-break-after:always;
-  break-after:page;
-  page-break-inside:avoid;
-  break-inside:avoid;
-}
+.student-sheet{page-break-before:always;break-before:page;page-break-inside:avoid;break-inside:avoid;}
 
-/* ============================================================
-   DOCUMENT HEADER
-   ============================================================ */
-.doc-header{
+/* ── DOC HEADER ── */
+.doc-hdr{
   display:flex;justify-content:space-between;align-items:center;
-  border-bottom:2.5px solid #0f172a;
-  padding-bottom:9px;margin-bottom:2px;
+  border-bottom:2.5px solid #0f172a;padding-bottom:9px;
 }
-.brand-row{display:flex;align-items:center;gap:11px;}
-.brand-logo{
+.hdr-brand{display:flex;align-items:center;gap:11px;}
+.hdr-logo{
   width:42px;height:42px;border-radius:10px;
-  background:#0f172a;color:#fff;
-  display:flex;align-items:center;justify-content:center;
-  font-weight:900;font-size:16px;letter-spacing:.5px;
-  flex-shrink:0;
+  background:#0f172a;color:#fff;font-weight:900;font-size:15px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
 }
-.brand-name{font-size:12px;font-weight:800;letter-spacing:.3px;color:#0f172a;}
-.brand-sub{font-size:9px;color:#64748b;font-weight:500;margin-top:2px;}
-.doc-meta{text-align:right;}
-.doc-code{font-family:'Courier New',monospace;font-size:10.5px;font-weight:700;color:#0f172a;letter-spacing:.5px;}
-.doc-date{font-size:9px;color:#64748b;margin-top:2px;}
+.hdr-title{font-size:11.5px;font-weight:800;letter-spacing:.3px;color:#0f172a;}
+.hdr-sub{font-size:8.5px;color:#64748b;font-weight:500;margin-top:2px;}
+.hdr-right{text-align:right;}
+.hdr-code{font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:#0f172a;}
+.hdr-date{font-size:8.5px;color:#64748b;margin-top:2px;}
 
-/* ============================================================
-   CLASS SUMMARY (PAGE 1)
-   ============================================================ */
+/* ── CLASS HERO ── */
 .class-hero{
-  background:linear-gradient(135deg,#0f172a 0%,#1e293b 60%,#0f2b5b 100%);
-  border-radius:14px;
-  padding:18px 22px;
-  color:#fff;
+  background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#0c2340 100%);
+  border-radius:14px;padding:18px 22px;color:#fff;
+  display:flex;justify-content:space-between;align-items:center;gap:16px;
 }
-.class-hero h1{
+.hero-left{flex:1;}
+.hero-eyebrow{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:.6;margin-bottom:5px;}
+.hero-h1{
   font-family:'Playfair Display',Georgia,serif;
-  font-size:21px;font-weight:800;
-  letter-spacing:-.3px;line-height:1.2;
-  margin-bottom:5px;
+  font-size:20px;font-weight:800;line-height:1.2;margin-bottom:7px;
 }
-.class-hero-sub{font-size:11px;opacity:.7;font-weight:500;}
+.hero-meta{font-size:9.5px;opacity:.65;display:flex;gap:7px;flex-wrap:wrap;}
+.hero-dot{opacity:.4;}
+.hero-stats{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.hero-stat-item{text-align:center;}
+.hero-stat-val{font-size:26px;font-weight:900;line-height:1;color:#fff;}
+.hero-stat-val.green{color:#4ade80;}
+.hero-stat-val.red{color:#f87171;}
+.hero-stat-unit{font-size:14px;font-weight:700;}
+.hero-stat-lbl{font-size:8px;opacity:.6;margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.hero-sep{width:1px;height:36px;background:rgba(255,255,255,.2);}
 
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;}
-.stat-card{
-  background:#f8fafc;border:1.5px solid #e2e8f0;
-  border-radius:12px;padding:10px 12px;text-align:center;
+/* ── SECTION WRAPPER ── */
+.section{}
+.section-hdr{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.section-title{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;color:#0f172a;}
+.section-badge{
+  background:#0f172a;color:#fff;font-size:8px;font-weight:800;
+  padding:2px 8px;border-radius:999px;
 }
-.stat-val{font-size:22px;font-weight:900;color:#0f172a;line-height:1.1;}
-.stat-lbl{font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.6px;margin-top:3px;}
 
-/* ============================================================
-   TWO-COLUMN CARDS
-   ============================================================ */
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
-.card{border-radius:12px;padding:10px 13px;}
-.card-green{background:#f0fdf4;border:1.5px solid #bbf7d0;}
-.card-red{background:#fef2f2;border:1.5px solid #fecaca;}
-.card-blue{background:#eff6ff;border:1.5px solid #bfdbfe;}
-.card-heading{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
-.card-list{padding-left:15px;list-style:disc;}
-.card-list li{padding:2.5px 0;font-size:10px;line-height:1.4;}
-
-/* ============================================================
-   TEACHER RECOMMENDATIONS
-   ============================================================ */
-.teacher-rec{
-  background:#eff6ff;border:1.5px solid #bfdbfe;
-  border-radius:12px;padding:11px 14px;
+/* ── LEADERBOARD TABLE ── */
+.lb-table{width:100%;border-collapse:collapse;font-size:9.5px;}
+.lb-table th{
+  background:#f8fafc;border-bottom:2px solid #e2e8f0;
+  font-size:8.5px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.5px;color:#64748b;padding:7px 9px;
 }
-.teacher-rec .card-heading{color:#1e40af;}
-.teacher-rec ol{padding-left:16px;color:#1e3a8a;}
-.teacher-rec li{font-size:10px;padding:2.5px 0;line-height:1.4;}
-
-/* ============================================================
-   TOPICS TABLE
-   ============================================================ */
-.topics-section{margin-top:2px;}
-.section-title{
-  font-size:9px;font-weight:900;color:#0f172a;
-  text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;
+.lb-table td{padding:6px 9px;vertical-align:middle;}
+.tr-even td{background:#fafafa;}
+.lb-table tbody tr:hover td{background:#f1f5f9;}
+.rank-cell{font-size:11px;text-align:center;width:36px;}
+.name-cell{display:flex;align-items:center;gap:7px;font-weight:600;color:#0f172a;}
+.name-avatar{
+  width:24px;height:24px;border-radius:7px;flex-shrink:0;
+  color:#fff;font-size:11px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;
 }
+.lb-badge{
+  font-size:8px;font-weight:800;padding:2px 8px;
+  border-radius:999px;letter-spacing:.4px;white-space:nowrap;
+}
+.lb-bar-wrap{display:flex;align-items:center;gap:7px;}
+.lb-bar-bg{flex:1;height:8px;border-radius:999px;overflow:hidden;}
+.lb-bar-fill{height:100%;border-radius:999px;}
+.lb-pct{font-size:9px;font-weight:800;white-space:nowrap;min-width:30px;text-align:right;}
+
+/* ── STRENGTHS / WEAKNESSES ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.sw-card{border-radius:12px;padding:10px 13px;}
+.green-card{background:#f0fdf4;border:1.5px solid #bbf7d0;}
+.red-card{background:#fff1f2;border:1.5px solid #fecdd3;}
+.sw-title{font-size:8.5px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
+.green-card .sw-title{color:#166534;}
+.red-card .sw-title{color:#9f1239;}
+.sw-list{padding-left:14px;list-style:disc;}
+.sw-list li{font-size:10px;padding:2.5px 0;line-height:1.4;}
+.green-card .sw-list li{color:#14532d;}
+.red-card .sw-list li{color:#881337;}
+
+/* ── RECOMMENDATIONS ── */
+.rec-card{background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:10px 13px;}
+.rec-title{font-size:8.5px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;color:#1e40af;margin-bottom:6px;}
+.rec-list{padding-left:15px;color:#1e3a8a;}
+.rec-list li{font-size:10px;padding:2.5px 0;line-height:1.4;}
+
+/* ── TOPICS TABLE ── */
 .topics-tbl{width:100%;border-collapse:collapse;font-size:9.5px;}
 .topics-tbl th{
-  background:#f1f5f9;font-weight:800;color:#0f172a;
-  font-size:9px;text-transform:uppercase;letter-spacing:.4px;
-  border:1px solid #e2e8f0;padding:7px 10px;
+  background:#f1f5f9;border:1px solid #e2e8f0;
+  font-size:8.5px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.4px;color:#0f172a;padding:7px 10px;
 }
 .topics-tbl td{border:1px solid #e2e8f0;padding:7px 10px;vertical-align:top;color:#1e293b;}
 .tbl-sub{font-size:8px;color:#94a3b8;display:block;margin-top:1px;}
 
-/* ============================================================
-   STUDENT HERO BAR
-   ============================================================ */
-.student-hero{
-  border-radius:14px;
-  padding:13px 16px;
-  display:flex;justify-content:space-between;align-items:center;
+/* ── STUDENT HERO ── */
+.st-hero{
+  border-radius:14px;padding:14px 16px;
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
 }
-.student-hero-left{display:flex;align-items:center;gap:12px;}
-.avatar{
-  width:46px;height:46px;border-radius:12px;
-  color:#fff;
+.st-hero-left{display:flex;align-items:center;gap:12px;flex:1;}
+.st-avatar{
+  width:52px;height:52px;border-radius:14px;
+  color:#fff;font-size:22px;font-weight:900;
   display:flex;align-items:center;justify-content:center;
-  font-size:20px;font-weight:900;flex-shrink:0;
+  flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,.15);
 }
-.student-name{font-size:18px;font-weight:800;color:#0f172a;line-height:1.15;}
-.student-sub{font-size:10px;color:#64748b;margin-top:2px;}
-.score-cluster{text-align:right;}
-.score-big{font-size:30px;font-weight:900;line-height:1;}
-.score-pct-sign{font-size:16px;font-weight:700;vertical-align:top;margin-top:4px;display:inline-block;}
-.score-raw-label{font-size:9px;color:#94a3b8;margin-top:2px;}
-
-/* ── level badges ── */
-.badge{
-  display:inline-block;font-size:8.5px;font-weight:800;
-  padding:3px 10px;border-radius:999px;
-  letter-spacing:.5px;margin-top:4px;
+.st-info{}
+.st-name{font-size:19px;font-weight:800;color:#0f172a;line-height:1.15;margin-bottom:3px;}
+.st-meta{font-size:9px;color:#64748b;display:flex;flex-wrap:wrap;gap:5px;margin-bottom:5px;}
+.st-rank-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.rank-pill{
+  font-size:8.5px;font-weight:800;padding:3px 10px;
+  border-radius:999px;display:inline-flex;align-items:center;gap:4px;
 }
-.badge-high{background:#dcfce7;color:#15803d;border:1px solid #86efac;}
-.badge-good{background:#e0e7ff;color:#4338ca;border:1px solid #a5b4fc;}
-.badge-mid {background:#fef3c7;color:#b45309;border:1px solid #fde68a;}
-.badge-low {background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;}
-
-/* ============================================================
-   INSIGHT STRIP
-   ============================================================ */
-.insight-strip{
-  background:#f1f5f9;border-left:4px solid #475569;
-  border-radius:7px;padding:8px 12px;
-  font-size:10px;color:#334155;line-height:1.45;
-  display:flex;gap:8px;align-items:flex-start;
+.level-pill{
+  font-size:8px;font-weight:900;padding:3px 10px;
+  border-radius:999px;letter-spacing:.5px;
 }
-.insight-icon{font-size:12px;flex-shrink:0;margin-top:1px;}
+.st-gauge{text-align:center;flex-shrink:0;}
+.gauge-raw{font-size:8.5px;color:#94a3b8;font-weight:600;margin-top:2px;}
 
-/* ============================================================
-   PARENT LETTER
-   ============================================================ */
-.parent-letter{
+/* ── INSIGHT BAR ── */
+.insight-bar{
+  background:#f8fafc;border-left:4px solid #6366f1;
+  border-radius:8px;padding:9px 12px;
+  display:flex;gap:9px;align-items:flex-start;
+}
+.insight-icon{font-size:14px;flex-shrink:0;margin-top:1px;}
+.insight-title{font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#4338ca;margin-bottom:2px;}
+.insight-text{font-size:10px;color:#334155;line-height:1.45;}
+
+/* ── MASTERY BARS ── */
+.mastery-wrap{border:1.5px solid #e2e8f0;border-radius:12px;padding:10px 13px;}
+.mastery-title{font-size:8.5px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;color:#0f172a;margin-bottom:7px;}
+.tm-row{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.tm-label{font-size:9px;font-weight:600;color:#374151;width:80px;flex-shrink:0;}
+.tm-bar-bg{flex:1;height:8px;border-radius:999px;overflow:hidden;}
+.tm-bar-fill{height:100%;border-radius:999px;}
+.tm-pct{font-size:9px;font-weight:800;min-width:28px;text-align:right;}
+
+/* ── PARENT LETTER ── */
+.parent-card{
   background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
   border-radius:12px;padding:13px 15px;
 }
-.parent-letter-badge{
-  font-size:9px;font-weight:900;color:#f59e0b;
-  text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;
-}
-.parent-letter-body{font-size:10.5px;line-height:1.55;color:#f1f5f9;}
+.parent-badge{font-size:8.5px;font-weight:900;color:#fbbf24;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
+.parent-body{font-size:10.5px;line-height:1.6;color:#f1f5f9;}
 
-/* ============================================================
-   ROADMAP
-   ============================================================ */
-.roadmap-wrap{
-  border:1.5px solid #e2e8f0;border-radius:12px;
-  padding:11px 13px;
-}
-.roadmap-title{
-  font-size:9px;font-weight:900;color:#0f172a;
-  text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;
-}
-.roadmap-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
-.roadmap-card{
-  background:#f8fafc;border-radius:9px;
-  padding:9px 10px;font-size:9.5px;
-  border:1.5px solid #f1f5f9;
-  border-top-width:3px;
+/* ── ROADMAP ── */
+.roadmap-wrap{border:1.5px solid #e2e8f0;border-radius:12px;padding:10px 13px;}
+.roadmap-hdr{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;}
+.roadmap-title{font-size:8.5px;font-weight:900;text-transform:uppercase;letter-spacing:.6px;color:#0f172a;}
+.roadmap-sub{font-size:8px;color:#94a3b8;font-weight:500;}
+.rm-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.rm-card{
+  background:#f8fafc;border-radius:9px;padding:9px 10px;
+  border:1.5px solid #f1f5f9;border-top-width:3px;
   display:flex;flex-direction:column;gap:4px;
 }
-.rc-head{display:flex;justify-content:space-between;align-items:center;}
-.rc-phase{font-weight:900;color:#0f172a;font-size:9.5px;}
-.rc-dur{font-size:8px;color:#64748b;font-weight:600;}
-.rc-focus{font-weight:700;color:#1e293b;font-size:10px;line-height:1.25;}
-.rc-section-label{font-weight:700;color:#475569;font-size:8.5px;text-transform:uppercase;letter-spacing:.3px;}
-.rc-actions{padding-left:12px;list-style:disc;color:#475569;font-size:9px;}
-.rc-actions li{padding:1px 0;}
-.rc-tip{
-  background:#fffbeb;border:1px solid #fef3c7;
-  border-radius:6px;padding:5px 6px;
-  font-size:8.5px;color:#78350f;line-height:1.3;
+.rm-head{display:flex;justify-content:space-between;align-items:center;}
+.rm-num{font-size:9.5px;font-weight:900;}
+.rm-dur{font-size:7.5px;color:#64748b;font-weight:700;background:#e2e8f0;padding:1px 6px;border-radius:999px;}
+.rm-focus{font-size:10px;font-weight:700;color:#1e293b;line-height:1.3;}
+.rm-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#94a3b8;}
+.rm-list{padding-left:11px;list-style:disc;color:#475569;}
+.rm-list li{font-size:9px;padding:1px 0;line-height:1.35;}
+.rm-chip{
+  border-radius:6px;padding:5px 7px;
+  font-size:8.5px;line-height:1.3;
   display:flex;gap:5px;align-items:flex-start;
 }
-.rc-outcome{
-  background:#ecfdf5;border:1px solid #d1fae5;
-  border-radius:6px;padding:5px 6px;
-  font-size:8.5px;color:#064e3b;line-height:1.3;
-  display:flex;gap:5px;align-items:flex-start;
+.rm-parent{background:#fffbeb;border:1px solid #fde68a;color:#78350f;}
+.rm-outcome{background:#ecfdf5;border:1px solid #d1fae5;color:#064e3b;}
+
+/* ── PROGRESS SCALE ── */
+.scale-wrap{margin-top:2px;}
+.scale-labels{display:flex;justify-content:space-between;font-size:8px;color:#94a3b8;font-weight:600;padding:0 1px;margin-bottom:3px;}
+.scale-bar{
+  height:10px;border-radius:999px;position:relative;
+  background:linear-gradient(90deg,#ef4444 0%,#f97316 20%,#eab308 40%,#84cc16 65%,#22c55e 85%,#15803d 100%);
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.1);
 }
-.rc-tip-icon{flex-shrink:0;margin-top:1px;}
+.scale-marker{
+  position:absolute;top:50%;transform:translate(-50%,-50%);
+  width:14px;height:14px;background:#fff;border-radius:50%;
+  border:2.5px solid #0f172a;box-shadow:0 1px 4px rgba(0,0,0,.25);
+}
+.scale-zones{display:flex;justify-content:space-between;font-size:7.5px;font-weight:700;margin-top:3px;padding:0 1px;}
 
-/* ============================================================
-   PROGRESS BAR COMPONENT
-   ============================================================ */
-.pb-wrapper{display:flex;align-items:center;gap:7px;flex:1;}
-.pb-track{flex:1;height:7px;border-radius:999px;overflow:hidden;}
-.pb-fill{height:100%;border-radius:999px;transition:width .3s;}
-.pb-label{font-size:9px;font-weight:800;white-space:nowrap;min-width:28px;text-align:right;}
-
-/* ============================================================
-   SIGNATURE FOOTER
-   ============================================================ */
+/* ── SIGNATURE FOOTER ── */
 .sig-footer{
-  display:grid;grid-template-columns:1fr 1fr 1fr;gap:22px;
-  padding-top:11px;border-top:1px solid #cbd5e1;
-  margin-top:auto;
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;
+  padding-top:10px;border-top:1.5px solid #e2e8f0;margin-top:auto;
 }
 .sig-block{text-align:center;}
 .sig-line{border-bottom:1.5px dashed #94a3b8;height:22px;margin-bottom:4px;}
-.sig-label{font-size:8px;color:#475569;font-weight:600;line-height:1.3;}
+.sig-lbl{font-size:8px;color:#475569;font-weight:600;line-height:1.3;}
 
-/* ============================================================
-   PRINT OVERRIDES
-   ============================================================ */
+/* ── PAGE NUMBER ── */
+.page-num{
+  position:absolute;bottom:8mm;right:13mm;
+  font-size:8px;color:#cbd5e1;font-weight:600;
+}
+
+/* ── PRINT OVERRIDES ── */
 @media print{
   body{background:#fff!important;}
   .topbar{display:none!important;}
-  .a4-wrap{margin:0!important;width:100%!important;max-width:100%!important;}
+  .a4-wrap{margin:0!important;max-width:100%!important;width:100%!important;}
   .a4-sheet{
     margin:0!important;padding:8mm 10mm!important;
     box-shadow:none!important;border-radius:0!important;
     min-height:280mm!important;
   }
-}
-</style>
+}`;
+
+  /* ─────────────── FULL HTML ─────────────── */
+  const html = `<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>${test?.title ?? 'Diagnostika'} — AI Sinf Xulosasi</title>
+<style>${css}</style>
 </head>
 <body>
 
-<!-- ▌ ACTION BAR (screen only) ▐ -->
+<!-- ACTION BAR -->
 <div class="topbar">
-  <div class="topbar-left">
-    <div class="topbar-logo">HB</div>
-    <div class="topbar-info">
-      <div class="topbar-title">🖨️ AI Diagnostika va Sinf Tahlili — Rasmiy Pechat Uchun</div>
-      <div class="topbar-sub">
-        Jami ${(analysisResult.studentAnalyses || []).length} nafar o'quvchi · Har biri uchun alohida A4 varaq tayyorlandi
+  <div class="tb-left">
+    <div class="tb-logo">HB</div>
+    <div class="tb-info">
+      <div class="tb-title">🖨️ AI Diagnostika va Sinf Tahlili — Rasmiy Pechat Uchun</div>
+      <div class="tb-sub">
+        Jami ${(analysisResult.studentAnalyses || []).length} nafar o'quvchi &nbsp;·&nbsp;
+        Har biri uchun alohida A4 varaq tayyorlandi
       </div>
     </div>
   </div>
-  <div class="topbar-actions">
-    <button class="btn-print" onclick="window.print()">
-      🖨️&nbsp; Pechat Qilish / PDF Saqlash &nbsp;<kbd style="background:rgba(255,255,255,.15);border-radius:5px;padding:1px 6px;font-size:10px;">Ctrl + P</kbd>
+  <div class="tb-actions">
+    <button class="btn-pdf" onclick="window.print()">
+      🖨️ &nbsp;Pechat / PDF Saqlash &nbsp;<kbd>Ctrl + P</kbd>
     </button>
     <button class="btn-close" onclick="window.close()">✕ Yopish</button>
   </div>
 </div>
 
-<!-- ▌ PAGES CONTAINER ▐ -->
 <div class="a4-wrap">
-
-  <!-- ════════════════════════════════════════════════
-       PAGE 1 · CLASS OVERVIEW (TEACHER / ADMIN)
-       ════════════════════════════════════════════════ -->
-  <div class="a4-sheet">
-
-    <!-- Header -->
-    <header class="doc-header">
-      <div class="brand-row">
-        <div class="brand-logo">HB</div>
-        <div>
-          <div class="brand-name">MAKTAB TA'LIM VA DIAGNOSTIKA TIZIMI</div>
-          <div class="brand-sub">Umumiy Sinf Ko'rsatkichlari va Metodik Tahlil Hisoboti</div>
-        </div>
-      </div>
-      <div class="doc-meta">
-        <div class="doc-code">SINF HISOBOTI</div>
-        <div class="doc-date">${today}</div>
-      </div>
-    </header>
-
-    <!-- Hero -->
-    <div class="class-hero">
-      <h1>📊 ${test?.title ?? 'Sinf Diagnostikasi'} — Sinf Natijalari</h1>
-      <div class="class-hero-sub">
-        Jami <strong>${ov.totalStudents}</strong> nafar o'quvchi qatnashdi &nbsp;·&nbsp;
-        O'rtacha o'zlashtirish: <strong>${ov.averageScore}%</strong> &nbsp;·&nbsp; Sana: ${today}
-      </div>
-    </div>
-
-    <!-- 4 stat cards -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-val">${ov.totalStudents}</div>
-        <div class="stat-lbl">Jami o'quvchi</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val" style="color:#d97706;">${ov.averageScore}%</div>
-        <div class="stat-lbl">O'rtacha ball</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val" style="color:#16a34a;">${ov.passCount}</div>
-        <div class="stat-lbl">O'tganlar (≥ 60%)</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val" style="color:#dc2626;">${ov.failCount}</div>
-        <div class="stat-lbl">E'tibor kerak (&lt; 60%)</div>
-      </div>
-    </div>
-
-    <!-- Student score distribution mini-table -->
-    ${(analysisResult.studentAnalyses || []).length > 0 ? `
-    <div>
-      <div class="section-title">📋 O'quvchilar Natijalari Jadvali</div>
-      <table class="topics-tbl">
-        <thead>
-          <tr>
-            <th style="width:32%;">O'quvchi ismi</th>
-            <th style="width:20%;">Ball</th>
-            <th style="width:18%;">Daraja</th>
-            <th style="width:30%;">Natija ko'rsatkichi</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${(analysisResult.studentAnalyses || []).map((st: StudentAnalysis) => {
-            const pct = st.scorePercent;
-            const { cls, label } = levelMeta(st.level);
-            return `<tr>
-              <td><strong>${st.name}</strong></td>
-              <td><strong style="color:${scoreColor(pct)};">${pct}%</strong> &nbsp;<span style="color:#94a3b8;font-size:9px;">(${st.scoreRaw} ball)</span></td>
-              <td><span class="badge ${cls}" style="font-size:8px;">${label}</span></td>
-              <td>${progressBar(pct)}</td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table>
-    </div>` : ''}
-
-    <!-- Strengths / Weaknesses -->
-    <div class="two-col">
-      <div class="card card-green">
-        <div class="card-heading" style="color:#166534;">✅ Sinf Kuchli Tomonlari</div>
-        <ul class="card-list">
-          ${(ov.classStrengths || []).map((s: string) => `<li style="color:#14532d;">${s}</li>`).join('')}
-        </ul>
-      </div>
-      <div class="card card-red">
-        <div class="card-heading" style="color:#991b1b;">⚡ Sinf Zaif Tomonlari (Bo'shliqlar)</div>
-        <ul class="card-list">
-          ${(ov.classWeaknesses || []).map((w: string) => `<li style="color:#7f1d1d;">${w}</li>`).join('')}
-        </ul>
-      </div>
-    </div>
-
-    <!-- Teacher recommendations -->
-    <div class="teacher-rec">
-      <div class="card-heading" style="color:#1e40af;">🎓 O'qituvchiga Metodik Tavsiyalar</div>
-      <ol>
-        ${(ov.teacherRecommendations || []).map((r: string) => `<li>${r}</li>`).join('')}
-      </ol>
-    </div>
-
-    <!-- Topics table -->
-    ${(analysisResult.curriculumTopics?.length ?? 0) > 0 ? `
-    <div class="topics-section">
-      <div class="section-title">📚 O'tilgan Mavzular va Ularning Hayotiy Zarurati</div>
-      <table class="topics-tbl">
-        <thead>
-          <tr>
-            <th style="width:25%;">Mavzu</th>
-            <th style="width:35%;">Nima uchun bolaga kerak?</th>
-            <th style="width:40%;">Real hayot va kasblarda (IT, Moliya)</th>
-          </tr>
-        </thead>
-        <tbody>${topicsHtml}</tbody>
-      </table>
-    </div>` : ''}
-
-    <!-- Signature footer -->
-    <footer class="sig-footer">
-      <div class="sig-block"><div class="sig-line"></div><div class="sig-label">Fan o'qituvchisi</div></div>
-      <div class="sig-block"><div class="sig-line"></div><div class="sig-label">Metodist / Ilmiy mudir</div></div>
-      <div class="sig-block"><div class="sig-line"></div><div class="sig-label">Maktab direktori</div></div>
-    </footer>
-  </div>
-  <!-- / PAGE 1 -->
-
-  <!-- ════════════════════════════════════════════════
-       PAGES 2-N · PER-STUDENT SHEETS
-       ════════════════════════════════════════════════ -->
+  ${classPage}
   ${studentPages}
-
-</div><!-- /a4-wrap -->
+</div>
 
 <script>
-  // Auto-launch print dialog after fonts/styles are loaded
-  window.addEventListener('load', function () {
-    setTimeout(function () { window.print(); }, 600);
-  });
+window.addEventListener('load',function(){setTimeout(function(){window.print();},700);});
 </script>
 </body>
 </html>`;
 
-  printWindow.document.open();
-  printWindow.document.write(html);
-  printWindow.document.close();
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
 }
