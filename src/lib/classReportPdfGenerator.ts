@@ -289,9 +289,6 @@ export function openClassReportPrintWindow(
     <!-- STUDENT HERO -->
     <div class="st-hero" style="background:${lv.bg};border:1.5px solid ${lv.border};">
       <div class="st-hero-left">
-        <div class="st-avatar" style="background:${gColor};">
-          ${st.name.charAt(0).toUpperCase()}
-        </div>
         <div class="st-info">
           <div class="st-name">${st.name}</div>
           <div class="st-meta">
