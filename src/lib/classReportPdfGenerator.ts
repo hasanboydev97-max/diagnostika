@@ -27,11 +27,6 @@ export function openClassReportPrintWindow(
   };
   const getLevel = (l: string) => LEVELS[l] ?? LEVELS['past'];
 
-  const scoreGradient = (pct: number) =>
-    pct >= 80 ? 'linear-gradient(135deg,#22c55e,#16a34a)' :
-    pct >= 60 ? 'linear-gradient(135deg,#f59e0b,#d97706)' :
-                'linear-gradient(135deg,#f87171,#dc2626)';
-
   const rankIcon = (i: number) =>
     i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
 
