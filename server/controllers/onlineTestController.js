@@ -619,10 +619,54 @@ export const getTestResultById = async (req, res) => {
 };
 export const generateAITest = async (req, res) => {
   try {
-    const { topic, questionCount, subject, grade, difficulty, language } = req.body;
+    const { 
+      topic, 
+      questionCount, 
+      subject, 
+      grade, 
+      difficulty, 
+      language,
+      questionStyle = 'mixed',
+      avoidPreviousTests = true
+    } = req.body;
 
     if (!topic || !subject) {
       return res.status(400).json({ error: 'Mavzu (topic) va fan (subject) talab qilinadi.' });
+    }
+
+    // --- O'tgan testlar xotirasi (Cross-Test Anti-Duplication Memory) ---
+    let priorQuestionTexts = [];
+    if (avoidPreviousTests && req.teacherId) {
+      try {
+        const priorTests = await OnlineTest.find({
+          teacherId: req.teacherId,
+          $or: [
+            { subject: new RegExp('^' + escapeRegex(subject) + '$', 'i') },
+            { title: new RegExp(escapeRegex(subject), 'i') }
+          ]
+        })
+          .sort({ createdAt: -1 })
+          .limit(10)
+          .select('questions title')
+          .lean();
+
+        for (const pt of priorTests) {
+          if (Array.isArray(pt.questions)) {
+            for (const q of pt.questions) {
+              const text = q.questionText || q.text || q.question;
+              if (text && typeof text === 'string') {
+                priorQuestionTexts.push(text.trim());
+              }
+            }
+          }
+        }
+        priorQuestionTexts = Array.from(new Set(priorQuestionTexts)).slice(0, 45);
+        if (priorQuestionTexts.length > 0) {
+          console.log(`[generateAITest] Cross-test deduplication: ${priorQuestionTexts.length} ta avvalgi savol olindi va AI ga taqiq sifatida uzatiladi.`);
+        }
+      } catch (dbErr) {
+        console.warn('[generateAITest] Prior tests lookup error:', dbErr.message);
+      }
     }
 
     // --- Limit TEKSHIRUVI (o'qish, o'zgartirish emas) ---
@@ -682,16 +726,68 @@ export const generateAITest = async (req, res) => {
       required: ["questions"]
     };
 
-    function buildTestPrompt({ topic, subject, questionCount = 5, difficulty = 'aralash', grade = 'aralash', language = 'o\'zbek', existingQuestions = [] }) {
+    function buildTestPrompt({ 
+      topic, 
+      subject, 
+      questionCount = 5, 
+      difficulty = 'aralash', 
+      grade = 'aralash', 
+      language = 'o\'zbek', 
+      questionStyle = 'mixed',
+      existingQuestions = [],
+      priorQuestions = []
+    }) {
       const existingText = existingQuestions.length > 0 
-        ? `\n\nCRITICAL RULE: DO NOT REPEAT THE FOLLOWING CONCEPTS. These questions have ALREADY been generated. You MUST create entirely NEW questions testing DIFFERENT concepts/angles:\n` + existingQuestions.map((q, i) => `${i+1}. ${q.questionText || q}`).join('\n')
+        ? `\n\nCRITICAL RULE: DO NOT REPEAT THE FOLLOWING CONCEPTS. These questions have ALREADY been generated in this session:\n` + existingQuestions.map((q, i) => `${i+1}. ${q.questionText || q}`).join('\n')
+        : '';
+
+      const priorText = priorQuestions.length > 0
+        ? `\n\n⛔ FORBIDDEN PRIOR QUESTIONS (CROSS-TEST DEDUPLICATION):
+The teacher has ALREADY tested the following questions in previous weeks.
+You are STRICTLY FORBIDDEN from generating these questions, duplicate concepts, or trivial rewrites.
+You MUST test completely NEW concepts, edge cases, practical aspects, and angles:
+` + priorQuestions.slice(0, 35).map((q, i) => `${i+1}. ${q}`).join('\n')
         : '';
 
       // String.raw template ichida backtick yozib bo'lmaydi (templateni yopib qo'yadi).
-      // ${bt} orqali backtick belgilarini xavfsiz kiritamiz.
       const bt = '\`';
 
-      return String.raw`Sen â€” istalgan fandan (matematika, fizika, biologiya, tarix, informatika, ona tili va h.k.) yuqori sifatli test tuzuvchi 20 yillik tajribali mutaxassis o'qituvchisan.
+      let styleInstruction = '';
+      if (questionStyle === 'code') {
+        styleInstruction = `
+## QUESTION FORMAT: PRACTICAL CODE SNIPPETS & SYNTAX
+- At least 80% of questions MUST include an explicit, realistic code snippet or markup inside inline backticks (${bt}...${bt}).
+- Ask what the output will be, how to fix an issue, or which exact CSS/HTML/Tailwind property/class is required.
+- NO pure dry theoretical definitions. Practical hands-on code only.`;
+      } else if (questionStyle === 'case_study') {
+        styleInstruction = `
+## QUESTION FORMAT: REAL-WORLD SCENARIOS & CASE STUDIES
+- Present realistic problem statements ("Bir dasturchi mobil ekran uchun menyu yasamoqda...", "Mijoz sahifa tezligini oshirishni so'radi...").
+- Ask which specific tool, class, property, or architecture solves the dilemma.
+- Emphasize real-world decision making over memorization.`;
+      } else if (questionStyle === 'troubleshooting') {
+        styleInstruction = `
+## QUESTION FORMAT: BUG HUNTING & DEBUGGING
+- Present a scenario or code with a flaw, conflict, or unexpected behavior.
+- Ask the student to identify why the bug occurs or which change will fix it.`;
+      } else if (questionStyle === 'conceptual') {
+        styleInstruction = `
+## QUESTION FORMAT: DEEP COMPARISONS & CONCEPTS
+- Compare technologies and approaches (e.g. Flexbox vs Grid, Tailwind utility classes vs inline styles, Figma auto-layout vs grouping, vector vs raster in Canva).
+- Test deep conceptual understanding rather than shallow surface definitions.`;
+      }
+
+      const randomSeed = Math.floor(Math.random() * 900000) + 100000;
+      const focusAreas = [
+        "mobil moslashuvchanlik (responsive layout) va turli ekranlar",
+        "unumdorlik, tejamkorlik va tez yuklanish (performance)",
+        "chegara holatlari (edge-cases) va kutilmagan brauzer xatti-harakatlari",
+        "zamonaviy standartlar va clean code amaliyotlari",
+        "foydalanuvchi tajribasi (UX), qulaylik (accessibility/a11y) va xavfsizlik"
+      ];
+      const randomFocus = focusAreas[Math.floor(Math.random() * focusAreas.length)];
+
+      return String.raw`Sen — istalgan fandan (matematika, fizika, biologiya, tarix, informatika, ona tili va h.k.) yuqori sifatli test tuzuvchi 20 yillik tajribali mutaxassis o'qituvchisan.
 Your ONLY output is a valid JSON array. Do not explain anything, do not add any text before or after the JSON.
 
 TASK
@@ -699,8 +795,12 @@ Generate exactly ${questionCount} multiple-choice questions for:
   Subject: ${subject}
   Topic(s): ${topic}
   Target Grade/Class: ${grade}
-  Difficulty: ${difficulty}${existingText}
-  Language: ${language}
+  Difficulty: ${difficulty}
+  Style: ${questionStyle}
+  Entropy Seed: #${randomSeed}
+  Special Emphasis: ${randomFocus}
+  Language: ${language}${existingText}${priorText}
+${styleInstruction}
 
 ## PEDAGOGICAL RULES
 
@@ -777,7 +877,9 @@ Begin generation now.`;
         grade: req.body.grade || 'aralash',
         difficulty: req.body.difficulty || 'aralash',
         language: req.body.language || 'o\'zbek',
-        existingQuestions
+        questionStyle: req.body.questionStyle || 'mixed',
+        existingQuestions,
+        priorQuestions: priorQuestionTexts
       });
 
       const isPremium = teacher && teacher.plan === 'premium';

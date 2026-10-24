@@ -36,6 +36,8 @@ export default function CreateTest() {
   const [grade, setGrade] = useState('');
   const [difficulty, setDifficulty] = useState('');
   const [language, setLanguage] = useState('o\'zbek');
+  const [questionStyle, setQuestionStyle] = useState('mixed');
+  const [avoidPreviousTests, setAvoidPreviousTests] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   
@@ -59,7 +61,9 @@ export default function CreateTest() {
         questionCount,
         grade,
         difficulty,
-        language
+        language,
+        questionStyle,
+        avoidPreviousTests
       };
       
       const res = await fetch(`${API_URL}/online-tests/generate`, {
@@ -432,7 +436,7 @@ export default function CreateTest() {
               mode === 'ocr' ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200/50' : 'text-zinc-500 hover:text-zinc-700'
             }`}
           >
-            <FileText size={14} /> OCR 👑
+            <FileText size={14} /> OCR ðŸ‘‘
           </button>
           <button
             onClick={() => setMode('manual')}
@@ -556,7 +560,21 @@ export default function CreateTest() {
                   <option value="Olimpiada darajasi">Olimpiada darajasi</option>
                 </select>
               </div>
-              <div className="md:col-span-2">
+              <div>
+                <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Savol Uslubi (Format)</label>
+                <select 
+                  value={questionStyle}
+                  onChange={e => setQuestionStyle(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-zinc-400 focus:bg-white transition-colors"
+                >
+                  <option value="mixed">Aralash (Standart nazariy va amaliy)</option>
+                  <option value="code">💻 Amaliy kodli (Code snippet & Natijani topish)</option>
+                  <option value="case_study">🧩 Real vaziyatli (Hayotiy keyslar & Muammolar)</option>
+                  <option value="troubleshooting">🔍 Xatolarni topish (Bug Hunter / Debugging)</option>
+                  <option value="conceptual">💡 Chuqur taqqoslash & Tushunchalar (Deep Concepts)</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Test Tili</label>
                 <select 
                   value={language}
@@ -570,6 +588,25 @@ export default function CreateTest() {
                   <option value="tojik">Tojik (Tajik)</option>
                 </select>
               </div>
+
+              <div className="md:col-span-2 pt-1">
+                <label className="inline-flex items-center gap-2.5 cursor-pointer select-none bg-blue-50/60 hover:bg-blue-50 px-3.5 py-2.5 rounded-xl border border-blue-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={avoidPreviousTests}
+                    onChange={e => setAvoidPreviousTests(e.target.checked)}
+                    className="w-4 h-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900 cursor-pointer"
+                  />
+                  <div>
+                    <span className="text-xs font-semibold text-blue-950 block">
+                      Avvalgi haftalardagi test savollarini takrorlamaslik (O'tgan testlar xotirasi)
+                    </span>
+                    <span className="text-[10px] text-blue-700/80">
+                      AI sizning shu fandan o'tgan haftalarda tuzgan barcha testlaringizni tekshirib, 100% yangi savollar beradi.
+                    </span>
+                  </div>
+                </label>
+              </div>
             </div>
             <button
               onClick={handleGenerate}
@@ -582,7 +619,7 @@ export default function CreateTest() {
           </div>
         )}
 
-        {/* OCR / Hujjat va Rasmdan Test Yaratish (Premium 👑) */}
+        {/* OCR / Hujjat va Rasmdan Test Yaratish (Premium ðŸ‘‘) */}
         {mode === 'ocr' && (
           <div className="bg-white border border-zinc-200 p-6 rounded-2xl mb-8 shadow-sm">
             <div className="flex items-center justify-between gap-2 mb-4">
@@ -591,7 +628,7 @@ export default function CreateTest() {
                 <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider">Hujjatdan (OCR) Test Yaratish</h3>
               </div>
               <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-black text-white uppercase shadow-sm">
-                👑 Premium Imkoniyat
+                ðŸ‘‘ Premium Imkoniyat
               </span>
             </div>
             <p className="text-xs text-zinc-500 mb-4">
