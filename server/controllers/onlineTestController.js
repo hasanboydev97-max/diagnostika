@@ -787,13 +787,28 @@ Generate exactly ${questionCount} multiple-choice questions for:
   Language: ${language}${multiTopicDistributionInstruction}${existingText}${priorText}
 ${styleInstruction}
 
-## PEDAGOGICAL RULES
+## PEDAGOGICAL & SCIENTIFIC ACCURACY RULES
 
 1. UNIQUE ANSWER: Each question must have exactly ONE unambiguously correct answer.
 2. PLAUSIBLE DISTRACTORS: Wrong options must reflect typical student mistakes — never random or unrelated.
 3. TEST UNDERSTANDING: Avoid rote recall. Prefer "Why?", "What if X?", multi-step reasoning.
 4. ZERO DUPLICATION: Every question tests a completely distinct concept. No repeated setups.
 5. LANGUAGE: All text must be grammatically correct ${language}. Zero language mixing in question/option text.
+
+## ILMIY TERMINOLOGIYA VA MAKTAB DARSLIKLARI STANDARTLARI (CRITICAL):
+- INFORMATIKA VA EXCEL (ELEKTRON JADVALLAR):
+  * Excel jadvalining eng kichik birligi / katagi (cell) — darsliklarda FAQAT "katak" yoki "katakcha" deb ataladi!
+  * ⛔ QAT'IYAN TAQIQLANADI: Excel yoki jadvallar haqidagi savollarda "hujayra" so'zini ishlatish MUTLAQO MAN ETILADI! ("Hujayra" faqat Biologiya faniga oid).
+  * Excel terminlari: katak / katakcha (cell), satr (row), ustun (column), ishchi varaq (worksheet), ishchi kitob (workbook), formulalar satri (formula bar), kataklar diapazoni (range), avtoto'ldirish (AutoFill).
+  * Matn muharriri (Word): matnni qalin qilish (Ctrl+B), kursiv (Ctrl+I), tagiga chizish (Ctrl+U), qidirish (Ctrl+F), saqlash (Ctrl+S), nusxa olish (Ctrl+C), qo'yish (Ctrl+V), lenta (Ribbon), hoshiya (Margins), tekislash (Alignment - chapga, o'ngga, markazga, kenglik bo'yicha).
+- VARIANTLARNI TIRNOQ BILAN O'RAMANG:
+  * Variantlar matnini tashqi bittalik yoki ikkitalik tirnoq ('...', "...") ichiga o'ramang!
+  * TO'G'RI: ["O'qish rejimi (Read Mode)", "Chop etish tartibi (Print Layout)", "Qora nusxa (Draft View)", "Web tartibi (Web Layout)"]
+  * NOTO'G'RI: ["'O'qish rejimi (Read Mode)'", "'Chop etish tartibi (Print Layout)'"]
+- ILMIY VA AKADEMIK ANIKLIK (SCIENTIFIC RIGOR):
+  * Savollar va variantlar O'zbekiston maktab darsliklari va fan dasturlarida qabul qilingan rasmiy ilmiy atamalar va ta'riflarga 100% mos bo'lishi shart.
+  * Fizika: massa (kg) skalyar kattalik, og'irlik esa jismning tayanchga ta'sir kuchi (P = mg, N) - adashtirilmasin.
+  * Biologiya: "hujayra" faqat tirik organizmlarning mikroskopik tuzilish va tiriklik birligi sifatida ishlatilsin.
 
 ## LATEX MATH RULES — CRITICAL
 
@@ -868,21 +883,11 @@ Begin generation now.`;
         priorQuestions: priorQuestionTexts,
         topicsList
       });
-        topic: chunkTopic, 
-        subject, 
-        questionCount: chunkCount, 
-        grade: req.body.grade || 'aralash',
-        difficulty: req.body.difficulty || 'aralash',
-        language: req.body.language || 'o\'zbek',
-        questionStyle: req.body.questionStyle || 'mixed',
-        existingQuestions,
-        priorQuestions: priorQuestionTexts
-      });
 
       const isPremium = teacher && teacher.plan === 'premium';
       const aiResult = await executeResilientQuestionGen({
         prompt,
-        systemPrompt: "You are an elite educational assessment engineer. Generate multiple-choice questions matching the strict JSON schema provided.",
+        systemPrompt: "You are an elite educational assessment engineer. Generate multiple-choice questions with strict scientific and academic terminology (e.g. in Excel/spreadsheets, a cell is strictly called 'katak' or 'katakcha', NEVER 'hujayra'). Output valid JSON matching the schema.",
         aiSchema,
         isPremium
       });
@@ -891,10 +896,11 @@ Begin generation now.`;
         return { success: false, error: aiResult.error };
       }
 
-      // Quality validation & distractor verification pass
+      // Quality validation & distractor verification pass with subject context
       const batchResult = processQuestionBatch(aiResult.questions, { 
         minAcceptable: Math.min(2, Math.floor(chunkCount * 0.5)), 
-        targetCount: chunkCount 
+        targetCount: chunkCount,
+        subject: subject
       });
 
       if (batchResult.shouldFallbackToNextProvider && batchResult.questions.length === 0) {

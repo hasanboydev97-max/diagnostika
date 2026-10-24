@@ -1,3 +1,4 @@
+import { sanitizeAcademicQuestion } from './academicSanitizer.js';
 /**
  * mathSanitizer.js — Markaziy matematik ifoda tozalagich
  *
@@ -102,10 +103,11 @@ export function sanitizeMathText(text) {
  * @param {Object} question
  * @returns {Object}
  */
-export function sanitizeQuestion(question) {
+export function sanitizeQuestion(question, subjectHint = "") {
   if (!question || typeof question !== 'object') return question;
 
-  const cleaned = { ...question };
+  let cleaned = sanitizeAcademicQuestion(question, subjectHint || question?.subtopic || "");
+  cleaned = { ...cleaned };
   cleaned.questionText = sanitizeMathText(cleaned.questionText);
   if (Array.isArray(cleaned.options)) {
     cleaned.options = cleaned.options.map(opt => {
@@ -129,6 +131,7 @@ export function sanitizeQuestion(question) {
   } else {
     cleaned.subtopic = 'Umumiy';
   }
+  cleaned = sanitizeAcademicQuestion(cleaned, subjectHint || cleaned?.subtopic || "");
   return cleaned;
 }
 
@@ -137,9 +140,9 @@ export function sanitizeQuestion(question) {
  * @param {Array} questions
  * @returns {Array}
  */
-export function sanitizeQuestions(questions) {
+export function sanitizeQuestions(questions, subjectHint = "") {
   if (!Array.isArray(questions)) return questions ?? [];
-  return questions.map(sanitizeQuestion);
+  return questions.map(q => sanitizeQuestion(q, subjectHint));
 }
 
 /**
@@ -180,7 +183,7 @@ export function isQuestionMalformed(q) {
  * @returns {Object} { shouldFallbackToNextProvider, stats, questions }
  */
 export function processQuestionBatch(rawQuestions, options = {}) {
-  const { minAcceptable = 5, targetCount = 30 } = options;
+  const { minAcceptable = 5, targetCount = 30, subject = "" } = options;
   const stats = { received: rawQuestions.length, valid: 0, repaired: 0, dropped: 0 };
   const validQuestions = [];
 
@@ -188,7 +191,7 @@ export function processQuestionBatch(rawQuestions, options = {}) {
     const originalText = String(raw.questionText ?? '');
     
     // Repair with sanitizer
-    const repairedQ = sanitizeQuestion(raw);
+    const repairedQ = sanitizeQuestion(raw, subject);
     
     // Validate the repaired version
     if (!isQuestionMalformed(repairedQ)) {
