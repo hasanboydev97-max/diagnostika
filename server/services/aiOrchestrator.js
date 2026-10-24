@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import pLimit from 'p-limit';
 
-// BUG #12 FIX: Alohida navbatlar â€” QuestionGen va TextGen bir-birini bloklmasin
+// BUG #12 FIX: Alohida navbatlar — QuestionGen va TextGen bir-birini bloklmasin
 // QuestionGen (og'ir, uzoq): 10 parallel
 // TextGen (sinf tahlili, diagnostika xulosasi): 5 parallel
 const questionQueue = pLimit(10);
@@ -30,7 +30,7 @@ function markAgentFailure(agentId, reason = '') {
     lastError: reason,
     failedAt: Date.now()
   });
-  console.warn(`âš ï¸ [AI Orchestrator] Agent "${agentId}" ${cooldownMs / 1000}s ga sovutish rejimiga olindi (${reason.substring(0, 60)})`);
+  console.warn(`⚠️ [AI Orchestrator] Agent "${agentId}" ${cooldownMs / 1000}s ga sovutish rejimiga olindi (${reason.substring(0, 60)})`);
 }
 
 function markAgentSuccess(agentId) {
@@ -40,10 +40,10 @@ function markAgentSuccess(agentId) {
 /**
  * 20-Year Senior Architecture: Multi-Agent Fallback Registry
  * Cost-Optimized Cascading Fallback:
- * 1. Google Gemini Paid (gemini-2.5-flash) â€” Primary Flagship (~$0.075 / 1M tokens, 2000 RPM)
- * 2. Google Gemini Free (gemini-2.5-flash) â€” Standard Fallback (15 RPM)
- * 3. Groq Accelerated LPUs (qwen/qwen3.8-27b, openai/gpt-oss-20b) â€” Fast & Free LPU Fallback
- * 4. Anthropic Claude (claude-haiku-4-5-20251001, claude-sonnet-4-5-20250929) â€” Emergency Safety Net Only
+ * 1. Google Gemini Paid (gemini-2.5-flash) — Primary Flagship (~$0.075 / 1M tokens, 2000 RPM)
+ * 2. Google Gemini Free (gemini-2.5-flash) — Standard Fallback (15 RPM)
+ * 3. Groq Accelerated LPUs (qwen/qwen3.8-27b, openai/gpt-oss-20b) — Fast & Free LPU Fallback
+ * 4. Anthropic Claude (claude-haiku-4-5-20251001, claude-sonnet-4-5-20250929) — Emergency Safety Net Only
  */
 function getAgentCatalog(keys) {
   const { geminiPaidKey, geminiKey, anthropicKey, groqKey } = keys;
@@ -267,18 +267,19 @@ function normalizeQuestions(parsed) {
       questionText: text.trim(),
       options: options.slice(0, 4),
       correctAnswerIndex: correctIdx,
-      correctOption: options[correctIdx] || options[0]
+      correctOption: options[correctIdx] || options[0],
+      subtopic: (q.subtopic || q.topic || '').trim() || undefined
     };
   }).filter(Boolean);
 }
 
 /**
- * Alohida agent chaqiruvi â€” strict timeout bilan
- * BUG #9 FIX: timeoutMs dinamik â€” xabar ham mos bo'ladi
+ * Alohida agent chaqiruvi — strict timeout bilan
+ * BUG #9 FIX: timeoutMs dinamik — xabar ham mos bo'ladi
  * BUG #11 FIX: isTextGen=true bo'lsa Groq da response_format ishlatilmaydi
  */
 async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22000, temperature = 0.7, isTextGen = false }) {
-  // agent.apiKey â€” pullik/bepul farq qilish (BUG #1 fix saqlanadi)
+  // agent.apiKey — pullik/bepul farq qilish (BUG #1 fix saqlanadi)
   const geminiKey    = agent.apiKey || process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
   const anthropicKey = process.env.VITE_ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY;
   const groqKey      = process.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
@@ -364,14 +365,14 @@ async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22
 }
 
 /**
- * Savol yaratish â€” kaskadli failover bilan
+ * Savol yaratish — kaskadli failover bilan
  * BUG #12 FIX: questionQueue (textQueue bilan aralashmasin)
  * BUG #9 FIX: dinamik timeout xabari
  */
 export async function executeResilientQuestionGen({ prompt, systemPrompt, aiSchema, isPremium = false, temperature = 0.82 }) {
   return questionQueue(async () => {
     const pipeline = buildAgentPipeline({ isPremium });
-    const timeoutMs = 85000;
+    const timeoutMs = 28000;
 
     if (pipeline.length === 0) {
       throw new Error("Hech qanday AI agenti sozlanmagan. Iltimos API kalitlarini tekshiring.");
@@ -394,7 +395,7 @@ export async function executeResilientQuestionGen({ prompt, systemPrompt, aiSche
         }
 
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-        console.log(`[AI QuestionGen] âœ… ${agent.id} (${duration}s) â€” ${validQuestions.length} ta savol`);
+        console.log(`[AI QuestionGen] ✅ ${agent.id} (${duration}s) — ${validQuestions.length} ta savol`);
 
         markAgentSuccess(agent.id);
         return { success: true, agentId: agent.id, questions: validQuestions };
@@ -405,7 +406,7 @@ export async function executeResilientQuestionGen({ prompt, systemPrompt, aiSche
         const errMsg = err.name === 'AbortError'
           ? `${Math.round(timeoutMs / 1000)}s Timeout oshib ketdi`
           : err.message;
-        console.warn(`[AI QuestionGen] âŒ ${agent.id} (${duration}s): ${errMsg}`);
+        console.warn(`[AI QuestionGen] ❌ ${agent.id} (${duration}s): ${errMsg}`);
 
         markAgentFailure(agent.id, errMsg);
         lastError = `${agent.id}: ${errMsg}`;
@@ -413,13 +414,13 @@ export async function executeResilientQuestionGen({ prompt, systemPrompt, aiSche
       }
     }
 
-    console.error(`[AI QuestionGen] ðŸ’¥ Barcha ${pipeline.length} ta agent xato:\n  - ${attemptLog.join('\n  - ')}`);
+    console.error(`[AI QuestionGen] 💥 Barcha ${pipeline.length} ta agent xato:\n  - ${attemptLog.join('\n  - ')}`);
     return { success: false, error: lastError, attempts: attemptLog };
   });
 }
 
 /**
- * Vision OCR â€” Multi-Agent Failover
+ * Vision OCR — Multi-Agent Failover
  * BUG #1 FIX: agent.apiKey ishlatiladi (pullik Gemini OCR uchun)
  * BUG #4 FIX: markAgentFailure har xatoda chaqiriladi (circuit breaker)
  * BUG #12 FIX: questionQueue (og'ir operatsiya)
@@ -435,10 +436,10 @@ export async function executeResilientVisionOCR({ promptText, imageBase64, image
     for (const agent of pipeline) {
       const startTime = Date.now();
       try {
-        console.log(`[AI Vision] ðŸ“· OCR Agent: ${agent.id}`);
+        console.log(`[AI Vision] 📷 OCR Agent: ${agent.id}`);
 
         if (agent.provider === 'gemini') {
-          // BUG #1 FIX: agent.apiKey â€” pullik kalit avtomatik ishlatiladi
+          // BUG #1 FIX: agent.apiKey — pullik kalit avtomatik ishlatiladi
           const genAI = new GoogleGenerativeAI(agent.apiKey);
           const model = genAI.getGenerativeModel({
             model: agent.model,
@@ -455,7 +456,7 @@ export async function executeResilientVisionOCR({ promptText, imageBase64, image
           
           if (parsed) {
             const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-            console.log(`[AI Vision] âœ… ${agent.id} (${duration}s)`);
+            console.log(`[AI Vision] ✅ ${agent.id} (${duration}s)`);
             markAgentSuccess(agent.id);
             // Agar massiv bo'lsa (savollar) uni questions ga o'raymiz, yo'qsa to'g'ridan to'g'ri qaytaramiz
             return { 
@@ -501,7 +502,7 @@ export async function executeResilientVisionOCR({ promptText, imageBase64, image
       } catch (err) {
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
         const errMsg = err.name === 'AbortError' ? '30s OCR Timeout' : err.message;
-        console.warn(`[AI Vision] âŒ ${agent.id} (${duration}s): ${errMsg}`);
+        console.warn(`[AI Vision] ❌ ${agent.id} (${duration}s): ${errMsg}`);
 
         // BUG #4 FIX: circuit breaker OCR da ham ishlaydi
         markAgentFailure(agent.id, errMsg);
@@ -510,14 +511,14 @@ export async function executeResilientVisionOCR({ promptText, imageBase64, image
       }
     }
 
-    console.error(`[AI Vision] ðŸ’¥ Barcha OCR agentlari xato:\n  - ${attemptLog.join('\n  - ')}`);
+    console.error(`[AI Vision] 💥 Barcha OCR agentlari xato:\n  - ${attemptLog.join('\n  - ')}`);
     return { success: false, error: lastError || "Rasmdan savollarni ajratib bo'lmadi" };
   });
 }
 
 /**
  * Text Generation (sinf tahlili, diagnostika xulosasi, feedback)
- * BUG #11 FIX: isTextGen=true â†’ Groq da response_format o'chiriladi
+ * BUG #11 FIX: isTextGen=true → Groq da response_format o'chiriladi
  * BUG #12 FIX: textQueue (questionQueue bilan aralashmasin)
  * BUG #9 FIX: dinamik timeout xabari
  */
@@ -536,7 +537,7 @@ export async function executeResilientTextGen({ prompt, systemPrompt, isPremium 
     for (const agent of pipeline) {
       const startTime = Date.now();
       try {
-        console.log(`[AI TextGen] ðŸš€ Agent: ${agent.id} (${agent.provider}/${agent.model})`);
+        console.log(`[AI TextGen] 🚀 Agent: ${agent.id} (${agent.provider}/${agent.model})`);
 
         const rawText = await callAgent(agent, {
           prompt,
@@ -552,7 +553,7 @@ export async function executeResilientTextGen({ prompt, systemPrompt, isPremium 
         }
 
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-        console.log(`[AI TextGen] âœ… ${agent.id} (${duration}s)`);
+        console.log(`[AI TextGen] ✅ ${agent.id} (${duration}s)`);
 
         markAgentSuccess(agent.id);
         return { success: true, agentId: agent.id, text: rawText };
@@ -563,7 +564,7 @@ export async function executeResilientTextGen({ prompt, systemPrompt, isPremium 
         const errMsg = err.name === 'AbortError'
           ? `${Math.round(timeoutMs / 1000)}s Timeout oshib ketdi`
           : err.message;
-        console.warn(`[AI TextGen] âŒ ${agent.id} (${duration}s): ${errMsg}`);
+        console.warn(`[AI TextGen] ❌ ${agent.id} (${duration}s): ${errMsg}`);
 
         markAgentFailure(agent.id, errMsg);
         lastError = `${agent.id}: ${errMsg}`;
@@ -571,7 +572,7 @@ export async function executeResilientTextGen({ prompt, systemPrompt, isPremium 
       }
     }
 
-    console.error(`[AI TextGen] ðŸ’¥ Barcha agentlar xato:\n  - ${attemptLog.join('\n  - ')}`);
+    console.error(`[AI TextGen] 💥 Barcha agentlar xato:\n  - ${attemptLog.join('\n  - ')}`);
     return { success: false, error: lastError, attempts: attemptLog };
   });
 }

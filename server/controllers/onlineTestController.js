@@ -10,7 +10,7 @@ import pLimit from 'p-limit';
 import xlsx from 'xlsx';
 import { executeResilientQuestionGen, executeResilientVisionOCR, executeResilientTextGen } from '../services/aiOrchestrator.js';
 
-// âœ… DRY FIX: Modul darajasida bir marta ta'riflanib, barcha funksiyalarda qayta ishlatiladi
+// ✅ DRY FIX: Modul darajasida bir marta ta'riflanib, barcha funksiyalarda qayta ishlatiladi
 const stripHtml = (text) => {
   if (!text) return '';
   return String(text)
@@ -23,7 +23,7 @@ const stripHtml = (text) => {
 const testGenerationQueue = pLimit(10); // 50-100 foydalanuvchi uchun test yaratish navbati
 const backgroundFeedbackQueue = pLimit(5); // O'quvchilar natijasi fonida AI tahlili uchun navbat
 
-// âœ… 20-Year Senior Architecture: Thundering Herd (Cache Stampede) himoyasi
+// ✅ 20-Year Senior Architecture: Thundering Herd (Cache Stampede) himoyasi
 // 30 ta bola bir vaqtda kirganda DB ga faqat 1 ta so'rov boradi, qolgan 29 tasi xotiradan (Promise) kutadi
 const testCache = new Map();
 const teacherCache = new Map();
@@ -81,7 +81,7 @@ export const getTests = async (req, res) => {
 export const getTestById = async (req, res) => {
   try {
     const { id } = req.params;
-    // âœ… Kesh orqali o'qiymiz, MongoDB ga bosim nolga tushadi
+    // ✅ Kesh orqali o'qiymiz, MongoDB ga bosim nolga tushadi
     const test = await getCachedTest(id);
     if (!test) return res.status(404).json({ error: 'Not found' });
     res.json(test);
@@ -371,7 +371,7 @@ export const submitTestResult = async (req, res) => {
         }
       }
 
-      // âœ… KRITIK: Score serverda qayta hisoblanadi â€” klientdan kelgan qiymatga ishonilmaydi
+      // ✅ KRITIK: Score serverda qayta hisoblanadi — klientdan kelgan qiymatga ishonilmaydi
       // Hacker score=100 yuborsa ham, DB ga to'g'ri hisoblangan qiymat yoziladi
       if (test.questions && Array.isArray(test.questions) && data.answers) {
         let serverScore = 0;
@@ -379,12 +379,12 @@ export const submitTestResult = async (req, res) => {
 
         if (data.questions && Array.isArray(data.questions)) {
           // Frontend questions are shuffled. Match by questionText to find the original question securely.
-          // correctAnswerText â€” frontend shuffle qilingan options dan olingan to'g'ri matn.
-          // Agar mavjud bo'lsa â€” eng ishonchli yo'l (harf indeksiga bog'liq emas).
+          // correctAnswerText — frontend shuffle qilingan options dan olingan to'g'ri matn.
+          // Agar mavjud bo'lsa — eng ishonchli yo'l (harf indeksiga bog'liq emas).
           const answeredIds = new Set();
 
-          // âœ… SENIOR LEVEL FIX: Ball hisoblashni to'liq isAnswerCorrect (DRY) yordamchisiga yukladik.
-          // âœ… EVENT LOOP OPTIMIZATION (O(N^2) -> O(N)): 
+          // ✅ SENIOR LEVEL FIX: Ball hisoblashni to'liq isAnswerCorrect (DRY) yordamchisiga yukladik.
+          // ✅ EVENT LOOP OPTIMIZATION (O(N^2) -> O(N)): 
           // Pre-calculate stripped texts and use Map for O(1) lookups to completely prevent Event Loop blocking during high concurrency
           const questionMap = new Map();
           test.questions.forEach(tq => {
@@ -422,16 +422,16 @@ export const submitTestResult = async (req, res) => {
 
         data.score = serverScore;
         data.totalScore = serverTotal;
-        console.log(`âœ… Score serverda hisoblandi: ${serverScore}/${serverTotal} (klientdan: ${req.body.score}/${req.body.totalScore})`);
+        console.log(`✅ Score serverda hisoblandi: ${serverScore}/${serverTotal} (klientdan: ${req.body.score}/${req.body.totalScore})`);
       }
 
     }
 
-    // âœ… KRITIK FIX: Natijani BIRINCHI tez saqlaymiz, AI feedbackni background'da ishlaymiz.
+    // ✅ KRITIK FIX: Natijani BIRINCHI tez saqlaymiz, AI feedbackni background'da ishlaymiz.
     // Bu "qotib qolish" va "Failed" muammolarini hal qiladi.
 
     // Upsert: agar bir xil id bilan ikki marta so'rov kelsa (foydalanuvchi qayta bosganida),
-    // MongoServerError: duplicate key o'rniga â€” shunchaki yangilaydi. Bu "Failed" xatosini to'xtatadi.
+    // MongoServerError: duplicate key o'rniga — shunchaki yangilaydi. Bu "Failed" xatosini to'xtatadi.
     const defaultFeedback = "Natijangiz saqlandi! AI batafsil tavsiyalarni tayyorlayapti, natijangizni yangilasangiz ko'rishingiz mumkin.";
     data.aiFeedback = defaultFeedback;
 
@@ -441,10 +441,10 @@ export const submitTestResult = async (req, res) => {
       { upsert: true, new: true }
     );
 
-    // Foydalanuvchiga DARHOL javob qaytaramiz â€” AI ni kutmaymiz!
+    // Foydalanuvchiga DARHOL javob qaytaramiz — AI ni kutmaymiz!
     res.status(201).json({ message: 'Result saved successfully', id: data.id, aiFeedback: defaultFeedback });
 
-    // â”€â”€ AI feedback background'da ishlaydi (fire-and-forget) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── AI feedback background'da ishlaydi (fire-and-forget) ──────────────
     // Bu blok foydalanuvchiga javob berilgandan KEYIN ishlaydi.
     // Xato bo'lsa ham foydalanuvchiga ta'siri yo'q.
     backgroundFeedbackQueue(async () => {
@@ -711,6 +711,7 @@ export const generateAITest = async (req, res) => {
             properties: {
               questionNumber: { type: "integer" },
               questionText: { type: "string" },
+              subtopic: { type: "string" },
               options: {
                 type: "array",
                 items: { type: "string" },
@@ -735,7 +736,8 @@ export const generateAITest = async (req, res) => {
       language = 'o\'zbek', 
       questionStyle = 'mixed',
       existingQuestions = [],
-      priorQuestions = []
+      priorQuestions = [],
+      topicsList = []
     }) {
       const existingText = existingQuestions.length > 0 
         ? `\n\nCRITICAL RULE: DO NOT REPEAT THE FOLLOWING CONCEPTS. These questions have ALREADY been generated in this session:\n` + existingQuestions.map((q, i) => `${i+1}. ${q.questionText || q}`).join('\n')
@@ -787,6 +789,13 @@ You MUST test completely NEW concepts, edge cases, practical aspects, and angles
       ];
       const randomFocus = focusAreas[Math.floor(Math.random() * focusAreas.length)];
 
+      const multiTopicDistributionInstruction = topicsList && topicsList.length > 1
+        ? `\n\n## MULTI-TOPIC COMPOSITE DISTRIBUTION (CRITICAL):\n` +
+          `This assessment covers ${topicsList.length} distinct topics: ${topicsList.join(', ')}.\n` +
+          `You MUST distribute the ${questionCount} questions evenly across these topics (approx. ${Math.round(questionCount / topicsList.length)} questions per topic).\n` +
+          `For EVERY single question in the JSON, populate the "subtopic" field with the exact matching topic name from: [${topicsList.map(t => `"${t}"`).join(', ')}].`
+        : '';
+
       return String.raw`Sen — istalgan fandan (matematika, fizika, biologiya, tarix, informatika, ona tili va h.k.) yuqori sifatli test tuzuvchi 20 yillik tajribali mutaxassis o'qituvchisan.
 Your ONLY output is a valid JSON array. Do not explain anything, do not add any text before or after the JSON.
 
@@ -799,62 +808,63 @@ Generate exactly ${questionCount} multiple-choice questions for:
   Style: ${questionStyle}
   Entropy Seed: #${randomSeed}
   Special Emphasis: ${randomFocus}
-  Language: ${language}${existingText}${priorText}
+  Language: ${language}${multiTopicDistributionInstruction}${existingText}${priorText}
 ${styleInstruction}
 
 ## PEDAGOGICAL RULES
 
 1. UNIQUE ANSWER: Each question must have exactly ONE unambiguously correct answer.
-2. PLAUSIBLE DISTRACTORS: Wrong options must reflect typical student mistakes â€” never random or unrelated.
+2. PLAUSIBLE DISTRACTORS: Wrong options must reflect typical student mistakes — never random or unrelated.
 3. TEST UNDERSTANDING: Avoid rote recall. Prefer "Why?", "What if X?", multi-step reasoning.
 4. ZERO DUPLICATION: Every question tests a completely distinct concept. No repeated setups.
 5. LANGUAGE: All text must be grammatically correct ${language}. Zero language mixing in question/option text.
 
-## LATEX MATH RULES â€” CRITICAL
+## LATEX MATH RULES — CRITICAL
 
 You are writing inside a JSON string. The ONLY escaping rule for LaTeX:
-  A single backslash \ in LaTeX â†’ write \\ in JSON string (two characters).
+  A single backslash \ in LaTeX → write \\ in JSON string (two characters).
   Nothing more. Do NOT add extra backslashes.
 
 CORRECT JSON examples (copy this pattern exactly):
   "questionText": "$3\\sqrt{8} - \\sqrt{18} + \\sqrt{2}$"
   "questionText": "$\\frac{6}{\\sqrt{10} - \\sqrt{7}}$"
   "questionText": "$\\sin^2\\alpha + \\cos^2\\alpha = 1$ qoidasiga ko'ra..."
-  "questionText": "$\\sin 30Â° + \\cos 60Â°$ ni hisoblang."
+  "questionText": "$\\sin 30° + \\cos 60°$ ni hisoblang."
   "questionText": "$\\cos\\alpha = \\frac{\\sqrt{3}}{2}$ bo'lsa, $\\alpha = ?$"
   "questionText": "$\\frac{1}{\\sqrt{5} - \\sqrt{3}}$ ifodasini soddalashtiring."
   "questionText": "Tenglamani yeching: $\\sqrt{2x - 1} = 3$"
   "questionText": "$\\begin{cases} x + y = 5 \\\\ x - y = 1 \\end{cases}$ sistemasini yeching."
   "options": ["$\\frac{1}{2}$", "$\\frac{\\sqrt{3}}{2}$", "$1$", "$0$"]
 
-WRONG â€” NEVER DO THIS (these render as plain text, not math):
-  "$3\\\\sqrt{8}$"     â† 4 backslashes = BROKEN
-  "$\\\\frac{1}{2}$"  â† 4 backslashes = BROKEN
-  "$\\\\sin\\\\alpha$" â† BROKEN
+WRONG — NEVER DO THIS (these render as plain text, not math):
+  "$3\\\\sqrt{8}$"     ← 4 backslashes = BROKEN
+  "$\\\\frac{1}{2}$"  ← 4 backslashes = BROKEN
+  "$\\\\sin\\\\alpha$" ← BROKEN
 
 LATEX SYNTAX:
-- Inline math: $expression$ â€” NO spaces at edges: $x+1$ correct, $ x+1 $ WRONG
+- Inline math: $expression$ — NO spaces at edges: $x+1$ correct, $ x+1 $ WRONG
 - Every { must have matching }, every $ must close in the same field
 - Allowed commands: \\frac, \\sqrt, \\sin, \\cos, \\tan, \\cot, \\pi, \\alpha, \\beta,
   \\theta, \\phi, \\leq, \\geq, \\neq, \\infty, \\cdot, \\times, \\div, \\left, \\right,
   \\begin{cases}...\\end{cases}, superscript ^, subscript _
-- Angles: write 30Â°, 45Â°, 60Â°, 90Â° using the Â° symbol (not \\circ) for readability
+- Angles: write 30°, 45°, 60°, 90° using the ° symbol (not \\circ) for readability
 - Systems of equations MUST use \\begin{cases} ... \\\\ ... \\end{cases}
 - NEVER put \n newline inside $ ... $. One line per math expression.
 - IT/PROGRAMMING questions (Python, JavaScript, HTML, Excel etc.):
   * Wrap ALL code expressions in inline code: ${bt}code here${bt}
   * Python example options: ${bt}b**2 - 4*a*c${bt}, ${bt}math.sqrt(x)${bt}, ${bt}x**2 + 2*x + 1${bt}
   * HTML example options: ${bt}<h1>Sarlavha</h1>${bt}, ${bt}<div class="box">${bt}
-  * NEVER write Python operators raw in options â€” ${bt}**${bt} without backticks renders as **bold** in Markdown!
-  * Formula code is NEVER in LaTeX â€” use backticks, not $...$
+  * NEVER write Python operators raw in options — ${bt}**${bt} without backticks renders as **bold** in Markdown!
+  * Formula code is NEVER in LaTeX — use backticks, not $...$
 
 ## OUTPUT FORMAT
 
-Return ONLY a valid JSON array â€” no markdown fences, no commentary.
+Return ONLY a valid JSON array — no markdown fences, no commentary.
 Each element must exactly match:
 {
   "questionNumber": <1..${questionCount}>,
   "questionText": "<question string with LaTeX>",
+  "subtopic": "<exact topic name from ${topic}>",
   "options": ["<opt1>", "<opt2>", "<opt3>", "<opt4>"],
   "correctAnswerIndex": <0|1|2|3>,
   "correctOption": "<exact text of correct option>"
@@ -869,8 +879,19 @@ Begin generation now.`;
     }
 
     // --- 20-Year Senior Architecture: Multi-Agent AI Orchestrator ---
-    async function generateChunkWithRetry(chunkTopic, chunkCount, existingQuestions = []) {
+    async function generateChunkWithRetry(chunkTopic, chunkCount, existingQuestions = [], topicsList = []) {
       const prompt = buildTestPrompt({ 
+        topic: chunkTopic, 
+        subject, 
+        questionCount: chunkCount, 
+        grade: req.body.grade || 'aralash',
+        difficulty: req.body.difficulty || 'aralash',
+        language: req.body.language || 'o\'zbek',
+        questionStyle: req.body.questionStyle || 'mixed',
+        existingQuestions,
+        priorQuestions: priorQuestionTexts,
+        topicsList
+      });
         topic: chunkTopic, 
         subject, 
         questionCount: chunkCount, 
@@ -907,86 +928,144 @@ Begin generation now.`;
       return { success: true, data: batchResult.questions };
     }
 
+    // Deduplication helper using Jaccard Similarity (Paraphrase & Semantic deduplication)
+    const calculateSimilarity = (str1, str2) => {
+      const getWords = s => (s || '').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, '').split(/\s+/).filter(w => w.length > 2);
+      const words1 = new Set(getWords(str1));
+      const words2 = new Set(getWords(str2));
+      if (words1.size === 0 || words2.size === 0) return 0;
+      const intersection = new Set([...words1].filter(x => words2.has(x)));
+      const union = new Set([...words1, ...words2]);
+      return intersection.size / union.size;
+    };
+
+    const deduplicateBatch = (candidates, existingTextsSet) => {
+      const unique = [];
+      for (const q of candidates) {
+        if (!q || !q.questionText) continue;
+        const cleanText = q.questionText.replace(/\s+/g, '').toLowerCase();
+
+        let isDuplicate = Array.from(existingTextsSet).some(et => et.replace(/\s+/g, '').toLowerCase() === cleanText);
+
+        if (!isDuplicate) {
+          isDuplicate = Array.from(existingTextsSet).some(et => calculateSimilarity(et, q.questionText) > 0.65);
+        }
+
+        if (!isDuplicate) {
+          unique.push(q);
+          existingTextsSet.add(q.questionText);
+        } else {
+          console.warn(`[AI Deduplication] Takroriy savol chetlatildi: ${q.questionText.substring(0, 50)}...`);
+        }
+      }
+      return unique;
+    };
+
+    const assignAndBalanceSubtopics = (questions, topicsList) => {
+      if (!topicsList || topicsList.length <= 1) {
+        const singleTopic = topicsList && topicsList[0] ? topicsList[0] : topic;
+        return questions.map(q => ({ ...q, subtopic: singleTopic }));
+      }
+
+      const topicCounts = {};
+      topicsList.forEach(t => { topicCounts[t.toLowerCase()] = 0; });
+
+      return questions.map(q => {
+        let assigned = null;
+        const qSub = (q.subtopic || '').trim().toLowerCase();
+
+        // 1. Direct or partial match with AI-tagged subtopic
+        const directMatch = topicsList.find(t => {
+          const lt = t.toLowerCase();
+          return qSub === lt || qSub.includes(lt) || lt.includes(qSub);
+        });
+
+        if (directMatch) {
+          assigned = directMatch;
+        } else {
+          // 2. Keyword heuristic from question text & options
+          const fullContent = `${q.questionText || ''} ${(q.options || []).join(' ')}`.toLowerCase();
+          const keywordMatch = topicsList.find(t => fullContent.includes(t.toLowerCase()));
+          if (keywordMatch) {
+            assigned = keywordMatch;
+          } else {
+            // 3. Balanced fallback: assign to the topic with lowest count so far
+            let minTopic = topicsList[0];
+            let minCount = topicCounts[minTopic.toLowerCase()] || 0;
+            for (const t of topicsList) {
+              const c = topicCounts[t.toLowerCase()] || 0;
+              if (c < minCount) {
+                minCount = c;
+                minTopic = t;
+              }
+            }
+            assigned = minTopic;
+          }
+        }
+
+        topicCounts[assigned.toLowerCase()] = (topicCounts[assigned.toLowerCase()] || 0) + 1;
+        return { ...q, subtopic: assigned };
+      });
+    };
+
     let rawQuestions = [];
     const targetTotal = questionCount || 10;
     const topicsArray = topic.split(',').map(t => t.trim()).filter(Boolean);
-    
-    // Exact distribution calculation
-    let neededPerTopic = {};
-    topicsArray.forEach(t => neededPerTopic[t] = 0);
-    for (let i = 0; i < targetTotal; i++) {
-      neededPerTopic[topicsArray[i % topicsArray.length]]++;
-    }
-    
-    // Generate questions for each topic until its quota is met
-    for (const currentTopic of topicsArray) {
-      let needed = neededPerTopic[currentTopic];
-      let failsafe = 0;
-      
-      while (needed > 0 && failsafe < 5) {
-        // [OPTIMIZATSIYA]: Katta so'rovlarda API (Prompt) narxini 2 baravar kamaytirish 
-        // uchun 10 talik bo'laklash 20 taga ko'tarildi.
-        const chunkCount = Math.min(needed, 20);
-        const existingTexts = rawQuestions.map(q => q.questionText).filter(Boolean);
-        
-        // [50-100 O'QITUVCHI UCHUN]: Kengaytirilgan navbat orqali parallel so'rovlar ketadi.
-        const aiResult = await testGenerationQueue(() => generateChunkWithRetry(currentTopic, chunkCount, existingTexts));
-        
-        if (aiResult.success && aiResult.data && aiResult.data.length > 0) {
-          // âœ… KRITIK FIX: har bir savolga uning tegishli mavzusini (subtopic) belgilaymiz.
-          // Bu "Mavzular Tahlili" panelining faqat "Umumiy 100%" ko'rsatish muammosini hal qiladi.
-          const withSubtopic = aiResult.data.map(q => ({ ...q, subtopic: currentTopic }));
-          
-          // âœ… SENIOR LEVEL FIX: Jaccard Similarity asosida Paraphrase Deduplication
-          // AI savolning shaklini ozgina o'zgartirib bersa ham ushlab qolinadi.
-          const calculateSimilarity = (str1, str2) => {
-            const getWords = s => (s || '').toLowerCase().replace(/[^\w\sÐ°-ÑÑ‘ÑžÒ›Ò“Ò³a-z]/gi, '').split(/\s+/).filter(w => w.length > 2);
-            const words1 = new Set(getWords(str1));
-            const words2 = new Set(getWords(str2));
-            if (words1.size === 0 || words2.size === 0) return 0;
-            const intersection = new Set([...words1].filter(x => words2.has(x)));
-            const union = new Set([...words1, ...words2]);
-            return intersection.size / union.size;
-          };
+    const existingTextsSet = new Set();
 
-          const uniqueNewQuestions = [];
-          for (const q of withSubtopic) {
-            const cleanText = (q.questionText || '').replace(/\s+/g, '').toLowerCase();
-            
-            // 1. Exact match tekshiruvi
-            let isDuplicate = existingTexts.some(et => (et || '').replace(/\s+/g, '').toLowerCase() === cleanText);
-            
-            // 2. Semantic (Word overlap) tekshiruvi - agar 65% dan ortiq o'xshash bo'lsa duplicate!
-            if (!isDuplicate) {
-              isDuplicate = existingTexts.some(et => calculateSimilarity(et, q.questionText) > 0.65);
-            }
-            
-            if (!isDuplicate) {
-              uniqueNewQuestions.push(q);
-              existingTexts.push(q.questionText); // Keyingi tekshiruvlar uchun qo'shib qo'yamiz
-            } else {
-              console.warn(`[AI Deduplication] Takroriy savol ushlandi va o'chirildi: ${q.questionText.substring(0, 50)}...`);
-            }
-          }
+    // ── 20-Year Senior Architecture: High-Performance Composite Generation ──
+    // Eliminates 75s proxy bottleneck: single unified pass for <= 30 questions (8-10s)
+    if (targetTotal <= 30) {
+      const aiResult = await testGenerationQueue(() => 
+        generateChunkWithRetry(topic, targetTotal, [], topicsArray)
+      );
 
-          rawQuestions = rawQuestions.concat(uniqueNewQuestions);
-          needed -= uniqueNewQuestions.length; // decrement by successfully generated and UNIQUE amount
-        } else {
-          failsafe++; // prevent infinite loops if AI completely fails
-          if (failsafe >= 5 && rawQuestions.length === 0) {
-             return res.status(500).json({ error: `AI xatosi: ${aiResult.error}` });
-          }
+      if (aiResult.success && aiResult.data && aiResult.data.length > 0) {
+        const unique = deduplicateBatch(aiResult.data, existingTextsSet);
+        rawQuestions = rawQuestions.concat(unique);
+      }
+
+      // Fast supplementary top-up pass if deduplication dropped below 85%
+      if (rawQuestions.length < Math.floor(targetTotal * 0.85)) {
+        const needed = targetTotal - rawQuestions.length;
+        const supplementaryResult = await testGenerationQueue(() =>
+          generateChunkWithRetry(topic, needed, Array.from(existingTextsSet), topicsArray)
+        );
+        if (supplementaryResult.success && supplementaryResult.data) {
+          const topUp = deduplicateBatch(supplementaryResult.data, existingTextsSet);
+          rawQuestions = rawQuestions.concat(topUp);
         }
       }
+    } else {
+      // For large tests (> 30 questions), split into 2 balanced parallel chunks
+      const batchSize = Math.ceil(targetTotal / 2);
+      const [batch1, batch2] = await Promise.all([
+        testGenerationQueue(() => generateChunkWithRetry(topic, batchSize, [], topicsArray)),
+        testGenerationQueue(() => generateChunkWithRetry(topic, targetTotal - batchSize, [], topicsArray))
+      ]);
+
+      if (batch1.success && batch1.data) {
+        rawQuestions = rawQuestions.concat(deduplicateBatch(batch1.data, existingTextsSet));
+      }
+      if (batch2.success && batch2.data) {
+        rawQuestions = rawQuestions.concat(deduplicateBatch(batch2.data, existingTextsSet));
+      }
     }
-    
+
+    if (rawQuestions.length === 0) {
+      return res.status(500).json({ error: "AI savollarni yarata olmadi. Iltimos mavzuni tekshirib qayta urinib ko'ring." });
+    }
+
     // Trim to exactly targetTotal just in case of slight over-generation
     rawQuestions = rawQuestions.slice(0, targetTotal);
+
+    // Assign canonical, balanced subtopics
+    rawQuestions = assignAndBalanceSubtopics(rawQuestions, topicsArray);
 
     // Shuffle options to ensure the correct answer is randomly distributed among options (A, B, C, D)
     const sanitizedQuestions = rawQuestions.map(q => {
       if (Array.isArray(q.options) && q.correctOption !== undefined) {
-        // âœ… FIX: Immutable shuffle â€” q ob'ektini mutatsiya qilmasdan yangi ob'ekt qaytaramiz
+        // ✅ FIX: Immutable shuffle — q ob'ektini mutatsiya qilmasdan yangi ob'ekt qaytaramiz
         const shuffled = [...q.options];
         for (let i = shuffled.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -1002,7 +1081,7 @@ Begin generation now.`;
       return q;
     });
 
-    // âœ… MUVAFFAQIYATLI: Faqat shu yerda (AI ishlagan taqdirda) counter oshiriladi
+    // ✅ MUVAFFAQIYATLI: Faqat shu yerda (AI ishlagan taqdirda) counter oshiriladi
     // Bu arxitektura xatosini tuzatadi: oldin counter oldin oshirilib, AI yiqilsa ham limit sarf bo'lardi
     await Teacher.findOneAndUpdate(
       { _id: req.teacherId },
@@ -1084,7 +1163,7 @@ export const classAnalysis = async (req, res) => {
     const testIds = [test.id, test._id?.toString(), id].filter(Boolean);
     const newResults = await OnlineTestResult.find({ testId: { $in: testIds } });
     
-    // âœ… FIX: Eski Result modelidan ham natijalar olinadi (orqaga mosligi)
+    // ✅ FIX: Eski Result modelidan ham natijalar olinadi (orqaga mosligi)
     const { Result } = await import('../models/index.js');
     const oldResults = await Result.find({ testId: { $in: testIds } }).lean();
     
@@ -1099,11 +1178,11 @@ export const classAnalysis = async (req, res) => {
     }
 
     const totalStudents = results.length;
-    // âœ… FIX: maxScore â€” o'rtacha hisoblash uchun to'g'riroq
+    // ✅ FIX: maxScore — o'rtacha hisoblash uchun to'g'riroq
     const maxScore = Math.max(...results.map(r => r.totalScore || 0), test.questions?.length || 0) || 0;
     const averageScore = results.reduce((acc, curr) => acc + (curr.score || 0), 0) / totalStudents;
     
-    // âœ… FIX: 200+ o'quvchi bo'lsa prompt juda katta bo'lib AI limitga urishi mumkin.
+    // ✅ FIX: 200+ o'quvchi bo'lsa prompt juda katta bo'lib AI limitga urishi mumkin.
     // Shuning uchun maksimal 150 ta o'quvchi natijalari ko'rsatiladi, qolganlari stat sifatida.
     const MAX_RESULTS_IN_PROMPT = 150;
     const resultsForPrompt = results.slice(0, MAX_RESULTS_IN_PROMPT);
@@ -1116,7 +1195,7 @@ export const classAnalysis = async (req, res) => {
     const passingThreshold = maxScore > 0 ? maxScore * 0.6 : 0;
     const failing = results.filter(r => (r.score || 0) < passingThreshold).length;
     const passing = totalStudents - failing;
-    const statsLine = `O'zlashtirish: ${passing} ta o'quvchi muvaffaqiyatli (â‰¥60%), ${failing} ta past ko'rsatkich.`;
+    const statsLine = `O'zlashtirish: ${passing} ta o'quvchi muvaffaqiyatli (≥60%), ${failing} ta past ko'rsatkich.`;
 
     const prompt = `Siz tajribali metodist-o'qituvchi va ta'lim ekspertisiz (Senior Level). "${test.title || 'Test'}" mavzusida o'quvchilar test ishlashdi.
 Testda jami ${totalStudents} ta o'quvchi qatnashdi.
@@ -1145,7 +1224,7 @@ Javobni FAQAT quyidagi JSON formatida qaytaring (boshqa hech qanday so'z yoki ma
       return res.status(500).json({ error: 'Barcha AI agentlari band yoki javob bera olmadi. Iltimos qayta urinib ko\'ring.' });
     }
 
-    // âœ… FIX: analysisResult.questions[0] â€” bu normalizeQuestions() dan kelgan ob'ekt.
+    // ✅ FIX: analysisResult.questions[0] — bu normalizeQuestions() dan kelgan ob'ekt.
     // classAnalysis uchun recommendation maydoni to'g'ridan olinsin.
     const analysisData = analysisResult.questions?.[0] || {};
     const recommendation = analysisData.recommendation

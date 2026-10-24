@@ -436,7 +436,7 @@ export default function CreateTest() {
               mode === 'ocr' ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200/50' : 'text-zinc-500 hover:text-zinc-700'
             }`}
           >
-            <FileText size={14} /> OCR ðŸ‘‘
+            <FileText size={14} /> OCR <span className="text-[9px] px-1.5 py-0.5 bg-amber-100 text-amber-700 font-bold rounded">PRO</span>
           </button>
           <button
             onClick={() => setMode('manual')}
@@ -619,7 +619,7 @@ export default function CreateTest() {
           </div>
         )}
 
-        {/* OCR / Hujjat va Rasmdan Test Yaratish (Premium ðŸ‘‘) */}
+        {/* OCR / Hujjat va Rasmdan Test Yaratish (Premium 👑) */}
         {mode === 'ocr' && (
           <div className="bg-white border border-zinc-200 p-6 rounded-2xl mb-8 shadow-sm">
             <div className="flex items-center justify-between gap-2 mb-4">
@@ -627,8 +627,8 @@ export default function CreateTest() {
                 <FileText className="text-amber-500" size={16} />
                 <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider">Hujjatdan (OCR) Test Yaratish</h3>
               </div>
-              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-black text-white uppercase shadow-sm">
-                ðŸ‘‘ Premium Imkoniyat
+              <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-zinc-900 text-amber-400 uppercase tracking-wider shadow-sm border border-amber-400/20">
+                Premium Imkoniyat
               </span>
             </div>
             <p className="text-xs text-zinc-500 mb-4">
