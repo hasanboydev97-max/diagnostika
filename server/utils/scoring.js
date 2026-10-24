@@ -86,3 +86,45 @@ export function computeScore(questions, answers) {
   }, 0);
   return { score, totalScore };
 }
+
+/**
+ * Foizni hisoblash — nolga bo'linishni oldini oladi
+ * @param {number} correct - To'g'ri javoblar soni
+ * @param {number} total - Jami savollar soni
+ * @returns {number} 0-100 oralig'idagi foiz
+ */
+export function calculateScore(correct, total) {
+  if (!total || total <= 0 || correct < 0) return 0;
+  return Math.round((correct / total) * 100);
+}
+
+/**
+ * Fan bo'yicha alohida natijalarni hisoblaydi
+ * @param {Array} questionResults - Savol natijalari [{subject, isCorrect}]
+ * @returns {Record<string, {correct: number, total: number, percent: number}>}
+ */
+export function calculateSubjectScores(questionResults) {
+  const map = {};
+  for (const r of questionResults || []) {
+    const sub = r.subject || 'Umumiy';
+    if (!map[sub]) map[sub] = { correct: 0, total: 0, percent: 0 };
+    map[sub].total++;
+    if (r.isCorrect) map[sub].correct++;
+  }
+  for (const sub of Object.keys(map)) {
+    map[sub].percent = calculateScore(map[sub].correct, map[sub].total);
+  }
+  return map;
+}
+
+/**
+ * Ball asosida daraja aniqlash
+ * @param {number} score - 0-100 oralig'idagi foiz
+ * @returns {'excellent' | 'good' | 'average' | 'poor'}
+ */
+export function getPerformanceLevel(score) {
+  if (score >= 90) return 'excellent';
+  if (score >= 70) return 'good';
+  if (score >= 50) return 'average';
+  return 'poor';
+}

@@ -1,55 +1,52 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Award, Calendar, ChevronRight, TrendingUp, Bell } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import MeshGradient from '../components/ui/MeshGradient';
+import { useStudentHistory } from '../hooks/useApi';
+
+interface TestResultItem {
+  id: string;
+  studentName: string;
+  grade?: string;
+  totalScore: number;
+  score?: number;
+  createdAt: string;
+}
 
 export default function StudentDashboard() {
-  const { studentName } = useParams();
+  const { studentName } = useParams<{ studentName: string }>();
   const navigate = useNavigate();
-  const [results, setResults] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-  useEffect(() => {
-    if (!studentName) {
-      navigate('/');
-      return;
+  // Senior pattern: TanStack React Query handles caching, background refetch, deduplication
+  const { data: rawResults, isLoading, error } = useStudentHistory(studentName);
+
+  const results: TestResultItem[] = useMemo(() => {
+    if (!Array.isArray(rawResults)) return [];
+    return rawResults as TestResultItem[];
+  }, [rawResults]);
+
+  const { bestScore, avgScore, chartData } = useMemo(() => {
+    if (results.length === 0) {
+      return { bestScore: 0, avgScore: 0, chartData: [] };
     }
+    const best = Math.max(...results.map(r => r.totalScore || 0));
+    const avg = Math.round(results.reduce((acc, curr) => acc + (curr.totalScore || 0), 0) / results.length);
+    const chart = [...results].reverse().map((r, i) => ({
+      name: `Test ${i + 1}`,
+      score: r.totalScore,
+      date: new Date(r.createdAt).toLocaleDateString('uz-UZ', { day: 'numeric', month: 'short' })
+    }));
+    return { bestScore: best, avgScore: avg, chartData: chart };
+  }, [results]);
 
-    const fetchResults = async () => {
-      try {
-        const response = await fetch(`${API_URL}/student-results/${encodeURIComponent(studentName)}`);
-        if (!response.ok) throw new Error('Ma\'lumotlarni yuklashda xatolik');
-        const data = await response.json();
-        setResults(data);
-      } catch (err: any) {
-        console.warn("Backend failed, attempting local fallback", err);
-        try {
-          const { db } = await import('../lib/db');
-          const allLocal = await db.getAllResults();
-          const studentLocal = allLocal.filter((r: any) => 
-             r.studentName?.toLowerCase() === studentName.toLowerCase()
-          );
-          if (studentLocal.length > 0) {
-            setResults(studentLocal);
-          } else {
-            setError(err.message || "Tarmoq xatosi va lokal ma'lumot topilmadi");
-          }
-        } catch (localErr) {
-          setError(err.message);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
+  if (!studentName) {
+    navigate('/');
+    return null;
+  }
 
-    fetchResults();
-  }, [studentName, navigate, API_URL]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-[#fdfdfd] flex items-center justify-center font-sans">
         <MeshGradient />
@@ -64,22 +61,18 @@ export default function StudentDashboard() {
   if (error) {
     return (
       <div className="min-h-screen bg-[#fdfdfd] flex items-center justify-center font-sans">
-        <div className="text-center">
-          <p className="text-red-500 mb-4">{error}</p>
-          <button onClick={() => navigate('/')} className="px-4 py-2 bg-black text-white rounded-lg">Bosh sahifaga qaytish</button>
+        <div className="text-center p-6 bg-white/80 backdrop-blur rounded-2xl border border-black/10">
+          <p className="text-red-500 mb-4 font-medium">{(error as Error)?.message || 'Xatolik yuz berdi'}</p>
+          <button 
+            onClick={() => navigate('/')} 
+            className="px-5 py-2.5 bg-black text-white rounded-xl text-sm font-semibold hover:bg-neutral-800 transition-colors"
+          >
+            Bosh sahifaga qaytish
+          </button>
         </div>
       </div>
     );
   }
-
-  const chartData = [...results].reverse().map((r, i) => ({
-    name: `Test ${i + 1}`,
-    score: r.totalScore,
-    date: new Date(r.createdAt).toLocaleDateString('uz-UZ', { day: 'numeric', month: 'short' })
-  }));
-
-  const bestScore = results.length > 0 ? Math.max(...results.map(r => r.totalScore)) : 0;
-  const avgScore = results.length > 0 ? Math.round(results.reduce((acc, curr) => acc + curr.totalScore, 0) / results.length) : 0;
 
   return (
     <div className="min-h-screen bg-[#fdfdfd] text-[#111111] font-sans relative selection:bg-black selection:text-white">
@@ -88,7 +81,11 @@ export default function StudentDashboard() {
       <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 relative z-10 space-y-12">
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button onClick={() => navigate(-1)} className="p-2 bg-white border border-black/10 rounded-full hover:bg-neutral-100 transition-colors">
+            <button 
+              onClick={() => navigate(-1)} 
+              className="p-2 bg-white border border-black/10 rounded-full hover:bg-neutral-100 transition-colors"
+              aria-label="Orqaga"
+            >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
@@ -103,6 +100,7 @@ export default function StudentDashboard() {
           </div>
         </header>
 
+        {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white/80 backdrop-blur-xl border border-black/10 p-6 rounded-3xl shadow-sm">
             <div className="flex items-center gap-3 mb-2 text-gray-500">
@@ -129,9 +127,9 @@ export default function StudentDashboard() {
           </motion.div>
         </div>
 
-                {/* Telegram Connect Card */}
+        {/* Telegram Connect Card */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.25 }} className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-6 rounded-3xl shadow-sm relative overflow-hidden">
-          <div className="absolute -right-10 -top-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute -right-10 -top-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl" />
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
@@ -151,6 +149,7 @@ export default function StudentDashboard() {
           </div>
         </motion.div>
 
+        {/* Progress chart */}
         {results.length > 1 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="bg-white/80 backdrop-blur-xl border border-black/10 p-6 md:p-8 rounded-3xl shadow-sm">
             <h3 className="text-sm font-bold uppercase tracking-widest mb-6">O'zlashtirish Dinamikasi</h3>
@@ -171,6 +170,7 @@ export default function StudentDashboard() {
           </motion.div>
         )}
 
+        {/* History table */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }} className="bg-white/80 backdrop-blur-xl border border-black/10 rounded-3xl shadow-sm overflow-hidden">
           <div className="p-6 border-b border-black/5 flex items-center justify-between">
             <h3 className="text-sm font-bold uppercase tracking-widest">Testlar Tarixi</h3>

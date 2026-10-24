@@ -1,20 +1,22 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Loader2, ArrowLeft, BrainCircuit, CheckCircle2, XCircle } from 'lucide-react';
+import { Loader2, ArrowLeft, BrainCircuit, CheckCircle2, XCircle, Award, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { motion } from 'framer-motion';
 import FormattedText from '../../components/FormattedText';
 import MeshGradient from '../../components/ui/MeshGradient';
-// ✅ 11. DRY: isAnswerCorrect umumiy moduldan import qilinadi — takrorlanmaydi
+import MistakeExplainerModal from '../../components/MistakeExplainerModal';
+import { generateCertificatePrintWindow } from '../../lib/certificatePdfGenerator';
+// âœ… 11. DRY: isAnswerCorrect umumiy moduldan import qilinadi â€” takrorlanmaydi
 import { isAnswerCorrect, isEqual } from '../../utils/scoring';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 function getScoreLabel(pct: number) {
-  if (pct >= 90) return { text: 'MUKAMMAL! 🎉', color: 'text-green-600' };
-  if (pct >= 70) return { text: "A'lo natija! ✨", color: 'text-blue-600' };
-  if (pct >= 50) return { text: 'Yaxshi! 👍', color: 'text-yellow-600' };
-  return { text: "Harakat qiling! 💪", color: 'text-orange-500' };
+  if (pct >= 90) return { text: 'MUKAMMAL! ðŸŽ‰', color: 'text-green-600' };
+  if (pct >= 70) return { text: "A'lo natija! âœ¨", color: 'text-blue-600' };
+  if (pct >= 50) return { text: 'Yaxshi! ðŸ‘', color: 'text-yellow-600' };
+  return { text: "Harakat qiling! ðŸ’ª", color: 'text-orange-500' };
 }
 
 function formatStudentName(name: string) {
@@ -55,16 +57,26 @@ export default function TestResultView() {
 
   const [loading, setLoading] = useState(!result);
   const [displayedScore, setDisplayedScore] = useState(0);
-  // ✅ 15. Xato holati — foydalanuvchiga ko'rsatish uchun
+  // âœ… 15. Xato holati â€” foydalanuvchiga ko'rsatish uchun
   const [fetchError, setFetchError] = useState<string | null>(null);
   const confettiFired = useRef(false);
   
-  // ✅ AI Feedback Polling uchun
+  // âœ… AI Feedback Polling uchun
   const DEFAULT_FEEDBACK = "Natijangiz saqlandi! AI batafsil tavsiyalarni tayyorlayapti, natijangizni yangilasangiz ko'rishingiz mumkin.";
   const pollCountRef = useRef(0);
 
+  // AI Mistake Explainer state
+  const [selectedMistakeQuestion, setSelectedMistakeQuestion] = useState<{
+    questionText: string;
+    options?: string[];
+    studentAnswer?: string;
+    correctAnswer?: string;
+    subject?: string;
+    grade?: string;
+  } | null>(null);
+
   useEffect(() => {
-    // ✅ FIX: Agar result allaqachon mavjud bo'lsa (location.state yoki sessionStorage) —
+    // âœ… FIX: Agar result allaqachon mavjud bo'lsa (location.state yoki sessionStorage) â€”
     // sahifa darhol ochiladi. fetchResult faqat background'da yangilanish uchun ishga tushadi.
     // Bu "uzoq kutish" muammosini butunlay bartaraf etadi.
     if (result) {
@@ -76,7 +88,7 @@ export default function TestResultView() {
     }
   }, [resultId]);
 
-  // ── Animated score counter (0 → target in ~1.2s) ─────────────────────────
+  // â”€â”€ Animated score counter (0 â†’ target in ~1.2s) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!result) return;
     const target = Math.round((result.score / (result.totalScore || 1)) * 100);
@@ -91,7 +103,7 @@ export default function TestResultView() {
     return () => clearInterval(timer);
   }, [result]);
 
-  // ── Score-based confetti ──────────────────────────────────────────────────
+  // â”€â”€ Score-based confetti â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!result || confettiFired.current) return;
     confettiFired.current = true;
@@ -113,20 +125,20 @@ export default function TestResultView() {
       if (!res.ok) res = await fetch(`${API_URL}/results/${resultId}`);
       if (res.ok) {
         const data = await res.json();
-        // Faqat yangi ma'lumotlarni birlashtir — mavjud state ni o'chirib yuborma
+        // Faqat yangi ma'lumotlarni birlashtir â€” mavjud state ni o'chirib yuborma
         setResult((prev: any) => ({ ...prev, ...data }));
         if (data.questions && data.questions.length > 0) {
           setTest({ title: data.testTitle || 'Onlayn Test', questions: data.questions });
         }
         
-        // ✅ POLLING LOGIC: Agar kutish matnida bo'lsa, fonda yana tekshiramiz
+        // âœ… POLLING LOGIC: Agar kutish matnida bo'lsa, fonda yana tekshiramiz
         if ((!data.aiFeedback || data.aiFeedback === DEFAULT_FEEDBACK) && pollCountRef.current < 5) {
           pollCountRef.current += 1;
           setTimeout(fetchResultInBackground, 3000); // 3 soniyadan so'ng yana
         }
       }
     } catch {
-      // Background fetch xatosi — foydalanuvchiga ko'rsatilmaydi, mavjud ma'lumot qoladi
+      // Background fetch xatosi â€” foydalanuvchiga ko'rsatilmaydi, mavjud ma'lumot qoladi
     }
   };
 
@@ -161,7 +173,7 @@ export default function TestResultView() {
         }
         setTest(testData);
 
-        // ✅ POLLING LOGIC:
+        // âœ… POLLING LOGIC:
         if ((!data.aiFeedback || data.aiFeedback === DEFAULT_FEEDBACK) && pollCountRef.current < 5) {
           pollCountRef.current += 1;
           setTimeout(fetchResultInBackground, 3000);
@@ -186,7 +198,7 @@ export default function TestResultView() {
     </div>
   );
 
-  // ✅ 15. Foydalanuvchiga xatoni aniq ko'rsatish
+  // âœ… 15. Foydalanuvchiga xatoni aniq ko'rsatish
   if (fetchError && !result) return (
     <div className="min-h-screen relative overflow-hidden bg-[#fdfdfd] flex flex-col items-center justify-center text-[#111111]">
       <MeshGradient />
@@ -217,14 +229,14 @@ export default function TestResultView() {
   const percentage = Math.round((result.score / (result.totalScore || 1)) * 100);
   const scoreLabel = getScoreLabel(percentage);
 
-  // ── Smart topic inference for questions without subtopic ────────────────────
-  // Eski testlarda subtopic yo'q → question matnidan mavzuni aqlli aniqlaymiz.
+  // â”€â”€ Smart topic inference for questions without subtopic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Eski testlarda subtopic yo'q â†’ question matnidan mavzuni aqlli aniqlaymiz.
   // Priority: q.subtopic (server set) > q.topic > keyword inference > 'Umumiy'
   const knownTopicPatterns: [RegExp, string][] = [
     [/<[a-zA-Z]|html\s|<\/|teg\s|<a\s|<p[>\s]|<ul|<ol|<li|<div|<body|<head|<form|<img|<table|<style|<link\s|havola\s|hujjat.*tuzilma/i, 'HTML'],
     [/css\s|style=|stylesheet|background-|font-size|color:\s|border:|margin:|padding:|\.css/i, 'CSS'],
     [/excel|katakcha|=max\(|=min\(|=sum\(|=avg\(|=count|=large|funksiya.*diapazon|formula\s.*beradi|a\d.*katakcha/i, 'Excel'],
-    [/word\s*dastur|insert\s*→|rasm\s*qo[ʻ'']sh|font.*paragraph|layout.*margin|design.*theme/i, 'MS Word'],
+    [/word\s*dastur|insert\s*â†’|rasm\s*qo[Ê»'']sh|font.*paragraph|layout.*margin|design.*theme/i, 'MS Word'],
     [/ctrl\s*\+|tezkor\s*tugma|klaviatura|barcha\s*element.*tanla|windows.*tugma/i, 'Kompyuter'],
     [/javascript|js\s|function\s|const\s|let\s|var\s|console\.|dom\.|addevent/i, 'JavaScript'],
     [/python|print\(|def\s|import\s|list\[|dict\{|tuple/i, 'Python'],
@@ -232,7 +244,7 @@ export default function TestResultView() {
   ];
 
   function inferSubtopic(q: any): string {
-    // 1. Serverdan kelgan subtopic — eng ishonchli
+    // 1. Serverdan kelgan subtopic â€” eng ishonchli
     if (q.subtopic && q.subtopic !== 'Umumiy') return q.subtopic;
     // 2. topic maydoni
     if (q.topic && q.topic !== 'Umumiy') return q.topic;
@@ -244,7 +256,7 @@ export default function TestResultView() {
     return 'Umumiy';
   }
 
-  // Topic data — aqlli inference bilan
+  // Topic data â€” aqlli inference bilan
   const topicStats: Record<string, { total: number; correct: number }> = {};
   (activeTest?.questions || []).forEach((q: any, i: number) => {
     const topic = inferSubtopic(q);
@@ -259,7 +271,7 @@ export default function TestResultView() {
       total: topicStats[topic].total,
       correct: topicStats[topic].correct,
     }))
-    .sort((a, b) => a.Olashtirish - b.Olashtirish); // Zaifdan kuchligacha — kamchiliklar birinchi
+    .sort((a, b) => a.Olashtirish - b.Olashtirish); // Zaifdan kuchligacha â€” kamchiliklar birinchi
 
   return (
     <div className="min-h-screen relative overflow-x-hidden font-sans pb-20 bg-[#fdfdfd] text-[#111111]">
@@ -272,7 +284,7 @@ export default function TestResultView() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
 
-          {/* ── Main Info Card ── */}
+          {/* â”€â”€ Main Info Card â”€â”€ */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -285,7 +297,7 @@ export default function TestResultView() {
                 <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-gray-900 mb-2">
                   {formatStudentName(result.studentName)} Natijalari
                 </h1>
-                {/* Score label — appears after counter finishes */}
+                {/* Score label â€” appears after counter finishes */}
                 <motion.p
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -296,24 +308,43 @@ export default function TestResultView() {
                 </motion.p>
               </div>
 
-              {/* Animated Score Badge */}
-              <div className="flex items-center gap-4 bg-white/50 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/50 shadow-sm">
-                <div className="text-center">
-                  <motion.span
-                    className="block text-3xl font-bold text-black tabular-nums"
-                    initial={{ scale: 0.5, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+              {/* Animated Score Badge & Certificate */}
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex items-center gap-4 bg-white/50 backdrop-blur-md px-6 py-4 rounded-2xl border border-white/50 shadow-sm">
+                  <div className="text-center">
+                    <motion.span
+                      className="block text-3xl font-bold text-black tabular-nums"
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+                    >
+                      {displayedScore}%
+                    </motion.span>
+                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Foiz</span>
+                  </div>
+                  <div className="w-px h-10 bg-gray-200 mx-2"></div>
+                  <div className="text-center">
+                    <span className="block text-xl font-semibold text-gray-700">{result.score} / {result.totalScore}</span>
+                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">To'g'ri</span>
+                  </div>
+                </div>
+
+                {displayedScore >= 70 && (
+                  <button
+                    onClick={() => generateCertificatePrintWindow({
+                      resultId: result.id || resultId || 'cert',
+                      studentName: result.studentName,
+                      testTitle: activeTest?.title || result.testTitle || 'Onlayn Test',
+                      score: result.score,
+                      totalScore: result.totalScore,
+                      grade: result.grade,
+                      date: result.createdAt,
+                    })}
+                    className="flex items-center gap-2 px-5 py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-2xl text-xs font-bold shadow-lg shadow-amber-500/25 transition-all cursor-pointer shrink-0"
                   >
-                    {displayedScore}%
-                  </motion.span>
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Foiz</span>
-                </div>
-                <div className="w-px h-10 bg-gray-200 mx-2"></div>
-                <div className="text-center">
-                  <span className="block text-xl font-semibold text-gray-700">{result.score} / {result.totalScore}</span>
-                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">To'g'ri</span>
-                </div>
+                    <Award size={18} /> Sertifikatni Olish
+                  </button>
+                )}
               </div>
             </div>
 
@@ -328,7 +359,7 @@ export default function TestResultView() {
             </div>
           </motion.div>
 
-          {/* ── Chart Card ── */}
+          {/* â”€â”€ Chart Card â”€â”€ */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
@@ -350,7 +381,7 @@ export default function TestResultView() {
                       <div className="flex justify-between items-baseline gap-2">
                         <span className="text-sm font-medium text-gray-800 leading-tight truncate">{entry.subject}</span>
                         <span className={`text-xs font-bold shrink-0 ${textColor}`}>
-                          {entry.correct}/{entry.total} · {entry.Olashtirish}%
+                          {entry.correct}/{entry.total} Â· {entry.Olashtirish}%
                         </span>
                       </div>
                       <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
@@ -374,7 +405,7 @@ export default function TestResultView() {
           </motion.div>
         </div>
 
-        {/* ── Staggered Question Results ── */}
+        {/* â”€â”€ Staggered Question Results â”€â”€ */}
         {(activeTest?.questions || []).length > 0 && (
           <div className="mt-12">
             <h2 className="text-lg font-semibold text-gray-900 mb-6">Savollar Bo'yicha Natijalar</h2>
@@ -386,7 +417,7 @@ export default function TestResultView() {
             >
               {(activeTest?.questions || []).map((q: any, i: number) => {
                 const studentAns = (result.answers || {})[i];
-                // correctAnswerText mavjud bo'lsa — eng ishonchli taqqoslash
+                // correctAnswerText mavjud bo'lsa â€” eng ishonchli taqqoslash
                 const isCorrect = isAnswerCorrect(studentAns, q.correctOption, q.options || [], q.correctAnswerText);
 
                 return (
@@ -481,6 +512,28 @@ export default function TestResultView() {
                         );
                       })}
                     </div>
+
+                    {!isCorrect && (
+                      <div className="mt-4 pl-9 flex items-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedMistakeQuestion({
+                              questionText: q.questionText,
+                              options: q.options,
+                              studentAnswer: typeof studentAns === 'object' && studentAns !== null ? studentAns.ans : String(studentAns ?? ''),
+                              correctAnswer: String(q.correctAnswerText || q.correctOption || ''),
+                              subject: q.subject || q.subtopic,
+                              grade: result.grade,
+                            });
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-xl border border-blue-200 shadow-sm transition-all cursor-pointer"
+                        >
+                          <Sparkles size={14} className="text-blue-600 animate-pulse" />
+                          AI bilan tushunish
+                        </button>
+                      </div>
+                    )}
                   </motion.div>
                 );
               })}
@@ -489,6 +542,12 @@ export default function TestResultView() {
           </div>
         )}
       </div>
+
+      <MistakeExplainerModal
+        isOpen={!!selectedMistakeQuestion}
+        onClose={() => setSelectedMistakeQuestion(null)}
+        question={selectedMistakeQuestion}
+      />
     </div>
   );
 }

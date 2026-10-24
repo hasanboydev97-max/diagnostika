@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Loader2, ArrowLeft, AlertTriangle, Swords } from 'lucide-react';
+import { Loader2, ArrowLeft, AlertTriangle, Swords, Volume2, VolumeX } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import MagicButton from '../../components/MagicButton';
 import confetti from 'canvas-confetti';
 import FormattedText from '../../components/FormattedText';
 import MeshGradient from '../../components/ui/MeshGradient';
+import { tts } from '../../utils/textToSpeech';
 
 import { db } from '../../lib/db';
 import { generateDiagnosticSummary } from '../../lib/gemini';
@@ -15,7 +16,7 @@ import { isAnswerCorrect } from '../../utils/scoring';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// ─── Helpers defined outside component ───────────────────────────────────────
+// â”€â”€â”€ Helpers defined outside component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60);
@@ -58,7 +59,7 @@ function TimerRing({ timeLeft, totalTime }: { timeLeft: number; totalTime: numbe
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function TakeTest() {
   const { testId } = useParams();
@@ -77,22 +78,51 @@ export default function TakeTest() {
   // Custom cursor
   const [mousePosition, setMousePosition] = useState({ x: -100, y: -100 });
   const [isHovering, setIsHovering] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
-  // ✅ savedProgress: localStorage dan o'qilgan — confirm kutayotgan holat
-  // Bu state started=true QILMAYDI — async state bug'idan xoli
+  // Stop speaking when question changes or unmounts
+  useEffect(() => {
+    tts.stop();
+    setIsSpeaking(false);
+  }, [currentQIndex]);
+
+  useEffect(() => {
+    return () => {
+      tts.stop();
+    };
+  }, []);
+
+  const toggleSpeakCurrentQuestion = () => {
+    if (isSpeaking) {
+      tts.stop();
+      setIsSpeaking(false);
+    } else {
+      const q = test?.questions?.[currentQIndex];
+      if (!q) return;
+      const textToRead = `${currentQIndex + 1}-savol. ${q.questionText}. Variantlar: ${q.options ? q.options.join(', ') : ''}`;
+      setIsSpeaking(true);
+      tts.speak(textToRead, {
+        onEnd: () => setIsSpeaking(false),
+        onError: () => setIsSpeaking(false),
+      });
+    }
+  };
+
+  // âœ… savedProgress: localStorage dan o'qilgan â€” confirm kutayotgan holat
+  // Bu state started=true QILMAYDI â€” async state bug'idan xoli
   const [savedProgress, setSavedProgress] = useState<{ studentName: string; answers: Record<number,string>; timeLeft: number|null; currentQIndex: number; shuffledQuestions: any[] } | null>(null);
 
   const violations = useRef(0);
   const submitRef = useRef(false);
   const milestonesFired = useRef<Set<number>>(new Set());
   const totalTimeRef = useRef<number>(0);
-  // ✅ Ref mirror — stale closure'lardan himoya
+  // âœ… Ref mirror â€” stale closure'lardan himoya
   const answersRef = useRef(answers);
   answersRef.current = answers;
   const studentNameRef = useRef(studentName);
   studentNameRef.current = studentName;
 
-  // ✅ FIX: useMemo — testId o'zgarmasa SAVE_KEY qayta hisoblanmaydi
+  // âœ… FIX: useMemo â€” testId o'zgarmasa SAVE_KEY qayta hisoblanmaydi
   const SAVE_KEY = useMemo(() => `test_progress_${testId}`, [testId]);
 
   useEffect(() => {
@@ -101,7 +131,7 @@ export default function TakeTest() {
     return () => window.removeEventListener('mousemove', onMove);
   }, []);
 
-  // ✅ FIX 1: localStorage o'qish — started=true qilmaymiz, faqat prompt ko'rsatamiz
+  // âœ… FIX 1: localStorage o'qish â€” started=true qilmaymiz, faqat prompt ko'rsatamiz
   useEffect(() => {
     const raw = localStorage.getItem(SAVE_KEY);
     if (raw) {
@@ -144,7 +174,7 @@ export default function TakeTest() {
       }
       
       if (!fetchedTest) {
-        // ✅ FIX: AbortController bilan timeout — server uyg'onishini kutamiz
+        // âœ… FIX: AbortController bilan timeout â€” server uyg'onishini kutamiz
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
         try {
@@ -154,12 +184,12 @@ export default function TakeTest() {
           fetchedTest = await res.json();
         } catch (fetchErr: any) {
           clearTimeout(timeoutId);
-          // ✅ RETRY: Cold start yoki vaqtinchalik xato bo'lsa, 3 marta qayta urinib ko'ramiz
+          // âœ… RETRY: Cold start yoki vaqtinchalik xato bo'lsa, 3 marta qayta urinib ko'ramiz
           if (attempt < 3) {
             const delay = (attempt + 1) * 1500; // 1.5s, 3s, 4.5s
             console.warn(`Test yuklashda xato, ${delay}ms kutib qayta urinilmoqda... (${attempt + 1}/3)`);
             setTimeout(() => fetchTest(attempt + 1), delay);
-            return; // setLoading(false) chaqirmaymiz — hali urinmoqdamiz
+            return; // setLoading(false) chaqirmaymiz â€” hali urinmoqdamiz
           }
           throw fetchErr;
         }
@@ -247,7 +277,7 @@ export default function TakeTest() {
     await launchTest();
   };
 
-  // ✅ FIX 2: handleResume — barcha setState SINXRON bajariladi, KEYIN launchTest
+  // âœ… FIX 2: handleResume â€” barcha setState SINXRON bajariladi, KEYIN launchTest
   // React 18 automatic batching: barcha setState bir render cycle'da bajariladi
   const handleResume = async () => {
     if (!savedProgress) return;
@@ -272,7 +302,7 @@ export default function TakeTest() {
     await launchTest();
   };
 
-  // ✅ FIX 3: Tozalab yangidan boshlash — savollar qayta shufflelanadi
+  // âœ… FIX 3: Tozalab yangidan boshlash â€” savollar qayta shufflelanadi
   const handleClearAndRestart = () => {
     localStorage.removeItem(SAVE_KEY);
     setSavedProgress(null);
@@ -345,7 +375,7 @@ export default function TakeTest() {
     };
   }, [started, answers]);
 
-  // 🎉 Milestone confetti: 25%, 50%, 75%, 100% javob berilganda
+  // ðŸŽ‰ Milestone confetti: 25%, 50%, 75%, 100% javob berilganda
   useEffect(() => {
     if (!started || !test?.questions) return;
     const total = test.questions.length;
@@ -363,10 +393,10 @@ export default function TakeTest() {
         scalar: 0.8
       });
       const msgs: Record<number, string> = {
-        25: '🚀 Yaxshi ketmoqdasiz!',
-        50: '💪 Yarimiga yetdingiz!',
-        75: '⚡ Deyarli tugadi!',
-        100: '🎯 Barcha savollarga javob berdingiz!'
+        25: 'ðŸš€ Yaxshi ketmoqdasiz!',
+        50: 'ðŸ’ª Yarimiga yetdingiz!',
+        75: 'âš¡ Deyarli tugadi!',
+        100: 'ðŸŽ¯ Barcha savollarga javob berdingiz!'
       };
       if (msgs[milestone]) toast.success(msgs[milestone], { duration: 2000, position: 'bottom-center' });
     }
@@ -378,11 +408,11 @@ export default function TakeTest() {
 
 
 
-  // ✅ FIX: useCallback — handleSubmit har render'da qayta yaratilmaydi
+  // âœ… FIX: useCallback â€” handleSubmit har render'da qayta yaratilmaydi
   // Bu useEffect dependency'larida infinite loop xavfini yo'q qiladi
   const handleSubmit = useCallback(async (isForced = false) => {
     if (submitRef.current) return;
-    // ✅ FIX: Ref'dan o'qiymiz — stale closure yo'q (ayniqsa forced submit'da muhim)
+    // âœ… FIX: Ref'dan o'qiymiz â€” stale closure yo'q (ayniqsa forced submit'da muhim)
     const currentAnswers = answersRef.current;
     const currentName = studentNameRef.current;
 
@@ -523,7 +553,7 @@ export default function TakeTest() {
 
 
     try {
-      // ✅ FIX: 30 soniyalik timeout — server javob bermasa qayta urinamiz
+      // âœ… FIX: 30 soniyalik timeout â€” server javob bermasa qayta urinamiz
       let submitRes = null;
       let lastErr = null;
       for (let retry = 0; retry <= 2; retry++) {
@@ -537,7 +567,7 @@ export default function TakeTest() {
             signal: controller.signal
           });
           clearTimeout(timeoutId);
-          break; // Muvaffaqiyatli — loopdan chiqamiz
+          break; // Muvaffaqiyatli â€” loopdan chiqamiz
         } catch (retryErr: any) {
           lastErr = retryErr;
           if (retry < 2) {
@@ -568,7 +598,7 @@ export default function TakeTest() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [test, studentName, answers, testId, navigate, SAVE_KEY]);
 
-  // ─── Render States ────────────────────────────────────────────────────────
+  // â”€â”€â”€ Render States â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   if (loading) {
     return (
@@ -632,7 +662,7 @@ export default function TakeTest() {
           <h1 className="text-3xl font-medium text-black mb-4 tracking-tight leading-tight">{test.title}</h1>
           <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-600 mb-8">
             <span className="px-2 py-1 bg-white/50 border border-white/50 rounded-md">{test.subject}</span>
-            <span className="text-black/20">•</span>
+            <span className="text-black/20">â€¢</span>
             <span>{test.questions.length} savol</span>
           </div>
           <div className="bg-white/40 border border-white/50 rounded-xl p-5 mb-8 text-xs text-gray-600 leading-relaxed shadow-sm">
@@ -658,7 +688,7 @@ export default function TakeTest() {
                      Davom ettirish ({savedProgress.studentName})
                    </button>
                    <button onClick={handleClearAndRestart} className="flex-1 bg-white border border-amber-300 text-amber-800 py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-amber-50 active:scale-95 transition-all">
-                     Tozalash — Men boshlayman
+                     Tozalash â€” Men boshlayman
                    </button>
                 </div>
               </div>
@@ -702,7 +732,7 @@ export default function TakeTest() {
     );
   }
 
-  // ─── Active Test UI (Vercel Light Compact - Commit 4cd7208) ───────────────
+  // â”€â”€â”€ Active Test UI (Vercel Light Compact - Commit 4cd7208) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const currentQ = test.questions[currentQIndex];
   const progress = ((currentQIndex + 1) / test.questions.length) * 100;
@@ -785,8 +815,23 @@ export default function TakeTest() {
         {/* Question Area */}
         <div className="flex-1 flex flex-col max-w-2xl order-1 lg:order-2 lg:pt-4">
           <div className="mb-8">
-            <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">
-              {currentQIndex + 1}-Savol
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                {currentQIndex + 1}-Savol
+              </span>
+              <button
+                type="button"
+                onClick={toggleSpeakCurrentQuestion}
+                className={`px-2.5 py-1 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+                  isSpeaking
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-sm animate-pulse'
+                    : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-50 hover:text-black'
+                }`}
+                title="Savolni ovozli o'qish"
+              >
+                {isSpeaking ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                <span className="text-[10px] font-semibold">{isSpeaking ? "To'xtatish" : "Ovozli o'qish"}</span>
+              </button>
             </div>
             <h3 className="text-lg font-medium text-zinc-900 leading-relaxed">
               <FormattedText content={currentQ.questionText} />

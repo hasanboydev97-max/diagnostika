@@ -10,7 +10,7 @@ import pLimit from 'p-limit';
 import xlsx from 'xlsx';
 import { executeResilientQuestionGen, executeResilientVisionOCR, executeResilientTextGen } from '../services/aiOrchestrator.js';
 
-// ✅ DRY FIX: Modul darajasida bir marta ta'riflanib, barcha funksiyalarda qayta ishlatiladi
+// âœ… DRY FIX: Modul darajasida bir marta ta'riflanib, barcha funksiyalarda qayta ishlatiladi
 const stripHtml = (text) => {
   if (!text) return '';
   return String(text)
@@ -23,7 +23,7 @@ const stripHtml = (text) => {
 const testGenerationQueue = pLimit(10); // 50-100 foydalanuvchi uchun test yaratish navbati
 const backgroundFeedbackQueue = pLimit(5); // O'quvchilar natijasi fonida AI tahlili uchun navbat
 
-// ✅ 20-Year Senior Architecture: Thundering Herd (Cache Stampede) himoyasi
+// âœ… 20-Year Senior Architecture: Thundering Herd (Cache Stampede) himoyasi
 // 30 ta bola bir vaqtda kirganda DB ga faqat 1 ta so'rov boradi, qolgan 29 tasi xotiradan (Promise) kutadi
 const testCache = new Map();
 const teacherCache = new Map();
@@ -81,7 +81,7 @@ export const getTests = async (req, res) => {
 export const getTestById = async (req, res) => {
   try {
     const { id } = req.params;
-    // ✅ Kesh orqali o'qiymiz, MongoDB ga bosim nolga tushadi
+    // âœ… Kesh orqali o'qiymiz, MongoDB ga bosim nolga tushadi
     const test = await getCachedTest(id);
     if (!test) return res.status(404).json({ error: 'Not found' });
     res.json(test);
@@ -161,30 +161,58 @@ export const exportToExcel = async (req, res) => {
     // True Excel file generation via xlsx
     const excelData = results.map((r, index) => {
       const percent = Math.round((r.score / (r.totalScore || 1)) * 100);
+      const emaktabGrade = percent >= 86 ? 5 : percent >= 71 ? 4 : percent >= 55 ? 3 : 2;
+      const statusLabel = percent >= 86 ? "A'lo" : percent >= 71 ? "Yaxshi" : percent >= 55 ? "Qoniqarli" : "Qoniqarsiz";
+
       return {
         "T/r": index + 1,
         "O'quvchi ism-familiyasi": r.studentName || 'Noma\'lum',
         "To'g'ri javoblar": r.score || 0,
         "Jami savollar": r.totalScore || 0,
         "O'zlashtirish (%)": `${percent}%`,
+        "eMaktab Bahosi": emaktabGrade,
+        "Daraja": statusLabel,
         "Topshirilgan sana": r.createdAt ? new Date(r.createdAt).toLocaleString('uz-UZ') : ''
       };
     });
 
+    // eMaktab Jurnaliga to'g'ridan-to'g'ri nusxalash uchun sodda sheet
+    const emaktabSimpleData = results.map((r, index) => {
+      const percent = Math.round((r.score / (r.totalScore || 1)) * 100);
+      const grade5 = percent >= 86 ? 5 : percent >= 71 ? 4 : percent >= 55 ? 3 : 2;
+      return {
+        "№": index + 1,
+        "F.I.SH.": r.studentName || '',
+        "Baho (5)": grade5,
+        "Ball (%)": percent
+      };
+    });
+
     const worksheet = xlsx.utils.json_to_sheet(excelData);
+    const emaktabWorksheet = xlsx.utils.json_to_sheet(emaktabSimpleData);
     
     // Ustunlar kengligini chiroyli qilish (Senior level touch)
     worksheet['!cols'] = [
-      { wch: 5 },  // T/r
-      { wch: 30 }, // Ism
-      { wch: 15 }, // To'g'ri
-      { wch: 15 }, // Jami
-      { wch: 15 }, // Foiz
-      { wch: 20 }  // Sana
+      { wch: 6 },  // T/r
+      { wch: 32 }, // Ism
+      { wch: 16 }, // To'g'ri
+      { wch: 14 }, // Jami
+      { wch: 18 }, // Foiz
+      { wch: 16 }, // eMaktab Bahosi
+      { wch: 16 }, // Daraja
+      { wch: 22 }  // Sana
+    ];
+
+    emaktabWorksheet['!cols'] = [
+      { wch: 6 },
+      { wch: 32 },
+      { wch: 12 },
+      { wch: 12 }
     ];
 
     const workbook = xlsx.utils.book_new();
-    xlsx.utils.book_append_sheet(workbook, worksheet, "Natijalar");
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Batafsil Hisobot");
+    xlsx.utils.book_append_sheet(workbook, emaktabWorksheet, "eMaktab Jurnal");
 
     const excelBuffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
 
@@ -343,7 +371,7 @@ export const submitTestResult = async (req, res) => {
         }
       }
 
-      // ✅ KRITIK: Score serverda qayta hisoblanadi — klientdan kelgan qiymatga ishonilmaydi
+      // âœ… KRITIK: Score serverda qayta hisoblanadi â€” klientdan kelgan qiymatga ishonilmaydi
       // Hacker score=100 yuborsa ham, DB ga to'g'ri hisoblangan qiymat yoziladi
       if (test.questions && Array.isArray(test.questions) && data.answers) {
         let serverScore = 0;
@@ -351,12 +379,12 @@ export const submitTestResult = async (req, res) => {
 
         if (data.questions && Array.isArray(data.questions)) {
           // Frontend questions are shuffled. Match by questionText to find the original question securely.
-          // correctAnswerText — frontend shuffle qilingan options dan olingan to'g'ri matn.
-          // Agar mavjud bo'lsa — eng ishonchli yo'l (harf indeksiga bog'liq emas).
+          // correctAnswerText â€” frontend shuffle qilingan options dan olingan to'g'ri matn.
+          // Agar mavjud bo'lsa â€” eng ishonchli yo'l (harf indeksiga bog'liq emas).
           const answeredIds = new Set();
 
-          // ✅ SENIOR LEVEL FIX: Ball hisoblashni to'liq isAnswerCorrect (DRY) yordamchisiga yukladik.
-          // ✅ EVENT LOOP OPTIMIZATION (O(N^2) -> O(N)): 
+          // âœ… SENIOR LEVEL FIX: Ball hisoblashni to'liq isAnswerCorrect (DRY) yordamchisiga yukladik.
+          // âœ… EVENT LOOP OPTIMIZATION (O(N^2) -> O(N)): 
           // Pre-calculate stripped texts and use Map for O(1) lookups to completely prevent Event Loop blocking during high concurrency
           const questionMap = new Map();
           test.questions.forEach(tq => {
@@ -394,16 +422,16 @@ export const submitTestResult = async (req, res) => {
 
         data.score = serverScore;
         data.totalScore = serverTotal;
-        console.log(`✅ Score serverda hisoblandi: ${serverScore}/${serverTotal} (klientdan: ${req.body.score}/${req.body.totalScore})`);
+        console.log(`âœ… Score serverda hisoblandi: ${serverScore}/${serverTotal} (klientdan: ${req.body.score}/${req.body.totalScore})`);
       }
 
     }
 
-    // ✅ KRITIK FIX: Natijani BIRINCHI tez saqlaymiz, AI feedbackni background'da ishlaymiz.
+    // âœ… KRITIK FIX: Natijani BIRINCHI tez saqlaymiz, AI feedbackni background'da ishlaymiz.
     // Bu "qotib qolish" va "Failed" muammolarini hal qiladi.
 
     // Upsert: agar bir xil id bilan ikki marta so'rov kelsa (foydalanuvchi qayta bosganida),
-    // MongoServerError: duplicate key o'rniga — shunchaki yangilaydi. Bu "Failed" xatosini to'xtatadi.
+    // MongoServerError: duplicate key o'rniga â€” shunchaki yangilaydi. Bu "Failed" xatosini to'xtatadi.
     const defaultFeedback = "Natijangiz saqlandi! AI batafsil tavsiyalarni tayyorlayapti, natijangizni yangilasangiz ko'rishingiz mumkin.";
     data.aiFeedback = defaultFeedback;
 
@@ -413,10 +441,10 @@ export const submitTestResult = async (req, res) => {
       { upsert: true, new: true }
     );
 
-    // Foydalanuvchiga DARHOL javob qaytaramiz — AI ni kutmaymiz!
+    // Foydalanuvchiga DARHOL javob qaytaramiz â€” AI ni kutmaymiz!
     res.status(201).json({ message: 'Result saved successfully', id: data.id, aiFeedback: defaultFeedback });
 
-    // ── AI feedback background'da ishlaydi (fire-and-forget) ──────────────
+    // â”€â”€ AI feedback background'da ishlaydi (fire-and-forget) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Bu blok foydalanuvchiga javob berilgandan KEYIN ishlaydi.
     // Xato bo'lsa ham foydalanuvchiga ta'siri yo'q.
     backgroundFeedbackQueue(async () => {
@@ -663,7 +691,7 @@ export const generateAITest = async (req, res) => {
       // ${bt} orqali backtick belgilarini xavfsiz kiritamiz.
       const bt = '\`';
 
-      return String.raw`Sen — istalgan fandan (matematika, fizika, biologiya, tarix, informatika, ona tili va h.k.) yuqori sifatli test tuzuvchi 20 yillik tajribali mutaxassis o'qituvchisan.
+      return String.raw`Sen â€” istalgan fandan (matematika, fizika, biologiya, tarix, informatika, ona tili va h.k.) yuqori sifatli test tuzuvchi 20 yillik tajribali mutaxassis o'qituvchisan.
 Your ONLY output is a valid JSON array. Do not explain anything, do not add any text before or after the JSON.
 
 TASK
@@ -677,52 +705,52 @@ Generate exactly ${questionCount} multiple-choice questions for:
 ## PEDAGOGICAL RULES
 
 1. UNIQUE ANSWER: Each question must have exactly ONE unambiguously correct answer.
-2. PLAUSIBLE DISTRACTORS: Wrong options must reflect typical student mistakes — never random or unrelated.
+2. PLAUSIBLE DISTRACTORS: Wrong options must reflect typical student mistakes â€” never random or unrelated.
 3. TEST UNDERSTANDING: Avoid rote recall. Prefer "Why?", "What if X?", multi-step reasoning.
 4. ZERO DUPLICATION: Every question tests a completely distinct concept. No repeated setups.
 5. LANGUAGE: All text must be grammatically correct ${language}. Zero language mixing in question/option text.
 
-## LATEX MATH RULES — CRITICAL
+## LATEX MATH RULES â€” CRITICAL
 
 You are writing inside a JSON string. The ONLY escaping rule for LaTeX:
-  A single backslash \ in LaTeX → write \\ in JSON string (two characters).
+  A single backslash \ in LaTeX â†’ write \\ in JSON string (two characters).
   Nothing more. Do NOT add extra backslashes.
 
 CORRECT JSON examples (copy this pattern exactly):
   "questionText": "$3\\sqrt{8} - \\sqrt{18} + \\sqrt{2}$"
   "questionText": "$\\frac{6}{\\sqrt{10} - \\sqrt{7}}$"
   "questionText": "$\\sin^2\\alpha + \\cos^2\\alpha = 1$ qoidasiga ko'ra..."
-  "questionText": "$\\sin 30° + \\cos 60°$ ni hisoblang."
+  "questionText": "$\\sin 30Â° + \\cos 60Â°$ ni hisoblang."
   "questionText": "$\\cos\\alpha = \\frac{\\sqrt{3}}{2}$ bo'lsa, $\\alpha = ?$"
   "questionText": "$\\frac{1}{\\sqrt{5} - \\sqrt{3}}$ ifodasini soddalashtiring."
   "questionText": "Tenglamani yeching: $\\sqrt{2x - 1} = 3$"
   "questionText": "$\\begin{cases} x + y = 5 \\\\ x - y = 1 \\end{cases}$ sistemasini yeching."
   "options": ["$\\frac{1}{2}$", "$\\frac{\\sqrt{3}}{2}$", "$1$", "$0$"]
 
-WRONG — NEVER DO THIS (these render as plain text, not math):
-  "$3\\\\sqrt{8}$"     ← 4 backslashes = BROKEN
-  "$\\\\frac{1}{2}$"  ← 4 backslashes = BROKEN
-  "$\\\\sin\\\\alpha$" ← BROKEN
+WRONG â€” NEVER DO THIS (these render as plain text, not math):
+  "$3\\\\sqrt{8}$"     â† 4 backslashes = BROKEN
+  "$\\\\frac{1}{2}$"  â† 4 backslashes = BROKEN
+  "$\\\\sin\\\\alpha$" â† BROKEN
 
 LATEX SYNTAX:
-- Inline math: $expression$ — NO spaces at edges: $x+1$ correct, $ x+1 $ WRONG
+- Inline math: $expression$ â€” NO spaces at edges: $x+1$ correct, $ x+1 $ WRONG
 - Every { must have matching }, every $ must close in the same field
 - Allowed commands: \\frac, \\sqrt, \\sin, \\cos, \\tan, \\cot, \\pi, \\alpha, \\beta,
   \\theta, \\phi, \\leq, \\geq, \\neq, \\infty, \\cdot, \\times, \\div, \\left, \\right,
   \\begin{cases}...\\end{cases}, superscript ^, subscript _
-- Angles: write 30°, 45°, 60°, 90° using the ° symbol (not \\circ) for readability
+- Angles: write 30Â°, 45Â°, 60Â°, 90Â° using the Â° symbol (not \\circ) for readability
 - Systems of equations MUST use \\begin{cases} ... \\\\ ... \\end{cases}
 - NEVER put \n newline inside $ ... $. One line per math expression.
 - IT/PROGRAMMING questions (Python, JavaScript, HTML, Excel etc.):
   * Wrap ALL code expressions in inline code: ${bt}code here${bt}
   * Python example options: ${bt}b**2 - 4*a*c${bt}, ${bt}math.sqrt(x)${bt}, ${bt}x**2 + 2*x + 1${bt}
   * HTML example options: ${bt}<h1>Sarlavha</h1>${bt}, ${bt}<div class="box">${bt}
-  * NEVER write Python operators raw in options — ${bt}**${bt} without backticks renders as **bold** in Markdown!
-  * Formula code is NEVER in LaTeX — use backticks, not $...$
+  * NEVER write Python operators raw in options â€” ${bt}**${bt} without backticks renders as **bold** in Markdown!
+  * Formula code is NEVER in LaTeX â€” use backticks, not $...$
 
 ## OUTPUT FORMAT
 
-Return ONLY a valid JSON array — no markdown fences, no commentary.
+Return ONLY a valid JSON array â€” no markdown fences, no commentary.
 Each element must exactly match:
 {
   "questionNumber": <1..${questionCount}>,
@@ -803,14 +831,14 @@ Begin generation now.`;
         const aiResult = await testGenerationQueue(() => generateChunkWithRetry(currentTopic, chunkCount, existingTexts));
         
         if (aiResult.success && aiResult.data && aiResult.data.length > 0) {
-          // ✅ KRITIK FIX: har bir savolga uning tegishli mavzusini (subtopic) belgilaymiz.
+          // âœ… KRITIK FIX: har bir savolga uning tegishli mavzusini (subtopic) belgilaymiz.
           // Bu "Mavzular Tahlili" panelining faqat "Umumiy 100%" ko'rsatish muammosini hal qiladi.
           const withSubtopic = aiResult.data.map(q => ({ ...q, subtopic: currentTopic }));
           
-          // ✅ SENIOR LEVEL FIX: Jaccard Similarity asosida Paraphrase Deduplication
+          // âœ… SENIOR LEVEL FIX: Jaccard Similarity asosida Paraphrase Deduplication
           // AI savolning shaklini ozgina o'zgartirib bersa ham ushlab qolinadi.
           const calculateSimilarity = (str1, str2) => {
-            const getWords = s => (s || '').toLowerCase().replace(/[^\w\sа-яёўқғҳa-z]/gi, '').split(/\s+/).filter(w => w.length > 2);
+            const getWords = s => (s || '').toLowerCase().replace(/[^\w\sÐ°-ÑÑ‘ÑžÒ›Ò“Ò³a-z]/gi, '').split(/\s+/).filter(w => w.length > 2);
             const words1 = new Set(getWords(str1));
             const words2 = new Set(getWords(str2));
             if (words1.size === 0 || words2.size === 0) return 0;
@@ -856,7 +884,7 @@ Begin generation now.`;
     // Shuffle options to ensure the correct answer is randomly distributed among options (A, B, C, D)
     const sanitizedQuestions = rawQuestions.map(q => {
       if (Array.isArray(q.options) && q.correctOption !== undefined) {
-        // ✅ FIX: Immutable shuffle — q ob'ektini mutatsiya qilmasdan yangi ob'ekt qaytaramiz
+        // âœ… FIX: Immutable shuffle â€” q ob'ektini mutatsiya qilmasdan yangi ob'ekt qaytaramiz
         const shuffled = [...q.options];
         for (let i = shuffled.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -872,7 +900,7 @@ Begin generation now.`;
       return q;
     });
 
-    // ✅ MUVAFFAQIYATLI: Faqat shu yerda (AI ishlagan taqdirda) counter oshiriladi
+    // âœ… MUVAFFAQIYATLI: Faqat shu yerda (AI ishlagan taqdirda) counter oshiriladi
     // Bu arxitektura xatosini tuzatadi: oldin counter oldin oshirilib, AI yiqilsa ham limit sarf bo'lardi
     await Teacher.findOneAndUpdate(
       { _id: req.teacherId },
@@ -954,7 +982,7 @@ export const classAnalysis = async (req, res) => {
     const testIds = [test.id, test._id?.toString(), id].filter(Boolean);
     const newResults = await OnlineTestResult.find({ testId: { $in: testIds } });
     
-    // ✅ FIX: Eski Result modelidan ham natijalar olinadi (orqaga mosligi)
+    // âœ… FIX: Eski Result modelidan ham natijalar olinadi (orqaga mosligi)
     const { Result } = await import('../models/index.js');
     const oldResults = await Result.find({ testId: { $in: testIds } }).lean();
     
@@ -969,11 +997,11 @@ export const classAnalysis = async (req, res) => {
     }
 
     const totalStudents = results.length;
-    // ✅ FIX: maxScore — o'rtacha hisoblash uchun to'g'riroq
+    // âœ… FIX: maxScore â€” o'rtacha hisoblash uchun to'g'riroq
     const maxScore = Math.max(...results.map(r => r.totalScore || 0), test.questions?.length || 0) || 0;
     const averageScore = results.reduce((acc, curr) => acc + (curr.score || 0), 0) / totalStudents;
     
-    // ✅ FIX: 200+ o'quvchi bo'lsa prompt juda katta bo'lib AI limitga urishi mumkin.
+    // âœ… FIX: 200+ o'quvchi bo'lsa prompt juda katta bo'lib AI limitga urishi mumkin.
     // Shuning uchun maksimal 150 ta o'quvchi natijalari ko'rsatiladi, qolganlari stat sifatida.
     const MAX_RESULTS_IN_PROMPT = 150;
     const resultsForPrompt = results.slice(0, MAX_RESULTS_IN_PROMPT);
@@ -986,7 +1014,7 @@ export const classAnalysis = async (req, res) => {
     const passingThreshold = maxScore > 0 ? maxScore * 0.6 : 0;
     const failing = results.filter(r => (r.score || 0) < passingThreshold).length;
     const passing = totalStudents - failing;
-    const statsLine = `O'zlashtirish: ${passing} ta o'quvchi muvaffaqiyatli (≥60%), ${failing} ta past ko'rsatkich.`;
+    const statsLine = `O'zlashtirish: ${passing} ta o'quvchi muvaffaqiyatli (â‰¥60%), ${failing} ta past ko'rsatkich.`;
 
     const prompt = `Siz tajribali metodist-o'qituvchi va ta'lim ekspertisiz (Senior Level). "${test.title || 'Test'}" mavzusida o'quvchilar test ishlashdi.
 Testda jami ${totalStudents} ta o'quvchi qatnashdi.
@@ -1015,7 +1043,7 @@ Javobni FAQAT quyidagi JSON formatida qaytaring (boshqa hech qanday so'z yoki ma
       return res.status(500).json({ error: 'Barcha AI agentlari band yoki javob bera olmadi. Iltimos qayta urinib ko\'ring.' });
     }
 
-    // ✅ FIX: analysisResult.questions[0] — bu normalizeQuestions() dan kelgan ob'ekt.
+    // âœ… FIX: analysisResult.questions[0] â€” bu normalizeQuestions() dan kelgan ob'ekt.
     // classAnalysis uchun recommendation maydoni to'g'ridan olinsin.
     const analysisData = analysisResult.questions?.[0] || {};
     const recommendation = analysisData.recommendation
