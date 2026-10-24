@@ -580,7 +580,11 @@ export default function TestDetails() {
     );
   }
 
-  const totalPercentage = results.reduce((acc, curr) => acc + (curr.score / curr.totalScore) * 100, 0);
+  const totalPercentage = results.reduce((acc, curr) => {
+    const total = curr.totalScore || 1;
+    const score = curr.score ?? 0;
+    return acc + (score / total) * 100;
+  }, 0);
   const averagePercentage = results.length > 0 ? Math.round(totalPercentage / results.length) : 0;
 
   return (
@@ -767,7 +771,9 @@ export default function TestDetails() {
                     </thead>
                     <tbody className="divide-y divide-black/5">
                       {results.map((r, i) => {
-                        const pct = Math.round((r.score / r.totalScore) * 100);
+                        const total = r.totalScore || 1;
+                        const score = r.score ?? 0;
+                        const pct = Math.round((score / total) * 100);
                         return (
                           <tr key={r._id || r.id || i} className="hover:bg-neutral-50/80 transition-colors">
                             <td className="px-8 py-4 font-semibold text-neutral-900 flex items-center gap-2.5">

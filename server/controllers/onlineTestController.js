@@ -100,20 +100,12 @@ export const getTestResults = async (req, res) => {
     
     const testIds = [test.id, test._id?.toString(), id].filter(Boolean);
 
-    // 1. Fetch from new architecture
-    const newResults = await OnlineTestResult.find({ testId: { $in: testIds } }).lean();
+    // Senior fix: Natijalar faqat aynan shu testga tegishli OnlineTestResult modelidan olinadi
+    const results = await OnlineTestResult.find({ testId: { $in: testIds } })
+      .sort({ createdAt: -1 })
+      .lean();
     
-    // 2. Fetch from old legacy architecture (in case student used old cached frontend)
-    const { Result } = await import('../models/index.js');
-    const oldResults = await Result.find({ testId: { $in: testIds } }).lean();
-    
-    // Merge, deduplicate by ID just in case, and sort by date descending
-    const merged = [...newResults, ...oldResults];
-    const uniqueMap = new Map();
-    merged.forEach(r => uniqueMap.set(r.id || r._id.toString(), r));
-    const allResults = Array.from(uniqueMap.values()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    
-    res.json(allResults);
+    res.json(results);
   } catch (error) {
     console.error("TestResults Fetch Error:", error);
     res.status(500).json({ error: 'Server error' });
@@ -150,13 +142,9 @@ export const exportToExcel = async (req, res) => {
     if (!test) return res.status(404).json({ error: 'Test topilmadi' });
 
     const testIds = [test.id, test._id?.toString(), id].filter(Boolean);
-    const newResults = await OnlineTestResult.find({ testId: { $in: testIds } }).lean();
-    const { Result } = await import('../models/index.js');
-    const oldResults = await Result.find({ testId: { $in: testIds } }).lean();
-    const merged = [...newResults, ...oldResults];
-    const uniqueMap = new Map();
-    merged.forEach(r => uniqueMap.set(r.id || r._id.toString(), r));
-    const results = Array.from(uniqueMap.values()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const results = await OnlineTestResult.find({ testId: { $in: testIds } })
+      .sort({ createdAt: -1 })
+      .lean();
 
     // True Excel file generation via xlsx
     const excelData = results.map((r, index) => {
@@ -571,15 +559,7 @@ export const deleteTestResult = async (req, res) => {
       ? { $or: [{ _id: id }, { id: id }] }
       : { id: id };
       
-    let result = await OnlineTestResult.findOne(query);
-    let ModelToUse = OnlineTestResult;
-    
-    if (!result) {
-      const { Result } = await import('../models/index.js');
-      result = await Result.findOne(query);
-      ModelToUse = Result;
-    }
-    
+    const result = await OnlineTestResult.findOne(query);
     if (!result) return res.status(404).json({ error: 'Natija topilmadi' });
     
     // O'qituvchining aynan shu testga egasi ekanligini tasdiqlash
@@ -592,7 +572,7 @@ export const deleteTestResult = async (req, res) => {
        return res.status(403).json({ error: 'Ushbu natijani o\'chirish huquqiga ega emassiz' });
     }
     
-    await ModelToUse.findOneAndDelete(query);
+    await OnlineTestResult.findOneAndDelete(query);
     res.json({ message: 'Natija o\'chirildi' });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -606,11 +586,7 @@ export const getTestResultById = async (req, res) => {
       ? { $or: [{ _id: id }, { id: id }] }
       : { id: id };
     
-    let result = await OnlineTestResult.findOne(query).lean();
-    if (!result) {
-      const { Result } = await import('../models/index.js');
-      result = await Result.findOne(query).lean();
-    }
+    const result = await OnlineTestResult.findOne(query).lean();
     if (!result) return res.status(404).json({ error: 'Not found' });
     res.json(result);
   } catch (error) {
@@ -1161,17 +1137,7 @@ export const classAnalysis = async (req, res) => {
     }
 
     const testIds = [test.id, test._id?.toString(), id].filter(Boolean);
-    const newResults = await OnlineTestResult.find({ testId: { $in: testIds } });
-    
-    // ✅ FIX: Eski Result modelidan ham natijalar olinadi (orqaga mosligi)
-    const { Result } = await import('../models/index.js');
-    const oldResults = await Result.find({ testId: { $in: testIds } }).lean();
-    
-    // Merge va dedup
-    const merged = [...newResults.map(r => r.toObject ? r.toObject() : r), ...oldResults];
-    const uniqueMap = new Map();
-    merged.forEach(r => uniqueMap.set(r.id || r._id?.toString(), r));
-    const results = Array.from(uniqueMap.values());
+    const results = await OnlineTestResult.find({ testId: { $in: testIds } }).lean();
     
     if (results.length === 0) {
       return res.status(400).json({ error: 'Tahlil qilish uchun yetarlicha natijalar yo\'q' });

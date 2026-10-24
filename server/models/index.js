@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 // Mongoose Schema
 const ResultSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true, index: true },
+  testId: { type: String, index: true },
   pin: String,
   studentName: String,
   grade: String,
