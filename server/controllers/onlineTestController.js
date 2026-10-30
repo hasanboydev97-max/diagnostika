@@ -1000,8 +1000,13 @@ Begin generation now.`;
     // ── 20-Year Senior Architecture: High-Performance Composite Generation ──
     // Eliminates 75s proxy bottleneck: single unified pass for <= 30 questions (8-10s)
     if (targetTotal <= 30) {
+      // AI ba'zida 1-2 ta o'xshash yoki filtrdan o'tmaydigan savol berishi mumkin.
+      // Deduplikatsiya va validatsiyadan so'ng roppa-rosa targetTotal chiqishi uchun kichik bufer bilan so'raymiz:
+      const bufferCount = Math.min(Math.max(Math.ceil(targetTotal * 0.12), 2), 4);
+      const requestCount = targetTotal + bufferCount;
+
       const aiResult = await testGenerationQueue(() => 
-        generateChunkWithRetry(topic, targetTotal, [], topicsArray)
+        generateChunkWithRetry(topic, requestCount, [], topicsArray)
       );
 
       if (aiResult.success && aiResult.data && aiResult.data.length > 0) {
@@ -1009,9 +1014,9 @@ Begin generation now.`;
         rawQuestions = rawQuestions.concat(unique);
       }
 
-      // Fast supplementary top-up pass if deduplication dropped below 85%
-      if (rawQuestions.length < Math.floor(targetTotal * 0.85)) {
-        const needed = targetTotal - rawQuestions.length;
+      // Agar filtrdan keyin ham targetTotal ga yetmasa, aniq yetmagan qismini darhol to'ldirish
+      if (rawQuestions.length < targetTotal) {
+        const needed = (targetTotal - rawQuestions.length) + 1;
         const supplementaryResult = await testGenerationQueue(() =>
           generateChunkWithRetry(topic, needed, Array.from(existingTextsSet), topicsArray)
         );
@@ -1021,11 +1026,12 @@ Begin generation now.`;
         }
       }
     } else {
-      // For large tests (> 30 questions), split into 2 balanced parallel chunks
+      // For large tests (> 30 questions), split into 2 balanced parallel chunks with safety buffer
+      const bufferEach = 2;
       const batchSize = Math.ceil(targetTotal / 2);
       const [batch1, batch2] = await Promise.all([
-        testGenerationQueue(() => generateChunkWithRetry(topic, batchSize, [], topicsArray)),
-        testGenerationQueue(() => generateChunkWithRetry(topic, targetTotal - batchSize, [], topicsArray))
+        testGenerationQueue(() => generateChunkWithRetry(topic, batchSize + bufferEach, [], topicsArray)),
+        testGenerationQueue(() => generateChunkWithRetry(topic, (targetTotal - batchSize) + bufferEach, [], topicsArray))
       ]);
 
       if (batch1.success && batch1.data) {
@@ -1033,6 +1039,17 @@ Begin generation now.`;
       }
       if (batch2.success && batch2.data) {
         rawQuestions = rawQuestions.concat(deduplicateBatch(batch2.data, existingTextsSet));
+      }
+
+      if (rawQuestions.length < targetTotal) {
+        const needed = (targetTotal - rawQuestions.length) + 1;
+        const supplementaryResult = await testGenerationQueue(() =>
+          generateChunkWithRetry(topic, needed, Array.from(existingTextsSet), topicsArray)
+        );
+        if (supplementaryResult.success && supplementaryResult.data) {
+          const topUp = deduplicateBatch(supplementaryResult.data, existingTextsSet);
+          rawQuestions = rawQuestions.concat(topUp);
+        }
       }
     }
 
