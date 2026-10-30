@@ -171,7 +171,10 @@ export function isQuestionMalformed(q) {
   if (!Array.isArray(q.options) || q.options.length < 2) return true;
   if (q.options.some(o => !o || String(o).trim().length === 0)) return true;
   if (!q.correctOption) return true;
-  if (!q.options.includes(q.correctOption)) return true;
+  // FIX #1: trim() qilib solishtirish — sanitize o'zgartirgandan keyin ham ishlaydi
+  const cleanedCorrect = String(q.correctOption).trim();
+  const optionsNormalized = q.options.map(o => String(o).trim());
+  if (!optionsNormalized.includes(cleanedCorrect)) return true;
 
   return false;
 }
@@ -191,8 +194,21 @@ export function processQuestionBatch(rawQuestions, options = {}) {
     const originalText = String(raw.questionText ?? '');
     
     // Repair with sanitizer
-    const repairedQ = sanitizeQuestion(raw, subject);
+    let repairedQ = sanitizeQuestion(raw, subject);
     
+    // FIX #1B: sanitize options o'zgartirgan bo'lsa correctOption ni yangilash
+    // Bu isQuestionMalformed() trim mismatch xatosini oldini oladi
+    if (repairedQ && Array.isArray(repairedQ.options) && repairedQ.correctOption) {
+      const trimmedCorrect = String(repairedQ.correctOption).trim();
+      const matchedOpt = repairedQ.options.find(o => String(o).trim() === trimmedCorrect);
+      if (!matchedOpt && repairedQ.correctAnswerIndex >= 0 && repairedQ.options[repairedQ.correctAnswerIndex]) {
+        // correctOption eski qiymati bilan mos kelmasa — indeks orqali to'g'ri variant topamiz
+        repairedQ = { ...repairedQ, correctOption: repairedQ.options[repairedQ.correctAnswerIndex] };
+      } else if (matchedOpt && matchedOpt !== repairedQ.correctOption) {
+        repairedQ = { ...repairedQ, correctOption: matchedOpt };
+      }
+    }
+
     // Validate the repaired version
     if (!isQuestionMalformed(repairedQ)) {
       validQuestions.push(repairedQ);

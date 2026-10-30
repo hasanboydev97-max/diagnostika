@@ -897,8 +897,10 @@ Begin generation now.`;
       }
 
       // Quality validation & distractor verification pass with subject context
+      // FIX #2: Math.min(2, x) = har doim 2 → Math.max(2, x) = kamida chunkCount*50%
+      // 30 savol so'ralganda minAcceptable = max(2, 15) = 15 (eski: 4 ta bo'lsa ham "OK" edi)
       const batchResult = processQuestionBatch(aiResult.questions, { 
-        minAcceptable: Math.min(2, Math.floor(chunkCount * 0.5)), 
+        minAcceptable: Math.max(2, Math.floor(chunkCount * 0.5)), 
         targetCount: chunkCount,
         subject: subject
       });

@@ -262,12 +262,15 @@ function normalizeQuestions(parsed) {
       }
     }
 
+    // FIX #3: slicedOptions orqali correctOption — sanitize keyinchalik options ni
+    // o'zgartirsa ham correctOption bilan mos kelishi uchun bir xil referencedan olinadi
+    const slicedOptions = options.slice(0, 4);
     return {
       questionNumber: q.questionNumber || (idx + 1),
       questionText: text.trim(),
-      options: options.slice(0, 4),
+      options: slicedOptions,
       correctAnswerIndex: correctIdx,
-      correctOption: options[correctIdx] || options[0],
+      correctOption: (slicedOptions[correctIdx] || slicedOptions[0] || '').trim(),
       subtopic: (q.subtopic || q.topic || '').trim() || undefined
     };
   }).filter(Boolean);
@@ -324,11 +327,15 @@ async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22
       // compound modellari json_object mode ni to'g'ri bajarmaydi
       const supportsJsonMode = !isTextGen && !agent.model.includes('compound');
 
-      // Groq on-demand OTPM limit is 1000 tokens for free tier
-      const maxTokens = Math.min(
-        isTextGen ? 1000 : Math.max(Math.ceil((prompt.length / 4) * 0.8) + 300, 500),
-        1000
-      );
+      // FIX #4: Groq maxTokens — savol soni asosida dinamik (30 savol = ~3900 token kerak)
+      // Eski: har doim 1000 → 30 ta savol uchun JSON kesilardi, barcha savollar yo'qolardi
+      const estimatedQuestions = Math.max(Math.ceil(prompt.length / 400), 5);
+      const tokenPerQuestion = 130; // har bir MCQ savol uchun o'rtacha token
+      const estimatedNeeded = isTextGen
+        ? 1000
+        : Math.max(estimatedQuestions * tokenPerQuestion, 800);
+      // Groq free tier: 6000 OTPM (on-demand tokens per minute)
+      const maxTokens = Math.min(estimatedNeeded, 6000);
 
       const body = {
         model: agent.model,
