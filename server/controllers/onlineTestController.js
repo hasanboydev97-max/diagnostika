@@ -913,14 +913,24 @@ Begin generation now.`;
     }
 
     // Deduplication helper using Jaccard Similarity (Paraphrase & Semantic deduplication)
+    // Senior-Level Smart Deduplication:
+    // Faqat 100% bir xil savollarni yoki matni 88% dan ortiq o'xshash bo'lgan haqiqiy dublikatlarni aniqlaydi.
+    // Dasturlashda "innerHTML vazifasi..." va "querySelector vazifasi..." kabi turli mavzulardagi
+    // savollarni soxta dublikat deb o'chirib yubormaydi!
     const calculateSimilarity = (str1, str2) => {
-      const getWords = s => (s || '').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, '').split(/\s+/).filter(w => w.length > 2);
-      const words1 = new Set(getWords(str1));
-      const words2 = new Set(getWords(str2));
-      if (words1.size === 0 || words2.size === 0) return 0;
-      const intersection = new Set([...words1].filter(x => words2.has(x)));
-      const union = new Set([...words1, ...words2]);
-      return intersection.size / union.size;
+      const clean1 = (str1 || '').toLowerCase().trim();
+      const clean2 = (str2 || '').toLowerCase().trim();
+      if (clean1 === clean2) return 1.0;
+
+      const words1 = clean1.split(/\s+/).filter(w => w.length > 1);
+      const words2 = clean2.split(/\s+/).filter(w => w.length > 1);
+      if (words1.length === 0 || words2.length === 0) return 0;
+
+      const set1 = new Set(words1);
+      const set2 = new Set(words2);
+      const intersection = [...set1].filter(x => set2.has(x)).length;
+      const union = new Set([...set1, ...set2]).size;
+      return union > 0 ? intersection / union : 0;
     };
 
     const deduplicateBatch = (candidates, existingTextsSet) => {
@@ -929,17 +939,22 @@ Begin generation now.`;
         if (!q || !q.questionText) continue;
         const cleanText = q.questionText.replace(/\s+/g, '').toLowerCase();
 
+        // 1. Exact match tekshiruvi
         let isDuplicate = Array.from(existingTextsSet).some(et => et.replace(/\s+/g, '').toLowerCase() === cleanText);
 
+        // 2. Semantik o'xshashlik tekshiruvi: 88% dan yuqori bo'lsa va variantlari ham deyarli bir xil bo'lsagina dublikat
         if (!isDuplicate) {
-          isDuplicate = Array.from(existingTextsSet).some(et => calculateSimilarity(et, q.questionText) > 0.65);
+          isDuplicate = Array.from(existingTextsSet).some(et => {
+            const textSim = calculateSimilarity(et, q.questionText);
+            return textSim > 0.88;
+          });
         }
 
         if (!isDuplicate) {
           unique.push(q);
           existingTextsSet.add(q.questionText);
         } else {
-          console.warn(`[AI Deduplication] Takroriy savol chetlatildi: ${q.questionText.substring(0, 50)}...`);
+          console.warn(`[AI Deduplication] Haqiqiy takroriy savol chetlatildi: ${q.questionText.substring(0, 60)}...`);
         }
       }
       return unique;

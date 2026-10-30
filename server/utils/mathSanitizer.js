@@ -159,13 +159,17 @@ export function isQuestionMalformed(q) {
   // Merged text (digit immediately followed by Cyrillic)
   if (/=\s*-?\d+[\u0400-\u04FF\u02BC]/u.test(text)) return true;
 
-  // Toq inline $
-  const singleDollars = (text.match(/(?<![\\$])\$(?!\$)/g) ?? []).length;
-  if (singleDollars % 2 !== 0) return true;
+  // Dasturlash (JS, HTML, CSS, PHP) kontekstida $ belgilari (masalan `$('#id')`, `${var}`) qonuniy kod hisoblanadi
+  const isCodeContext = /[`<>]|\b(function|var|let|const|console|\$\(|document|selector|html|css|php|jquery|dom|method|tag)\b/i.test(text);
+  if (!isCodeContext) {
+    // Toq inline $ (faqat sof matematika savollari uchun)
+    const singleDollars = (text.match(/(?<![\\$])\$(?!\$)/g) ?? []).length;
+    if (singleDollars % 2 !== 0) return true;
 
-  // Toq $$
-  const doubleDollars = (text.match(/\$\$/g) ?? []).length;
-  if (doubleDollars % 2 !== 0) return true;
+    // Toq $$
+    const doubleDollars = (text.match(/\$\$/g) ?? []).length;
+    if (doubleDollars % 2 !== 0) return true;
+  }
 
   // Options tekshiruvi
   if (!Array.isArray(q.options) || q.options.length < 2) return true;
