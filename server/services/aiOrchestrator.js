@@ -327,13 +327,13 @@ async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22
       // compound modellari json_object mode ni to'g'ri bajarmaydi
       const supportsJsonMode = !isTextGen && !agent.model.includes('compound');
 
-      // FIX #4: Groq maxTokens — savol soni asosida dinamik (30 savol = ~3900 token kerak)
-      // Eski: har doim 1000 → 30 ta savol uchun JSON kesilardi, barcha savollar yo'qolardi
-      const estimatedQuestions = Math.max(Math.ceil(prompt.length / 400), 5);
-      const tokenPerQuestion = 130; // har bir MCQ savol uchun o'rtacha token
+      // Senior Fix: Promptdagi aniq so'ralgan savollar sonini regex orqali aniqlash
+      const countMatch = prompt.match(/Generate exactly (\d+)/i) || prompt.match(/(\d+)\s*multiple-choice/i);
+      const requestedQCount = countMatch ? parseInt(countMatch[1], 10) : Math.max(Math.ceil(prompt.length / 400), 10);
+      const tokenPerQuestion = 220; // Amaliy kodli va LaTeX savollar uchun o'rtacha token
       const estimatedNeeded = isTextGen
-        ? 1000
-        : Math.max(estimatedQuestions * tokenPerQuestion, 800);
+        ? 1200
+        : Math.max(requestedQCount * tokenPerQuestion + 400, 1500);
       // Groq free tier: 6000 OTPM (on-demand tokens per minute)
       const maxTokens = Math.min(estimatedNeeded, 6000);
 
@@ -379,7 +379,7 @@ async function callAgent(agent, { prompt, systemPrompt, aiSchema, timeoutMs = 22
 export async function executeResilientQuestionGen({ prompt, systemPrompt, aiSchema, isPremium = false, temperature = 0.82 }) {
   return questionQueue(async () => {
     const pipeline = buildAgentPipeline({ isPremium });
-    const timeoutMs = 28000;
+    const timeoutMs = 45000; // 45 soniya — amaliy kod va murakkab JSON uchun yetarli vaqt
 
     if (pipeline.length === 0) {
       throw new Error("Hech qanday AI agenti sozlanmagan. Iltimos API kalitlarini tekshiring.");

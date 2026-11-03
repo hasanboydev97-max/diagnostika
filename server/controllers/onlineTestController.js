@@ -897,16 +897,15 @@ Begin generation now.`;
       }
 
       // Quality validation & distractor verification pass with subject context
-      // FIX #2: Math.min(2, x) = har doim 2 → Math.max(2, x) = kamida chunkCount*50%
-      // 30 savol so'ralganda minAcceptable = max(2, 15) = 15 (eski: 4 ta bo'lsa ham "OK" edi)
       const batchResult = processQuestionBatch(aiResult.questions, { 
         minAcceptable: Math.max(2, Math.floor(chunkCount * 0.5)), 
         targetCount: chunkCount,
         subject: subject
       });
 
-      if (batchResult.shouldFallbackToNextProvider && batchResult.questions.length === 0) {
-        return { success: false, error: "Savollar sifatsiz yoki validatsiyadan o'ta olmadi" };
+      // Agar olingan sifatli savollar minAcceptable dan kam bo'lsa, failover qilib keyingi provayderga o'tish
+      if (batchResult.shouldFallbackToNextProvider) {
+        return { success: false, error: "Savollar soni yetarli bo'lmadi yoki sifat tekshiruvidan o'tmadi" };
       }
 
       return { success: true, data: batchResult.questions };
@@ -1008,16 +1007,18 @@ Begin generation now.`;
     };
 
     let rawQuestions = [];
-    const targetTotal = questionCount || 10;
+    const targetTotal = Number(questionCount) || 10;
     const topicsArray = topic.split(',').map(t => t.trim()).filter(Boolean);
     const existingTextsSet = new Set();
 
-    // ── 20-Year Senior Architecture: High-Performance Composite Generation ──
-    // Eliminates 75s proxy bottleneck: single unified pass for <= 30 questions (8-10s)
-    if (targetTotal <= 30) {
-      // AI ba'zida 1-2 ta o'xshash yoki filtrdan o'tmaydigan savol berishi mumkin.
-      // Deduplikatsiya va validatsiyadan so'ng roppa-rosa targetTotal chiqishi uchun kichik bufer bilan so'raymiz:
-      const bufferCount = Math.min(Math.max(Math.ceil(targetTotal * 0.12), 2), 4);
+    // ── 20-Year Senior Architecture: Scalable Micro-Chunk Parallel Generation ──
+    // LLMlarning optimal diqqat va token sig'imi — 1 ta so'rovda 10 ta savol.
+    // 30 ta savol so'ralganda 3 ta 10 talik mikro-paket parallel ishga tushiriladi (8-12s ichida to'liq 30 ta sifatli chiqadi).
+    const maxChunkSize = 10;
+
+    if (targetTotal <= maxChunkSize) {
+      // 10 tagacha bo'lgan kichik testlar uchun bitta tezkor so'rov
+      const bufferCount = Math.min(Math.max(Math.ceil(targetTotal * 0.15), 2), 3);
       const requestCount = targetTotal + bufferCount;
 
       const aiResult = await testGenerationQueue(() => 
@@ -1028,43 +1029,40 @@ Begin generation now.`;
         const unique = deduplicateBatch(aiResult.data, existingTextsSet);
         rawQuestions = rawQuestions.concat(unique);
       }
-
-      // Agar filtrdan keyin ham targetTotal ga yetmasa, aniq yetmagan qismini darhol to'ldirish
-      if (rawQuestions.length < targetTotal) {
-        const needed = (targetTotal - rawQuestions.length) + 1;
-        const supplementaryResult = await testGenerationQueue(() =>
-          generateChunkWithRetry(topic, needed, Array.from(existingTextsSet), topicsArray)
-        );
-        if (supplementaryResult.success && supplementaryResult.data) {
-          const topUp = deduplicateBatch(supplementaryResult.data, existingTextsSet);
-          rawQuestions = rawQuestions.concat(topUp);
-        }
-      }
     } else {
-      // For large tests (> 30 questions), split into 2 balanced parallel chunks with safety buffer
-      const bufferEach = 2;
-      const batchSize = Math.ceil(targetTotal / 2);
-      const [batch1, batch2] = await Promise.all([
-        testGenerationQueue(() => generateChunkWithRetry(topic, batchSize + bufferEach, [], topicsArray)),
-        testGenerationQueue(() => generateChunkWithRetry(topic, (targetTotal - batchSize) + bufferEach, [], topicsArray))
-      ]);
+      // 10 tadan ko'p (masalan 15, 20, 30 ta) so'rovlar uchun parallel mikro-paketlar
+      const numChunks = Math.ceil(targetTotal / maxChunkSize);
+      const chunkPromises = [];
+      let remaining = targetTotal;
 
-      if (batch1.success && batch1.data) {
-        rawQuestions = rawQuestions.concat(deduplicateBatch(batch1.data, existingTextsSet));
-      }
-      if (batch2.success && batch2.data) {
-        rawQuestions = rawQuestions.concat(deduplicateBatch(batch2.data, existingTextsSet));
-      }
+      for (let i = 0; i < numChunks; i++) {
+        const thisBase = Math.min(remaining, maxChunkSize);
+        remaining -= thisBase;
+        const thisCount = thisBase + 2; // +2 bufer (filtr va deduplikatsiyadan keyin to'liq chiqishi kafolati)
 
-      if (rawQuestions.length < targetTotal) {
-        const needed = (targetTotal - rawQuestions.length) + 1;
-        const supplementaryResult = await testGenerationQueue(() =>
-          generateChunkWithRetry(topic, needed, Array.from(existingTextsSet), topicsArray)
+        chunkPromises.push(
+          testGenerationQueue(() => generateChunkWithRetry(topic, thisCount, [], topicsArray))
         );
-        if (supplementaryResult.success && supplementaryResult.data) {
-          const topUp = deduplicateBatch(supplementaryResult.data, existingTextsSet);
-          rawQuestions = rawQuestions.concat(topUp);
+      }
+
+      const results = await Promise.all(chunkPromises);
+      for (const res of results) {
+        if (res.success && res.data && res.data.length > 0) {
+          const unique = deduplicateBatch(res.data, existingTextsSet);
+          rawQuestions = rawQuestions.concat(unique);
         }
+      }
+    }
+
+    // Agar filtrlar yoki takrorlanishlar tufayli kam chiqsa, yetishmayotgan qismini to'ldirish
+    if (rawQuestions.length < targetTotal) {
+      const needed = (targetTotal - rawQuestions.length) + 2;
+      const supplementaryResult = await testGenerationQueue(() =>
+        generateChunkWithRetry(topic, needed, Array.from(existingTextsSet), topicsArray)
+      );
+      if (supplementaryResult.success && supplementaryResult.data) {
+        const topUp = deduplicateBatch(supplementaryResult.data, existingTextsSet);
+        rawQuestions = rawQuestions.concat(topUp);
       }
     }
 

@@ -32,7 +32,7 @@ export default function CreateTest() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [topic, setTopic] = useState('');
-  const [questionCount, setQuestionCount] = useState<number | string>(0);
+  const [questionCount, setQuestionCount] = useState<number | string>(15);
   const [grade, setGrade] = useState('');
   const [difficulty, setDifficulty] = useState('');
   const [language, setLanguage] = useState('o\'zbek');
@@ -524,7 +524,7 @@ export default function CreateTest() {
                 <label className="block text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Savollar soni</label>
                 <input 
                   type="number" 
-                  min="1" max="20"
+                  min="1" max="100"
                   value={questionCount}
                   onChange={e => {
                     const val = e.target.value;
